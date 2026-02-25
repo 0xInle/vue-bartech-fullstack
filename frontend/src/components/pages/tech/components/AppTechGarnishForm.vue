@@ -1,0 +1,235 @@
+<template>
+  <div class="garnish-form" ref="target">
+    <form class="garnish-form__content flex" @submit.prevent="createGarnish">
+      <div class="garnish-form__section flex">
+        <label class="garnish-form__label"> Название: </label>
+        <UiInput
+          v-model="customGarnish.name"
+          type="text"
+          class="garnish-form__input"
+          placeholder="Название гарнира"
+        />
+      </div>
+      <div class="garnish-form__section flex">
+        <label class="garnish-form__label"> Ингридиенты: </label>
+        <div
+          class="garnish-form__row flex"
+          v-for="ingredient in customGarnish.ingredients"
+          :key="ingredient.id"
+        >
+          <UiInput
+            v-model="ingredient.name"
+            type="text"
+            class="garnish-form__input garnish-form__input--ingredients"
+            placeholder="Название ингридиента"
+          />
+          <UiInput
+            v-model.number="ingredient.amount"
+            type="text"
+            class="garnish-form__input garnish-form__input--unit"
+            placeholder="Объем"
+          />
+          <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :selectArr="UNITS" />
+          <UiButton
+            :disabled="customGarnish.ingredients.length === 1"
+            @click="delGarnish(ingredient.id)"
+            class="garnish-form__button garnish-form__button--delete"
+          >
+            x
+          </UiButton>
+        </div>
+      </div>
+      <UiButton class="garnish-form__button btn-reset" @click="addGarnish"
+        >Добавить ингридиент</UiButton
+      >
+      <div class="garnish-form__section flex">
+        <label class="garnish-form__label"> Комментарий: </label>
+        <textarea v-model="customGarnish.comment" class="garnish-form__comment" rows="5">
+        </textarea>
+      </div>
+      <UiButton type="submit" class="garnish-form__button btn-reset"> Создать гарнир </UiButton>
+    </form>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { CustomGarnish } from '@/type/type'
+import { useTemplateRef, reactive } from 'vue'
+import { onClickOutside } from '@vueuse/core'
+import { UNITS } from '@/type/consts'
+import { useStore } from '@/stores/store'
+import UiInput from '@/components/Ui/UiInput.vue'
+import UiButton from '@/components/Ui/UiButton.vue'
+import UiSelect from '@/components/Ui/UiSelect.vue'
+import { v4 as uuidv4 } from 'uuid'
+
+const target = useTemplateRef('target')
+const emit = defineEmits(['close'])
+const store = useStore()
+
+onClickOutside(target, () => {
+  emit('close')
+})
+
+const customGarnish = reactive<CustomGarnish>({
+  id: '',
+  name: '',
+  ingredients: [
+    {
+      id: '',
+      name: '',
+      amount: null,
+      unit: UNITS[0],
+    },
+  ],
+  comment: '',
+})
+
+function addGarnish() {
+  customGarnish.ingredients.push({
+    id: uuidv4(),
+    name: '',
+    amount: null,
+    unit: UNITS[0],
+  })
+}
+
+function delGarnish(id: string) {
+  if (customGarnish.ingredients.length > 1) {
+    customGarnish.ingredients = customGarnish.ingredients.filter((i) => i.id !== id)
+  }
+}
+
+function createGarnish() {
+  const newGarnish: CustomGarnish = {
+    id: uuidv4(),
+    name: customGarnish.name.trim(),
+    ingredients: customGarnish.ingredients.map((i) => ({
+      id: uuidv4(),
+      name: i.name.trim(),
+      amount: i.amount,
+      unit: i.unit || UNITS[0],
+    })),
+    comment: customGarnish.comment.trim(),
+  }
+  store.addCustomGarnish(newGarnish)
+
+  customGarnish.name = ''
+  customGarnish.ingredients = [{ id: '', name: '', amount: null, unit: UNITS[0] }]
+  customGarnish.comment = ''
+
+  console.log(store.customGarnishLib)
+}
+</script>
+
+<style scoped>
+.garnish-form {
+  position: relative;
+  max-height: max-content;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+  background-color: var(--black-color);
+}
+
+.garnish-form__content {
+  flex-direction: column;
+}
+
+.garnish-form__section {
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.garnish-form__label {
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: var(--white-color);
+}
+
+.garnish-form__input {
+  padding: 5px;
+  color: var(--black-color);
+  border: 1px solid var(--black-color);
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+}
+
+.garnish-form__row {
+  gap: 10px;
+}
+
+.garnish-form__row:not(:last-child) {
+  margin-bottom: 15px;
+}
+
+.garnish-form__input--ingredients {
+  flex-grow: 1;
+}
+
+.garnish-form__input--unit {
+  max-width: 15%;
+}
+
+.garnish-form__unit {
+  width: 28px;
+  height: 28px;
+}
+
+.garnish-form__unit {
+  padding: 5px;
+  border: 1px solid var(--black-color);
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+  font-size: 12px;
+}
+
+.garnish-form__param {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.garnish-form__param--glases {
+  flex: 2;
+}
+
+.garnish-form__param--ice {
+  flex: 1;
+}
+
+.garnish-form__param--method {
+  flex: 1;
+}
+
+.garnish-form__comment {
+  outline: none;
+  width: 100%;
+  padding: 5px;
+  font-family: Nunito;
+  color: var(--black-color);
+  border: 1px solid var(--black-color);
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+  resize: none;
+}
+
+.garnish-form__button {
+  margin-bottom: 15px;
+}
+
+.garnish-form__button--delete {
+  margin: 0;
+  padding: 6px 11px;
+  width: 29.5px;
+}
+
+::placeholder {
+  font-size: 10px;
+}
+
+:disabled {
+  cursor: not-allowed;
+  background-color: var(--gray-light-color);
+  border-color: var(--gray-light-color);
+}
+</style>

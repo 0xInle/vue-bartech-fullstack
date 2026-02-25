@@ -1,0 +1,6 @@
+.idea/
+.vscode/
+**/node_modules/
+**/generated/
+frontend/env.d.ts
+**/.env*

@@ -1,0 +1,106 @@
+@font-face {
+  font-family: Nunito;
+  src: url('/fonts/Nunito-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Nunito;
+  src: url('/fonts/Nunito-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Nunito;
+  src: url('/fonts/Nunito-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Nunito;
+  src: url('/fonts/Nunito-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Nunito;
+  src: url('/fonts/Nunito-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+}
+
+:root {
+  --white-color: #f8f8f8;
+  --black-color: #222629;
+  --green-dark-color: #61892f;
+  --green-bright-color: #86c232;
+  --gray-dark-color: #474b4f;
+  --gray-light-color: #6b6e70;
+  --box-shadow: 0 0 10px rgb(0 0 0 / 30%);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Nunito, Roboto, sans-serif;
+  font-weight: 700;
+  overflow-y: auto;
+  background-color: #f8f8f8;
+}
+
+img {
+  height: auto;
+  max-width: 100%;
+  object-fit: cover;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 15px;
+  margin: 0 auto;
+}
+
+.btn-reset {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.list-reset {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.link-reset {
+  color: #000;
+  font-size: 18px;
+  text-decoration: none;
+}
+
+.flex {
+  display: -webkit-box;
+  display: flex;
+}
+
+.hidden {
+  display: none;
+}
+
+.app {
+  height: 100vh;
+}
