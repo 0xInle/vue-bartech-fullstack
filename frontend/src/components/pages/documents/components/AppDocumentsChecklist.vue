@@ -10,7 +10,7 @@
         </header>
         <ul class="checklist__list list-reset">
           <li class="checklist__item" v-for="toDo in toDoLib" :key="toDo.id">
-            <div class="checklist__item-block flex" tabindex="1" @click="toggleAccordion(toDo.id)">
+            <div class="checklist__item-block flex" tabindex="0" @click="toggleAccordion(toDo.id)">
               <span class="checklist__item-name" :class="{ 'checklist__item-name-sm': showForm }">{{
                 toDo.name
               }}</span>
@@ -126,6 +126,7 @@ function toggleAccordion(id: string) {
 }
 
 .checklist__item-block {
+  outline: none;
   justify-content: space-between;
   gap: 20px;
   align-items: center;
@@ -150,6 +151,7 @@ function toggleAccordion(id: string) {
   &:focus {
     color: var(--white-color);
     background-color: var(--gray-dark-color);
+    border-color: var(--gray-dark-color);
   }
 }
 

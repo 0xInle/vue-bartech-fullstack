@@ -35,5 +35,11 @@ input {
   box-shadow: var(--box-shadow);
   border-radius: 10px;
   outline: none;
+  transition: all 0.3s ease-in-out;
+
+  &:focus {
+    border-color: var(--green-bright-color);
+    box-shadow: 0 0 10px rgba(134, 194, 50, 0.3);
+  }
 }
 </style>

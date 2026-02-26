@@ -26,7 +26,7 @@
     </div>
     <div class="tech__modal-action flex">
       <UiButton @click="openEdit" class="tech__modal-btn"> Редактировать </UiButton>
-      <UiButton class="tech__modal-btn"> Удалить </UiButton>
+      <UiButton class="tech__modal-btn" @click="delIngredient"> Удалить </UiButton>
     </div>
   </article>
 </template>
@@ -34,6 +34,9 @@
 <script setup lang="ts">
 import type { CustomIngredient } from '@/type/type'
 import UiButton from '@/components/Ui/UiButton.vue'
+import { useStore } from '@/stores/store'
+
+const store = useStore()
 
 const props = defineProps<{
   ingredient: CustomIngredient
@@ -47,6 +50,11 @@ const emit = defineEmits<{
 function openEdit() {
   emit('close')
   emit('edit', props.ingredient)
+}
+
+function delIngredient() {
+  store.delItem(store.customIngridientLib, props.ingredient.id)
+  emit('close')
 }
 </script>
 
@@ -110,7 +118,6 @@ function openEdit() {
 
 .tech__modal-btn {
   flex: 1;
-  color: var(--white-color);
   background-color: var(--green-bright-color);
 }
 </style>

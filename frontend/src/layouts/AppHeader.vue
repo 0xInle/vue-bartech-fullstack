@@ -46,8 +46,19 @@ function openSettings() {
 }
 
 .header-logo {
+  outline: none;
   font-size: 30px;
+  color: var(--black-color);
   background-color: var(--green-bright-color);
+  transition: all 0.3s ease-in-out;
+
+  &:hover {
+    color: var(--white-color);
+  }
+
+  &:focus {
+    color: var(--white-color);
+  }
 }
 
 .header-list {
@@ -62,6 +73,7 @@ function openSettings() {
 
 .header-link {
   position: relative;
+  outline: none;
   font-size: 14px;
   color: var(--white-color);
   transition: all 0.3s ease-in-out;
@@ -101,9 +113,14 @@ function openSettings() {
 }
 
 .header-btn {
+  outline: none;
   width: 34px;
   height: 34px;
   border-radius: 50%;
+
+  &:hover {
+    color: var(--white-color);
+  }
 }
 
 .header-logo.router-link-active {

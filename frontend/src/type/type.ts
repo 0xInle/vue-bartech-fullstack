@@ -1,10 +1,10 @@
 import type { Ice, Method, Glass } from '@/type/consts'
 
 // ----------------- Основной коктейль -----------------
-export type Coctail = {
+export type Cocktail = {
   id: string
   name: string
-  ingredients: CoctailIngredient[] // То, что реально добавлено в коктейль
+  ingredients: CocktailIngredient[] // То, что реально добавлено в коктейль
   params: {
     glass: Glass
     ice: Ice
@@ -20,7 +20,7 @@ export type Ingredient = {
 }
 
 // ----------------- Добавляемый в коктейль ингредиент -----------------
-export type CoctailIngredient = {
+export type CocktailIngredient = {
   id: string
   name: string // Имя ингредиента или кастомного ингредиента
   amount: number | null // Количество
@@ -31,7 +31,7 @@ export type CoctailIngredient = {
 export type CustomIngredient = {
   id: string
   name: string
-  ingredients: CoctailIngredient[] // Составные части
+  ingredients: CocktailIngredient[] // Составные части
   comment: string // Описание приготовления
 }
 
@@ -43,7 +43,7 @@ export type Garnish = {
 export type CustomGarnish = {
   id: string
   name: string
-  ingredients: CoctailIngredient[] // Что входит в гарнир
+  ingredients: CocktailIngredient[] // Что входит в гарнир
   comment: string // Как приготовить/украсить
 }
 
@@ -60,9 +60,9 @@ export type ToDo = {
 }
 
 // ----------------- Библиотеки -----------------
-export type CoctailLib = Coctail[] // Все коктейли
+export type CocktailLib = Cocktail[] // Все коктейли
 export type IngredientLib = Ingredient[] // Все базовые ингредиенты
 export type CustomIngredientLib = CustomIngredient[] // Все составные
 export type GarnishLib = Garnish[] // Все гарниры
 export type CustomGarnishLib = CustomGarnish[]
-export type toDoLib = ToDo[]
+export type ToDoLib = ToDo[]

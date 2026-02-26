@@ -82,7 +82,7 @@
         <textarea v-model="localCocktail.comment" class="cocktail-form__comment" rows="5">
         </textarea>
       </div>
-      <div class="coctail-form__actions flex">
+      <div class="cocktail-form__actions flex">
         <UiButton type="submit" @click="close" class="cocktail-form__button">
           Отредактировать коктейль
         </UiButton>
@@ -99,15 +99,15 @@ import UiButton from '@/components/Ui/UiButton.vue'
 import UiSelect from '@/components/Ui/UiSelect.vue'
 import { UNITS, GLASS, ICE, METHOD } from '@/type/consts'
 import { onClickOutside } from '@vueuse/core'
-import type { Coctail } from '@/type/type'
+import type { Cocktail } from '@/type/type'
 import { v4 as uuidv4 } from 'uuid'
 
 const props = defineProps<{
-  coctail: Coctail
+  cocktail: Cocktail
 }>()
 const emit = defineEmits(['close'])
 const target = useTemplateRef('target')
-const localCocktail = reactive(props.coctail)
+const localCocktail = reactive(props.cocktail)
 
 function delIngredient(id: string) {
   if (localCocktail.ingredients.length > 1) {
@@ -222,6 +222,12 @@ onClickOutside(target, () => {
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   resize: none;
+  transition: all 0.3s ease-in-out;
+
+  &:focus {
+    box-shadow: 0 0 10px rgba(134, 194, 50, 0.3);
+    border: 1px solid var(--green-bright-color);
+  }
 }
 
 .cocktail-form__button {
@@ -234,7 +240,7 @@ onClickOutside(target, () => {
   width: 29.5px;
 }
 
-.coctail-form__actions {
+.cocktail-form__actions {
   gap: 20px;
 }
 

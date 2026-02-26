@@ -1,7 +1,7 @@
 <template>
   <section class="tech flex">
-    <div class="tech__coctail">
-      <h2 class="tech__coctail-title">{{ title }}</h2>
+    <div class="tech__cocktail">
+      <h2 class="tech__cocktail-title">{{ title }}</h2>
       <div class="tech__toolbar flex">
         <UiButton
           @click="selectCategory('cocktail')"
@@ -25,10 +25,10 @@
           Гарниры
         </UiButton>
       </div>
-      <ul class="tech__coctail-list list-reset">
+      <ul class="tech__cocktail-list list-reset">
         <UiLoader v-if="loading" />
-        <li class="tech__coctail-item" v-for="item in listToShow" :key="item.id">
-          <a href="#" class="tech__coctail-link link-reset" @click="openItem(item)">
+        <li class="tech__cocktail-item" v-for="item in listToShow" :key="item.id">
+          <a href="#" class="tech__cocktail-link link-reset" @click="openItem(item)">
             {{ item.name }}
           </a>
         </li>
@@ -61,12 +61,12 @@
           >
         </li>
       </ul>
-      <AppTechCoctailForm v-if="openModal === 'cocktail'" @close="openModal = null" />
+      <AppTechCocktailForm v-if="openModal === 'cocktail'" @close="openModal = null" />
       <AppTechIngredientForm v-if="openModal === 'customIngredient'" @close="openModal = null" />
       <AppTechGarnishForm v-if="openModal === 'customGarnish'" @close="openModal = null" />
-      <AppTechCoctailEditForm
+      <AppTechCocktailEditForm
         v-if="editingCocktail"
-        :coctail="editingCocktail"
+        :cocktail="editingCocktail"
         @close="editingCocktail = null"
       />
       <AppTechIngredientEditForm
@@ -107,27 +107,27 @@
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useStore } from '@/stores/store'
-import type { Coctail, CustomGarnish, CustomIngredient } from '@/type/type'
+import type { Cocktail, CustomGarnish, CustomIngredient } from '@/type/type'
 import UiButton from '@/components/Ui/UiButton.vue'
 import UiLoader from '@/components/Ui/UiLoader.vue'
 import UIModal from '@/components/Ui/UIModal.vue'
-import AppTechCoctailForm from './components/AppTechCoctailForm.vue'
+import AppTechCocktailForm from './components/AppTechCocktailForm.vue'
 import AppTechIngredientForm from './components/AppTechIngredientForm.vue'
 import AppTechGarnishForm from './components/AppTechGarnishForm.vue'
 import AppTechCocktailDetails from './components/AppTechCocktailDetails.vue'
 import AppTechIngredientDetails from './components/AppTechIngredientDetails.vue'
 import AppTechGarnishDetails from './components/AppTechGarnishDetails.vue'
-import AppTechCoctailEditForm from './components/AppTechCoctailEditForm.vue'
+import AppTechCocktailEditForm from './components/AppTechCocktailEditForm.vue'
 import AppTechIngredientEditForm from './components/AppTechIngredientEditForm.vue'
 import AppTechGarnishEditForm from './components/AppTechGarnishEditForm.vue'
 import { useEditingItem } from './composables/useEditingItem'
 
 const store = useStore()
-const { coctailsLib, customGarnishLib, customIngridientLib } = storeToRefs(store)
+const { cocktailsLib, customGarnishLib, customIngridientLib } = storeToRefs(store)
 
 const openModal = ref<'cocktail' | 'customIngredient' | 'customGarnish' | null>(null)
 const currentCategory = ref<'cocktail' | 'customIngredient' | 'customGarnish'>('cocktail')
-const selectedCocktail = ref<Coctail | null>(null)
+const selectedCocktail = ref<Cocktail | null>(null)
 const selectedIngredient = ref<CustomIngredient | null>(null)
 const selectedGarnish = ref<CustomGarnish | null>(null)
 const loading = ref(false)
@@ -150,7 +150,7 @@ const titles = {
 const title = computed(() => titles[currentCategory.value] || '')
 
 const libs = {
-  cocktail: coctailsLib,
+  cocktail: cocktailsLib,
   customIngredient: customIngridientLib,
   customGarnish: customGarnishLib,
 }
@@ -166,16 +166,15 @@ function openForm(type: 'cocktail' | 'customIngredient' | 'customGarnish') {
   openModal.value = type
 }
 
-function openItem(item: Coctail | CustomIngredient | CustomGarnish) {
+function openItem(item: Cocktail | CustomIngredient | CustomGarnish) {
   showModal.value = true
-  console.log(item)
 
   selectedCocktail.value = null
   selectedIngredient.value = null
   selectedGarnish.value = null
 
   if (currentCategory.value === 'cocktail') {
-    selectedCocktail.value = item as Coctail
+    selectedCocktail.value = item as Cocktail
   }
 
   if (currentCategory.value === 'customIngredient') {
@@ -199,7 +198,7 @@ function openItem(item: Coctail | CustomIngredient | CustomGarnish) {
 //   openModal.value = 'customGarnish'
 // }
 
-// function openItem(item: Coctail | CustomIngredient | CustomGarnish) {
+// function openItem(item: Cocktail | CustomIngredient | CustomGarnish) {
 //   if (currentCategory.value === 'cocktail') {
 //     selectedItem.value = item
 //     showModal.value = true
@@ -240,7 +239,7 @@ function openItem(item: Coctail | CustomIngredient | CustomGarnish) {
 //   loading.value = true
 
 //   const libMap = {
-//     cocktail: coctailsLib,
+//     cocktail: cocktailsLib,
 //     customIngredient: ingridientLib,
 //     garnish: garnishLib,
 //   }
@@ -264,7 +263,7 @@ function openItem(item: Coctail | CustomIngredient | CustomGarnish) {
   align-items: flex-start;
 }
 
-.tech__coctail {
+.tech__cocktail {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 61px);
@@ -281,7 +280,7 @@ function openItem(item: Coctail | CustomIngredient | CustomGarnish) {
   margin-bottom: 20px;
 }
 
-.tech__coctail-title {
+.tech__cocktail-title {
   display: flex;
   margin: 0;
   align-items: center;
@@ -296,7 +295,7 @@ function openItem(item: Coctail | CustomIngredient | CustomGarnish) {
   box-shadow: var(--box-shadow);
 }
 
-.tech__coctail-list {
+.tech__cocktail-list {
   flex: 1;
   overflow-y: auto;
   padding: 10px;
@@ -306,16 +305,16 @@ function openItem(item: Coctail | CustomIngredient | CustomGarnish) {
   background-color: var(--white-color);
 }
 
-.tech__coctail-item {
+.tech__cocktail-item {
   max-width: max-content;
   border-bottom: 1px solid var(--black-color);
 }
 
-.tech__coctail-item:not(:last-child) {
+.tech__cocktail-item:not(:last-child) {
   margin-bottom: 10px;
 }
 
-.tech__coctail-link {
+.tech__cocktail-link {
   font-size: 14px;
   font-weight: 500;
 }
@@ -336,8 +335,6 @@ function openItem(item: Coctail | CustomIngredient | CustomGarnish) {
 .tech__actions-btn,
 .tech__toolbar-btn {
   width: 100%;
-  /* color: var(--white-color); */
-  /* background-color: var(--black-color); */
 }
 
 .tech__actions-btn.is-active,

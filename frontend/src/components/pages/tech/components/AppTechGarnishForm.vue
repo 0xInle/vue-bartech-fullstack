@@ -211,6 +211,12 @@ function createGarnish() {
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   resize: none;
+  transition: all 0.3s ease-in-out;
+
+  &:focus {
+    box-shadow: 0 0 10px rgba(134, 194, 50, 0.3);
+    border: 1px solid var(--green-bright-color);
+  }
 }
 
 .garnish-form__button {

@@ -26,7 +26,7 @@
     </div>
     <div class="tech__modal-action flex">
       <UiButton @click="openEdit" class="tech__modal-btn"> Редактировать </UiButton>
-      <UiButton class="tech__modal-btn"> Удалить </UiButton>
+      <UiButton class="tech__modal-btn" @click="delIngredient"> Удалить </UiButton>
     </div>
   </article>
 </template>
@@ -34,6 +34,9 @@
 <script setup lang="ts">
 import type { CustomGarnish } from '@/type/type'
 import UiButton from '@/components/Ui/UiButton.vue'
+import { useStore } from '@/stores/store'
+
+const store = useStore()
 
 const props = defineProps<{
   garnish: CustomGarnish
@@ -47,6 +50,11 @@ const emit = defineEmits<{
 function openEdit() {
   emit('close')
   emit('edit', props.garnish)
+}
+
+function delIngredient() {
+  store.delItem(store.customGarnishLib, props.garnish.id)
+  emit('close')
 }
 </script>
 

@@ -1,29 +1,37 @@
 import { defineStore } from 'pinia'
 import type {
-  Coctail,
+  Cocktail,
   IngredientLib,
   Garnish,
   CustomIngredient,
   CustomIngredientLib,
   CustomGarnish,
   CustomGarnishLib,
-  toDoLib,
+  ToDoLib,
   ToDo,
+  CocktailLib,
 } from '@/type/type'
 import { ref } from 'vue'
 
 export const useStore = defineStore(
   'store',
   () => {
-    const coctailsLib = ref<Coctail[]>([])
+    const cocktailsLib = ref<CocktailLib>([])
     const ingridientLib = ref<IngredientLib>([])
     const garnishLib = ref<Garnish[]>([])
     const customIngridientLib = ref<CustomIngredientLib>([])
     const customGarnishLib = ref<CustomGarnishLib>([])
-    const toDoLib = ref<toDoLib>([])
+    const toDoLib = ref<ToDoLib>([])
 
-    function addCocktail(cocktail: Coctail) {
-      coctailsLib.value.push(cocktail)
+    function addCocktail(cocktail: Cocktail) {
+      cocktailsLib.value.push(cocktail)
+    }
+
+    function delItem<T extends { id: string }>(lib: T[], id: string) {
+      const index = lib.findIndex((item) => item.id === id)
+      if (index !== -1) {
+        lib.splice(index, 1)
+      }
     }
 
     function addCustomIngridient(customIngridient: CustomIngredient) {
@@ -50,13 +58,14 @@ export const useStore = defineStore(
     }
 
     return {
-      coctailsLib,
+      cocktailsLib,
       ingridientLib,
       garnishLib,
       customIngridientLib,
       customGarnishLib,
       toDoLib,
       addCocktail,
+      delItem,
       addCustomIngridient,
       addCustomGarnish,
       addToDo,

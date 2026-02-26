@@ -1,12 +1,12 @@
 import { ref, reactive, toRaw } from 'vue'
-import type { Coctail, CustomIngredient, CustomGarnish } from '@/type/type'
+import type { Cocktail, CustomIngredient, CustomGarnish } from '@/type/type'
 
 export function useEditingItem() {
-  const editingCocktail = ref<Coctail | null>(null)
+  const editingCocktail = ref<Cocktail | null>(null)
   const editingIngredient = ref<CustomIngredient | null>(null)
   const editingGarnish = ref<CustomGarnish | null>(null)
 
-  function editCocktail(cocktail: Coctail) {
+  function editCocktail(cocktail: Cocktail) {
     editingCocktail.value = reactive(toRaw(cocktail))
   }
 

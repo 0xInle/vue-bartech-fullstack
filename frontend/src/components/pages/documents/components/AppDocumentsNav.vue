@@ -64,6 +64,7 @@ function openComponent(tab: string) {
 }
 
 .documents__button {
+  outline: none;
   position: relative;
   font-size: 14px;
   color: var(--white-color);

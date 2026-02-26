@@ -53,18 +53,21 @@
     </div>
     <div class="tech__modal-action flex">
       <UiButton @click="openEdit" class="tech__modal-btn"> Редактировать </UiButton>
-      <UiButton class="tech__modal-btn"> Удалить </UiButton>
+      <UiButton class="tech__modal-btn" @click="delCocktail"> Удалить </UiButton>
     </div>
   </article>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/Ui/UiButton.vue'
-import type { Coctail } from '@/type/type'
+import { useStore } from '@/stores/store'
+import type { Cocktail } from '@/type/type'
 import { computed } from 'vue'
 
+const store = useStore()
+
 const props = defineProps<{
-  cocktail: Coctail
+  cocktail: Cocktail
 }>()
 
 const totalAmount = computed(() => {
@@ -72,13 +75,18 @@ const totalAmount = computed(() => {
 })
 
 const emit = defineEmits<{
-  (e: 'edit', cocktail: Coctail): void
+  (e: 'edit', cocktail: Cocktail): void
   (e: 'close'): void
 }>()
 
 function openEdit() {
   emit('close')
   emit('edit', props.cocktail)
+}
+
+function delCocktail() {
+  store.delItem(store.cocktailsLib, props.cocktail.id)
+  emit('close')
 }
 </script>
 

@@ -1,10 +1,10 @@
 <template>
   <div class="cocktail-form" ref="target">
-    <form class="cocktail-form__content flex" @submit.prevent="createCoctail">
+    <form class="cocktail-form__content flex" @submit.prevent="createCocktail">
       <div class="cocktail-form__section flex">
         <label class="cocktail-form__label"> Название: </label>
         <UiInput
-          v-model="coctail.name"
+          v-model="cocktail.name"
           type="text"
           class="cocktail-form__input"
           placeholder="Название коктейля"
@@ -14,7 +14,7 @@
         <label class="cocktail-form__label"> Ингридиенты: </label>
         <div
           class="cocktail-form__row flex"
-          v-for="ingredient in coctail.ingredients"
+          v-for="ingredient in cocktail.ingredients"
           :key="ingredient.id"
         >
           <UiInput
@@ -31,7 +31,7 @@
           />
           <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :selectArr="UNITS" />
           <UiButton
-            :disabled="coctail.ingredients.length === 1"
+            :disabled="cocktail.ingredients.length === 1"
             @click="delIngredient(ingredient.id)"
             class="cocktail-form__button cocktail-form__button--delete"
           >
@@ -42,26 +42,26 @@
       <UiButton
         class="cocktail-form__button btn-reset"
         @click="addIngredient"
-        v-if="coctail.ingredients.length < 20"
+        v-if="cocktail.ingredients.length < 20"
         >Добавить ингридиент</UiButton
       >
       <div class="cocktail-form__section flex">
         <label class="cocktail-form__label"> Описание: </label>
         <div class="cocktail-form__row flex">
           <UiSelect
-            v-model="coctail.params.glass"
+            v-model="cocktail.params.glass"
             :selectArr="GLASS"
             placeholder="Бокал"
             class="cocktail-form__param cocktail-form__param--glases"
           />
           <UiSelect
-            v-model="coctail.params.ice"
+            v-model="cocktail.params.ice"
             :selectArr="ICE"
             placeholder="Лед"
             class="cocktail-form__param cocktail-form__param--ice"
           />
           <UiSelect
-            v-model="coctail.params.method"
+            v-model="cocktail.params.method"
             :selectArr="METHOD"
             placeholder="Метод"
             class="cocktail-form__param cocktail-form__param--method"
@@ -73,13 +73,13 @@
         <UiInput
           type="text"
           placeholder="Название гарнира"
-          v-model="coctail.garnish"
+          v-model="cocktail.garnish"
           class="cocktail-form__input"
         />
       </div>
       <div class="cocktail-form__section flex">
         <label class="cocktail-form__label"> Комментарий: </label>
-        <textarea v-model="coctail.comment" class="cocktail-form__comment" rows="5"> </textarea>
+        <textarea v-model="cocktail.comment" class="cocktail-form__comment" rows="5"> </textarea>
       </div>
       <UiButton type="submit" class="cocktail-form__button btn-reset"> Создать коктейль </UiButton>
     </form>
@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Coctail } from '@/type/type'
+import type { Cocktail } from '@/type/type'
 import { useStore } from '@/stores/store'
 import { reactive, useTemplateRef } from 'vue'
 import UiInput from '@/components/Ui/UiInput.vue'
@@ -106,7 +106,7 @@ onClickOutside(target, () => {
 
 const store = useStore()
 
-const coctail = reactive<Coctail>({
+const cocktail = reactive<Cocktail>({
   id: '',
   name: '',
   ingredients: [
@@ -127,7 +127,7 @@ const coctail = reactive<Coctail>({
 })
 
 function addIngredient() {
-  coctail.ingredients.push({
+  cocktail.ingredients.push({
     id: uuidv4(),
     name: '',
     amount: null,
@@ -136,34 +136,34 @@ function addIngredient() {
 }
 
 function delIngredient(id: string) {
-  if (coctail.ingredients.length > 1) {
-    coctail.ingredients = coctail.ingredients.filter((i) => i.id !== id)
+  if (cocktail.ingredients.length > 1) {
+    cocktail.ingredients = cocktail.ingredients.filter((i) => i.id !== id)
   }
 }
 
-function createCoctail() {
-  const newCocktail: Coctail = {
+function createCocktail() {
+  const newCocktail: Cocktail = {
     id: uuidv4(),
-    name: coctail.name.trim(),
-    ingredients: coctail.ingredients.map((i) => ({
+    name: cocktail.name.trim(),
+    ingredients: cocktail.ingredients.map((i) => ({
       id: uuidv4(),
       name: i.name.trim(),
       amount: i.amount,
       unit: i.unit || UNITS[0],
     })),
     params: {
-      glass: coctail.params.glass,
-      ice: coctail.params.ice,
-      method: coctail.params.method,
+      glass: cocktail.params.glass,
+      ice: cocktail.params.ice,
+      method: cocktail.params.method,
     },
-    comment: coctail.comment.trim(),
-    garnish: coctail.garnish,
+    comment: cocktail.comment.trim(),
+    garnish: cocktail.garnish,
   }
 
   store.addCocktail(newCocktail)
 
-  coctail.name = ''
-  coctail.ingredients = [
+  cocktail.name = ''
+  cocktail.ingredients = [
     {
       id: '',
       name: '',
@@ -171,11 +171,11 @@ function createCoctail() {
       unit: UNITS[0],
     },
   ]
-  coctail.params.glass = ''
-  coctail.params.ice = ''
-  coctail.params.method = ''
-  coctail.comment = ''
-  coctail.garnish = ''
+  cocktail.params.glass = ''
+  cocktail.params.ice = ''
+  cocktail.params.method = ''
+  cocktail.comment = ''
+  cocktail.garnish = ''
 }
 </script>
 
@@ -264,10 +264,16 @@ function createCoctail() {
   padding: 5px;
   font-family: Nunito;
   color: var(--black-color);
-  border: 1px solid var(--black-color);
+  border: 1px solid (--black-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   resize: none;
+  transition: all 0.3s ease-in-out;
+
+  &:focus {
+    box-shadow: 0 0 10px rgba(134, 194, 50, 0.3);
+    border: 1px solid var(--green-bright-color);
+  }
 }
 
 .cocktail-form__button {

@@ -51,6 +51,7 @@ import IconSun from '@/assets/icons/svg/icon-sun.svg'
 }
 
 .footer-link {
+  outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
