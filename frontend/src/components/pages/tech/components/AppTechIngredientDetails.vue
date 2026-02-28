@@ -26,7 +26,7 @@
     </div>
     <div class="tech__modal-action flex">
       <UiButton @click="openEdit" class="tech__modal-btn"> Редактировать </UiButton>
-      <UiButton class="tech__modal-btn" @click="delIngredient"> Удалить </UiButton>
+      <UiButton class="tech__modal-btn" @click="deleteIngredient"> Удалить </UiButton>
     </div>
   </article>
 </template>
@@ -52,8 +52,8 @@ function openEdit() {
   emit('edit', props.ingredient)
 }
 
-function delIngredient() {
-  store.delItem(store.customIngridientLib, props.ingredient.id)
+function deleteIngredient() {
+  store.removeItemById(store.customIngredientLib, props.ingredient.id)
   emit('close')
 }
 </script>

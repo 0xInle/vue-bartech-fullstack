@@ -7,11 +7,11 @@
           v-model="localIngredient.name"
           type="text"
           class="ingredient-form__input"
-          placeholder="Название ингридиента"
+          placeholder="Название ингредиента"
         />
       </div>
       <div class="ingredient-form__section flex">
-        <label class="ingredient-form__label"> Ингридиенты: </label>
+        <label class="ingredient-form__label"> Ингредиенты: </label>
         <div
           class="ingredient-form__row flex"
           v-for="ingredient in localIngredient.ingredients"
@@ -21,7 +21,7 @@
             v-model="ingredient.name"
             type="text"
             class="ingredient-form__input ingredient-form__input--ingredients"
-            placeholder="Название ингридиента"
+            placeholder="Название ингредиента"
           />
           <UiInput
             v-model.number="ingredient.amount"
@@ -29,7 +29,7 @@
             class="ingredient-form__input ingredient-form__input--unit"
             placeholder="Объем"
           />
-          <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :selectArr="UNITS" />
+          <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="localIngredient.ingredients.length === 1"
             @click="delIngredient(ingredient.id)"
@@ -40,7 +40,7 @@
         </div>
       </div>
       <UiButton class="ingredient-form__button btn-reset" @click="addIngredient"
-        >Добавить ингридиент</UiButton
+        >Добавить ингредиент</UiButton
       >
       <div class="ingredient-form__section flex">
         <label class="ingredient-form__label"> Комментарий: </label>
@@ -48,7 +48,7 @@
         </textarea>
       </div>
       <UiButton type="submit" @click="close" class="ingredient-form__button btn-reset">
-        Редактировать ингридиент
+        Редактировать ингредиент
       </UiButton>
     </form>
   </div>
@@ -162,7 +162,7 @@ onClickOutside(target, () => {
   min-width: 0;
 }
 
-.ingredient-form__param--glases {
+.ingredient-form__param--glasses {
   flex: 2;
 }
 

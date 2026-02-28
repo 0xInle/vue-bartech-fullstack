@@ -1,11 +1,11 @@
 <template>
   <div class="select" ref="target">
-    <UiButton class="select__toggle btn-reset" @click="show = !show">
+    <UiButton class="select__toggle btn-reset" @click="isDropdownOpen = !isDropdownOpen">
       {{ selectedValue || placeholder }}
     </UiButton>
-    <ul class="select__list list-reset" v-if="show">
-      <li class="select__item" v-for="(item, index) in selectArr" :key="item + index">
-        <UiButton class="select__button" @click="selectedItem(item)">
+    <ul class="select__list list-reset" v-if="isDropdownOpen">
+      <li class="select__item" v-for="(item, index) in options" :key="item + index">
+        <UiButton class="select__button" @click="selectOption(item)">
           {{ item }}
         </UiButton>
       </li>
@@ -20,7 +20,7 @@ import { onClickOutside } from '@vueuse/core'
 
 interface SelectProps<T extends string> {
   modelValue: T
-  selectArr: readonly T[]
+  options: readonly T[]
   placeholder: string
 }
 
@@ -31,7 +31,7 @@ const emit = defineEmits<{
 }>()
 
 const target = useTemplateRef('target')
-const show = ref(false)
+const isDropdownOpen = ref(false)
 const selectedValue = ref<string>(props.modelValue)
 
 watch(
@@ -42,14 +42,14 @@ watch(
   { immediate: true },
 )
 
-function selectedItem(item: string) {
+function selectOption(item: string) {
   selectedValue.value = item
   emit('update:modelValue', item)
-  show.value = false
+  isDropdownOpen.value = false
 }
 
 onClickOutside(target, () => {
-  show.value = false
+  isDropdownOpen.value = false
 })
 </script>
 

@@ -15,7 +15,7 @@
           :class="{ 'is-active': currentCategory === 'customIngredient' }"
           class="tech__toolbar-btn"
         >
-          Ингридиенты
+          Ингредиенты
         </UiButton>
         <UiButton
           @click="selectCategory('customGarnish')"
@@ -27,8 +27,8 @@
       </div>
       <ul class="tech__cocktail-list list-reset">
         <UiLoader v-if="loading" />
-        <li class="tech__cocktail-item" v-for="item in listToShow" :key="item.id">
-          <a href="#" class="tech__cocktail-link link-reset" @click="openItem(item)">
+        <li class="tech__cocktail-item" v-for="item in visibleItems" :key="item.id">
+          <a href="#" class="tech__cocktail-link link-reset" @click="openItemDetails(item)">
             {{ item.name }}
           </a>
         </li>
@@ -49,7 +49,7 @@
             class="tech__actions-btn"
             :class="{ 'is-active': openModal === 'customIngredient' }"
             @click="openForm('customIngredient')"
-            >Создать ингридиент</UiButton
+            >Создать ингредиент</UiButton
           >
         </li>
         <li class="tech__actions-item">
@@ -123,7 +123,7 @@ import AppTechGarnishEditForm from './components/AppTechGarnishEditForm.vue'
 import { useEditingItem } from './composables/useEditingItem'
 
 const store = useStore()
-const { cocktailsLib, customGarnishLib, customIngridientLib } = storeToRefs(store)
+const { cocktailsLib, customGarnishLib, customIngredientLib } = storeToRefs(store)
 
 const openModal = ref<'cocktail' | 'customIngredient' | 'customGarnish' | null>(null)
 const currentCategory = ref<'cocktail' | 'customIngredient' | 'customGarnish'>('cocktail')
@@ -149,13 +149,13 @@ const titles = {
 
 const title = computed(() => titles[currentCategory.value] || '')
 
-const libs = {
+const itemsByCategory = {
   cocktail: cocktailsLib,
-  customIngredient: customIngridientLib,
+  customIngredient: customIngredientLib,
   customGarnish: customGarnishLib,
 }
 
-const listToShow = computed(() => libs[currentCategory.value]?.value ?? [])
+const visibleItems = computed(() => itemsByCategory[currentCategory.value]?.value ?? [])
 
 function selectCategory(category: typeof currentCategory.value) {
   currentCategory.value = category
@@ -166,7 +166,7 @@ function openForm(type: 'cocktail' | 'customIngredient' | 'customGarnish') {
   openModal.value = type
 }
 
-function openItem(item: Cocktail | CustomIngredient | CustomGarnish) {
+function openItemDetails(item: Cocktail | CustomIngredient | CustomGarnish) {
   showModal.value = true
 
   selectedCocktail.value = null
@@ -190,7 +190,7 @@ function openItem(item: Cocktail | CustomIngredient | CustomGarnish) {
 //   openModal.value = 'cocktail'
 // }
 
-// function openIngridientForm() {
+// function openIngredientForm() {
 //   openModal.value = 'customIngredient'
 // }
 
@@ -198,7 +198,7 @@ function openItem(item: Cocktail | CustomIngredient | CustomGarnish) {
 //   openModal.value = 'customGarnish'
 // }
 
-// function openItem(item: Cocktail | CustomIngredient | CustomGarnish) {
+// function openItemDetails(item: Cocktail | CustomIngredient | CustomGarnish) {
 //   if (currentCategory.value === 'cocktail') {
 //     selectedItem.value = item
 //     showModal.value = true
@@ -240,7 +240,7 @@ function openItem(item: Cocktail | CustomIngredient | CustomGarnish) {
 
 //   const libMap = {
 //     cocktail: cocktailsLib,
-//     customIngredient: ingridientLib,
+//     customIngredient: ingredientLib,
 //     garnish: garnishLib,
 //   }
 

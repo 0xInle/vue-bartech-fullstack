@@ -7,11 +7,11 @@
           v-model="customIngredient.name"
           type="text"
           class="ingredient-form__input"
-          placeholder="Название ингридиента"
+          placeholder="Название ингредиента"
         />
       </div>
       <div class="ingredient-form__section flex">
-        <label class="ingredient-form__label"> Ингридиенты: </label>
+        <label class="ingredient-form__label"> Ингредиенты: </label>
         <div
           class="ingredient-form__row flex"
           v-for="ingredient in customIngredient.ingredients"
@@ -21,7 +21,7 @@
             v-model="ingredient.name"
             type="text"
             class="ingredient-form__input ingredient-form__input--ingredients"
-            placeholder="Название ингридиента"
+            placeholder="Название ингредиента"
           />
           <UiInput
             v-model.number="ingredient.amount"
@@ -29,7 +29,7 @@
             class="ingredient-form__input ingredient-form__input--unit"
             placeholder="Объем"
           />
-          <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :selectArr="UNITS" />
+          <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="customIngredient.ingredients.length === 1"
             @click="delIngredient(ingredient.id)"
@@ -40,7 +40,7 @@
         </div>
       </div>
       <UiButton class="ingredient-form__button btn-reset" @click="addIngredient"
-        >Добавить ингридиент</UiButton
+        >Добавить ингредиент</UiButton
       >
       <div class="ingredient-form__section flex">
         <label class="ingredient-form__label"> Комментарий: </label>
@@ -48,7 +48,7 @@
         </textarea>
       </div>
       <UiButton type="submit" class="ingredient-form__button btn-reset">
-        Создать ингридиент
+        Создать ингредиент
       </UiButton>
     </form>
   </div>
@@ -114,13 +114,13 @@ function createIngredient() {
     })),
     comment: customIngredient.comment.trim(),
   }
-  store.addCustomIngridient(newIngredient)
+  store.addCustomIngredient(newIngredient)
 
   customIngredient.name = ''
   customIngredient.ingredients = [{ id: '', name: '', amount: null, unit: UNITS[0] }]
   customIngredient.comment = ''
 
-  console.log(store.customIngridientLib)
+  console.log(store.customIngredientLib)
 }
 </script>
 
@@ -191,7 +191,7 @@ function createIngredient() {
   min-width: 0;
 }
 
-.ingredient-form__param--glases {
+.ingredient-form__param--glasses {
   flex: 2;
 }
 

@@ -11,7 +11,7 @@
         />
       </div>
       <div class="garnish-form__section flex">
-        <label class="garnish-form__label"> Ингридиенты: </label>
+        <label class="garnish-form__label"> Ингредиенты: </label>
         <div
           class="garnish-form__row flex"
           v-for="ingredient in localGarnish.ingredients"
@@ -21,7 +21,7 @@
             v-model="ingredient.name"
             type="text"
             class="garnish-form__input garnish-form__input--ingredients"
-            placeholder="Название ингридиента"
+            placeholder="Название ингредиента"
           />
           <UiInput
             v-model.number="ingredient.amount"
@@ -29,7 +29,7 @@
             class="garnish-form__input garnish-form__input--unit"
             placeholder="Объем"
           />
-          <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :selectArr="UNITS" />
+          <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="localGarnish.ingredients.length === 1"
             @click="delGarnish(ingredient.id)"
@@ -40,7 +40,7 @@
         </div>
       </div>
       <UiButton class="garnish-form__button btn-reset" @click="addGarnish"
-        >Добавить ингридиент</UiButton
+        >Добавить ингредиент</UiButton
       >
       <div class="garnish-form__section flex">
         <label class="garnish-form__label"> Комментарий: </label>
@@ -161,7 +161,7 @@ onClickOutside(target, () => {
   min-width: 0;
 }
 
-.garnish-form__param--glases {
+.garnish-form__param--glasses {
   flex: 2;
 }
 

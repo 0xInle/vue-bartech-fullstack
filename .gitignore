@@ -4,3 +4,4 @@
 **/generated/
 frontend/env.d.ts
 **/.env*
+AGENTS.md

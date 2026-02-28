@@ -17,9 +17,9 @@ export const useStore = defineStore(
   'store',
   () => {
     const cocktailsLib = ref<CocktailLib>([])
-    const ingridientLib = ref<IngredientLib>([])
+    const ingredientLib = ref<IngredientLib>([])
     const garnishLib = ref<Garnish[]>([])
-    const customIngridientLib = ref<CustomIngredientLib>([])
+    const customIngredientLib = ref<CustomIngredientLib>([])
     const customGarnishLib = ref<CustomGarnishLib>([])
     const toDoLib = ref<ToDoLib>([])
 
@@ -27,15 +27,15 @@ export const useStore = defineStore(
       cocktailsLib.value.push(cocktail)
     }
 
-    function delItem<T extends { id: string }>(lib: T[], id: string) {
-      const index = lib.findIndex((item) => item.id === id)
+    function removeItemById<T extends { id: string }>(collection: T[], id: string) {
+      const index = collection.findIndex((item) => item.id === id)
       if (index !== -1) {
-        lib.splice(index, 1)
+        collection.splice(index, 1)
       }
     }
 
-    function addCustomIngridient(customIngridient: CustomIngredient) {
-      customIngridientLib.value.push(customIngridient)
+    function addCustomIngredient(customIngredient: CustomIngredient) {
+      customIngredientLib.value.push(customIngredient)
     }
 
     function addCustomGarnish(customGarnish: CustomGarnish) {
@@ -59,14 +59,14 @@ export const useStore = defineStore(
 
     return {
       cocktailsLib,
-      ingridientLib,
+      ingredientLib,
       garnishLib,
-      customIngridientLib,
+      customIngredientLib,
       customGarnishLib,
       toDoLib,
       addCocktail,
-      delItem,
-      addCustomIngridient,
+      removeItemById,
+      addCustomIngredient,
       addCustomGarnish,
       addToDo,
       delToDo,

@@ -11,7 +11,7 @@
         />
       </div>
       <div class="cocktail-form__section flex">
-        <label class="cocktail-form__label"> Ингридиенты: </label>
+        <label class="cocktail-form__label"> Ингредиенты: </label>
         <div
           class="cocktail-form__row flex"
           v-for="ingredient in localCocktail.ingredients"
@@ -21,7 +21,7 @@
             v-model="ingredient.name"
             type="text"
             class="cocktail-form__input cocktail-form__input--ingredients"
-            placeholder="Название ингридиента"
+            placeholder="Название ингредиента"
           />
           <UiInput
             v-model.number="ingredient.amount"
@@ -29,7 +29,7 @@
             class="cocktail-form__input cocktail-form__input--unit"
             placeholder="Объем"
           />
-          <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :selectArr="UNITS" />
+          <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="localCocktail.ingredients.length === 1"
             @click="delIngredient(ingredient.id)"
@@ -43,26 +43,26 @@
         class="cocktail-form__button btn-reset"
         @click="addIngredient"
         v-if="localCocktail.ingredients.length < 20"
-        >Добавить ингридиент</UiButton
+        >Добавить ингредиент</UiButton
       >
       <div class="cocktail-form__section flex">
         <label class="cocktail-form__label"> Описание: </label>
         <div class="cocktail-form__row flex">
           <UiSelect
             v-model="localCocktail.params.glass"
-            :selectArr="GLASS"
+            :options="GLASS"
             placeholder="Бокал"
-            class="cocktail-form__param cocktail-form__param--glases"
+            class="cocktail-form__param cocktail-form__param--glasses"
           />
           <UiSelect
             v-model="localCocktail.params.ice"
-            :selectArr="ICE"
+            :options="ICE"
             placeholder="Лед"
             class="cocktail-form__param cocktail-form__param--ice"
           />
           <UiSelect
             v-model="localCocktail.params.method"
-            :selectArr="METHOD"
+            :options="METHOD"
             placeholder="Метод"
             class="cocktail-form__param cocktail-form__param--method"
           />
@@ -200,7 +200,7 @@ onClickOutside(target, () => {
   min-width: 0;
 }
 
-.cocktail-form__param--glases {
+.cocktail-form__param--glasses {
   flex: 2;
 }
 

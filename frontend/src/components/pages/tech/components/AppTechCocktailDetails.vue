@@ -53,7 +53,7 @@
     </div>
     <div class="tech__modal-action flex">
       <UiButton @click="openEdit" class="tech__modal-btn"> Редактировать </UiButton>
-      <UiButton class="tech__modal-btn" @click="delCocktail"> Удалить </UiButton>
+      <UiButton class="tech__modal-btn" @click="deleteCocktail"> Удалить </UiButton>
     </div>
   </article>
 </template>
@@ -84,8 +84,8 @@ function openEdit() {
   emit('edit', props.cocktail)
 }
 
-function delCocktail() {
-  store.delItem(store.cocktailsLib, props.cocktail.id)
+function deleteCocktail() {
+  store.removeItemById(store.cocktailsLib, props.cocktail.id)
   emit('close')
 }
 </script>
