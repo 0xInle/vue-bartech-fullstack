@@ -56,16 +56,23 @@
       <UiButton class="tech__modal-btn" @click="deleteCocktail"> Удалить </UiButton>
     </div>
   </article>
+  <UiConfirmModal
+    :title="cocktail.name"
+    :isOpen="isOpen"
+    @cancel="handleCancel"
+    @confirm="handleConfirm"
+  />
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/Ui/UiButton.vue'
+import UiConfirmModal from '@/components/Ui/UiConfirmModal.vue'
 import { useStore } from '@/stores/store'
 import type { Cocktail } from '@/type/type'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const store = useStore()
-
+const isOpen = ref(false)
 const props = defineProps<{
   cocktail: Cocktail
 }>()
@@ -85,8 +92,17 @@ function openEdit() {
 }
 
 function deleteCocktail() {
+  isOpen.value = true
+}
+
+function handleConfirm() {
   store.removeItemById(store.cocktailsLib, props.cocktail.id)
+  isOpen.value = false
   emit('close')
+}
+
+function handleCancel() {
+  isOpen.value = false
 }
 </script>
 

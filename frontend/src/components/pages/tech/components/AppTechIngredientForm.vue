@@ -1,5 +1,5 @@
 <template>
-  <div class="ingredient-form" ref="target">
+  <div class="ingredient-form">
     <form class="ingredient-form__content flex" @submit.prevent="createIngredient">
       <div class="ingredient-form__section flex">
         <label class="ingredient-form__label"> Название: </label>
@@ -32,7 +32,7 @@
           <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="customIngredient.ingredients.length === 1"
-            @click="delIngredient(ingredient.id)"
+            @click="removeIngredient(ingredient.id)"
             class="ingredient-form__button ingredient-form__button--delete"
           >
             x
@@ -47,17 +47,21 @@
         <textarea v-model="customIngredient.comment" class="ingredient-form__comment" rows="5">
         </textarea>
       </div>
-      <UiButton type="submit" class="ingredient-form__button btn-reset">
-        Создать ингредиент
-      </UiButton>
+      <div class="ingredient-form__actions flex">
+        <UiButton type="submit" class="ingredient-form__button btn-reset">
+          Создать ингредиент
+        </UiButton>
+        <UiButton type="button" class="ingredient-form__button" @click="closeForm"
+          >Закрыть форму</UiButton
+        >
+      </div>
     </form>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { CustomIngredient } from '@/type/type'
-import { useTemplateRef, reactive } from 'vue'
-import { onClickOutside } from '@vueuse/core'
+import { reactive } from 'vue'
 import { UNITS } from '@/type/consts'
 import { useStore } from '@/stores/store'
 import UiInput from '@/components/Ui/UiInput.vue'
@@ -65,13 +69,8 @@ import UiButton from '@/components/Ui/UiButton.vue'
 import UiSelect from '@/components/Ui/UiSelect.vue'
 import { v4 as uuidv4 } from 'uuid'
 
-const target = useTemplateRef('target')
 const emit = defineEmits(['close'])
 const store = useStore()
-
-onClickOutside(target, () => {
-  emit('close')
-})
 
 const customIngredient = reactive<CustomIngredient>({
   id: '',
@@ -96,7 +95,7 @@ function addIngredient() {
   })
 }
 
-function delIngredient(id: string) {
+function removeIngredient(id: string) {
   if (customIngredient.ingredients.length > 1) {
     customIngredient.ingredients = customIngredient.ingredients.filter((i) => i.id !== id)
   }
@@ -119,8 +118,10 @@ function createIngredient() {
   customIngredient.name = ''
   customIngredient.ingredients = [{ id: '', name: '', amount: null, unit: UNITS[0] }]
   customIngredient.comment = ''
+}
 
-  console.log(store.customIngredientLib)
+function closeForm() {
+  emit('close')
 }
 </script>
 
@@ -222,13 +223,17 @@ function createIngredient() {
 }
 
 .ingredient-form__button {
-  margin-bottom: 15px;
+  flex: 1;
 }
 
 .ingredient-form__button--delete {
   margin: 0;
   padding: 6px 11px;
   width: 29.5px;
+}
+
+.ingredient-form__actions {
+  gap: 20px;
 }
 
 ::placeholder {

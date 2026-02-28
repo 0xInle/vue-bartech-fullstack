@@ -27,6 +27,27 @@ export const useStore = defineStore(
       cocktailsLib.value.push(cocktail)
     }
 
+    function updateCocktail(cocktail: Cocktail) {
+      const index = cocktailsLib.value.findIndex((i) => i.id === cocktail.id)
+      if (index !== -1) {
+        cocktailsLib.value[index] = cocktail
+      }
+    }
+
+    function updateGarnish(garnish: CustomGarnish) {
+      const index = customGarnishLib.value.findIndex((i) => i.id === garnish.id)
+      if (index !== -1) {
+        customGarnishLib.value[index] = garnish
+      }
+    }
+
+    function updateIngredient(ingredient: CustomIngredient) {
+      const index = customIngredientLib.value.findIndex((i) => i.id === ingredient.id)
+      if (index !== -1) {
+        customIngredientLib.value[index] = ingredient
+      }
+    }
+
     function removeItemById<T extends { id: string }>(collection: T[], id: string) {
       const index = collection.findIndex((item) => item.id === id)
       if (index !== -1) {
@@ -46,7 +67,7 @@ export const useStore = defineStore(
       toDoLib.value.push(toDo)
     }
 
-    function delToDo(id: string) {
+    function removeToDo(id: string) {
       toDoLib.value = toDoLib.value.filter((i) => i.id !== id)
     }
 
@@ -69,8 +90,11 @@ export const useStore = defineStore(
       addCustomIngredient,
       addCustomGarnish,
       addToDo,
-      delToDo,
+      removeToDo,
       updateToDoTask,
+      updateCocktail,
+      updateGarnish,
+      updateIngredient,
     }
   },
   {

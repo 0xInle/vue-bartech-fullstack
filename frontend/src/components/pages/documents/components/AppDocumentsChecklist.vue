@@ -69,7 +69,7 @@ function editToDo(toDo: ToDo) {
 }
 
 function handleDelete(id: string) {
-  store.delToDo(id)
+  store.removeToDo(id)
 }
 
 onClickOutside(target, () => {

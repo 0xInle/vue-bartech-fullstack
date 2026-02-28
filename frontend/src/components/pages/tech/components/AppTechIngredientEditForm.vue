@@ -1,6 +1,6 @@
 <template>
   <div class="ingredient-form" ref="target">
-    <form class="ingredient-form__content flex" @submit.prevent>
+    <form class="ingredient-form__content flex" @submit.prevent="saveIngredient">
       <div class="ingredient-form__section flex">
         <label class="ingredient-form__label"> Название: </label>
         <UiInput
@@ -32,7 +32,7 @@
           <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="localIngredient.ingredients.length === 1"
-            @click="delIngredient(ingredient.id)"
+            @click="removeIngredient(ingredient.id)"
             class="ingredient-form__button ingredient-form__button--delete"
           >
             x
@@ -47,9 +47,14 @@
         <textarea v-model="localIngredient.comment" class="ingredient-form__comment" rows="5">
         </textarea>
       </div>
-      <UiButton type="submit" @click="close" class="ingredient-form__button btn-reset">
-        Редактировать ингредиент
-      </UiButton>
+      <div class="ingredient-form__actions flex">
+        <UiButton type="submit" class="ingredient-form__button">
+          Сохранить изменения
+        </UiButton>
+        <UiButton class="ingredient-form__button" @click="revertChanges"
+          >Отменить изменения</UiButton
+        >
+      </div>
     </form>
   </div>
 </template>
@@ -63,15 +68,18 @@ import UiInput from '@/components/Ui/UiInput.vue'
 import UiButton from '@/components/Ui/UiButton.vue'
 import UiSelect from '@/components/Ui/UiSelect.vue'
 import { v4 as uuidv4 } from 'uuid'
+import { useStore } from '@/stores/store'
 
+const store = useStore()
 const props = defineProps<{
   ingredient: CustomIngredient
 }>()
 const emit = defineEmits(['close'])
-const localIngredient = reactive(props.ingredient)
+const localIngredient = reactive<CustomIngredient>(JSON.parse(JSON.stringify(props.ingredient)))
 const target = useTemplateRef('target')
 
-function close() {
+function saveIngredient() {
+  store.updateIngredient(localIngredient)
   emit('close')
 }
 
@@ -84,10 +92,14 @@ function addIngredient() {
   })
 }
 
-function delIngredient(id: string) {
+function removeIngredient(id: string) {
   if (localIngredient.ingredients.length > 1) {
     localIngredient.ingredients = localIngredient.ingredients.filter((i) => i.id !== id)
   }
+}
+
+function revertChanges() {
+  Object.assign(localIngredient, JSON.parse(JSON.stringify(props.ingredient)))
 }
 
 onClickOutside(target, () => {
@@ -192,9 +204,12 @@ onClickOutside(target, () => {
   }
 }
 
+.ingredient-form__actions {
+  gap: 20px;
+}
+
 .ingredient-form__button {
-  color: var(--white-color);
-  background-color: var(--black-color);
+  flex: 1;
   margin-bottom: 15px;
 }
 
@@ -210,6 +225,12 @@ onClickOutside(target, () => {
 
 :disabled {
   cursor: not-allowed;
-  background-color: rgb(53, 53, 53);
+  background-color: var(--gray-light-color);
+  border-color: var(--gray-light-color);
+}
+
+:disabled:hover {
+  background-color: var(--gray-light-color);
+  border-color: var(--gray-light-color);
 }
 </style>

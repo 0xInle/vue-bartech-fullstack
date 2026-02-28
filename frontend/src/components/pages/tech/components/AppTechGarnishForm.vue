@@ -1,5 +1,5 @@
 <template>
-  <div class="garnish-form" ref="target">
+  <div class="garnish-form">
     <form class="garnish-form__content flex" @submit.prevent="createGarnish">
       <div class="garnish-form__section flex">
         <label class="garnish-form__label"> Название: </label>
@@ -32,7 +32,7 @@
           <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="customGarnish.ingredients.length === 1"
-            @click="delGarnish(ingredient.id)"
+            @click="removeIngredient(ingredient.id)"
             class="garnish-form__button garnish-form__button--delete"
           >
             x
@@ -47,15 +47,19 @@
         <textarea v-model="customGarnish.comment" class="garnish-form__comment" rows="5">
         </textarea>
       </div>
-      <UiButton type="submit" class="garnish-form__button btn-reset"> Создать гарнир </UiButton>
+      <div class="garnish-form__actions flex">
+        <UiButton type="submit" class="garnish-form__button"> Создать гарнир </UiButton>
+        <UiButton type="button" class="garnish-form__button" @click="closeForm"
+          >Закрыть форму</UiButton
+        >
+      </div>
     </form>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { CustomGarnish } from '@/type/type'
-import { useTemplateRef, reactive } from 'vue'
-import { onClickOutside } from '@vueuse/core'
+import { reactive } from 'vue'
 import { UNITS } from '@/type/consts'
 import { useStore } from '@/stores/store'
 import UiInput from '@/components/Ui/UiInput.vue'
@@ -63,13 +67,8 @@ import UiButton from '@/components/Ui/UiButton.vue'
 import UiSelect from '@/components/Ui/UiSelect.vue'
 import { v4 as uuidv4 } from 'uuid'
 
-const target = useTemplateRef('target')
 const emit = defineEmits(['close'])
 const store = useStore()
-
-onClickOutside(target, () => {
-  emit('close')
-})
 
 const customGarnish = reactive<CustomGarnish>({
   id: '',
@@ -94,7 +93,7 @@ function addGarnish() {
   })
 }
 
-function delGarnish(id: string) {
+function removeIngredient(id: string) {
   if (customGarnish.ingredients.length > 1) {
     customGarnish.ingredients = customGarnish.ingredients.filter((i) => i.id !== id)
   }
@@ -117,8 +116,10 @@ function createGarnish() {
   customGarnish.name = ''
   customGarnish.ingredients = [{ id: '', name: '', amount: null, unit: UNITS[0] }]
   customGarnish.comment = ''
+}
 
-  console.log(store.customGarnishLib)
+function closeForm() {
+  emit('close')
 }
 </script>
 
@@ -220,13 +221,17 @@ function createGarnish() {
 }
 
 .garnish-form__button {
-  margin-bottom: 15px;
+  flex: 1;
 }
 
 .garnish-form__button--delete {
   margin: 0;
   padding: 6px 11px;
   width: 29.5px;
+}
+
+.garnish-form__actions {
+  gap: 20px;
 }
 
 ::placeholder {

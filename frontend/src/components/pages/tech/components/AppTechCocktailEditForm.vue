@@ -1,6 +1,6 @@
 <template>
   <div class="cocktail-form" ref="target">
-    <form class="cocktail-form__content flex" @submit.prevent>
+    <form class="cocktail-form__content flex" @submit.prevent="saveCocktail">
       <div class="cocktail-form__section flex">
         <label class="cocktail-form__label"> Название: </label>
         <UiInput
@@ -32,7 +32,7 @@
           <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="localCocktail.ingredients.length === 1"
-            @click="delIngredient(ingredient.id)"
+            @click="removeIngredient(ingredient.id)"
             class="cocktail-form__button cocktail-form__button--delete"
           >
             x
@@ -83,10 +83,10 @@
         </textarea>
       </div>
       <div class="cocktail-form__actions flex">
-        <UiButton type="submit" @click="close" class="cocktail-form__button">
-          Отредактировать коктейль
+        <UiButton type="submit" class="cocktail-form__button">
+          Сохранить изменения
         </UiButton>
-        <UiButton class="cocktail-form__button">Отменить изменения</UiButton>
+        <UiButton class="cocktail-form__button" @click="revertChanges">Отменить изменения</UiButton>
       </div>
     </form>
   </div>
@@ -101,15 +101,17 @@ import { UNITS, GLASS, ICE, METHOD } from '@/type/consts'
 import { onClickOutside } from '@vueuse/core'
 import type { Cocktail } from '@/type/type'
 import { v4 as uuidv4 } from 'uuid'
+import { useStore } from '@/stores/store'
 
+const store = useStore()
 const props = defineProps<{
   cocktail: Cocktail
 }>()
 const emit = defineEmits(['close'])
 const target = useTemplateRef('target')
-const localCocktail = reactive(props.cocktail)
+const localCocktail = reactive<Cocktail>(JSON.parse(JSON.stringify(props.cocktail)))
 
-function delIngredient(id: string) {
+function removeIngredient(id: string) {
   if (localCocktail.ingredients.length > 1) {
     localCocktail.ingredients = localCocktail.ingredients.filter((i) => i.id !== id)
   }
@@ -124,8 +126,13 @@ function addIngredient() {
   })
 }
 
-function close() {
+function saveCocktail() {
+  store.updateCocktail(localCocktail)
   emit('close')
+}
+
+function revertChanges() {
+  Object.assign(localCocktail, JSON.parse(JSON.stringify(props.cocktail)))
 }
 
 onClickOutside(target, () => {
@@ -251,5 +258,11 @@ onClickOutside(target, () => {
 :disabled {
   cursor: not-allowed;
   background-color: var(--gray-light-color);
+  border-color: var(--gray-light-color);
+}
+
+:disabled:hover {
+  background-color: var(--gray-light-color);
+  border-color: var(--gray-light-color);
 }
 </style>

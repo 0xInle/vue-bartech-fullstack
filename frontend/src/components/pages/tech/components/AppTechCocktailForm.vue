@@ -1,5 +1,5 @@
 <template>
-  <div class="cocktail-form" ref="target">
+  <div class="cocktail-form">
     <form class="cocktail-form__content flex" @submit.prevent="createCocktail">
       <div class="cocktail-form__section flex">
         <label class="cocktail-form__label"> Название: </label>
@@ -32,7 +32,7 @@
           <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="cocktail.ingredients.length === 1"
-            @click="delIngredient(ingredient.id)"
+            @click="removeIngredient(ingredient.id)"
             class="cocktail-form__button cocktail-form__button--delete"
           >
             x
@@ -81,7 +81,12 @@
         <label class="cocktail-form__label"> Комментарий: </label>
         <textarea v-model="cocktail.comment" class="cocktail-form__comment" rows="5"> </textarea>
       </div>
-      <UiButton type="submit" class="cocktail-form__button btn-reset"> Создать коктейль </UiButton>
+      <div class="cocktail-form__actions flex">
+        <UiButton type="submit" class="cocktail-form__button"> Создать коктейль </UiButton>
+        <UiButton type="button" class="cocktail-form__button" @click="closeForm">
+          Закрыть форму
+        </UiButton>
+      </div>
     </form>
   </div>
 </template>
@@ -89,20 +94,15 @@
 <script setup lang="ts">
 import type { Cocktail } from '@/type/type'
 import { useStore } from '@/stores/store'
-import { reactive, useTemplateRef } from 'vue'
+import { reactive } from 'vue'
 import UiInput from '@/components/Ui/UiInput.vue'
 import UiButton from '@/components/Ui/UiButton.vue'
 import UiSelect from '@/components/Ui/UiSelect.vue'
 import { UNITS, GLASS, ICE, METHOD } from '@/type/consts'
-import { onClickOutside } from '@vueuse/core'
+
 import { v4 as uuidv4 } from 'uuid'
 
-const target = useTemplateRef('target')
 const emit = defineEmits(['close'])
-
-onClickOutside(target, () => {
-  emit('close')
-})
 
 const store = useStore()
 
@@ -135,7 +135,7 @@ function addIngredient() {
   })
 }
 
-function delIngredient(id: string) {
+function removeIngredient(id: string) {
   if (cocktail.ingredients.length > 1) {
     cocktail.ingredients = cocktail.ingredients.filter((i) => i.id !== id)
   }
@@ -176,6 +176,10 @@ function createCocktail() {
   cocktail.params.method = ''
   cocktail.comment = ''
   cocktail.garnish = ''
+}
+
+function closeForm() {
+  emit('close')
 }
 </script>
 
@@ -277,6 +281,7 @@ function createCocktail() {
 }
 
 .cocktail-form__button {
+  flex: 1;
   margin-bottom: 15px;
 }
 
@@ -284,6 +289,10 @@ function createCocktail() {
   margin: 0;
   padding: 6px 11px;
   width: 29.5px;
+}
+
+.cocktail-form__actions {
+  gap: 20px;
 }
 
 ::placeholder {

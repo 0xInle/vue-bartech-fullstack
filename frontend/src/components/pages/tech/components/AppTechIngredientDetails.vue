@@ -29,14 +29,23 @@
       <UiButton class="tech__modal-btn" @click="deleteIngredient"> Удалить </UiButton>
     </div>
   </article>
+  <UiConfirmModal
+    :title="ingredient.name"
+    :isOpen="isOpen"
+    @cancel="handleCancel"
+    @confirm="handleConfirm"
+  />
 </template>
 
 <script setup lang="ts">
 import type { CustomIngredient } from '@/type/type'
+import UiConfirmModal from '@/components/Ui/UiConfirmModal.vue'
 import UiButton from '@/components/Ui/UiButton.vue'
 import { useStore } from '@/stores/store'
+import { ref } from 'vue'
 
 const store = useStore()
+const isOpen = ref(false)
 
 const props = defineProps<{
   ingredient: CustomIngredient
@@ -53,8 +62,18 @@ function openEdit() {
 }
 
 function deleteIngredient() {
+  isOpen.value = true
+}
+
+function handleConfirm() {
   store.removeItemById(store.customIngredientLib, props.ingredient.id)
+
+  isOpen.value = false
   emit('close')
+}
+
+function handleCancel() {
+  isOpen.value = false
 }
 </script>
 

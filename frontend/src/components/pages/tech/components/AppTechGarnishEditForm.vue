@@ -1,6 +1,6 @@
 <template>
   <div class="garnish-form" ref="target">
-    <form class="garnish-form__content flex" @submit.prevent>
+    <form class="garnish-form__content flex" @submit.prevent="saveGarnish">
       <div class="garnish-form__section flex">
         <label class="garnish-form__label"> Название: </label>
         <UiInput
@@ -32,7 +32,7 @@
           <UiSelect v-model="ingredient.unit" :placeholder="UNITS[0]" :options="UNITS" />
           <UiButton
             :disabled="localGarnish.ingredients.length === 1"
-            @click="delGarnish(ingredient.id)"
+            @click="removeIngredient(ingredient.id)"
             class="garnish-form__button garnish-form__button--delete"
           >
             x
@@ -46,9 +46,12 @@
         <label class="garnish-form__label"> Комментарий: </label>
         <textarea v-model="localGarnish.comment" class="garnish-form__comment" rows="5"> </textarea>
       </div>
-      <UiButton type="submit" @click="close" class="garnish-form__button btn-reset">
-        Создать гарнир
-      </UiButton>
+      <div class="garnish-form__actions flex">
+        <UiButton type="submit" class="garnish-form__button">
+          Сохранить изменения
+        </UiButton>
+        <UiButton class="garnish-form__button" @click="revertChanges">Отменить изменения</UiButton>
+      </div>
     </form>
   </div>
 </template>
@@ -62,15 +65,19 @@ import UiInput from '@/components/Ui/UiInput.vue'
 import UiButton from '@/components/Ui/UiButton.vue'
 import UiSelect from '@/components/Ui/UiSelect.vue'
 import { v4 as uuidv4 } from 'uuid'
+import { useStore } from '@/stores/store'
 
+const store = useStore()
 const props = defineProps<{
   garnish: CustomGarnish
 }>()
 const emit = defineEmits(['close'])
-const localGarnish = reactive(props.garnish)
 const target = useTemplateRef('target')
 
-function close() {
+const localGarnish = reactive<CustomGarnish>(JSON.parse(JSON.stringify(props.garnish)))
+
+function saveGarnish() {
+  store.updateGarnish(localGarnish)
   emit('close')
 }
 
@@ -83,10 +90,14 @@ function addGarnish() {
   })
 }
 
-function delGarnish(id: string) {
+function removeIngredient(id: string) {
   if (localGarnish.ingredients.length > 1) {
     localGarnish.ingredients = localGarnish.ingredients.filter((i) => i.id !== id)
   }
+}
+
+function revertChanges() {
+  Object.assign(localGarnish, JSON.parse(JSON.stringify(props.garnish)))
 }
 
 onClickOutside(target, () => {
@@ -191,9 +202,12 @@ onClickOutside(target, () => {
   }
 }
 
+.garnish-form__actions {
+  gap: 20px;
+}
+
 .garnish-form__button {
-  color: var(--white-color);
-  background-color: var(--black-color);
+  flex: 1;
   margin-bottom: 15px;
 }
 
@@ -209,6 +223,12 @@ onClickOutside(target, () => {
 
 :disabled {
   cursor: not-allowed;
-  background-color: rgb(53, 53, 53);
+  background-color: var(--gray-light-color);
+  border-color: var(--gray-light-color);
+}
+
+:disabled:hover {
+  background-color: var(--gray-light-color);
+  border-color: var(--gray-light-color);
 }
 </style>

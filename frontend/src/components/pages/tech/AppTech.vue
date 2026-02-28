@@ -61,9 +61,18 @@
           >
         </li>
       </ul>
-      <AppTechCocktailForm v-if="openModal === 'cocktail'" @close="openModal = null" />
-      <AppTechIngredientForm v-if="openModal === 'customIngredient'" @close="openModal = null" />
-      <AppTechGarnishForm v-if="openModal === 'customGarnish'" @close="openModal = null" />
+      <AppTechCocktailForm
+        v-if="openModal === 'cocktail' && !editingCocktail"
+        @close="openModal = null"
+      />
+      <AppTechIngredientForm
+        v-if="openModal === 'customIngredient' && !editingIngredient"
+        @close="openModal = null"
+      />
+      <AppTechGarnishForm
+        v-if="openModal === 'customGarnish' && !editingGarnish"
+        @close="openModal = null"
+      />
       <AppTechCocktailEditForm
         v-if="editingCocktail"
         :cocktail="editingCocktail"
@@ -160,10 +169,15 @@ const visibleItems = computed(() => itemsByCategory[currentCategory.value]?.valu
 function selectCategory(category: typeof currentCategory.value) {
   currentCategory.value = category
   // loadData(category)
+
+  if (openModal.value) {
+    openModal.value = category
+  }
 }
 
 function openForm(type: 'cocktail' | 'customIngredient' | 'customGarnish') {
   openModal.value = type
+  currentCategory.value = type
 }
 
 function openItemDetails(item: Cocktail | CustomIngredient | CustomGarnish) {

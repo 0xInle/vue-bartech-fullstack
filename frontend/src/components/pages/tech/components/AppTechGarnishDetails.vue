@@ -29,14 +29,23 @@
       <UiButton class="tech__modal-btn" @click="deleteGarnish"> Удалить </UiButton>
     </div>
   </article>
+  <UiConfirmModal
+    :title="garnish.name"
+    :isOpen="isOpen"
+    @cancel="handleCancel"
+    @confirm="handleConfirm"
+  />
 </template>
 
 <script setup lang="ts">
 import type { CustomGarnish } from '@/type/type'
 import UiButton from '@/components/Ui/UiButton.vue'
+import UiConfirmModal from '@/components/Ui/UiConfirmModal.vue'
 import { useStore } from '@/stores/store'
+import { ref } from 'vue'
 
 const store = useStore()
+const isOpen = ref(false)
 
 const props = defineProps<{
   garnish: CustomGarnish
@@ -53,8 +62,18 @@ function openEdit() {
 }
 
 function deleteGarnish() {
+  isOpen.value = true
+}
+
+function handleConfirm() {
   store.removeItemById(store.customGarnishLib, props.garnish.id)
+
+  isOpen.value = false
   emit('close')
+}
+
+function handleCancel() {
+  isOpen.value = false
 }
 </script>
 
@@ -118,7 +137,7 @@ function deleteGarnish() {
 
 .tech__modal-btn {
   flex: 1;
-  color: var(--white-color);
-  background-color: var(--black-color);
+  color: var(--black-color);
+  background-color: var(--green-bright-color);
 }
 </style>
