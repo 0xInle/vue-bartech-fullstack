@@ -23,21 +23,21 @@ useEventListener(window, 'keydown', (e: KeyboardEvent) => {
 
 <style scoped>
 .modal {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgb(0 0 0 / 50%);
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   backdrop-filter: blur(4px);
 }
 
 .modal__content {
+  width: 25%;
+  padding: 20px;
   background: var(--black-color);
   border-radius: 10px;
-  padding: 20px;
-  width: 25%;
   overflow-y: auto;
   box-shadow: var(--box-shadow);
 }

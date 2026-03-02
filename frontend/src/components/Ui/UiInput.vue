@@ -29,9 +29,9 @@ function onInput(e: Event) {
 input {
   width: 100%;
   padding: 10px 20px;
+  border: 1px solid var(--black-color);
   color: var(--black-color);
   font-size: 14px;
-  border: 1px solid var(--black-color);
   box-shadow: var(--box-shadow);
   border-radius: 10px;
   outline: none;
@@ -39,7 +39,7 @@ input {
 
   &:focus {
     border-color: var(--green-bright-color);
-    box-shadow: 0 0 10px rgba(134, 194, 50, 0.3);
+    box-shadow: 0 0 10px rgb(134 194 50 / 30%);
   }
 }
 </style>

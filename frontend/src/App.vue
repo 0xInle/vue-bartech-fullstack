@@ -24,8 +24,8 @@ const route = useRoute()
 }
 
 .main-content {
-  flex: 1;
   justify-content: space-evenly;
   padding: 20px 0;
+  flex: 1;
 }
 </style>

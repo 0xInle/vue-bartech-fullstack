@@ -25,9 +25,11 @@
 .loader-dot:nth-child(1) {
   animation-delay: 0s;
 }
+
 .loader-dot:nth-child(2) {
   animation-delay: 0.2s;
 }
+
 .loader-dot:nth-child(3) {
   animation-delay: 0.4s;
 }
@@ -38,6 +40,7 @@
   100% {
     transform: scale(0);
   }
+
   40% {
     transform: scale(1);
   }

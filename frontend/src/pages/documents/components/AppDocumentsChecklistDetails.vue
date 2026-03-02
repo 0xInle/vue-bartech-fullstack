@@ -93,22 +93,22 @@ function addTask() {
 }
 
 .checklist-edit__header {
-  max-height: 29.5px;
   justify-content: space-between;
+  max-height: 29.5px;
   margin-bottom: 10px;
   gap: 20px;
 }
 
 .checklist-edit__title {
   display: block;
-  flex: 1;
-  text-align: center;
   max-width: 100%;
   margin: 0;
+  border: 1px solid var(--black-color);
+  color: var(--black-color);
+  text-align: center;
+  flex: 1;
   font-size: 21px;
   font-weight: 900;
-  color: var(--black-color);
-  border: 1px solid var(--black-color);
   box-shadow: var(--box-shadow);
   border-radius: 5px;
 }
@@ -122,24 +122,27 @@ function addTask() {
   flex-direction: column;
   margin-bottom: 10px;
 }
+
 .checklist-edit__label {
+  color: var(--black-color);
   font-size: 12px;
   margin-bottom: 5px;
-  color: var(--black-color);
 }
+
 .checklist-edit__input {
   padding: 5px;
-  color: var(--black-color);
   border: 1px solid var(--black-color);
+  color: var(--black-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
 }
+
 .checklist-edit__tasks {
   margin: 0;
+  color: var(--black-color);
   margin-bottom: 10px;
   padding-left: 15px;
   font-size: 12px;
-  color: var(--black-color);
 }
 
 .checklist-edit__task:not(:last-child) {
@@ -149,24 +152,25 @@ function addTask() {
 .checklist-edit__task-row {
   gap: 10px;
 }
+
 .checklist-edit__task-input {
   padding: 5px;
-  color: var(--black-color);
   border: 1px solid var(--black-color);
+  color: var(--black-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
 }
 
 .checklist-edit__task-button--delete {
-  margin: 0;
-  padding: 6px 11px;
   width: 29.5px;
+  padding: 6px 11px;
+  margin: 0;
 }
 
 .checklist-edit__actions {
-  margin-left: auto;
-  width: 50%;
   justify-content: flex-end;
+  width: 50%;
+  margin-left: auto;
   gap: 10px;
   margin-top: 20px;
 }

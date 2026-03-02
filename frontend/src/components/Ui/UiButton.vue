@@ -25,24 +25,24 @@ function handleClick() {
 
 <style scoped>
 button {
-  outline: none;
   padding: 6px;
+  border: 1px solid var(--green-bright-color);
   color: var(--black-color);
+  outline: none;
   font-weight: 700;
   background-color: var(--green-bright-color);
-  border: 1px solid var(--green-bright-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   transition: all 0.3s ease-in-out;
 
   &:hover {
-    background-color: var(--green-dark-color);
     border: 1px solid var(--green-dark-color);
+    background-color: var(--green-dark-color);
   }
 
   &:focus-visible {
-    background-color: var(--green-dark-color);
     border: 1px solid var(--green-dark-color);
+    background-color: var(--green-dark-color);
   }
 
   &:active {

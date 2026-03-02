@@ -55,19 +55,19 @@ function openComponent(tab: string) {
 
 .documents__list {
   align-items: center;
-  gap: 20px;
   padding: 7px 20px;
-  background-color: var(--black-color);
   border: 1px solid var(--black-color);
+  gap: 20px;
+  background-color: var(--black-color);
   box-shadow: var(--box-shadow);
   border-radius: 10px;
 }
 
 .documents__button {
+  color: var(--white-color);
   outline: none;
   position: relative;
   font-size: 14px;
-  color: var(--white-color);
   font-weight: 700;
   transition: all 0.3s ease-in-out;
 
@@ -84,13 +84,13 @@ function openComponent(tab: string) {
   }
 
   &::after {
+    width: 0;
+    height: 1px;
     content: '';
     position: absolute;
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 0;
-    height: 1px;
     background-color: var(--green-bright-color);
     transition: all 0.3s ease-in-out;
   }
@@ -104,13 +104,13 @@ function openComponent(tab: string) {
   color: var(--green-bright-color);
 
   &::after {
+    width: 100%;
+    height: 1px;
     content: '';
     position: absolute;
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
-    height: 1px;
     background-color: var(--green-bright-color);
     transition: all 0.3s ease-in-out;
   }

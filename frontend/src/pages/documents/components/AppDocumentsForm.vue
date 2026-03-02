@@ -21,7 +21,7 @@
         <UiButton
           type="button"
           :disabled="toDo.tasks.length === 1"
-          @click="delTasks(task.id)"
+          @click="removeTaskById(task.id)"
           class="documents-form__button documents-form__button--delete"
         >
           x
@@ -101,7 +101,7 @@ function resetForm() {
   ]
 }
 
-function delTasks(id: string) {
+function removeTaskById(id: string) {
   toDo.value.tasks = toDo.value.tasks.filter((i) => i.id !== id)
 }
 </script>
@@ -119,15 +119,15 @@ function delTasks(id: string) {
 
 .documents-form__label,
 .documents-form__section-label {
+  color: var(--white-color);
   font-size: 12px;
   margin-bottom: 5px;
-  color: var(--white-color);
 }
 
 .documents-form__input {
   padding: 5px;
-  color: var(--black-color);
   border: 1px solid var(--black-color);
+  color: var(--black-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
 }
@@ -142,9 +142,9 @@ function delTasks(id: string) {
 }
 
 .documents-form__button--delete {
-  margin: 0;
-  padding: 6px 11px;
   width: 29.5px;
+  padding: 6px 11px;
+  margin: 0;
 }
 
 .documents-form__field-row {

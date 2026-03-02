@@ -55,19 +55,20 @@ onClickOutside(target, () => {
 
 <style scoped>
 .select {
-  position: relative;
   align-items: center;
+  position: relative;
   flex-shrink: 0;
   font-size: 12px;
 }
 
 .select__toggle {
   width: 100%;
-  min-width: 35px;
-  padding: 5px;
   height: 29.5px;
-  font-size: 12px;
+  padding: 5px;
   color: var(--black-color);
+  min-width: 35px;
+  font-size: 12px;
+
   /* border: 1px solid var(--black-color); */
   box-shadow: var(--box-shadow);
   border-radius: 5px;
@@ -79,14 +80,14 @@ onClickOutside(target, () => {
 }
 
 .select__list {
-  position: absolute;
   display: flex;
   flex-direction: column;
+  padding: 5px;
+  border: 1px solid var(--black-color);
+  position: absolute;
   gap: 5px;
   top: 120%;
   right: -1px;
-  padding: 5px;
-  border: 1px solid var(--black-color);
   border-radius: 5px;
   background-color: var(--white-color);
   box-shadow: var(--box-shadow);
@@ -99,15 +100,15 @@ onClickOutside(target, () => {
 
 .select__button {
   display: flex;
-  align-items: center;
   justify-content: end;
-  white-space: nowrap;
+  align-items: center;
   width: 100%;
-  min-width: 100px;
   height: 29.5px;
   padding: 5px;
-  font-size: 12px;
   color: var(--black-color);
+  white-space: nowrap;
+  min-width: 100px;
+  font-size: 12px;
   box-shadow: var(--box-shadow);
   border-radius: 5px;
   transition: all 0.3s ease-in-out;

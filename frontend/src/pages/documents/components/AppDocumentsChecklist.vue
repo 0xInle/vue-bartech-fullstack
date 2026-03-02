@@ -90,32 +90,34 @@ function toggleAccordion(id: string) {
 .checklist__list-block {
   display: flex;
   flex-direction: column;
-  flex: 1;
   height: calc(100vh - 118.5px);
+  flex: 1;
 }
+
 .checklist__header {
-  gap: 20px;
   justify-content: space-between;
+  gap: 20px;
   margin-bottom: 20px;
 }
+
 .checklist__title {
   display: block;
-  flex: 1;
-  text-align: center;
   max-width: 100%;
   margin: 0;
+  color: var(--black-color);
+  text-align: center;
+  flex: 1;
   font-size: 21px;
   font-weight: 900;
-  color: var(--black-color);
   background-color: var(--white-color);
   border-radius: 5px;
 }
 
 .checklist__list {
-  flex: 1;
-  overflow-y: auto;
   padding: 10px;
   border: 1px solid var(--black-color);
+  flex: 1;
+  overflow-y: auto;
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   background-color: var(--white-color);
@@ -126,25 +128,25 @@ function toggleAccordion(id: string) {
 }
 
 .checklist__item-block {
-  outline: none;
   justify-content: space-between;
-  gap: 20px;
   align-items: center;
   width: 100%;
   padding: 5px;
+  border: 1px solid var(--black-color);
+  text-align: start;
+  outline: none;
+  gap: 20px;
   font-size: 14px;
   font-weight: 700;
-  border: 1px solid var(--black-color);
   background-color: transparent;
   border-radius: 5px;
   box-shadow: var(--box-shadow);
-  text-align: start;
   margin-bottom: 10px;
   transition: all 0.3s ease-in-out;
 
   &:hover {
-    cursor: pointer;
     color: var(--white-color);
+    cursor: pointer;
     background-color: var(--gray-dark-color);
   }
 
@@ -156,17 +158,17 @@ function toggleAccordion(id: string) {
 }
 
 .checklist__item-name {
+  width: 793px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 793px;
 }
 
 .checklist__item-name-sm {
+  max-width: 198px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 198px;
 }
 
 .checklist__item-action {

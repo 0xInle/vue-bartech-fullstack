@@ -46,9 +46,9 @@ function openSettings() {
 }
 
 .header-logo {
+  color: var(--black-color);
   outline: none;
   font-size: 30px;
-  color: var(--black-color);
   background-color: var(--green-bright-color);
   transition: all 0.3s ease-in-out;
 
@@ -63,19 +63,19 @@ function openSettings() {
 
 .header-list {
   align-items: center;
-  gap: 20px;
   padding: 7px 20px;
-  background-color: var(--black-color);
   border: 1px solid var(--black-color);
+  gap: 20px;
+  background-color: var(--black-color);
   box-shadow: var(--box-shadow);
   border-radius: 10px;
 }
 
 .header-link {
+  color: var(--white-color);
   position: relative;
   outline: none;
   font-size: 14px;
-  color: var(--white-color);
   transition: all 0.3s ease-in-out;
 
   &:hover {
@@ -91,13 +91,13 @@ function openSettings() {
   }
 
   &::after {
+    width: 0;
+    height: 1px;
     content: '';
     position: absolute;
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 0;
-    height: 1px;
     background-color: var(--green-bright-color);
     transition: all 0.3s ease-in-out;
   }
@@ -113,9 +113,9 @@ function openSettings() {
 }
 
 .header-btn {
-  outline: none;
   width: 34px;
   height: 34px;
+  outline: none;
   border-radius: 50%;
 
   &:hover {
@@ -132,13 +132,13 @@ function openSettings() {
   transition: all 0.3s ease-in-out;
 
   &::after {
+    width: 100%;
+    height: 1px;
     content: '';
     position: absolute;
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
-    height: 1px;
     background-color: var(--green-bright-color);
     transition: all 0.3s ease-in-out;
   }

@@ -35,9 +35,9 @@ import IconSun from '@/assets/icons/svg/icon-sun.svg'
 .footer {
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
   padding: 20px;
   border: 1px solid var(--black-color);
+  margin-bottom: 10px;
   box-shadow: var(--box-shadow);
   border-radius: 10px;
 }
@@ -51,10 +51,10 @@ import IconSun from '@/assets/icons/svg/icon-sun.svg'
 }
 
 .footer-link {
-  outline: none;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  outline: none;
 }
 
 .footer-btn {
