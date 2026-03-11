@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 
 async function main() {
   await prisma.ingredient.createMany({
-    data: ingredients.map((name) => ({ name })),
+    data: ingredients,
     skipDuplicates: true,
   })
 

@@ -1,28 +1,14 @@
 <template>
-  <input
-    :class="customClass"
-    :type="type"
-    :placeholder="placeholder"
-    :value="modelValue"
-    @input="onInput"
-  />
+  <input v-model="model" :type="type" :placeholder="placeholder" />
 </template>
 
 <script setup lang="ts">
+const model = defineModel<string | number | null>()
+
 defineProps<{
-  modelValue: string | number | null
   type: string
   placeholder: string
-  customClass?: string
 }>()
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void
-}>()
-
-function onInput(e: Event) {
-  emit('update:modelValue', (e.target as HTMLInputElement).value)
-}
 </script>
 
 <style scoped>
@@ -31,9 +17,10 @@ input {
   padding: 10px 20px;
   border: 1px solid var(--black-color);
   color: var(--black-color);
+  max-height: 28px;
   font-size: 14px;
   box-shadow: var(--box-shadow);
-  border-radius: 10px;
+  border-radius: 5px;
   outline: none;
   transition: all 0.3s ease-in-out;
 

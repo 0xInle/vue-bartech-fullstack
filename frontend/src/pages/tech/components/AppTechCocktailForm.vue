@@ -24,7 +24,7 @@
             placeholder="Название ингредиента"
           />
           <UiInput
-            v-model.number="ingredient.amount"
+            v-model="ingredient.amount"
             type="text"
             class="cocktail-form__input cocktail-form__input--unit"
             placeholder="Объем"
@@ -99,7 +99,6 @@ import UiInput from '@/components/Ui/UiInput.vue'
 import UiButton from '@/components/Ui/UiButton.vue'
 import UiSelect from '@/components/Ui/UiSelect.vue'
 import { UNITS, GLASS, ICE, METHOD } from '@/type/consts'
-
 import { v4 as uuidv4 } from 'uuid'
 
 const emit = defineEmits(['close'])
@@ -185,9 +184,9 @@ function closeForm() {
 
 <style scoped>
 .cocktail-form {
+  padding: 20px;
   position: relative;
   max-height: max-content;
-  padding: 20px;
   border-radius: 5px;
   background-color: var(--black-color);
   box-shadow: var(--box-shadow);
@@ -203,15 +202,15 @@ function closeForm() {
 }
 
 .cocktail-form__label {
+  color: var(--white-color);
   font-size: 12px;
   margin-bottom: 5px;
-  color: var(--white-color);
 }
 
 .cocktail-form__input {
   padding: 5px;
-  color: var(--black-color);
   border: 1px solid var(--black-color);
+  color: var(--black-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
 }
@@ -232,19 +231,6 @@ function closeForm() {
   max-width: 15%;
 }
 
-.cocktail-form__unit {
-  width: 28px;
-  height: 28px;
-}
-
-.cocktail-form__unit {
-  padding: 5px;
-  border: 1px solid var(--black-color);
-  border-radius: 5px;
-  box-shadow: var(--box-shadow);
-  font-size: 12px;
-}
-
 .cocktail-form__param {
   flex-grow: 1;
   min-width: 0;
@@ -263,20 +249,21 @@ function closeForm() {
 }
 
 .cocktail-form__comment {
-  outline: none;
   width: 100%;
   padding: 5px;
-  font-family: Nunito;
+  border: 1px solid var(--black-color);
   color: var(--black-color);
-  border: 1px solid (--black-color);
+  outline: none;
+  /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+  font-family: Nunito;
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   resize: none;
   transition: all 0.3s ease-in-out;
 
   &:focus {
-    box-shadow: 0 0 10px rgba(134, 194, 50, 0.3);
     border: 1px solid var(--green-bright-color);
+    box-shadow: 0 0 10px rgb(134 194 50 / 30%);
   }
 }
 
@@ -286,9 +273,9 @@ function closeForm() {
 }
 
 .cocktail-form__button--delete {
-  margin: 0;
-  padding: 6px 11px;
   width: 29.5px;
+  padding: 6px 11px;
+  margin: 0;
 }
 
 .cocktail-form__actions {

@@ -47,9 +47,7 @@
         <textarea v-model="localGarnish.comment" class="garnish-form__comment" rows="5"> </textarea>
       </div>
       <div class="garnish-form__actions flex">
-        <UiButton type="submit" class="garnish-form__button">
-          Сохранить изменения
-        </UiButton>
+        <UiButton type="submit" class="garnish-form__button"> Сохранить изменения </UiButton>
         <UiButton class="garnish-form__button" @click="revertChanges">Отменить изменения</UiButton>
       </div>
     </form>
@@ -107,9 +105,9 @@ onClickOutside(target, () => {
 
 <style scoped>
 .garnish-form {
+  padding: 20px;
   position: relative;
   max-height: max-content;
-  padding: 20px;
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   background-color: var(--black-color);
@@ -125,15 +123,14 @@ onClickOutside(target, () => {
 }
 
 .garnish-form__label {
+  color: var(--white-color);
   font-size: 12px;
   margin-bottom: 5px;
-  color: var(--white-color);
 }
 
 .garnish-form__input {
-  padding: 5px;
-  color: var(--black-color);
   border: 1px solid var(--black-color);
+  color: var(--black-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
 }
@@ -154,51 +151,22 @@ onClickOutside(target, () => {
   max-width: 15%;
 }
 
-.garnish-form__unit {
-  width: 28px;
-  height: 28px;
-}
-
-.garnish-form__unit {
-  padding: 5px;
-  border: 1px solid var(--black-color);
-  border-radius: 5px;
-  box-shadow: var(--box-shadow);
-  font-size: 12px;
-}
-
-.garnish-form__param {
-  flex-grow: 1;
-  min-width: 0;
-}
-
-.garnish-form__param--glasses {
-  flex: 2;
-}
-
-.garnish-form__param--ice {
-  flex: 1;
-}
-
-.garnish-form__param--method {
-  flex: 1;
-}
-
 .garnish-form__comment {
-  outline: none;
   width: 100%;
   padding: 5px;
-  font-family: Nunito;
-  color: var(--black-color);
   border: 1px solid var(--black-color);
+  color: var(--black-color);
+  outline: none;
+  /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+  font-family: Nunito;
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   resize: none;
   transition: all 0.3s ease-in-out;
 
   &:focus {
-    box-shadow: 0 0 10px rgba(134, 194, 50, 0.3);
     border: 1px solid var(--green-bright-color);
+    box-shadow: 0 0 10px rgb(134 194 50 / 30%);
   }
 }
 
@@ -212,9 +180,9 @@ onClickOutside(target, () => {
 }
 
 .garnish-form__button--delete {
-  margin: 0;
-  padding: 6px 11px;
   width: 29.5px;
+  padding: 6px 11px;
+  margin: 0;
 }
 
 ::placeholder {

@@ -57,9 +57,4 @@ import IconSun from '@/assets/icons/svg/icon-sun.svg'
   outline: none;
 }
 
-.footer-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-}
 </style>

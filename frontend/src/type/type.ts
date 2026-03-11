@@ -16,6 +16,7 @@ export type Cocktail = {
 
 // // ----------------- "Просто ингредиент" -----------------
 export type Ingredient = {
+  id: string
   name: string // Например, "Водка", "Сок"
 }
 

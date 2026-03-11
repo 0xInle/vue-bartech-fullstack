@@ -32,8 +32,8 @@ watch(input, (val) => {
 <style scoped>
 .home {
   flex-direction: column;
-  align-items: center;
   justify-content: space-evenly;
+  align-items: center;
 }
 
 .home-input {
@@ -42,8 +42,7 @@ watch(input, (val) => {
 
 .home-btn-container {
   grid-template-columns: repeat(3, 1fr);
-  row-gap: 30px;
-  column-gap: 60px;
+  gap: 30px 60px;
   justify-items: center;
 }
 

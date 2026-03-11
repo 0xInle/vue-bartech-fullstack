@@ -108,29 +108,29 @@ function handleCancel() {
 
 <style scoped>
 .tech__modal-title {
-  margin: 0;
-  margin-bottom: 20px;
-  text-align: center;
   padding: 10px;
-  background-color: var(--white-color);
+  margin: 0;
   border: 1px solid var(--black-color);
+  text-align: center;
+  margin-bottom: 20px;
+  background-color: var(--white-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
 }
 
 .tech__modal-content {
-  margin-bottom: 20px;
   padding: 10px;
-  background-color: var(--white-color);
   border: 1px solid var(--black-color);
+  margin-bottom: 20px;
+  background-color: var(--white-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
 }
 
 .tech__modal-subtitle {
+  max-width: max-content;
   margin: 0;
   margin-bottom: 10px;
-  max-width: max-content;
   font-size: 12px;
   font-weight: 400;
   border-bottom: 1px solid var(--black-color);
@@ -148,8 +148,8 @@ function handleCancel() {
 }
 
 .tech__modal-total {
-  padding-top: 5px;
   text-align: end;
+  padding-top: 5px;
   text-decoration: underline;
   font-weight: 400;
   font-size: 12px;
@@ -161,8 +161,8 @@ function handleCancel() {
 }
 
 .tech__modal-action {
-  gap: 20px;
   justify-content: space-between;
+  gap: 20px;
 }
 
 .tech__modal-btn {

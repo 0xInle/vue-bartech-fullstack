@@ -25,6 +25,12 @@
           Гарниры
         </UiButton>
       </div>
+      <UiInput
+        class="tech__toolbar-search"
+        v-model="query"
+        type="text"
+        placeholder="Введите слова для поиска"
+      />
       <ul class="tech__cocktail-list list-reset">
         <UiLoader v-if="loading" />
         <li class="tech__cocktail-item" v-for="item in visibleItems" :key="item.id">
@@ -130,10 +136,12 @@ import AppTechCocktailEditForm from './components/AppTechCocktailEditForm.vue'
 import AppTechIngredientEditForm from './components/AppTechIngredientEditForm.vue'
 import AppTechGarnishEditForm from './components/AppTechGarnishEditForm.vue'
 import { useEditingItem } from './composables/useEditingItem'
+import UiInput from '@/components/Ui/UiInput.vue'
 
 const store = useStore()
 const { cocktailsLib, customGarnishLib, customIngredientLib } = storeToRefs(store)
 
+const query = ref('')
 const openModal = ref<'cocktail' | 'customIngredient' | 'customGarnish' | null>(null)
 const currentCategory = ref<'cocktail' | 'customIngredient' | 'customGarnish'>('cocktail')
 const selectedCocktail = ref<Cocktail | null>(null)
@@ -168,7 +176,6 @@ const visibleItems = computed(() => itemsByCategory[currentCategory.value]?.valu
 
 function selectCategory(category: typeof currentCategory.value) {
   currentCategory.value = category
-  // loadData(category)
 
   if (openModal.value) {
     openModal.value = category
@@ -199,89 +206,20 @@ function openItemDetails(item: Cocktail | CustomIngredient | CustomGarnish) {
     selectedGarnish.value = item as CustomGarnish
   }
 }
-
-// function openCocktailForm() {
-//   openModal.value = 'cocktail'
-// }
-
-// function openIngredientForm() {
-//   openModal.value = 'customIngredient'
-// }
-
-// function openGarnishForm() {
-//   openModal.value = 'customGarnish'
-// }
-
-// function openItemDetails(item: Cocktail | CustomIngredient | CustomGarnish) {
-//   if (currentCategory.value === 'cocktail') {
-//     selectedItem.value = item
-//     showModal.value = true
-
-//     return
-//   }
-
-//   if (currentCategory.value === 'customIngredient') {
-//     selectedItem.value = item
-//     showModal.value = true
-//     return
-//   }
-
-//   if (currentCategory.value === 'customGarnish') {
-//     selectedItem.value = item
-//     showModal.value = true
-
-//     return
-//   }
-// }
-
-// async function fetchCocktails() {
-//   const res = await fetch('http://localhost:4000/cocktails')
-//   return res.json()
-// }
-
-// async function fetchIngredients() {
-//   const res = await fetch('http://localhost:4000/ingredients', { cache: 'no-store' })
-//   return res.json()
-// }
-
-// async function fetchGarnishes() {
-//   const res = await fetch('http://localhost:4000/garnishes')
-//   return res.json()
-// }
-
-// async function loadData(category: typeof currentCategory.value) {
-//   loading.value = true
-
-//   const libMap = {
-//     cocktail: cocktailsLib,
-//     customIngredient: ingredientLib,
-//     garnish: garnishLib,
-//   }
-
-//   const fetchMap = {
-//     cocktail: fetchCocktails,
-//     ingredient: fetchIngredients,
-//     garnish: fetchGarnishes,
-//   }
-
-//   libMap[category].value = await fetchMap[category]()
-
-//   loading.value = false
-// }
 </script>
 
 <style scoped>
 .tech {
+  align-items: flex-start;
   width: 100%;
   gap: 50px;
-  align-items: flex-start;
 }
 
 .tech__cocktail {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 61px);
   width: 50%;
+  height: calc(100vh - 61px);
   padding: 20px;
   border: 1px solid var(--black-color);
   border-radius: 10px;
@@ -296,24 +234,24 @@ function openItemDetails(item: Cocktail | CustomIngredient | CustomGarnish) {
 
 .tech__cocktail-title {
   display: flex;
-  margin: 0;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  margin: 0;
+  border: 1px solid var(--black-color);
   margin-bottom: 20px;
   max-height: 29.5px;
   font-size: 21px;
   font-weight: 900;
   background-color: var(--white-color);
-  border: 1px solid var(--black-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
 }
 
 .tech__cocktail-list {
-  flex: 1;
-  overflow-y: auto;
   padding: 10px;
   border: 1px solid var(--black-color);
+  flex: 1;
+  overflow-y: auto;
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   background-color: var(--white-color);
@@ -355,5 +293,9 @@ function openItemDetails(item: Cocktail | CustomIngredient | CustomGarnish) {
 .tech__toolbar-btn.is-active {
   background-color: var(--green-dark-color);
   border-color: var(--green-dark-color);
+}
+
+.tech__toolbar-search {
+  margin-bottom: 20px;
 }
 </style>

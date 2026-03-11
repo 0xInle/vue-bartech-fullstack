@@ -48,9 +48,7 @@
         </textarea>
       </div>
       <div class="ingredient-form__actions flex">
-        <UiButton type="submit" class="ingredient-form__button">
-          Сохранить изменения
-        </UiButton>
+        <UiButton type="submit" class="ingredient-form__button"> Сохранить изменения </UiButton>
         <UiButton class="ingredient-form__button" @click="revertChanges"
           >Отменить изменения</UiButton
         >
@@ -109,9 +107,9 @@ onClickOutside(target, () => {
 
 <style scoped>
 .ingredient-form {
+  padding: 20px;
   position: relative;
   max-height: max-content;
-  padding: 20px;
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   background-color: var(--black-color);
@@ -127,15 +125,14 @@ onClickOutside(target, () => {
 }
 
 .ingredient-form__label {
+  color: var(--white-color);
   font-size: 12px;
   margin-bottom: 5px;
-  color: var(--white-color);
 }
 
 .ingredient-form__input {
-  padding: 5px;
-  color: var(--black-color);
   border: 1px solid var(--black-color);
+  color: var(--black-color);
   border-radius: 5px;
   box-shadow: var(--box-shadow);
 }
@@ -156,51 +153,22 @@ onClickOutside(target, () => {
   max-width: 15%;
 }
 
-.ingredient-form__unit {
-  width: 28px;
-  height: 28px;
-}
-
-.ingredient-form__unit {
-  padding: 5px;
-  border: 1px solid var(--black-color);
-  border-radius: 5px;
-  box-shadow: var(--box-shadow);
-  font-size: 12px;
-}
-
-.ingredient-form__param {
-  flex-grow: 1;
-  min-width: 0;
-}
-
-.ingredient-form__param--glasses {
-  flex: 2;
-}
-
-.ingredient-form__param--ice {
-  flex: 1;
-}
-
-.ingredient-form__param--method {
-  flex: 1;
-}
-
 .ingredient-form__comment {
-  outline: none;
   width: 100%;
   padding: 5px;
-  font-family: Nunito;
-  color: var(--black-color);
   border: 1px solid var(--black-color);
+  color: var(--black-color);
+  outline: none;
+  /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+  font-family: Nunito;
   border-radius: 5px;
   box-shadow: var(--box-shadow);
   resize: none;
   transition: all 0.3s ease-in-out;
 
   &:focus {
-    box-shadow: 0 0 10px rgba(134, 194, 50, 0.3);
     border: 1px solid var(--green-bright-color);
+    box-shadow: 0 0 10px rgb(134 194 50 / 30%);
   }
 }
 
@@ -214,9 +182,9 @@ onClickOutside(target, () => {
 }
 
 .ingredient-form__button--delete {
-  margin: 0;
-  padding: 6px 11px;
   width: 29.5px;
+  padding: 6px 11px;
+  margin: 0;
 }
 
 ::placeholder {
