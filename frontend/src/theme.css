@@ -36,11 +36,13 @@
 :root {
   --white-color: #f8f8f8;
   --black-color: #222629;
+  --red-color: #e64040;
   --green-dark-color: #61892f;
   --green-bright-color: #86c232;
   --gray-dark-color: #474b4f;
   --gray-light-color: #6b6e70;
   --box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  --error-shadow: 0 0 10px rgba(230, 64, 64, 0.3);
 }
 
 *,

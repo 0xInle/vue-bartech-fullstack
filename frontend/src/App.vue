@@ -1,6 +1,6 @@
 <template>
   <div class="layout">
-    <AppHeader />
+    <AppHeader v-if="route.meta.header" />
     <main class="main-content flex">
       <RouterView />
     </main>
