@@ -8,7 +8,7 @@ export async function registerUser(email: string, password: string) {
   const existingUser = await repository.findByEmail(normalizedEmail)
 
   if (existingUser) {
-    throw new Error('User already exists')
+    throw new Error('Пользователь уже существует')
   }
 
   const hashedPassword = await bcrypt.hash(password, 10)

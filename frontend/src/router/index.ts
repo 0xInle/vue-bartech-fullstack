@@ -1,13 +1,26 @@
 import { api } from '@/api/api'
-import AppRegister from '@/pages/auth/AppRegister.vue'
+import AppAuth from '@/pages/auth/AppAuth.vue'
+import AppLogin from '@/pages/auth/components/AppLogin.vue'
+import AppRegister from '@/pages/auth/components/AppRegister.vue'
 import AppHome from '@/pages/home/AppHome.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/login', component: AppRegister, meta: { header: false } },
-    { path: '/', component: AppHome, meta: { requiresAuth: true, footer: true, header: true } },
+    {
+      path: '/',
+      redirect: '/login',
+    },
+    {
+      path: '/',
+      component: AppAuth,
+      children: [
+        { path: 'login', component: AppLogin, meta: { header: false } },
+        { path: 'register', component: AppRegister, meta: { header: false } },
+      ],
+    },
+    { path: '/home', component: AppHome, meta: { requiresAuth: true, footer: true, header: true } },
     {
       path: '/about',
       component: () => import('@/pages/about/AppAbout.vue'),
@@ -46,25 +59,17 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async (to, from, next) => {
-  console.log('guard start', to.path)
+router.beforeEach(async (to, _, next) => {
   try {
     await api.get('/users/me')
-    console.log('user authenticated')
 
-    if (to.path === '/login') {
-      console.log('redirecting to /')
-      return next('/')
-    }
-
-    if (to.meta.requiresAuth) {
-      return next()
+    if (['/login', '/register'].includes(to.path)) {
+      return next('/home')
     }
 
     next()
   } catch {
     if (to.meta.requiresAuth) {
-      console.log('not authenticated')
       return next('/login')
     }
 

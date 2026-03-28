@@ -1,50 +1,47 @@
 <template>
-  <section class="auth flex">
-    <UiDecorationBlock class="auth__content">
-      <h1 class="auth__title">bartech.</h1>
-      <div class="auth__subtitle">Создайте аккаунт для работы с системой</div>
-      <form class="auth__form-content flex" @submit.prevent="onSubmit">
-        <div class="auth__form-section flex">
-          <label class="auth__form-label"> Email: </label>
-          <UiInput
-            :class="emailError ? 'auth__form-input--error' : 'auth__form-input'"
-            v-model="email"
-            type="email"
-            placeholder="Введите email"
-          />
-          <span class="auth__form-error">{{ emailError }}</span>
-        </div>
-        <div class="auth__form-section flex">
-          <label class="auth__form-label"> Пароль: </label>
-          <UiInput
-            :class="passwordError ? 'auth__form-input--error' : 'auth__form-input'"
-            v-model="password"
-            type="password"
-            placeholder="Введите пароль"
-          />
-          <span class="auth__form-error">{{ passwordError }}</span>
-        </div>
-        <div class="auth__form-section flex">
-          <label class="auth__form-label"> Подтвердите пароль: </label>
-          <UiInput
-            :class="confirmPasswordError ? 'auth__form-input--error' : 'auth__form-input'"
-            v-model="confirmPassword"
-            type="password"
-            placeholder="Подтвердите пароль"
-          />
-          <span class="auth__form-error">{{ confirmPasswordError }}</span>
-        </div>
-        <UiButton :disabled="!meta.valid" type="submit">Зарегистрироваться</UiButton>
-      </form>
-    </UiDecorationBlock>
-  </section>
+  <div>
+    <h1 class="auth__title">bartech.</h1>
+    <div class="auth__subtitle">Создайте аккаунт для работы с системой</div>
+    <form class="auth__form-content flex" @submit.prevent="onSubmit">
+      <div class="auth__form-section flex">
+        <label class="auth__form-label"> Email: </label>
+        <UiInput
+          :class="emailError ? 'auth__form-input--error' : 'auth__form-input'"
+          v-model="email"
+          type="email"
+          placeholder="Введите email"
+        />
+        <span class="auth__form-error">{{ emailError }}</span>
+      </div>
+      <div class="auth__form-section flex">
+        <label class="auth__form-label"> Пароль: </label>
+        <UiInput
+          :class="passwordError ? 'auth__form-input--error' : 'auth__form-input'"
+          v-model="password"
+          type="password"
+          placeholder="Введите пароль"
+        />
+        <span class="auth__form-error">{{ passwordError }}</span>
+      </div>
+      <div class="auth__form-section flex">
+        <label class="auth__form-label"> Подтвердите пароль: </label>
+        <UiInput
+          :class="confirmPasswordError ? 'auth__form-input--error' : 'auth__form-input'"
+          v-model="confirmPassword"
+          type="password"
+          placeholder="Подтвердите пароль"
+        />
+        <span class="auth__form-error">{{ confirmPasswordError }}</span>
+      </div>
+      <UiButton :disabled="!meta.valid" type="submit">Зарегистрироваться</UiButton>
+    </form>
+  </div>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/Ui/UiButton.vue'
-import UiDecorationBlock from '@/components/Ui/UiDecorationBlock.vue'
 import UiInput from '@/components/Ui/UiInput.vue'
-import { useRegisterForm } from './composables/useRegisterValidate'
+import { useRegisterForm } from '../composables/useRegisterValidate'
 import { registerUser } from '@/api/auth.api'
 import { useRouter } from 'vue-router'
 
@@ -67,10 +64,9 @@ const onSubmit = handleSubmit(async (values, { resetForm }) => {
       email: values.email,
       password: values.password,
     })
-    console.log('Registered user:', user)
-    console.log('redirecting...')
+    console.log(user)
     resetForm()
-    router.push('/')
+    router.push('/home')
   } catch (error) {
     console.error(error)
   }

@@ -1,4 +1,4 @@
-import type { Ice, Method, Glass } from '@/type/consts'
+import type { Ice, Method, Glass, Roles } from '@/type/consts'
 
 // ----------------- Основной коктейль -----------------
 export type Cocktail = {
@@ -60,8 +60,15 @@ export type ToDo = {
   tasks: Task[]
 }
 
-// ----------------- Библиотеки -----------------
-export type CocktailLib = Cocktail[] // Все коктейли
+export type User = {
+  id: string
+  email: string
+  password: string
+  role: Roles
+}
+
+export // ----------------- Библиотеки -----------------
+type CocktailLib = Cocktail[] // Все коктейли
 export type IngredientLib = Ingredient[] // Все базовые ингредиенты
 export type CustomIngredientLib = CustomIngredient[] // Все составные
 export type GarnishLib = Garnish[] // Все гарниры

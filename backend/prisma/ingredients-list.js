@@ -8,27 +8,27 @@ export const ingredients = [
   { name: 'Водка Absolut Pear' },
   { name: 'Водка Absolut Peppar' },
   { name: 'Водка Absolut Vanilia' },
-  { name: 'Водка Absolwent' },  // польская, зерновая
-  { name: 'Водка Adnams' },  // британская, из ячменя/пшеницы/овса
-  { name: 'Водка Aivy' },  // часто с вкусами
+  { name: 'Водка Absolwent' }, // польская, зерновая
+  { name: 'Водка Adnams' }, // британская, из ячменя/пшеницы/овса
+  { name: 'Водка Aivy' }, // часто с вкусами
   { name: 'Водка Akvinta' },
   { name: 'Водка Altamura' },
-  { name: 'Водка Anastasia' },  // американская, из кукурузы
-  { name: 'Водка Arbikie' },  // шотландская крафтовая
+  { name: 'Водка Anastasia' }, // американская, из кукурузы
+  { name: 'Водка Arbikie' }, // шотландская крафтовая
   { name: 'Водка Arsenal' },
   { name: 'Водка Assaranca' },
-  { name: 'Водка Au Vodka' },  // британская, золотая фильтрация
-  { name: 'Водка Aval Dor' },  // валлийская, из кукурузы
+  { name: 'Водка Au Vodka' }, // британская, золотая фильтрация
+  { name: 'Водка Aval Dor' }, // валлийская, из кукурузы
   { name: 'Водка Avokado' },
-  { name: 'Водка Aber Falls' },  // валлийская
-  { name: 'Водка A' },  // российская премиум, кукурузная
-  { name: 'Водка Air' },  // редкая, но встречается в списках (Air Company, CO2-based)
-  { name: 'Водка Akula' },  // российская/украинская, иногда в A-lists
-  { name: 'Водка Alkon' },  // российская
-  { name: 'Водка Altai' },  // сибирская
-  { name: 'Водка Amundsen' },  // норвежская/экспедиционная серия
-  { name: 'Водка Ararat' },  // армянская, но иногда классифицируют как водку (хотя больше бренди)
-  { name: 'Водка Atlantic' },  // европейская
+  { name: 'Водка Aber Falls' }, // валлийская
+  { name: 'Водка A' }, // российская премиум, кукурузная
+  { name: 'Водка Air' }, // редкая, но встречается в списках (Air Company, CO2-based)
+  { name: 'Водка Akula' }, // российская/украинская, иногда в A-lists
+  { name: 'Водка Alkon' }, // российская
+  { name: 'Водка Altai' }, // сибирская
+  { name: 'Водка Amundsen' }, // норвежская/экспедиционная серия
+  { name: 'Водка Ararat' }, // армянская, но иногда классифицируют как водку (хотя больше бренди)
+  { name: 'Водка Atlantic' }, // европейская
   { name: 'Водка Babicka' },
   { name: 'Водка Baczewski' },
   { name: 'Водка Badachro' },
@@ -84,7 +84,7 @@ export const ingredients = [
   { name: 'Водка V Gallery' },
   { name: 'Водка Valt' },
   { name: 'Водка Vaudon' },
-  { name: 'Водка Velho Barreiro' },  // иногда классифицируют как водку/кашасу, но в списках есть
+  { name: 'Водка Velho Barreiro' }, // иногда классифицируют как водку/кашасу, но в списках есть
   { name: 'Водка Verde Momento' },
   { name: 'Водка Villa Lobos' },
   { name: 'Водка Vincent Béjot' },
@@ -105,7 +105,7 @@ export const ingredients = [
   { name: 'Водка Golden Egg' },
   { name: 'Водка Green Moon' },
   { name: 'Водка Grey Goose' },
-  { name: 'Водка Grey Goose L'Orange'' },
+  { name: "Водка Grey Goose L'Orange'" },
   { name: 'Водка Grey Goose Le Citron' },
   { name: 'Водка Gorbatschow' },
   { name: 'Водка Gorbatschow Premium' },
@@ -114,7 +114,7 @@ export const ingredients = [
   { name: 'Водка Гербовая' },
   { name: 'Водка Гжелка' },
   { name: 'Водка Гимаевская' },
-  { name: 'Водка Главспирттрест' },  // историческая/серия
+  { name: 'Водка Главспирттрест' }, // историческая/серия
   { name: 'Водка Глазовская классическая' },
   { name: 'Водка Горбачёв' },
   { name: 'Водка Danzka' },
@@ -147,7 +147,7 @@ export const ingredients = [
   { name: 'Водка Ed Hardy' },
   { name: 'Водка Effen' },
   { name: 'Водка Emperor' },
-  { name: 'Водка Ельцин' },  // Jelzin Vodka, российско-немецкая марка
+  { name: 'Водка Ельцин' }, // Jelzin Vodka, российско-немецкая марка
   { name: 'Водка Ермак' },
   { name: 'Водка Журавли' },
   { name: 'Водка Журавли Премиум' },
@@ -183,7 +183,7 @@ export const ingredients = [
   { name: 'Водка Imperial' },
   { name: 'Водка Imperia' },
   { name: 'Водка Imperia by Stolichnaya' },
-  { name: 'Водка Infusion' },  // редкая, иногда в flavored-линейках
+  { name: 'Водка Infusion' }, // редкая, иногда в flavored-линейках
   { name: 'Водка Irbis' },
   { name: 'Водка Ironroot' },
   { name: 'Водка Ice Queen' },
@@ -213,7 +213,7 @@ export const ingredients = [
   { name: 'Водка Кедровая' },
   { name: 'Водка Кедровица' },
   { name: 'Водка Ключ' },
-  { name: 'Водка Клюквенная' },  // иногда чистая водка с клюквенным оттенком, но классическая
+  { name: 'Водка Клюквенная' }, // иногда чистая водка с клюквенным оттенком, но классическая
   { name: 'Водка Кауффман' },
   { name: 'Водка Капитанская' },
   { name: 'Водка Княжеская' },
@@ -232,7 +232,7 @@ export const ingredients = [
   { name: 'Водка Граф Ледофф Аляска' },
   { name: 'Водка Легенда Кремля' },
   { name: 'Водка Ладога' },
-  { name: 'Водка Ливіз' },  // Liviz, украинская/российская серия
+  { name: 'Водка Ливіз' }, // Liviz, украинская/российская серия
   { name: 'Водка Лаб' },
   { name: 'Водка LAB№40' },
   { name: 'Водка LAB№50' },
@@ -240,10 +240,10 @@ export const ingredients = [
   { name: 'Водка Liverpool' },
   { name: 'Водка Le Philtre' },
   { name: 'Водка Long Table' },
-  { name: 'Водка L'Chaim'' },
+  { name: "Водка L'Chaim'" },
   { name: 'Водка Luchino' },
   { name: 'Водка Little Mountain Gorilla' },
-  { name: 'Водка Legend of Kremlin' },  // иногда пишут Легенда Кремля
+  { name: 'Водка Legend of Kremlin' }, // иногда пишут Легенда Кремля
   { name: 'Водка Luksusowa' },
   { name: 'Водка Мамонт' },
   { name: 'Водка Мамонт Премиум' },
@@ -268,7 +268,7 @@ export const ingredients = [
   { name: 'Водка Медведь Особая' },
   { name: 'Водка Мятная' },
   { name: 'Водка Мята' },
-  { name: 'Водка Морошка' },  // иногда как водка с морошкой, но встречается как бренд
+  { name: 'Водка Морошка' }, // иногда как водка с морошкой, но встречается как бренд
   { name: 'Водка Марал' },
   { name: 'Водка Мараль' },
   { name: 'Водка Монастырская' },
@@ -306,10 +306,10 @@ export const ingredients = [
   { name: 'Водка Oval' },
   { name: 'Водка Outer Space' },
   { name: 'Водка Onegin' },
-  { name: 'Водка O' },  // Vodka O, американская/органическая
+  { name: 'Водка O' }, // Vodka O, американская/органическая
   { name: 'Водка Orloff' },
   { name: 'Водка Oso Negro' },
-  { name: 'Водка Original' },  // иногда как "Оригинальная" в сериях
+  { name: 'Водка Original' }, // иногда как "Оригинальная" в сериях
   { name: 'Водка Онегин' },
   { name: 'Водка Оригинальная' },
   { name: 'Водка Охотничья' },
@@ -426,7 +426,7 @@ export const ingredients = [
   { name: 'Водка Belvedere' },
   { name: 'Водка Belvedere Intense' },
   { name: 'Водка Grey Goose' },
-  { name: 'Водка Grey Goose L'Orange'' },
+  { name: "Водка Grey Goose L'Orange'" },
   { name: 'Водка Ketel One' },
   { name: 'Водка Smirnoff' },
   { name: 'Водка Smirnoff Red Label' },
@@ -462,9 +462,6 @@ export const ingredients = [
   { name: 'Водка Pinnacle' },
   { name: 'Водка New Amsterdam' },
   { name: 'Водка Wyborowa' },
-]
-
-export const ingredients = [
   { name: 'Водка Absolut' },
   { name: 'Водка Absolut Citron' },
   { name: 'Водка Absolut Crystal' },
@@ -474,30 +471,27 @@ export const ingredients = [
   { name: 'Водка Absolut Pear' },
   { name: 'Водка Absolut Peppar' },
   { name: 'Водка Absolut Vanilia' },
-  { name: 'Водка Absolwent' },  // польская, зерновая
-  { name: 'Водка Adnams' },  // британская, из ячменя/пшеницы/овса
-  { name: 'Водка Aivy' },  // часто с вкусами
+  { name: 'Водка Absolwent' }, // польская, зерновая
+  { name: 'Водка Adnams' }, // британская, из ячменя/пшеницы/овса
+  { name: 'Водка Aivy' }, // часто с вкусами
   { name: 'Водка Akvinta' },
   { name: 'Водка Altamura' },
-  { name: 'Водка Anastasia' },  // американская, из кукурузы
-  { name: 'Водка Arbikie' },  // шотландская крафтовая
+  { name: 'Водка Anastasia' }, // американская, из кукурузы
+  { name: 'Водка Arbikie' }, // шотландская крафтовая
   { name: 'Водка Arsenal' },
   { name: 'Водка Assaranca' },
-  { name: 'Водка Au Vodka' },  // британская, золотая фильтрация
-  { name: 'Водка Aval Dor' },  // валлийская, из кукурузы
+  { name: 'Водка Au Vodka' }, // британская, золотая фильтрация
+  { name: 'Водка Aval Dor' }, // валлийская, из кукурузы
   { name: 'Водка Avokado' },
-  { name: 'Водка Aber Falls' },  // валлийская
-  { name: 'Водка A' },  // российская премиум, кукурузная
-  { name: 'Водка Air' },  // редкая, но встречается в списках (Air Company, CO2-based)
-  { name: 'Водка Akula' },  // российская/украинская, иногда в A-lists
-  { name: 'Водка Alkon' },  // российская
-  { name: 'Водка Altai' },  // сибирская
-  { name: 'Водка Amundsen' },  // норвежская/экспедиционная серия
-  { name: 'Водка Ararat' },  // армянская, но иногда классифицируют как водку (хотя больше бренди)
-  { name: 'Водка Atlantic' },  // европейская
-];
-
-export const ingredients = [
+  { name: 'Водка Aber Falls' }, // валлийская
+  { name: 'Водка A' }, // российская премиум, кукурузная
+  { name: 'Водка Air' }, // редкая, но встречается в списках (Air Company, CO2-based)
+  { name: 'Водка Akula' }, // российская/украинская, иногда в A-lists
+  { name: 'Водка Alkon' }, // российская
+  { name: 'Водка Altai' }, // сибирская
+  { name: 'Водка Amundsen' }, // норвежская/экспедиционная серия
+  { name: 'Водка Ararat' }, // армянская, но иногда классифицируют как водку (хотя больше бренди)
+  { name: 'Водка Atlantic' }, // европейская
   { name: 'Водка Babicka' },
   { name: 'Водка Baczewski' },
   { name: 'Водка Badachro' },
@@ -529,13 +523,10 @@ export const ingredients = [
   { name: 'Водка Баня' },
   { name: 'Водка Брестская' },
   { name: 'Водка Бульба' },
-  { name: 'Водка Бальзам' },  // иногда классифицируют как водку/настойку, но встречается
+  { name: 'Водка Бальзам' }, // иногда классифицируют как водку/настойку, но встречается
   { name: 'Водка Bivrost' },
   { name: 'Водка Ballykeefe' },
   { name: 'Водка Boris Yeltsin' },
-];
-
-export const ingredients = [
   { name: 'Водка Babicka' },
   { name: 'Водка Baczewski' },
   { name: 'Водка Badachro' },
@@ -579,9 +570,6 @@ export const ingredients = [
   { name: 'Водка Белый аист' },
   { name: 'Водка Благородная' },
   { name: 'Водка Боярская' },
-];
-
-export const ingredients = [
   { name: 'Водка Van Gogh' },
   { name: 'Водка Vault' },
   { name: 'Водка Vestal' },
@@ -594,7 +582,7 @@ export const ingredients = [
   { name: 'Водка V Gallery' },
   { name: 'Водка Valt' },
   { name: 'Водка Vaudon' },
-  { name: 'Водка Velho Barreiro' },  // иногда классифицируют как водку/кашасу, но в списках есть
+  { name: 'Водка Velho Barreiro' }, // иногда классифицируют как водку/кашасу, но в списках есть
   { name: 'Водка Verde Momento' },
   { name: 'Водка Villa Lobos' },
   { name: 'Водка Vincent Béjot' },
@@ -610,15 +598,12 @@ export const ingredients = [
   { name: 'Водка Весна' },
   { name: 'Водка Вечный зов' },
   { name: 'Водка Виртуоз' },
-];
-
-export const ingredients = [
   { name: 'Водка Gattertop' },
   { name: 'Водка General John Stark' },
   { name: 'Водка Golden Egg' },
   { name: 'Водка Green Moon' },
   { name: 'Водка Grey Goose' },
-  { name: 'Водка Grey Goose L'Orange'' },
+  { name: "Водка Grey Goose L'Orange'" },
   { name: 'Водка Grey Goose Le Citron' },
   { name: 'Водка Gorbatschow' },
   { name: 'Водка Gorbatschow Premium' },
@@ -627,12 +612,9 @@ export const ingredients = [
   { name: 'Водка Гербовая' },
   { name: 'Водка Гжелка' },
   { name: 'Водка Гимаевская' },
-  { name: 'Водка Главспирттрест' },  // историческая/серия
+  { name: 'Водка Главспирттрест' }, // историческая/серия
   { name: 'Водка Глазовская классическая' },
   { name: 'Водка Горбачёв' },
-];
-
-export const ingredients = [
   { name: 'Водка Danzka' },
   { name: 'Водка Debowa' },
   { name: 'Водка Degen' },
@@ -652,9 +634,6 @@ export const ingredients = [
   { name: 'Водка Дымка' },
   { name: 'Водка Дягилев' },
   { name: 'Водка Душепарка' },
-];
-
-export const ingredients = [
   { name: 'Водка Edwards' },
   { name: 'Водка Eight Lands' },
   { name: 'Водка Eiko' },
@@ -666,11 +645,8 @@ export const ingredients = [
   { name: 'Водка Ed Hardy' },
   { name: 'Водка Effen' },
   { name: 'Водка Emperor' },
-  { name: 'Водка Ельцин' },  // Jelzin Vodka, российско-немецкая марка
-  { name: 'Водка Ермак' },   // от Московского ЛВЗ "Ермак"
-];
-
-export const ingredients = [
+  { name: 'Водка Ельцин' }, // Jelzin Vodka, российско-немецкая марка
+  { name: 'Водка Ермак' }, // от Московского ЛВЗ "Ермак"
   { name: 'Водка Журавли' },
   { name: 'Водка Журавли Премиум' },
   { name: 'Водка Живая' },
@@ -682,9 +658,6 @@ export const ingredients = [
   { name: 'Водка Житняя Сльоза' },
   { name: 'Водка Житня Сльоза Бриллиантовая' },
   { name: 'Водка Живой рецепт' },
-];
-
-export const ingredients = [
   { name: 'Водка Зеленая марка' },
   { name: 'Водка Зеленая марка Кедровая' },
   { name: 'Водка Зеленая марка Особая' },
@@ -704,23 +677,17 @@ export const ingredients = [
   { name: 'Водка Заря' },
   { name: 'Водка Золотой колос' },
   { name: 'Водка Золотое кольцо' },
-];
-
-export const ingredients = [
   { name: 'Водка Iceberg' },
   { name: 'Водка Imperial' },
   { name: 'Водка Imperia' },
   { name: 'Водка Imperia by Stolichnaya' },
-  { name: 'Водка Infusion' },  // редкая, иногда в flavored-линейках
+  { name: 'Водка Infusion' }, // редкая, иногда в flavored-линейках
   { name: 'Водка Irbis' },
   { name: 'Водка Ironroot' },
   { name: 'Водка Ice Queen' },
   { name: 'Водка Иней' },
   { name: 'Водка Интер' },
   { name: 'Водка Искра' },
-];
-
-export const ingredients = [
   { name: 'Водка Кристалл' },
   { name: 'Водка Кристалл Столичная' },
   { name: 'Водка Кристалл Особая' },
@@ -741,11 +708,11 @@ export const ingredients = [
   { name: 'Водка Kauffman' },
   { name: 'Водка Kauffman Private Collection' },
   { name: 'Водка Koskenkorva' },
-  { name: 'Водка Khortytsia' },  // английская транслитерация, но часто используется
+  { name: 'Водка Khortytsia' }, // английская транслитерация, но часто используется
   { name: 'Водка Кедровая' },
   { name: 'Водка Кедровица' },
   { name: 'Водка Ключ' },
-  { name: 'Водка Клюквенная' },  // иногда чистая водка с клюквенным оттенком, но классическая
+  { name: 'Водка Клюквенная' }, // иногда чистая водка с клюквенным оттенком, но классическая
   { name: 'Водка Кауффман' },
   { name: 'Водка Капитанская' },
   { name: 'Водка Княжеская' },
@@ -757,9 +724,6 @@ export const ingredients = [
   { name: 'Водка Курганная' },
   { name: 'Водка Курская' },
   { name: 'Водка Кяхтинская' },
-];
-
-export const ingredients = [
   { name: 'Водка Л' },
   { name: 'Водка Лапландия' },
   { name: 'Водка Лапландия черносмородиновая' },
@@ -768,7 +732,7 @@ export const ingredients = [
   { name: 'Водка Граф Ледофф Аляска' },
   { name: 'Водка Легенда Кремля' },
   { name: 'Водка Ладога' },
-  { name: 'Водка Ливіз' },  // Liviz, украинская/российская серия
+  { name: 'Водка Ливіз' }, // Liviz, украинская/российская серия
   { name: 'Водка Лаб' },
   { name: 'Водка LAB№40' },
   { name: 'Водка LAB№50' },
@@ -776,14 +740,11 @@ export const ingredients = [
   { name: 'Водка Liverpool' },
   { name: 'Водка Le Philtre' },
   { name: 'Водка Long Table' },
-  { name: 'Водка L'Chaim'' },
+  { name: "Водка L'Chaim'" },
   { name: 'Водка Luchino' },
   { name: 'Водка Little Mountain Gorilla' },
-  { name: 'Водка Legend of Kremlin' },  // иногда пишут Легенда Кремля
+  { name: 'Водка Legend of Kremlin' }, // иногда пишут Легенда Кремля
   { name: 'Водка Luksusowa' },
-];
-
-export const ingredients = [
   { name: 'Водка Мамонт' },
   { name: 'Водка Мамонт Премиум' },
   { name: 'Водка Мороша' },
@@ -807,7 +768,7 @@ export const ingredients = [
   { name: 'Водка Медведь Особая' },
   { name: 'Водка Мятная' },
   { name: 'Водка Мята' },
-  { name: 'Водка Морошка' },  // иногда как водка с морошкой, но встречается как бренд
+  { name: 'Водка Морошка' }, // иногда как водка с морошкой, но встречается как бренд
   { name: 'Водка Марал' },
   { name: 'Водка Мараль' },
   { name: 'Водка Монастырская' },
@@ -821,9 +782,6 @@ export const ingredients = [
   { name: 'Водка Manly Spirits' },
   { name: 'Водка Mikolasch' },
   { name: 'Водка Mothaiba' },
-];
-
-export const ingredients = [
   { name: 'Водка Nemiroff' },
   { name: 'Водка Nemiroff De Luxe' },
   { name: 'Водка Nemiroff Original' },
@@ -844,23 +802,17 @@ export const ingredients = [
   { name: 'Водка Ностальгия' },
   { name: 'Водка Номерная' },
   { name: 'Водка Ночная Москва' },
-];
-
-export const ingredients = [
   { name: 'Водка Oddka' },
   { name: 'Водка Oval' },
   { name: 'Водка Outer Space' },
   { name: 'Водка Onegin' },
-  { name: 'Водка O' },  // Vodka O, американская/органическая
+  { name: 'Водка O' }, // Vodka O, американская/органическая
   { name: 'Водка Orloff' },
   { name: 'Водка Oso Negro' },
-  { name: 'Водка Original' },  // иногда как "Оригинальная" в сериях
+  { name: 'Водка Original' }, // иногда как "Оригинальная" в сериях
   { name: 'Водка Онегин' },
   { name: 'Водка Оригинальная' },
-  { name: 'Водка Охотничья' },  // иногда классифицируют как водку/настойку, но встречается
-];
-
-export const ingredients = [
+  { name: 'Водка Охотничья' }, // иногда классифицируют как водку/настойку, но встречается
   { name: 'Водка Пять озёр' },
   { name: 'Водка Пять озёр Премиум' },
   { name: 'Водка Пять озёр Классическая' },
@@ -894,9 +846,6 @@ export const ingredients = [
   { name: 'Водка Прима' },
   { name: 'Водка Привоз' },
   { name: 'Водка Прохоровское поле' },
-];
-
-export const ingredients = [
   { name: 'Водка Русский стандарт' },
   { name: 'Водка Русский стандарт Оригинал' },
   { name: 'Водка Русский стандарт Платинум' },
@@ -927,9 +876,6 @@ export const ingredients = [
   { name: 'Водка Региональная' },
   { name: 'Водка Рекорд' },
   { name: 'Водка Ретро' },
-];
-
-export const ingredients = [
   { name: 'Водка Столичная' },
   { name: 'Водка Столичная Классическая' },
   { name: 'Водка Столичная Премиум' },
@@ -971,9 +917,6 @@ export const ingredients = [
   { name: 'Водка Софія' },
   { name: 'Водка Софія Премиум' },
   { name: 'Водка Софія Золото' },
-];
-
-export const ingredients = [
   { name: 'Водка Tito’s Handmade Vodka' },
   { name: 'Водка Тундра' },
   { name: 'Водка Тундра Аутентик' },
@@ -984,24 +927,18 @@ export const ingredients = [
   { name: 'Водка Three Olives Marilyn Monroe' },
   { name: 'Водка Thunder' },
   { name: 'Водка Tried and True' },
-  { name: 'Водка Tanqueray' },  // хотя это джин, иногда в списках водок по ошибке, но пропустим если строго
-  { name: 'Водка Tatra' },  // Tatra Tea иногда путают, но есть водочные вариации
-  { name: 'Водка Tuica' },  // румынская/молдавская, иногда классифицируют как водку
+  { name: 'Водка Tanqueray' }, // хотя это джин, иногда в списках водок по ошибке, но пропустим если строго
+  { name: 'Водка Tatra' }, // Tatra Tea иногда путают, но есть водочные вариации
+  { name: 'Водка Tuica' }, // румынская/молдавская, иногда классифицируют как водку
   { name: 'Водка Tovarishch' },
   { name: 'Водка Tsar' },
   { name: 'Водка Tundra Premium' },
   { name: 'Водка Тяпница' },
-  { name: 'Водка Турецкая ракти' },  // редкая/традиционная
+  { name: 'Водка Турецкая ракти' }, // редкая/традиционная
   { name: 'Водка Тройка' },
   { name: 'Водка Тайга' },
-];
-
-export const ingredients = [
   { name: 'Водка Ukiyo' },
   { name: 'Водка Utkins' },
-];
-
-export const ingredients = [
   { name: 'Водка Fair' },
   { name: 'Водка Fallen Angel' },
   { name: 'Водка Finlandia' },
@@ -1009,9 +946,6 @@ export const ingredients = [
   { name: 'Водка Finlandia Grapefruit' },
   { name: 'Водка Finlandia Mango' },
   { name: 'Водка Firestarter' },
-];
-
-export const ingredients = [
   { name: 'Водка Хортица' },
   { name: 'Водка Хортица Премиум' },
   { name: 'Водка Хортица Серебряная' },
@@ -1019,20 +953,14 @@ export const ingredients = [
   { name: 'Водка Хаски' },
   { name: 'Водка Хан' },
   { name: 'Водка Ханская' },
-  { name: 'Водка Хреновая' },  // иногда как "Хреновуха", но встречается как чистая водка с хреном
+  { name: 'Водка Хреновая' }, // иногда как "Хреновуха", но встречается как чистая водка с хреном
   { name: 'Водка Хлебная' },
-];
-
-export const ingredients = [
   { name: 'Водка Царская' },
   { name: 'Водка Царская Оригинальная' },
   { name: 'Водка Царская Золотая' },
   { name: 'Водка Царская Ледяная' },
   { name: 'Водка Царская Органик' },
-  { name: 'Водка Царская' },  // вкусовые вариации: арбуз, персик, вишня, яблоко, клубника и т.д. — их 11+ в линейке
-];
-
-export const ingredients = [
+  { name: 'Водка Царская' }, // вкусовые вариации: арбуз, персик, вишня, яблоко, клубника и т.д. — их 11+ в линейке
   { name: 'Водка Царская Чарка' },
   { name: 'Водка Царская Чарка Золотая' },
   { name: 'Водка Царская Чарка Серебряная' },
@@ -1047,9 +975,6 @@ export const ingredients = [
   { name: 'Водка Чистые Росы из ячменного зерна' },
   { name: 'Водка Чистые Росы с перцем' },
   { name: 'Водка Чистые Росы Органик' },
-];
-
-export const ingredients = [
   { name: 'Водка Шустов' },
   { name: 'Водка Шустов Сильвер' },
   { name: 'Водка Шустов Красная' },
@@ -1061,8 +986,7 @@ export const ingredients = [
   { name: 'Водка Taiga Shtof' },
   { name: 'Водка Taiga Shtof Классическая' },
   { name: 'Водка Штоф' },
-
   { name: 'Водка Ять' },
   { name: 'Водка Ять Классическая' },
   { name: 'Водка Ять с хреном' },
-];
+]

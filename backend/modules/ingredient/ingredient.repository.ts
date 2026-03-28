@@ -1,6 +1,4 @@
-import { PrismaClient } from '../../generated/prisma/index.js'
-
-const prisma = new PrismaClient()
+import prisma from '../../lib/db.js'
 
 export async function findMany(search: string) {
   return prisma.ingredient.findMany({
