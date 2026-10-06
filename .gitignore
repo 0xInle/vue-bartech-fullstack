@@ -2,7 +2,9 @@
 .vscode/
 **/node_modules/
 **/generated/
+**/dist/
+**/.eslintcache
+.DS_Store
+**/.DS_Store
 frontend/env.d.ts
 **/.env*
-AGENTS.md
-checks.md
