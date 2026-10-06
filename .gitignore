@@ -1,5 +1,11 @@
 .idea/
 .vscode/
+
+# Локальные инструкции и настройки агентов
+AGENTS.md
+.agents/
+.codex/
+
 **/node_modules/
 **/generated/
 **/dist/

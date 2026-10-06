@@ -1,6 +1,0 @@
-interface:
-  display_name: "Проверка документации"
-  short_description: "Независимая проверка проектной документации"
-  default_prompt: "Используй $review-documentation для независимой проверки выбранного документа или набора связанных документов."
-policy:
-  allow_implicit_invocation: false
