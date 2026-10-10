@@ -12,6 +12,12 @@
             {{ invitation.companyName }} · {{ invitation.venueName }}
           </p>
           <p v-else class="mt-2 text-sm text-zinc-600">{{ invitation.companyName }}</p>
+          <p
+            v-if="invitation.purpose === 'CREATE_VENUE_AS_BAR_MANAGER'"
+            class="text-sm text-zinc-600"
+          >
+            Вы создадите новое заведение в этой компании и станете его бар-менеджером.
+          </p>
           <p class="text-sm text-zinc-600">Должность: {{ invitation.roleLabel }}</p>
           <p v-if="invitation.accessDescription" class="text-sm text-zinc-600">
             {{ invitation.accessDescription }}
@@ -21,7 +27,9 @@
         <Message v-if="hasEmailMismatch" severity="warn" :closable="false">
           Вы вошли под другим адресом. Выйдите из аккаунта, чтобы принять или отклонить приглашение.
         </Message>
-        <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
+        <Message v-if="error && !venueNameError" severity="error" :closable="false">
+          {{ error }}
+        </Message>
         <div v-if="stage === 'preview'" class="flex flex-wrap gap-2">
           <Button
             v-if="!hasEmailMismatch"
@@ -132,6 +140,19 @@
             />
             <label for="invite-code" class="text-xs">Код подтверждения</label>
           </FloatLabel>
+          <FloatLabel v-if="needsVenueName" variant="on">
+            <InputText
+              id="invite-venue-name"
+              v-model="form.venueName"
+              required
+              maxlength="120"
+              size="small"
+              class="w-full"
+              @input="clearVenueNameError"
+            />
+            <label for="invite-venue-name" class="text-xs">Название нового заведения</label>
+          </FloatLabel>
+          <small v-if="venueNameError" class="block text-red-600">{{ venueNameError }}</small>
           <Button type="submit" label="Подтвердить и присоединиться" size="small" :loading="busy" />
           <Button
             type="button"
@@ -169,8 +190,37 @@
           </FloatLabel>
           <Button type="submit" label="Войти и присоединиться" size="small" :loading="busy" />
         </form>
+        <form
+          v-else-if="stage === 'venueName'"
+          class="space-y-3"
+          @submit.prevent="completeVenueInvitation"
+        >
+          <h2 class="text-base font-semibold">Новое заведение</h2>
+          <p class="text-sm text-zinc-600">
+            Укажите название заведения в компании «{{ invitation.companyName }}».
+          </p>
+          <FloatLabel variant="on">
+            <InputText
+              id="invite-existing-venue-name"
+              v-model="form.venueName"
+              required
+              maxlength="120"
+              size="small"
+              class="w-full"
+              @input="clearVenueNameError"
+            />
+            <label for="invite-existing-venue-name" class="text-xs">Название заведения</label>
+          </FloatLabel>
+          <small v-if="venueNameError" class="block text-red-600">{{ venueNameError }}</small>
+          <Button
+            type="submit"
+            label="Создать заведение и присоединиться"
+            size="small"
+            :loading="busy"
+          />
+        </form>
         <Button
-          v-if="['choose', 'register', 'verify', 'login'].includes(stage)"
+          v-if="['choose', 'register', 'verify', 'login', 'venueName'].includes(stage)"
           label="Отменить присоединение"
           severity="secondary"
           variant="text"
@@ -204,6 +254,7 @@ const {
   invitation,
   stage,
   error,
+  venueNameError,
   busy,
   form,
   identity,
@@ -215,8 +266,14 @@ const {
   cancelAcceptance,
   loginAndJoin,
   completeCurrentAccount,
+  completeVenueInvitation,
+  needsVenueName,
   switchAccount,
 } = useInvitationAcceptance();
+
+function clearVenueNameError(): void {
+  venueNameError.value = "";
+}
 
 const hasEmailMismatch = computed(
   () =>

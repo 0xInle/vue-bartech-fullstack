@@ -47,6 +47,14 @@
         >
           Шеф-бармены компании
         </NuxtLink>
+        <NuxtLink
+          v-if="workspace.permissions.includes('invite_chef_bartender')"
+          :to="newVenuePath"
+          class="rounded-md px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+          :aria-current="isNewVenue ? 'page' : undefined"
+        >
+          Новое заведение
+        </NuxtLink>
       </nav>
 
       <div class="mt-auto border-t border-zinc-200 pt-4">
@@ -101,12 +109,15 @@
       aria-label="Мобильная навигация"
       class="fixed inset-x-0 bottom-0 z-10 grid border-t border-zinc-200 bg-white p-2 lg:hidden"
       :class="{
-        'grid-cols-4':
+        'grid-cols-5':
           workspace.permissions.includes('view_team') &&
           workspace.permissions.includes('invite_chef_bartender'),
-        'grid-cols-3':
+        'grid-cols-4':
           workspace.permissions.includes('view_team') !==
           workspace.permissions.includes('invite_chef_bartender'),
+        'grid-cols-3':
+          workspace.permissions.includes('view_team') &&
+          !workspace.permissions.includes('invite_chef_bartender'),
         'grid-cols-2':
           !workspace.permissions.includes('view_team') &&
           !workspace.permissions.includes('invite_chef_bartender'),
@@ -142,6 +153,14 @@
       >
         Шеф-бармены
       </NuxtLink>
+      <NuxtLink
+        v-if="workspace.permissions.includes('invite_chef_bartender')"
+        :to="newVenuePath"
+        class="rounded-md px-3 py-2 text-center text-sm text-zinc-700 hover:bg-zinc-100"
+        :aria-current="isNewVenue ? 'page' : undefined"
+      >
+        Новое заведение
+      </NuxtLink>
     </nav>
   </div>
 </template>
@@ -173,9 +192,11 @@ const homePath = computed(
 const profilePath = computed(() => `${homePath.value}/profile`);
 const teamPath = computed(() => `${homePath.value}/team`);
 const companyChefPath = computed(() => `${homePath.value}/chefs`);
+const newVenuePath = computed(() => `${homePath.value}/new-venue`);
 const isProfile = computed(() => route.path.endsWith("/profile"));
 const isTeam = computed(() => route.path.endsWith("/team"));
 const isCompanyChefs = computed(() => route.path.endsWith("/chefs"));
+const isNewVenue = computed(() => route.path.endsWith("/new-venue"));
 
 function selectWorkspace(key: string): void {
   const selected = props.workplaces.find((item) => `${item.company.id}:${item.venue.id}` === key);

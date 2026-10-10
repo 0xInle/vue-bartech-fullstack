@@ -14,8 +14,13 @@
         />
       </header>
 
-      <div class="grid flex-1 items-center gap-8 lg:grid-cols-[1fr_360px]">
-        <section class="max-w-2xl">
+      <TransitionGroup
+        tag="div"
+        name="public-entry"
+        class="public-entry-layout flex-1"
+        :class="{ 'public-entry-layout--active': isEntryPanelVisible }"
+      >
+        <section key="hero" class="public-entry-hero">
           <p class="brand-eyebrow text-sm font-semibold uppercase tracking-[0.22em]">IndieBar</p>
           <p class="brand-description mt-3 max-w-xl text-base leading-7">
             Рабочее пространство для барной команды.
@@ -26,7 +31,7 @@
           </p>
           <div
             v-if="!flow.identity.currentUser.value"
-            class="mt-5 flex flex-wrap items-center gap-3"
+            class="public-entry-actions mt-5 flex flex-wrap items-center gap-3"
           >
             <Button
               type="button"
@@ -48,14 +53,10 @@
         </section>
 
         <section
-          v-if="
-            flow.identity.currentUser.value ||
-            flow.mode.value !== 'landing' ||
-            flow.notice.value ||
-            flow.errorMessage.value
-          "
+          v-if="isEntryPanelVisible"
           id="public-entry-panel"
-          class="auth-panel rounded-2xl border p-4 shadow-sm sm:p-5"
+          key="entry-panel"
+          class="public-entry-panel auth-panel rounded-2xl border p-4 shadow-sm sm:p-5"
           aria-live="polite"
         >
           <AccountSessionPanel
@@ -64,7 +65,10 @@
             :busy="flow.formsDisabled.value"
             @logout="flow.run(flow.logout)"
           >
-            <OrganizationsPanel :workplaces="flow.organizations.workplaces.value" />
+            <OrganizationsPanel
+              :workplaces="flow.organizations.workplaces.value"
+              :companies="flow.organizations.companies.value"
+            />
           </AccountSessionPanel>
           <RegistrationForm
             v-else-if="flow.mode.value === 'register' && flow.registration.step.value === 'details'"
@@ -124,7 +128,7 @@
             {{ flow.errorMessage.value }}
           </Message>
         </section>
-      </div>
+      </TransitionGroup>
 
       <footer class="mt-auto flex items-center justify-between gap-2 pt-4">
         <span class="landing-section-counter text-sm" aria-label="Секция 01 из 05">01 | 05</span>
@@ -192,9 +196,95 @@ import { usePublicEntryFlow } from "~/composables/usePublicEntryFlow";
 defineOptions({ name: "PublicEntryScreen" });
 
 const flow = usePublicEntryFlow();
+const isEntryPanelVisible = computed(
+  () =>
+    Boolean(flow.identity.currentUser.value) ||
+    flow.mode.value !== "landing" ||
+    Boolean(flow.notice.value) ||
+    Boolean(flow.errorMessage.value),
+);
 </script>
 
 <style scoped>
+.public-entry-layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  transition:
+    grid-template-columns 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    column-gap 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.public-entry-layout--active {
+  grid-template-columns: minmax(0, 1fr) 22.5rem;
+  column-gap: 2rem;
+}
+
+.public-entry-hero {
+  grid-column: 1 / -1;
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: center;
+  margin-inline: auto;
+  text-align: center;
+  transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.public-entry-layout--active .public-entry-hero {
+  grid-column: 1;
+  width: min(100%, 42rem);
+  align-items: flex-start;
+  margin-right: auto;
+  margin-left: 0;
+  text-align: left;
+}
+
+.public-entry-actions {
+  justify-content: center;
+}
+
+.public-entry-layout--active .public-entry-actions {
+  justify-content: flex-start;
+}
+
+.public-entry-panel {
+  grid-column: 2;
+  width: 100%;
+}
+
+.public-entry-move {
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.public-entry-enter-active,
+.public-entry-leave-active {
+  transition:
+    opacity 280ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.public-entry-enter-from,
+.public-entry-leave-to {
+  opacity: 0;
+  transform: translateX(1.5rem);
+}
+
+.public-entry-enter-active {
+  transition-delay: 50ms;
+}
+
+.public-entry-leave-active {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 22.5rem;
+  translate: 0 -50%;
+}
+
 .public-page {
   background: var(--p-surface-50);
   color: var(--p-text-color);
@@ -204,6 +294,54 @@ const flow = usePublicEntryFlow();
   background: var(--p-content-background);
   border-color: var(--p-content-border-color);
   color: var(--p-content-color);
+}
+
+@media (max-width: 63.999rem) {
+  .public-entry-layout,
+  .public-entry-layout--active {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 1.5rem;
+  }
+
+  .public-entry-layout--active {
+    align-content: start;
+    padding-block: 2rem;
+  }
+
+  .public-entry-hero,
+  .public-entry-layout--active .public-entry-hero,
+  .public-entry-panel {
+    grid-column: 1;
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  .public-entry-panel {
+    max-width: 28rem;
+  }
+
+  .public-entry-enter-from,
+  .public-entry-leave-to {
+    transform: translateY(1rem);
+  }
+
+  .public-entry-leave-active {
+    position: static;
+    top: auto;
+    right: auto;
+    width: 100%;
+    translate: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-entry-layout,
+  .public-entry-move,
+  .public-entry-enter-active,
+  .public-entry-leave-active {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
 }
 
 :deep(.brand-eyebrow),

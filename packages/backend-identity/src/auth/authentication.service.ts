@@ -216,6 +216,7 @@ export class AuthenticationService {
       email: user.email,
       fullName: user.fullName,
       workplaces: await this.organizations.listWorkspacesForUser(user.id),
+      companies: await this.organizations.listEmptyCompaniesForUser(user.id),
     };
   }
 

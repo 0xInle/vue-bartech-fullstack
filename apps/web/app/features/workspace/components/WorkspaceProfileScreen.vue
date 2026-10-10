@@ -16,6 +16,7 @@
       :full-name="currentUser.fullName"
       :email="currentUser.email"
       :workplaces="workplaces"
+      :companies="currentUser.companies"
       :busy="busy"
       :error-message="actionError"
       @logout="runLogout(false)"

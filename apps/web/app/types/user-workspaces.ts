@@ -7,9 +7,12 @@ export type Workspace = {
   permissions: string[];
 };
 
+export type CompanySummary = { id: string; name: string };
+
 export type CurrentUser = {
   id: string;
   email: string;
   fullName: string;
   workplaces: Workspace[];
+  companies: CompanySummary[];
 };

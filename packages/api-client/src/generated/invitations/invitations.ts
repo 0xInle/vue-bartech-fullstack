@@ -32,9 +32,12 @@ import type {
 
 import type {
   CompanyChefTeamResponseDto,
+  CompanyVenueInvitationsResponseDto,
+  CompleteExistingInvitationDto,
   CompleteInvitationRegistrationDto,
   CreateChefInvitationDto,
   CreateVenueInvitationDto,
+  CreateVenueManagerInvitationDto,
   InvitationAcceptanceStateDto,
   InviteTokenDto,
   PublicInvitationDto,
@@ -357,6 +360,317 @@ export const useInvitationsControllerRevokeChefInvitation = <TError = unknown,
         TContext
       > => {
       return useMutation(getInvitationsControllerRevokeChefInvitationMutationOptions(options), queryClient);
+    }
+    export type invitationsControllerCompanyVenueInvitationsResponse200 = {
+  data: CompanyVenueInvitationsResponseDto
+  status: 200
+}
+
+export type invitationsControllerCompanyVenueInvitationsResponseSuccess = (invitationsControllerCompanyVenueInvitationsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type invitationsControllerCompanyVenueInvitationsResponse = (invitationsControllerCompanyVenueInvitationsResponseSuccess)
+
+export const getInvitationsControllerCompanyVenueInvitationsUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venue-invitations`
+}
+
+/**
+ * @summary Получить приглашения для новых заведений компании
+ */
+export const invitationsControllerCompanyVenueInvitations = async (companyId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<invitationsControllerCompanyVenueInvitationsResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getInvitationsControllerCompanyVenueInvitationsUrl(companyId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: invitationsControllerCompanyVenueInvitationsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as invitationsControllerCompanyVenueInvitationsResponse
+}
+
+
+
+
+
+export const getInvitationsControllerCompanyVenueInvitationsQueryKey = (companyId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'venue-invitations'
+    ] as const;
+    }
+
+
+export const getInvitationsControllerCompanyVenueInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof invitationsControllerCompanyVenueInvitations>>, TError = unknown>(companyId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof invitationsControllerCompanyVenueInvitations>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getInvitationsControllerCompanyVenueInvitationsQueryKey(companyId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof invitationsControllerCompanyVenueInvitations>>> = ({ signal }) => invitationsControllerCompanyVenueInvitations(toValue(companyId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof invitationsControllerCompanyVenueInvitations>>, TError, TData>
+}
+
+export type InvitationsControllerCompanyVenueInvitationsQueryResult = NonNullable<Awaited<ReturnType<typeof invitationsControllerCompanyVenueInvitations>>>
+export type InvitationsControllerCompanyVenueInvitationsQueryError = unknown
+
+
+/**
+ * @summary Получить приглашения для новых заведений компании
+ */
+
+export function useInvitationsControllerCompanyVenueInvitations<TData = Awaited<ReturnType<typeof invitationsControllerCompanyVenueInvitations>>, TError = unknown>(
+ companyId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof invitationsControllerCompanyVenueInvitations>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getInvitationsControllerCompanyVenueInvitationsQueryOptions(companyId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type invitationsControllerCreateVenueManagerInvitationResponse200 = {
+  data: void
+  status: 200
+}
+
+export type invitationsControllerCreateVenueManagerInvitationResponseSuccess = (invitationsControllerCreateVenueManagerInvitationResponse200) & {
+  headers: Headers;
+};
+;
+
+export type invitationsControllerCreateVenueManagerInvitationResponse = (invitationsControllerCreateVenueManagerInvitationResponseSuccess)
+
+export const getInvitationsControllerCreateVenueManagerInvitationUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venue-invitations`
+}
+
+/**
+ * @summary Пригласить бар-менеджера для нового заведения
+ */
+export const invitationsControllerCreateVenueManagerInvitation = async (companyId: string,
+    createVenueManagerInvitationDto: CreateVenueManagerInvitationDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<invitationsControllerCreateVenueManagerInvitationResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getInvitationsControllerCreateVenueManagerInvitationUrl(companyId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createVenueManagerInvitationDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: invitationsControllerCreateVenueManagerInvitationResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as invitationsControllerCreateVenueManagerInvitationResponse
+}
+
+
+
+
+
+export const getInvitationsControllerCreateVenueManagerInvitationMutationKey = () => ['invitationsControllerCreateVenueManagerInvitation'] as const;
+
+export const getInvitationsControllerCreateVenueManagerInvitationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>, TError,InvitationsControllerCreateVenueManagerInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>, TError,InvitationsControllerCreateVenueManagerInvitationMutationVariables, TContext> => {
+
+const mutationKey = getInvitationsControllerCreateVenueManagerInvitationMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>, InvitationsControllerCreateVenueManagerInvitationMutationVariables> = (props) => {
+          const {companyId,data} = props ?? {};
+
+          return  invitationsControllerCreateVenueManagerInvitation(companyId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InvitationsControllerCreateVenueManagerInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>>
+    export type InvitationsControllerCreateVenueManagerInvitationMutationBody = CreateVenueManagerInvitationDto
+    export type InvitationsControllerCreateVenueManagerInvitationMutationError = unknown
+    export type InvitationsControllerCreateVenueManagerInvitationMutationVariables = {companyId: string;data: CreateVenueManagerInvitationDto}
+
+    /**
+ * @summary Пригласить бар-менеджера для нового заведения
+ */
+export const useInvitationsControllerCreateVenueManagerInvitation = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>, TError,InvitationsControllerCreateVenueManagerInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>,
+        TError,
+        InvitationsControllerCreateVenueManagerInvitationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getInvitationsControllerCreateVenueManagerInvitationMutationOptions(options), queryClient);
+    }
+    export type invitationsControllerRevokeVenueManagerInvitationResponse200 = {
+  data: void
+  status: 200
+}
+
+export type invitationsControllerRevokeVenueManagerInvitationResponseSuccess = (invitationsControllerRevokeVenueManagerInvitationResponse200) & {
+  headers: Headers;
+};
+;
+
+export type invitationsControllerRevokeVenueManagerInvitationResponse = (invitationsControllerRevokeVenueManagerInvitationResponseSuccess)
+
+export const getInvitationsControllerRevokeVenueManagerInvitationUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venue-invitations/revoke`
+}
+
+/**
+ * @summary Отозвать приглашение для нового заведения
+ */
+export const invitationsControllerRevokeVenueManagerInvitation = async (companyId: string,
+    revokeInvitationDto: RevokeInvitationDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<invitationsControllerRevokeVenueManagerInvitationResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getInvitationsControllerRevokeVenueManagerInvitationUrl(companyId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(revokeInvitationDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: invitationsControllerRevokeVenueManagerInvitationResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as invitationsControllerRevokeVenueManagerInvitationResponse
+}
+
+
+
+
+
+export const getInvitationsControllerRevokeVenueManagerInvitationMutationKey = () => ['invitationsControllerRevokeVenueManagerInvitation'] as const;
+
+export const getInvitationsControllerRevokeVenueManagerInvitationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>, TError,InvitationsControllerRevokeVenueManagerInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>, TError,InvitationsControllerRevokeVenueManagerInvitationMutationVariables, TContext> => {
+
+const mutationKey = getInvitationsControllerRevokeVenueManagerInvitationMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>, InvitationsControllerRevokeVenueManagerInvitationMutationVariables> = (props) => {
+          const {companyId,data} = props ?? {};
+
+          return  invitationsControllerRevokeVenueManagerInvitation(companyId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InvitationsControllerRevokeVenueManagerInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>>
+    export type InvitationsControllerRevokeVenueManagerInvitationMutationBody = RevokeInvitationDto
+    export type InvitationsControllerRevokeVenueManagerInvitationMutationError = unknown
+    export type InvitationsControllerRevokeVenueManagerInvitationMutationVariables = {companyId: string;data: RevokeInvitationDto}
+
+    /**
+ * @summary Отозвать приглашение для нового заведения
+ */
+export const useInvitationsControllerRevokeVenueManagerInvitation = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>, TError,InvitationsControllerRevokeVenueManagerInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>,
+        TError,
+        InvitationsControllerRevokeVenueManagerInvitationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getInvitationsControllerRevokeVenueManagerInvitationMutationOptions(options), queryClient);
     }
     export type invitationsControllerTeamResponse200 = {
   data: VenueTeamResponseDto
@@ -1512,14 +1826,28 @@ export const getInvitationsControllerCompleteExistingUrl = () => {
 /**
  * @summary Завершить приглашение для существующего аккаунта
  */
-export const invitationsControllerCompleteExisting = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<invitationsControllerCompleteExistingResponse> => {
+export const invitationsControllerCompleteExisting = async (completeExistingInvitationDto: CompleteExistingInvitationDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<invitationsControllerCompleteExistingResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getInvitationsControllerCompleteExistingUrl(),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getInvitationsControllerCompleteExistingUrl(),
   {
     ...options,
-    method: 'POST'
-
-
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(completeExistingInvitationDto)
   }
 )
 
@@ -1537,8 +1865,8 @@ export const invitationsControllerCompleteExisting = async ( options?: RequestIn
 export const getInvitationsControllerCompleteExistingMutationKey = () => ['invitationsControllerCompleteExisting'] as const;
 
 export const getInvitationsControllerCompleteExistingMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>, TError,void, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
-): UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>, TError,InvitationsControllerCompleteExistingMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>, TError,InvitationsControllerCompleteExistingMutationVariables, TContext> => {
 
 const mutationKey = getInvitationsControllerCompleteExistingMutationKey();
 const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
@@ -1550,10 +1878,10 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>, InvitationsControllerCompleteExistingMutationVariables> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  invitationsControllerCompleteExisting(fetchOptions, fetcherFn)
+          return  invitationsControllerCompleteExisting(data,fetchOptions, fetcherFn)
         }
 
 
@@ -1564,19 +1892,19 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
   return  { mutationFn, ...mutationOptions }}
 
     export type InvitationsControllerCompleteExistingMutationResult = NonNullable<Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>>
-
+    export type InvitationsControllerCompleteExistingMutationBody = CompleteExistingInvitationDto
     export type InvitationsControllerCompleteExistingMutationError = unknown
-
+    export type InvitationsControllerCompleteExistingMutationVariables = {data: CompleteExistingInvitationDto}
 
     /**
  * @summary Завершить приглашение для существующего аккаунта
  */
 export const useInvitationsControllerCompleteExisting = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>, TError,void, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>, TError,InvitationsControllerCompleteExistingMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof invitationsControllerCompleteExisting>>,
         TError,
-        void,
+        InvitationsControllerCompleteExistingMutationVariables,
         TContext
       > => {
       return useMutation(getInvitationsControllerCompleteExistingMutationOptions(options), queryClient);

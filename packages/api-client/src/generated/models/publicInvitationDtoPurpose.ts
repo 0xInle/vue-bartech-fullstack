@@ -12,4 +12,5 @@ export type PublicInvitationDtoPurpose = typeof PublicInvitationDtoPurpose[keyof
 export const PublicInvitationDtoPurpose = {
   JOIN_EXISTING_VENUE: 'JOIN_EXISTING_VENUE',
   JOIN_COMPANY_AS_CHEF: 'JOIN_COMPANY_AS_CHEF',
+  CREATE_VENUE_AS_BAR_MANAGER: 'CREATE_VENUE_AS_BAR_MANAGER',
 } as const;

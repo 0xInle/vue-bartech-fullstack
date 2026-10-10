@@ -17,6 +17,8 @@ export type WorkspaceInput = {
   venueName: string;
 };
 
+export type CompanySummary = { id: string; name: string };
+
 export type VenueInviteRole = "BARTENDER" | "SENIOR_BARTENDER" | "BAR_MANAGER";
 
 export function normalizeName(value: string): string {
@@ -134,6 +136,21 @@ export class OrganizationsService {
         first.company.name.localeCompare(second.company.name, "ru-RU") ||
         first.venue.name.localeCompare(second.venue.name, "ru-RU"),
     );
+  }
+
+  async listEmptyCompaniesForUser(userId: string): Promise<CompanySummary[]> {
+    const memberships = await this.database.companyMembership.findMany({
+      where: {
+        userId,
+        companyRole: "CHEF_BARTENDER",
+        company: { venues: { none: {} } },
+      },
+      select: { company: { select: { id: true, name: true } } },
+    });
+
+    return memberships
+      .map(({ company }) => company)
+      .sort((first, second) => first.name.localeCompare(second.name, "ru-RU"));
   }
 
   async findWorkspaceForUser(

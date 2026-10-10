@@ -364,8 +364,17 @@ export class InvitationAcceptanceService {
     });
   }
 
-  async completeInvitationRegistration(acceptanceToken: string, code: string) {
+  async completeInvitationRegistration(
+    acceptanceToken: string,
+    code: string,
+    venueNameInput?: string,
+  ) {
     const acceptance = await this.findAcceptanceSession(acceptanceToken);
+    const createsVenue = acceptance.invitation.purpose === "CREATE_VENUE_AS_BAR_MANAGER";
+    const venueName = venueNameInput === undefined ? "" : normalizeName(venueNameInput);
+    if (createsVenue && (!venueName || venueName.length > 120)) {
+      throw new BadRequestException("Укажите название заведения длиной не более 120 символов");
+    }
     const challenge = await this.database.emailChallenge.findFirst({
       where: {
         invitationSessionId: acceptance.id,
@@ -416,8 +425,16 @@ export class InvitationAcceptanceService {
           return { expired: true as const };
         }
         const isChefInvitation = activeSession.invitation.purpose === "JOIN_COMPANY_AS_CHEF";
+        const createsVenue = activeSession.invitation.purpose === "CREATE_VENUE_AS_BAR_MANAGER";
+        if (
+          createsVenue &&
+          (activeSession.invitation.venueId || activeSession.invitation.role !== "BAR_MANAGER")
+        ) {
+          throw new ConflictException("Цель приглашения указана неверно");
+        }
         if (
           !isChefInvitation &&
+          !createsVenue &&
           (!activeSession.invitation.venueId || !activeSession.invitation.role)
         ) {
           throw new ConflictException("Цель приглашения указана неверно");
@@ -477,6 +494,14 @@ export class InvitationAcceptanceService {
           });
           if (!venue) throw new ConflictException("В компании нет доступного заведения");
           venueId = venue.id;
+        } else if (createsVenue) {
+          venueId = (
+            await this.organizationInvitations.createInvitedVenueInTransaction(transaction, {
+              companyId: activeSession.invitation.companyId,
+              userId: user.id,
+              name: venueName,
+            })
+          ).id;
         } else {
           await transaction.venueMembership.create({
             data: {
@@ -502,7 +527,7 @@ export class InvitationAcceptanceService {
             actorType: "USER",
             actorId: user.id,
             companyId: activeSession.invitation.companyId,
-            venueId: activeSession.invitation.venueId,
+            venueId,
             entityType: "invitation",
             entityId: activeSession.invitationId,
             metadata: {
@@ -520,6 +545,9 @@ export class InvitationAcceptanceService {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        if (createsVenue && isVenueNameConflict(error)) {
+          throw new ConflictException("В компании уже есть заведение с таким названием");
+        }
         await this.closeInvitationAfterConflict(acceptance.invitationId);
         throw new ConflictException("Учётная запись или членство уже существуют");
       }
@@ -536,12 +564,21 @@ export class InvitationAcceptanceService {
     };
   }
 
-  async completeInvitationForUser(acceptanceToken: string, user: AuthenticatedUser) {
+  async completeInvitationForUser(
+    acceptanceToken: string,
+    user: AuthenticatedUser,
+    venueNameInput?: string,
+  ) {
     const acceptance = await this.findAcceptanceSession(acceptanceToken);
     if (acceptance.emailNormalized !== normalizeEmail(user.email)) {
       throw new ForbiddenException(
         "Войдите с адресом электронной почты, на который пришло приглашение",
       );
+    }
+    const createsVenue = acceptance.invitation.purpose === "CREATE_VENUE_AS_BAR_MANAGER";
+    const venueName = venueNameInput === undefined ? "" : normalizeName(venueNameInput);
+    if (createsVenue && (!venueName || venueName.length > 120)) {
+      throw new BadRequestException("Укажите название заведения длиной не более 120 символов");
     }
     let result: { expired: true } | { companyId: string; venueId: string };
     let closeOnMembershipConflict = false;
@@ -573,8 +610,16 @@ export class InvitationAcceptanceService {
           return { expired: true as const };
         }
         const isChefInvitation = activeSession.invitation.purpose === "JOIN_COMPANY_AS_CHEF";
+        const createsVenue = activeSession.invitation.purpose === "CREATE_VENUE_AS_BAR_MANAGER";
+        if (
+          createsVenue &&
+          (activeSession.invitation.venueId || activeSession.invitation.role !== "BAR_MANAGER")
+        ) {
+          throw new ConflictException("Цель приглашения указана неверно");
+        }
         if (
           !isChefInvitation &&
+          !createsVenue &&
           (!activeSession.invitation.venueId || !activeSession.invitation.role)
         ) {
           throw new ConflictException("Цель приглашения указана неверно");
@@ -600,12 +645,14 @@ export class InvitationAcceptanceService {
             },
           },
         });
+        let venueId = activeSession.invitation.venueId;
         if (isChefInvitation && companyMembership?.companyRole === "CHEF_BARTENDER") {
           closeOnMembershipConflict = true;
           throw new ConflictException("Вы уже являетесь шеф-барменом этой компании");
         }
         if (
           !isChefInvitation &&
+          !createsVenue &&
           (await transaction.venueMembership.findUnique({
             where: {
               userId_venueId: { userId: user.id, venueId: activeSession.invitation.venueId! },
@@ -647,6 +694,23 @@ export class InvitationAcceptanceService {
             completedInvitationId: activeSession.invitationId,
             actorId: user.id,
           });
+        } else if (createsVenue) {
+          if (companyMembership?.companyRole === "CHEF_BARTENDER") {
+            closeOnMembershipConflict = true;
+            throw new ConflictException("Вы уже являетесь шеф-барменом этой компании");
+          }
+          if (!companyMembership) {
+            await transaction.companyMembership.create({
+              data: { companyId: activeSession.invitation.companyId, userId: user.id },
+            });
+          }
+          venueId = (
+            await this.organizationInvitations.createInvitedVenueInTransaction(transaction, {
+              companyId: activeSession.invitation.companyId,
+              userId: user.id,
+              name: venueName,
+            })
+          ).id;
         } else {
           if (!companyMembership) {
             await transaction.companyMembership.create({
@@ -668,7 +732,7 @@ export class InvitationAcceptanceService {
             actorType: "USER",
             actorId: user.id,
             companyId: activeSession.invitation.companyId,
-            venueId: activeSession.invitation.venueId,
+            venueId,
             entityType: "invitation",
             entityId: activeSession.invitationId,
             metadata: {
@@ -678,8 +742,8 @@ export class InvitationAcceptanceService {
           },
         });
         await transaction.invitationAcceptanceSession.delete({ where: { id: activeSession.id } });
-        const venue = activeSession.invitation.venueId
-          ? { id: activeSession.invitation.venueId }
+        const venue = venueId
+          ? { id: venueId }
           : await transaction.venue.findFirst({
               where: { companyId: activeSession.invitation.companyId, status: "ACTIVE" },
               orderBy: { createdAt: "asc" },
@@ -693,6 +757,9 @@ export class InvitationAcceptanceService {
         await this.closeInvitationAfterConflict(acceptance.invitationId);
       }
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        if (createsVenue && isVenueNameConflict(error)) {
+          throw new ConflictException("В компании уже есть заведение с таким названием");
+        }
         await this.closeInvitationAfterConflict(acceptance.invitationId);
         throw new ConflictException("Членство уже создано. Приглашение закрыто без результата");
       }
@@ -785,4 +852,12 @@ export class InvitationAcceptanceService {
       await transaction.invitationAcceptanceSession.deleteMany({ where: { invitationId } });
     });
   }
+}
+
+function isVenueNameConflict(error: Prisma.PrismaClientKnownRequestError): boolean {
+  const target = error.meta?.target;
+  if (Array.isArray(target)) {
+    return target.includes("companyId") && target.includes("nameNormalized");
+  }
+  return typeof target === "string" && target.includes("venues_company_normalized_name_key");
 }

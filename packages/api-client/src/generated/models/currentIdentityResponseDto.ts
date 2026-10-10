@@ -5,6 +5,7 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { CompanySummaryDto } from './companySummaryDto';
 import type { WorkspaceSummaryDto } from './workspaceSummaryDto';
 
 export interface CurrentIdentityResponseDto {
@@ -12,4 +13,5 @@ export interface CurrentIdentityResponseDto {
   email: string;
   fullName: string;
   workplaces: WorkspaceSummaryDto[];
+  companies: CompanySummaryDto[];
 }

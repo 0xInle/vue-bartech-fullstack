@@ -12,4 +12,6 @@ export interface CompleteInvitationRegistrationDto {
      * @maxLength 6
      */
   code: string;
+  /** @maxLength 120 */
+  venueName?: string;
 }

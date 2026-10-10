@@ -7,7 +7,11 @@ import {
 } from "@nestjs/common";
 import { DATABASE_CLIENT, Prisma, PrismaClient } from "@bartech/database";
 import { PermissionService, type WorkspaceRole } from "./permissions/permission.service.js";
-import { type VenueInviteRole } from "./organizations.service.js";
+import {
+  normalizeName,
+  normalizeVenueName,
+  type VenueInviteRole,
+} from "./organizations.service.js";
 
 @Injectable()
 export class OrganizationInvitationsService {
@@ -26,6 +30,20 @@ export class OrganizationInvitationsService {
     );
   }
 
+  async revokeVenueManagerInvitation(
+    actorId: string,
+    companyId: string,
+    invitationId: string,
+  ): Promise<void> {
+    await this.database.$transaction((transaction) =>
+      this.revokeVenueManagerInvitationInTransaction(transaction, {
+        actorId,
+        companyId,
+        invitationId,
+      }),
+    );
+  }
+
   async revokeInvitation(
     actorId: string,
     companyId: string,
@@ -40,6 +58,311 @@ export class OrganizationInvitationsService {
         invitationId,
       }),
     );
+  }
+
+  async getCompanyVenueInvitations(
+    userId: string,
+    companyId: string,
+  ): Promise<{
+    invitations: Array<{
+      id: string;
+      email: string;
+      purpose: "CREATE_VENUE_AS_BAR_MANAGER";
+      role: "BAR_MANAGER";
+      status: "ACTIVE" | "IN_PROGRESS";
+      createdAt: Date;
+      expiresAt: Date;
+      canRevoke: boolean;
+    }>;
+  }> {
+    const company = await this.database.company.findUnique({
+      where: { id: companyId },
+      include: {
+        memberships: true,
+        venues: { where: { status: "ACTIVE" }, include: { memberships: true } },
+      },
+    });
+    if (!company) throw new NotFoundException("Компания не найдена");
+    this.assertCompanyInvitationManager(company, userId);
+    const now = new Date();
+    const invitations = await this.database.invitation.findMany({
+      where: {
+        companyId,
+        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
+        OR: [
+          { status: "ACTIVE", expiresAt: { gt: now } },
+          { status: "IN_PROGRESS", acceptanceSession: { is: { expiresAt: { gt: now } } } },
+        ],
+      },
+      include: { acceptanceSession: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return {
+      invitations: invitations.map((invitation) => ({
+        id: invitation.id,
+        email: invitation.email,
+        purpose: "CREATE_VENUE_AS_BAR_MANAGER" as const,
+        role: "BAR_MANAGER" as const,
+        status: invitation.status as "ACTIVE" | "IN_PROGRESS",
+        createdAt: invitation.createdAt,
+        expiresAt:
+          invitation.status === "IN_PROGRESS" && invitation.acceptanceSession
+            ? invitation.acceptanceSession.expiresAt
+            : invitation.expiresAt,
+        canRevoke: true,
+      })),
+    };
+  }
+
+  async createVenueManagerInvitationInTransaction(
+    transaction: Prisma.TransactionClient,
+    input: {
+      actorId: string;
+      companyId: string;
+      email: string;
+      emailNormalized: string;
+      tokenHash: string;
+      expiresAt: Date;
+    },
+  ): Promise<{
+    invitation: {
+      id: string;
+      email: string;
+      purpose: "CREATE_VENUE_AS_BAR_MANAGER";
+      role: "BAR_MANAGER";
+      status: "ACTIVE";
+      expiresAt: Date;
+    };
+    companyName: string;
+  }> {
+    await this.lockInvitationTargetInTransaction(
+      transaction,
+      input.emailNormalized,
+      input.companyId,
+    );
+    await this.closeExpiredTargetInvitationsInTransaction(
+      transaction,
+      input.emailNormalized,
+      input.companyId,
+    );
+    const company = await transaction.company.findUnique({
+      where: { id: input.companyId },
+      include: {
+        memberships: true,
+        venues: { where: { status: "ACTIVE" }, include: { memberships: true } },
+      },
+    });
+    if (!company) throw new NotFoundException("Компания не найдена");
+    this.assertCompanyInvitationManager(company, input.actorId);
+
+    const existingUser = await transaction.user.findUnique({
+      where: { emailNormalized: input.emailNormalized },
+      select: { id: true },
+    });
+    if (existingUser) {
+      const companyMembership = await transaction.companyMembership.findUnique({
+        where: { userId_companyId: { userId: existingUser.id, companyId: input.companyId } },
+        select: { companyRole: true },
+      });
+      if (companyMembership?.companyRole === "CHEF_BARTENDER") {
+        throw new ConflictException("Этот человек уже является шеф-барменом компании");
+      }
+    }
+    const chefInvitation = await transaction.invitation.findFirst({
+      where: {
+        companyId: input.companyId,
+        purpose: "JOIN_COMPANY_AS_CHEF",
+        emailNormalized: input.emailNormalized,
+        status: { in: ["ACTIVE", "IN_PROGRESS"] },
+      },
+      select: { id: true },
+    });
+    if (chefInvitation) {
+      throw new ConflictException(
+        "Для этого адреса уже есть приглашение шеф-бармена в компанию. Сначала завершите или отзовите его.",
+      );
+    }
+
+    const replaced = await transaction.invitation.findMany({
+      where: {
+        companyId: input.companyId,
+        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
+        emailNormalized: input.emailNormalized,
+        status: { in: ["ACTIVE", "IN_PROGRESS"] },
+      },
+      select: { id: true },
+    });
+    if (replaced.length) {
+      const now = new Date();
+      await transaction.invitation.updateMany({
+        where: {
+          id: { in: replaced.map(({ id }) => id) },
+          status: { in: ["ACTIVE", "IN_PROGRESS"] },
+        },
+        data: { status: "CLOSED", closedAt: now },
+      });
+      await transaction.auditEvent.createMany({
+        data: replaced.map(({ id }) => ({
+          eventType: "invitation.revoked",
+          actorType: "USER",
+          actorId: input.actorId,
+          companyId: input.companyId,
+          entityType: "invitation",
+          entityId: id,
+          metadata: { reason: "replaced" },
+        })),
+      });
+      await transaction.invitationAcceptanceSession.deleteMany({
+        where: { invitationId: { in: replaced.map(({ id }) => id) } },
+      });
+    }
+
+    const invitation = await transaction.invitation.create({
+      data: {
+        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
+        companyId: input.companyId,
+        email: input.email,
+        emailNormalized: input.emailNormalized,
+        role: "BAR_MANAGER",
+        tokenHash: input.tokenHash,
+        createdByUserId: input.actorId,
+        expiresAt: input.expiresAt,
+      },
+    });
+    await transaction.auditEvent.create({
+      data: {
+        eventType: "invitation.created",
+        actorType: "USER",
+        actorId: input.actorId,
+        companyId: input.companyId,
+        entityType: "invitation",
+        entityId: invitation.id,
+        metadata: { purpose: invitation.purpose, role: "BAR_MANAGER" },
+      },
+    });
+    return {
+      invitation: {
+        id: invitation.id,
+        email: invitation.email,
+        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
+        role: "BAR_MANAGER",
+        status: "ACTIVE",
+        expiresAt: invitation.expiresAt,
+      },
+      companyName: company.name,
+    };
+  }
+
+  async revokeVenueManagerInvitationInTransaction(
+    transaction: Prisma.TransactionClient,
+    input: { actorId: string; companyId: string; invitationId: string },
+  ): Promise<void> {
+    const invitation = await transaction.invitation.findFirst({
+      where: {
+        id: input.invitationId,
+        companyId: input.companyId,
+        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
+        status: { in: ["ACTIVE", "IN_PROGRESS"] },
+      },
+      select: { id: true, createdByUserId: true },
+    });
+    if (!invitation) throw new NotFoundException("Приглашение не найдено");
+    const company = await transaction.company.findUnique({
+      where: { id: input.companyId },
+      include: {
+        memberships: true,
+        venues: { where: { status: "ACTIVE" }, include: { memberships: true } },
+      },
+    });
+    if (!company) throw new NotFoundException("Приглашение не найдено");
+    if (invitation.createdByUserId !== input.actorId) {
+      this.assertCompanyInvitationManager(company, input.actorId);
+    }
+    const now = new Date();
+    const revoked = await transaction.invitation.updateMany({
+      where: { id: invitation.id, status: { in: ["ACTIVE", "IN_PROGRESS"] } },
+      data: { status: "CLOSED", closedAt: now },
+    });
+    if (revoked.count !== 1) throw new ConflictException("Приглашение уже закрыто");
+    await transaction.invitationAcceptanceSession.deleteMany({
+      where: { invitationId: invitation.id },
+    });
+    await transaction.auditEvent.create({
+      data: {
+        eventType: "invitation.revoked",
+        actorType: "USER",
+        actorId: input.actorId,
+        companyId: input.companyId,
+        entityType: "invitation",
+        entityId: invitation.id,
+      },
+    });
+  }
+
+  async createInvitedVenueInTransaction(
+    transaction: Prisma.TransactionClient,
+    input: { companyId: string; userId: string; name: string },
+  ): Promise<{ id: string }> {
+    const name = normalizeName(input.name);
+    if (!name || name.length > 120)
+      throw new ConflictException("Укажите корректное название заведения");
+    const nameNormalized = normalizeVenueName(name);
+    const company = await transaction.company.findUnique({
+      where: { id: input.companyId },
+      select: { id: true },
+    });
+    if (!company) throw new ConflictException("Компания больше недоступна");
+    const existingVenue = await transaction.venue.findFirst({
+      where: { companyId: input.companyId, nameNormalized },
+      select: { id: true },
+    });
+    if (existingVenue) {
+      throw new ConflictException("В компании уже есть заведение с таким названием");
+    }
+    const venue = await transaction.venue.create({
+      data: { companyId: input.companyId, name, nameNormalized },
+    });
+    await transaction.venueMembership.create({
+      data: {
+        companyId: input.companyId,
+        venueId: venue.id,
+        userId: input.userId,
+        role: "BAR_MANAGER",
+      },
+    });
+    await transaction.auditEvent.create({
+      data: {
+        eventType: "venue.created",
+        actorType: "USER",
+        actorId: input.userId,
+        companyId: input.companyId,
+        venueId: venue.id,
+        entityType: "venue",
+        entityId: venue.id,
+        metadata: { source: "invitation", initialRole: "BAR_MANAGER" },
+      },
+    });
+    return { id: venue.id };
+  }
+
+  private assertCompanyInvitationManager(
+    company: {
+      memberships: Array<{ userId: string; companyRole: string | null }>;
+      venues: Array<{ memberships: Array<{ userId: string; role: string }> }>;
+    },
+    userId: string,
+  ): void {
+    const isChef = company.memberships.some(
+      (membership) => membership.userId === userId && membership.companyRole === "CHEF_BARTENDER",
+    );
+    const isBarManager = company.venues.some((venue) =>
+      venue.memberships.some(
+        (membership) => membership.userId === userId && membership.role === "BAR_MANAGER",
+      ),
+    );
+    if (!isChef && !isBarManager) {
+      throw new NotFoundException("Управление приглашениями компании недоступно");
+    }
   }
 
   async cleanupExpiredInTransaction(
@@ -178,6 +501,11 @@ export class OrganizationInvitationsService {
       input.emailNormalized,
       input.companyId,
     );
+    await this.closeExpiredTargetInvitationsInTransaction(
+      transaction,
+      input.emailNormalized,
+      input.companyId,
+    );
 
     const existingUser = await transaction.user.findUnique({
       where: { emailNormalized: input.emailNormalized },
@@ -297,6 +625,72 @@ export class OrganizationInvitationsService {
     await transaction.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${emailNormalized + ":" + venueId}, 721804))`;
   }
 
+  private async closeExpiredTargetInvitationsInTransaction(
+    transaction: Prisma.TransactionClient,
+    emailNormalized: string,
+    companyId: string,
+  ): Promise<void> {
+    const now = new Date();
+    const expiredInvitations = await transaction.invitation.findMany({
+      where: {
+        emailNormalized,
+        companyId,
+        OR: [
+          { status: "ACTIVE", expiresAt: { lte: now } },
+          {
+            status: "IN_PROGRESS",
+            OR: [
+              { acceptanceSession: { is: null } },
+              { acceptanceSession: { is: { expiresAt: { lte: now } } } },
+            ],
+          },
+        ],
+      },
+      select: { id: true, companyId: true, venueId: true },
+    });
+    const closedInvitationIds: string[] = [];
+
+    for (const invitation of expiredInvitations) {
+      const closed = await transaction.invitation.updateMany({
+        where: {
+          id: invitation.id,
+          emailNormalized,
+          companyId,
+          OR: [
+            { status: "ACTIVE", expiresAt: { lte: now } },
+            {
+              status: "IN_PROGRESS",
+              OR: [
+                { acceptanceSession: { is: null } },
+                { acceptanceSession: { is: { expiresAt: { lte: now } } } },
+              ],
+            },
+          ],
+        },
+        data: { status: "CLOSED", closedAt: now },
+      });
+      if (closed.count !== 1) continue;
+
+      closedInvitationIds.push(invitation.id);
+      await transaction.auditEvent.create({
+        data: {
+          eventType: "invitation.expired",
+          actorType: "SYSTEM",
+          companyId: invitation.companyId,
+          venueId: invitation.venueId,
+          entityType: "invitation",
+          entityId: invitation.id,
+        },
+      });
+    }
+
+    if (closedInvitationIds.length) {
+      await transaction.invitationAcceptanceSession.deleteMany({
+        where: { invitationId: { in: closedInvitationIds } },
+      });
+    }
+  }
+
   async getCompanyChefTeam(
     userId: string,
     companyId: string,
@@ -414,6 +808,11 @@ export class OrganizationInvitationsService {
       input.emailNormalized,
       input.companyId,
     );
+    await this.closeExpiredTargetInvitationsInTransaction(
+      transaction,
+      input.emailNormalized,
+      input.companyId,
+    );
     const company = await transaction.company.findUnique({
       where: { id: input.companyId },
       include: {
@@ -489,7 +888,7 @@ export class OrganizationInvitationsService {
     const localInvitation = await transaction.invitation.findFirst({
       where: {
         companyId: input.companyId,
-        purpose: "JOIN_EXISTING_VENUE",
+        purpose: { in: ["JOIN_EXISTING_VENUE", "CREATE_VENUE_AS_BAR_MANAGER"] },
         emailNormalized: input.emailNormalized,
         status: { in: ["ACTIVE", "IN_PROGRESS"] },
       },
@@ -497,7 +896,7 @@ export class OrganizationInvitationsService {
     });
     if (localInvitation) {
       throw new ConflictException(
-        "Для этого адреса уже есть приглашение в заведение этой компании. Сначала завершите его или отзовите.",
+        "Для этого адреса уже есть несовместимое приглашение в этой компании. Сначала завершите его или отзовите.",
       );
     }
 
@@ -637,7 +1036,7 @@ export class OrganizationInvitationsService {
       where: {
         companyId: input.companyId,
         emailNormalized: input.emailNormalized,
-        purpose: "JOIN_EXISTING_VENUE",
+        purpose: { in: ["JOIN_EXISTING_VENUE", "CREATE_VENUE_AS_BAR_MANAGER"] },
         status: { in: ["ACTIVE", "IN_PROGRESS"] },
         id: { not: input.completedInvitationId },
       },
@@ -754,7 +1153,7 @@ export class OrganizationInvitationsService {
   }
 
   async findInvitationByToken(tokenHash: string): Promise<{
-    purpose: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF";
+    purpose: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF" | "CREATE_VENUE_AS_BAR_MANAGER";
     company: { name: string };
     venue: { name: string } | null;
     role: VenueInviteRole | null;

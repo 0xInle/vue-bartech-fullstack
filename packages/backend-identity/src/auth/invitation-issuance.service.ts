@@ -89,4 +89,38 @@ export class InvitationIssuanceService {
       };
     });
   }
+
+  async createVenueManagerInvitation(actorId: string, companyId: string, emailInput: string) {
+    const email = emailInput.trim();
+    const emailNormalized = normalizeEmail(email);
+    const token = randomBytes(32).toString("base64url");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    return this.database.$transaction(async (transaction) => {
+      const result = await this.organizationInvitations.createVenueManagerInvitationInTransaction(
+        transaction,
+        {
+          actorId,
+          companyId,
+          email,
+          emailNormalized,
+          tokenHash: sessionTokenHash(token),
+          expiresAt,
+        },
+      );
+      const origin = this.config.getOrThrow<string>("APP_ORIGIN").replace(/\/$/u, "");
+      await this.outbox.enqueue(transaction, "organizations.new_venue_invitation", {
+        to: email,
+        subject: `Приглашение открыть новое заведение в ${result.companyName} — IndieBar`,
+        text: `Вас приглашают открыть новое заведение в компании «${result.companyName}» в роли бар-менеджера. Название заведения вы укажете после принятия приглашения. Примите приглашение по персональной ссылке: ${origin}/invitations#${token}. Ссылка действует 24 часа.`,
+      });
+      return {
+        id: result.invitation.id,
+        email: result.invitation.email,
+        purpose: result.invitation.purpose,
+        role: "BAR_MANAGER" as const,
+        status: result.invitation.status,
+        expiresAt: result.invitation.expiresAt,
+      };
+    });
+  }
 }

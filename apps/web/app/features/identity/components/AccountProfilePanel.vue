@@ -40,6 +40,17 @@
         </li>
       </ul>
       <p v-else class="mt-3 text-sm text-zinc-600">Сейчас у аккаунта нет доступных заведений.</p>
+      <ul v-if="companies.length" class="mt-4 divide-y divide-zinc-200">
+        <li v-for="company in companies" :key="company.id" class="py-3 first:pt-0 last:pb-0">
+          <p class="font-medium">{{ company.name }}</p>
+          <NuxtLink
+            :to="`/app/companies/${company.id}`"
+            class="mt-1 inline-block text-sm text-emerald-700 hover:underline"
+          >
+            Добавить заведение
+          </NuxtLink>
+        </li>
+      </ul>
     </section>
 
     <section class="rounded-xl border border-zinc-200 bg-white p-5">
@@ -71,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Workspace } from "~/types/user-workspaces";
+import type { CompanySummary, Workspace } from "~/types/user-workspaces";
 
 defineOptions({ name: "AccountProfilePanel" });
 
@@ -79,6 +90,7 @@ defineProps<{
   fullName: string;
   email: string;
   workplaces: Workspace[];
+  companies: CompanySummary[];
   busy: boolean;
   errorMessage: string;
 }>();

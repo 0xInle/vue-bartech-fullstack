@@ -1,5 +1,13 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsIn, IsNotEmpty, IsString, Length, MaxLength } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsEmail,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+  MaxLength,
+} from "class-validator";
 
 export const VENUE_INVITE_ROLES = ["BARTENDER", "SENIOR_BARTENDER", "BAR_MANAGER"] as const;
 
@@ -16,6 +24,13 @@ export class CreateVenueInvitationDto {
 
 export class CreateChefInvitationDto {
   @ApiProperty({ example: "chef@example.ru" })
+  @IsEmail()
+  @MaxLength(254)
+  email!: string;
+}
+
+export class CreateVenueManagerInvitationDto {
+  @ApiProperty({ example: "manager@example.ru" })
   @IsEmail()
   @MaxLength(254)
   email!: string;
@@ -47,6 +62,20 @@ export class CompleteInvitationRegistrationDto {
   @IsString()
   @Length(6, 6)
   code!: string;
+
+  @ApiPropertyOptional({ example: "Бар на Петровке", maxLength: 120 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  venueName?: string;
+}
+
+export class CompleteExistingInvitationDto {
+  @ApiPropertyOptional({ example: "Бар на Петровке", maxLength: 120 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  venueName?: string;
 }
 
 export class RevokeInvitationDto {
@@ -105,8 +134,10 @@ export class VenueTeamResponseDto {
 }
 
 export class PublicInvitationDto {
-  @ApiProperty({ enum: ["JOIN_EXISTING_VENUE", "JOIN_COMPANY_AS_CHEF"] })
-  purpose!: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF";
+  @ApiProperty({
+    enum: ["JOIN_EXISTING_VENUE", "JOIN_COMPANY_AS_CHEF", "CREATE_VENUE_AS_BAR_MANAGER"],
+  })
+  purpose!: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF" | "CREATE_VENUE_AS_BAR_MANAGER";
 
   @ApiProperty()
   companyName!: string;
@@ -164,6 +195,37 @@ export class CompanyChefTeamResponseDto {
 
   @ApiProperty({ type: [CompanyChefInvitationDto] })
   invitations!: CompanyChefInvitationDto[];
+}
+
+export class CompanyVenueInvitationDto {
+  @ApiProperty({ format: "uuid" })
+  id!: string;
+
+  @ApiProperty()
+  email!: string;
+
+  @ApiProperty({ enum: ["CREATE_VENUE_AS_BAR_MANAGER"] })
+  purpose!: "CREATE_VENUE_AS_BAR_MANAGER";
+
+  @ApiProperty({ enum: ["BAR_MANAGER"] })
+  role!: "BAR_MANAGER";
+
+  @ApiProperty({ enum: ["ACTIVE", "IN_PROGRESS"] })
+  status!: "ACTIVE" | "IN_PROGRESS";
+
+  @ApiProperty({ format: "date-time" })
+  createdAt!: Date;
+
+  @ApiProperty({ format: "date-time" })
+  expiresAt!: Date;
+
+  @ApiProperty()
+  canRevoke!: boolean;
+}
+
+export class CompanyVenueInvitationsResponseDto {
+  @ApiProperty({ type: [CompanyVenueInvitationDto] })
+  invitations!: CompanyVenueInvitationDto[];
 }
 
 export class InvitationAcceptanceStateDto {

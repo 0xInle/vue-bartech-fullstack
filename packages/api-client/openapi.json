@@ -18,7 +18,9 @@
           }
         },
         "summary": "Проверить, что процесс HTTP API запущен",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     },
     "/api/v1/health/ready": {
@@ -38,7 +40,9 @@
           }
         },
         "summary": "Проверить готовность критичных зависимостей",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     },
     "/api/v1/meta": {
@@ -58,7 +62,9 @@
           }
         },
         "summary": "Получить безопасную информацию о версии API",
-        "tags": ["meta"]
+        "tags": [
+          "meta"
+        ]
       }
     },
     "/api/v1/identity/csrf": {
@@ -78,7 +84,9 @@
           }
         },
         "summary": "Получить CSRF-токен для изменяющих запросов",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/registration": {
@@ -108,7 +116,9 @@
           }
         },
         "summary": "Начать регистрацию и отправить код подтверждения",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/registration/resend": {
@@ -128,7 +138,9 @@
           }
         },
         "summary": "Повторно отправить код подтверждения регистрации",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/registration/verify": {
@@ -158,7 +170,9 @@
           }
         },
         "summary": "Подтвердить email и атомарно создать аккаунт с первой компанией",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/login": {
@@ -188,7 +202,9 @@
           }
         },
         "summary": "Войти по электронной почте и паролю",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/logout": {
@@ -208,7 +224,9 @@
           }
         },
         "summary": "Завершить текущую сессию",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/logout-all": {
@@ -228,7 +246,9 @@
           }
         },
         "summary": "Завершить все сессии аккаунта",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/session": {
@@ -248,7 +268,9 @@
           }
         },
         "summary": "Получить текущего пользователя и доступные рабочие пространства",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/password-recovery": {
@@ -278,7 +300,9 @@
           }
         },
         "summary": "Запросить код восстановления пароля",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/password-recovery/complete": {
@@ -308,7 +332,9 @@
           }
         },
         "summary": "Подтвердить код и установить новый пароль",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/password": {
@@ -338,7 +364,9 @@
           }
         },
         "summary": "Изменить пароль текущего аккаунта",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}": {
@@ -378,7 +406,9 @@
           }
         },
         "summary": "Получить доступный рабочий контекст заведения",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations": {
@@ -408,7 +438,9 @@
           }
         },
         "summary": "Создать компанию и первое заведение для существующего пользователя",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/chef-team": {
@@ -437,7 +469,9 @@
           }
         },
         "summary": "Получить шеф-барменов и приглашения компании",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/chef-invitations": {
@@ -469,7 +503,9 @@
           }
         },
         "summary": "Пригласить шеф-бармена в компанию",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/chef-invitations/revoke": {
@@ -501,7 +537,106 @@
           }
         },
         "summary": "Отозвать приглашение шеф-бармена",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venue-invitations": {
+      "get": {
+        "operationId": "InvitationsController_companyVenueInvitations",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyVenueInvitationsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Получить приглашения для новых заведений компании",
+        "tags": [
+          "invitations"
+        ]
+      },
+      "post": {
+        "operationId": "InvitationsController_createVenueManagerInvitation",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVenueManagerInvitationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Приглашение создано, письмо поставлено в Outbox"
+          }
+        },
+        "summary": "Пригласить бар-менеджера для нового заведения",
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venue-invitations/revoke": {
+      "post": {
+        "operationId": "InvitationsController_revokeVenueManagerInvitation",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeInvitationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Приглашение и его сессия закрыты"
+          }
+        },
+        "summary": "Отозвать приглашение для нового заведения",
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/team": {
@@ -538,7 +673,9 @@
           }
         },
         "summary": "Получить команду и открытые приглашения заведения",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/invitations": {
@@ -578,7 +715,9 @@
           }
         },
         "summary": "Пригласить сотрудника в существующее заведение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/invitations/revoke": {
@@ -618,7 +757,9 @@
           }
         },
         "summary": "Отозвать приглашение в заведение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/preview": {
@@ -648,7 +789,9 @@
           }
         },
         "summary": "Получить минимум данных приглашения по токену в теле запроса",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/current": {
@@ -668,7 +811,9 @@
           }
         },
         "summary": "Восстановить принятое приглашение по защищённой cookie",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/accept": {
@@ -691,7 +836,9 @@
           }
         },
         "summary": "Принять приглашение и начать 60-минутную сессию",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/decline": {
@@ -714,7 +861,9 @@
           }
         },
         "summary": "Отклонить персональное приглашение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/cancel": {
@@ -727,7 +876,9 @@
           }
         },
         "summary": "Отменить начатое присоединение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/registration": {
@@ -750,7 +901,9 @@
           }
         },
         "summary": "Начать регистрацию по принятому приглашению",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/registration/resend": {
@@ -763,7 +916,9 @@
           }
         },
         "summary": "Повторно отправить код подтверждения приглашения",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/registration/verify": {
@@ -786,20 +941,34 @@
           }
         },
         "summary": "Подтвердить адрес и завершить присоединение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/complete": {
       "post": {
         "operationId": "InvitationsController_completeExisting",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteExistingInvitationDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Пользователь получил членство и доступ"
           }
         },
         "summary": "Завершить приглашение для существующего аккаунта",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     }
   },
@@ -819,10 +988,14 @@
           "status": {
             "type": "string",
             "example": "ok",
-            "enum": ["ok"]
+            "enum": [
+              "ok"
+            ]
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "MetaResponseDto": {
         "type": "object",
@@ -836,7 +1009,10 @@
             "example": "1.0.0"
           }
         },
-        "required": ["name", "version"]
+        "required": [
+          "name",
+          "version"
+        ]
       },
       "CsrfTokenResponseDto": {
         "type": "object",
@@ -845,7 +1021,9 @@
             "type": "string"
           }
         },
-        "required": ["token"]
+        "required": [
+          "token"
+        ]
       },
       "RegistrationStartDto": {
         "type": "object",
@@ -875,7 +1053,13 @@
             "maxLength": 120
           }
         },
-        "required": ["email", "password", "fullName", "companyName", "venueName"]
+        "required": [
+          "email",
+          "password",
+          "fullName",
+          "companyName",
+          "venueName"
+        ]
       },
       "AcceptedDto": {
         "type": "object",
@@ -885,7 +1069,9 @@
             "example": true
           }
         },
-        "required": ["accepted"]
+        "required": [
+          "accepted"
+        ]
       },
       "VerifyEmailDto": {
         "type": "object",
@@ -897,7 +1083,9 @@
             "maxLength": 6
           }
         },
-        "required": ["code"]
+        "required": [
+          "code"
+        ]
       },
       "PublicUserDto": {
         "type": "object",
@@ -912,7 +1100,11 @@
             "type": "string"
           }
         },
-        "required": ["id", "email", "fullName"]
+        "required": [
+          "id",
+          "email",
+          "fullName"
+        ]
       },
       "CompanySummaryDto": {
         "type": "object",
@@ -924,7 +1116,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "VenueSummaryDto": {
         "type": "object",
@@ -936,7 +1131,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "RegistrationCompleteResponseDto": {
         "type": "object",
@@ -954,7 +1152,12 @@
             "type": "string"
           }
         },
-        "required": ["user", "company", "venue", "redirectTo"]
+        "required": [
+          "user",
+          "company",
+          "venue",
+          "redirectTo"
+        ]
       },
       "LoginDto": {
         "type": "object",
@@ -967,7 +1170,10 @@
             "type": "string"
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "LoginResponseDto": {
         "type": "object",
@@ -976,7 +1182,9 @@
             "$ref": "#/components/schemas/PublicUserDto"
           }
         },
-        "required": ["user"]
+        "required": [
+          "user"
+        ]
       },
       "WorkspaceCompanyDto": {
         "type": "object",
@@ -988,7 +1196,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "WorkspaceVenueDto": {
         "type": "object",
@@ -1000,7 +1211,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "WorkspaceSummaryDto": {
         "type": "object",
@@ -1013,24 +1227,43 @@
           },
           "role": {
             "type": "string",
-            "enum": ["bartender", "senior_bartender", "bar_manager", "chef_bartender"]
+            "enum": [
+              "bartender",
+              "senior_bartender",
+              "bar_manager",
+              "chef_bartender"
+            ]
           },
           "roleLabel": {
             "type": "string"
           },
           "scope": {
             "type": "string",
-            "enum": ["company", "venue"]
+            "enum": [
+              "company",
+              "venue"
+            ]
           },
           "permissions": {
-            "example": ["view_products", "view_archive", "manage_products"],
+            "example": [
+              "view_products",
+              "view_archive",
+              "manage_products"
+            ],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": ["company", "venue", "role", "roleLabel", "scope", "permissions"]
+        "required": [
+          "company",
+          "venue",
+          "role",
+          "roleLabel",
+          "scope",
+          "permissions"
+        ]
       },
       "CurrentIdentityResponseDto": {
         "type": "object",
@@ -1049,9 +1282,21 @@
             "items": {
               "$ref": "#/components/schemas/WorkspaceSummaryDto"
             }
+          },
+          "companies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanySummaryDto"
+            }
           }
         },
-        "required": ["id", "email", "fullName", "workplaces"]
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "workplaces",
+          "companies"
+        ]
       },
       "PasswordRecoveryRequestDto": {
         "type": "object",
@@ -1061,7 +1306,9 @@
             "example": "bar.manager@example.ru"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "PasswordRecoveryCompleteDto": {
         "type": "object",
@@ -1082,7 +1329,11 @@
             "maxLength": 256
           }
         },
-        "required": ["email", "code", "password"]
+        "required": [
+          "email",
+          "code",
+          "password"
+        ]
       },
       "ChangePasswordDto": {
         "type": "object",
@@ -1096,7 +1347,10 @@
             "maxLength": 256
           }
         },
-        "required": ["currentPassword", "newPassword"]
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
       },
       "CreateCompanyDto": {
         "type": "object",
@@ -1112,7 +1366,10 @@
             "maxLength": 120
           }
         },
-        "required": ["companyName", "venueName"]
+        "required": [
+          "companyName",
+          "venueName"
+        ]
       },
       "CreateCompanyResponseDto": {
         "type": "object",
@@ -1127,7 +1384,11 @@
             "type": "string"
           }
         },
-        "required": ["company", "venue", "redirectTo"]
+        "required": [
+          "company",
+          "venue",
+          "redirectTo"
+        ]
       },
       "CompanyChefMemberDto": {
         "type": "object",
@@ -1143,7 +1404,11 @@
             "type": "string"
           }
         },
-        "required": ["id", "fullName", "email"]
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
       },
       "CompanyChefInvitationDto": {
         "type": "object",
@@ -1157,7 +1422,10 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "IN_PROGRESS"]
+            "enum": [
+              "ACTIVE",
+              "IN_PROGRESS"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -1168,7 +1436,13 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "email", "status", "createdAt", "expiresAt"]
+        "required": [
+          "id",
+          "email",
+          "status",
+          "createdAt",
+          "expiresAt"
+        ]
       },
       "CompanyChefTeamResponseDto": {
         "type": "object",
@@ -1186,7 +1460,10 @@
             }
           }
         },
-        "required": ["members", "invitations"]
+        "required": [
+          "members",
+          "invitations"
+        ]
       },
       "CreateChefInvitationDto": {
         "type": "object",
@@ -1196,7 +1473,9 @@
             "example": "chef@example.ru"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "RevokeInvitationDto": {
         "type": "object",
@@ -1206,7 +1485,87 @@
             "format": "uuid"
           }
         },
-        "required": ["invitationId"]
+        "required": [
+          "invitationId"
+        ]
+      },
+      "CompanyVenueInvitationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "CREATE_VENUE_AS_BAR_MANAGER"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "BAR_MANAGER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_PROGRESS"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "canRevoke": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "purpose",
+          "role",
+          "status",
+          "createdAt",
+          "expiresAt",
+          "canRevoke"
+        ]
+      },
+      "CompanyVenueInvitationsResponseDto": {
+        "type": "object",
+        "properties": {
+          "invitations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanyVenueInvitationDto"
+            }
+          }
+        },
+        "required": [
+          "invitations"
+        ]
+      },
+      "CreateVenueManagerInvitationDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "manager@example.ru"
+          }
+        },
+        "required": [
+          "email"
+        ]
       },
       "VenueTeamMemberDto": {
         "type": "object",
@@ -1223,7 +1582,11 @@
           },
           "role": {
             "type": "string",
-            "enum": ["BARTENDER", "SENIOR_BARTENDER", "BAR_MANAGER"]
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BAR_MANAGER"
+            ]
           },
           "delegatedPermissions": {
             "type": "array",
@@ -1232,7 +1595,13 @@
             }
           }
         },
-        "required": ["id", "fullName", "email", "role", "delegatedPermissions"]
+        "required": [
+          "id",
+          "fullName",
+          "email",
+          "role",
+          "delegatedPermissions"
+        ]
       },
       "VenueInvitationDto": {
         "type": "object",
@@ -1246,11 +1615,18 @@
           },
           "role": {
             "type": "string",
-            "enum": ["BARTENDER", "SENIOR_BARTENDER", "BAR_MANAGER"]
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BAR_MANAGER"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "IN_PROGRESS"]
+            "enum": [
+              "ACTIVE",
+              "IN_PROGRESS"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -1264,7 +1640,15 @@
             "type": "boolean"
           }
         },
-        "required": ["id", "email", "role", "status", "createdAt", "expiresAt", "canRevoke"]
+        "required": [
+          "id",
+          "email",
+          "role",
+          "status",
+          "createdAt",
+          "expiresAt",
+          "canRevoke"
+        ]
       },
       "VenueTeamResponseDto": {
         "type": "object",
@@ -1282,7 +1666,10 @@
             }
           }
         },
-        "required": ["members", "invitations"]
+        "required": [
+          "members",
+          "invitations"
+        ]
       },
       "CreateVenueInvitationDto": {
         "type": "object",
@@ -1293,10 +1680,17 @@
           },
           "role": {
             "type": "string",
-            "enum": ["BARTENDER", "SENIOR_BARTENDER", "BAR_MANAGER"]
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BAR_MANAGER"
+            ]
           }
         },
-        "required": ["email", "role"]
+        "required": [
+          "email",
+          "role"
+        ]
       },
       "InviteTokenDto": {
         "type": "object",
@@ -1307,14 +1701,20 @@
             "maxLength": 128
           }
         },
-        "required": ["token"]
+        "required": [
+          "token"
+        ]
       },
       "PublicInvitationDto": {
         "type": "object",
         "properties": {
           "purpose": {
             "type": "string",
-            "enum": ["JOIN_EXISTING_VENUE", "JOIN_COMPANY_AS_CHEF"]
+            "enum": [
+              "JOIN_EXISTING_VENUE",
+              "JOIN_COMPANY_AS_CHEF",
+              "CREATE_VENUE_AS_BAR_MANAGER"
+            ]
           },
           "companyName": {
             "type": "string"
@@ -1325,7 +1725,11 @@
           },
           "role": {
             "type": "string",
-            "enum": ["BARTENDER", "SENIOR_BARTENDER", "BAR_MANAGER"],
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BAR_MANAGER"
+            ],
             "nullable": true
           },
           "roleLabel": {
@@ -1364,7 +1768,10 @@
             "type": "boolean"
           }
         },
-        "required": ["invitation", "registrationStarted"]
+        "required": [
+          "invitation",
+          "registrationStarted"
+        ]
       },
       "StartInvitationRegistrationDto": {
         "type": "object",
@@ -1380,7 +1787,10 @@
             "maxLength": 256
           }
         },
-        "required": ["fullName", "password"]
+        "required": [
+          "fullName",
+          "password"
+        ]
       },
       "CompleteInvitationRegistrationDto": {
         "type": "object",
@@ -1390,9 +1800,26 @@
             "example": "123456",
             "minLength": 6,
             "maxLength": 6
+          },
+          "venueName": {
+            "type": "string",
+            "example": "Бар на Петровке",
+            "maxLength": 120
           }
         },
-        "required": ["code"]
+        "required": [
+          "code"
+        ]
+      },
+      "CompleteExistingInvitationDto": {
+        "type": "object",
+        "properties": {
+          "venueName": {
+            "type": "string",
+            "example": "Бар на Петровке",
+            "maxLength": 120
+          }
+        }
       }
     }
   }

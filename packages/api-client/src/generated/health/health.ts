@@ -120,6 +120,12 @@ export function useHealthControllerLive<TData = Awaited<ReturnType<typeof health
 
   return query;
 }
+
+
+
+
+
+
 export type healthControllerReadyResponse200 = {
   data: HealthStatusDto
   status: 200
@@ -211,3 +217,9 @@ export function useHealthControllerReady<TData = Awaited<ReturnType<typeof healt
 
   return query;
 }
+
+
+
+
+
+

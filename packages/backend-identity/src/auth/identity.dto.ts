@@ -145,4 +145,7 @@ export class LoginResponseDto {
 export class CurrentIdentityResponseDto extends PublicUserDto {
   @ApiProperty({ type: [WorkspaceSummaryDto] })
   workplaces!: WorkspaceSummaryDto[];
+
+  @ApiProperty({ type: [CompanySummaryDto] })
+  companies!: CompanySummaryDto[];
 }

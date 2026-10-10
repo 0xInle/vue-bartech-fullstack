@@ -14,7 +14,7 @@ import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow
 import { requestApi } from "~/utils/api-response";
 
 type Invitation = {
-  purpose: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF";
+  purpose: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF" | "CREATE_VENUE_AS_BAR_MANAGER";
   companyName: string;
   venueName: string | null;
   role: string | null;
@@ -35,13 +35,18 @@ export function useInvitationAcceptance() {
     | "register"
     | "verify"
     | "login"
+    | "venueName"
     | "done"
     | "declined"
     | "missing"
   >("loading");
   const error = ref("");
+  const venueNameError = ref("");
   const busy = ref(false);
-  const form = reactive({ fullName: "", password: "", email: "", code: "" });
+  const form = reactive({ fullName: "", password: "", email: "", code: "", venueName: "" });
+  const needsVenueName = computed(
+    () => invitation.value?.purpose === "CREATE_VENUE_AS_BAR_MANAGER",
+  );
 
   async function load(): Promise<void> {
     invitationToken = window.location.hash.slice(1);
@@ -134,13 +139,19 @@ export function useInvitationAcceptance() {
   async function verifyRegistration(): Promise<void> {
     await run(async () => {
       await identity.refreshCsrf();
-      const result = await requestApi<{ redirectTo: string }>(
-        invitationsControllerVerifyRegistration(
-          { code: form.code },
-          identity.mutationOptions(),
-          identity.apiFetch,
-        ),
-      );
+      let result: { redirectTo: string };
+      try {
+        result = await requestApi<{ redirectTo: string }>(
+          invitationsControllerVerifyRegistration(
+            { code: form.code, venueName: needsVenueName.value ? form.venueName : undefined },
+            identity.mutationOptions(),
+            identity.apiFetch,
+          ),
+        );
+      } catch (cause) {
+        setVenueNameError(cause);
+        throw cause;
+      }
       stage.value = "done";
       await navigateTo(result.redirectTo, { replace: true });
     });
@@ -175,21 +186,50 @@ export function useInvitationAcceptance() {
           identity.apiFetch,
         ),
       );
-      const result = await requestApi<{ redirectTo: string }>(
-        invitationsControllerCompleteExisting(identity.mutationOptions(), identity.apiFetch),
-      );
-      await navigateTo(result.redirectTo, { replace: true });
+      if (needsVenueName.value) {
+        stage.value = "venueName";
+        return;
+      }
+      await completeExistingInvitation();
     });
   }
 
   async function completeCurrentAccount(): Promise<void> {
     await run(async () => {
       await identity.refreshCsrf();
-      const result = await requestApi<{ redirectTo: string }>(
-        invitationsControllerCompleteExisting(identity.mutationOptions(), identity.apiFetch),
-      );
+      if (needsVenueName.value) {
+        stage.value = "venueName";
+        return;
+      }
+      await completeExistingInvitation();
+    });
+  }
+
+  async function completeVenueInvitation(): Promise<void> {
+    await run(async () => {
+      await identity.refreshCsrf();
+      let result: { redirectTo: string };
+      try {
+        result = await requestApi<{ redirectTo: string }>(
+          invitationsControllerCompleteExisting(
+            { venueName: form.venueName },
+            identity.mutationOptions(),
+            identity.apiFetch,
+          ),
+        );
+      } catch (cause) {
+        setVenueNameError(cause);
+        throw cause;
+      }
       await navigateTo(result.redirectTo, { replace: true });
     });
+  }
+
+  async function completeExistingInvitation(): Promise<void> {
+    const result = await requestApi<{ redirectTo: string }>(
+      invitationsControllerCompleteExisting({}, identity.mutationOptions(), identity.apiFetch),
+    );
+    await navigateTo(result.redirectTo, { replace: true });
   }
 
   async function switchAccount(): Promise<void> {
@@ -203,6 +243,7 @@ export function useInvitationAcceptance() {
   async function run(action: () => Promise<void>): Promise<void> {
     busy.value = true;
     error.value = "";
+    venueNameError.value = "";
     try {
       await action();
     } catch (cause) {
@@ -212,12 +253,19 @@ export function useInvitationAcceptance() {
     }
   }
 
+  function setVenueNameError(cause: unknown): void {
+    if (cause instanceof Error && cause.message.toLowerCase().includes("назван")) {
+      venueNameError.value = cause.message;
+    }
+  }
+
   onMounted(load);
 
   return {
     invitation,
     stage,
     error,
+    venueNameError,
     busy,
     form,
     identity,
@@ -229,6 +277,8 @@ export function useInvitationAcceptance() {
     cancelAcceptance,
     loginAndJoin,
     completeCurrentAccount,
+    completeVenueInvitation,
+    needsVenueName,
     switchAccount,
   };
 }

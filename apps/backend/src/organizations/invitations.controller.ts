@@ -42,6 +42,9 @@ import {
   PublicInvitationDto,
   VenueTeamResponseDto,
   CompanyChefTeamResponseDto,
+  CompanyVenueInvitationsResponseDto,
+  CompleteExistingInvitationDto,
+  CreateVenueManagerInvitationDto,
 } from "./invitations.dto.js";
 
 const INVITATION_COOKIE = "bartech_invitation";
@@ -87,6 +90,46 @@ export class InvitationsController {
     @Body() body: RevokeInvitationDto,
   ) {
     await this.organizationInvitations.revokeChefInvitation(user.id, companyId, body.invitationId);
+    return { accepted: true };
+  }
+
+  @Get("organizations/companies/:companyId/venue-invitations")
+  @UseGuards(SessionGuard)
+  @ApiOperation({ summary: "Получить приглашения для новых заведений компании" })
+  @ApiOkResponse({ type: CompanyVenueInvitationsResponseDto })
+  companyVenueInvitations(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+  ) {
+    return this.organizationInvitations.getCompanyVenueInvitations(user.id, companyId);
+  }
+
+  @Post("organizations/companies/:companyId/venue-invitations")
+  @UseGuards(SessionGuard)
+  @ApiOperation({ summary: "Пригласить бар-менеджера для нового заведения" })
+  @ApiOkResponse({ description: "Приглашение создано, письмо поставлено в Outbox" })
+  createVenueManagerInvitation(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Body() body: CreateVenueManagerInvitationDto,
+  ) {
+    return this.invitationIssuance.createVenueManagerInvitation(user.id, companyId, body.email);
+  }
+
+  @Post("organizations/companies/:companyId/venue-invitations/revoke")
+  @UseGuards(SessionGuard)
+  @ApiOperation({ summary: "Отозвать приглашение для нового заведения" })
+  @ApiOkResponse({ description: "Приглашение и его сессия закрыты" })
+  async revokeVenueManagerInvitation(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Body() body: RevokeInvitationDto,
+  ) {
+    await this.organizationInvitations.revokeVenueManagerInvitation(
+      user.id,
+      companyId,
+      body.invitationId,
+    );
     return { accepted: true };
   }
 
@@ -258,7 +301,11 @@ export class InvitationsController {
   ) {
     const token = readCookie(request, INVITATION_COOKIE);
     if (!token) throw new ForbiddenException("Сначала примите приглашение");
-    const result = await this.invitationAcceptance.completeInvitationRegistration(token, body.code);
+    const result = await this.invitationAcceptance.completeInvitationRegistration(
+      token,
+      body.code,
+      body.venueName,
+    );
     this.clearInvitationCookie(response);
     this.setSessionCookie(response, result.session.token, result.session.expiresAt);
     return { user: result.user, redirectTo: result.redirectTo };
@@ -270,12 +317,17 @@ export class InvitationsController {
   @ApiOkResponse({ description: "Пользователь получил членство и доступ" })
   async completeExisting(
     @CurrentUser() user: AuthenticatedUser,
+    @Body() body: CompleteExistingInvitationDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
     const token = readCookie(request, INVITATION_COOKIE);
     if (!token) throw new ForbiddenException("Сначала примите приглашение");
-    const result = await this.invitationAcceptance.completeInvitationForUser(token, user);
+    const result = await this.invitationAcceptance.completeInvitationForUser(
+      token,
+      user,
+      body.venueName,
+    );
     this.clearInvitationCookie(response);
     return result;
   }

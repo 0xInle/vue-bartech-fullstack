@@ -30,6 +30,7 @@ enum InvitationStatus {
 enum InvitationPurpose {
   JOIN_EXISTING_VENUE
   JOIN_COMPANY_AS_CHEF
+  CREATE_VENUE_AS_BAR_MANAGER
 }
 
 model Company {
