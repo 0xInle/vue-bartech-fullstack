@@ -1,16 +1,23 @@
 .idea/
 .vscode/
 
+.superpowers/
+
 # Локальные инструкции и настройки агентов
 AGENTS.md
 .agents/
 .codex/
 
 **/node_modules/
-**/generated/
+.pnpm-store/
 **/dist/
+**/.nuxt/
+**/.output/
+**/*.tsbuildinfo
 **/.eslintcache
 .DS_Store
 **/.DS_Store
 frontend/env.d.ts
 **/.env*
+!**/.env.example
+packages/database/src/generated/

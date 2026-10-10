@@ -1,0 +1,114 @@
+enum ChallengePurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  INVITATION_EMAIL_VERIFICATION
+}
+
+enum OutboxStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+model User {
+  id                                String                        @id @default(uuid()) @db.Uuid
+  email                             String
+  emailNormalized                   String                        @unique(map: "users_email_normalized_key")
+  passwordHash                      String
+  emailVerifiedAt                   DateTime                      @db.Timestamptz(6)
+  createdAt                         DateTime                      @default(now()) @db.Timestamptz(6)
+  updatedAt                         DateTime                      @updatedAt @db.Timestamptz(6)
+  profile                           UserProfile?
+  sessions                          Session[]
+  challenges                        EmailChallenge[]
+  companyMemberships                CompanyMembership[]
+  venueMemberships                  VenueMembership[]
+  delegatedPermissionsGranted       DelegatedPermission[]
+  temporaryResponsibilitiesAssigned TemporaryResponsibility[]
+  createdInvitations                Invitation[]
+  invitationAcceptanceSessions      InvitationAcceptanceSession[]
+  auditEvents                       AuditEvent[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  userId    String   @id @db.Uuid
+  fullName  String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model RegistrationAttempt {
+  id                    String           @id @default(uuid()) @db.Uuid
+  email                 String
+  emailNormalized       String
+  fullName              String
+  passwordHash          String
+  companyName           String
+  companyNameNormalized String
+  venueName             String
+  venueNameNormalized   String
+  tokenHash             String           @unique(map: "registration_attempts_token_hash_key")
+  expiresAt             DateTime         @db.Timestamptz(6)
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  challenges            EmailChallenge[]
+
+  @@index([emailNormalized, expiresAt], map: "registration_attempts_email_expiry_idx")
+  @@index([expiresAt], map: "registration_attempts_expiry_idx")
+  @@map("registration_attempts")
+}
+
+model EmailChallenge {
+  id                    String                       @id @default(uuid()) @db.Uuid
+  emailNormalized       String
+  purpose               ChallengePurpose
+  codeHash              String
+  attemptCount          Int                          @default(0)
+  expiresAt             DateTime                     @db.Timestamptz(6)
+  consumedAt            DateTime?                    @db.Timestamptz(6)
+  createdAt             DateTime                     @default(now()) @db.Timestamptz(6)
+  userId                String?                      @db.Uuid
+  registrationAttemptId String?                      @db.Uuid
+  invitationSessionId   String?                      @db.Uuid
+  user                  User?                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  registrationAttempt   RegistrationAttempt?         @relation(fields: [registrationAttemptId], references: [id], onDelete: Cascade)
+  invitationSession     InvitationAcceptanceSession? @relation(fields: [invitationSessionId], references: [id], onDelete: Cascade)
+
+  @@index([emailNormalized, purpose, expiresAt], map: "email_challenges_lookup_idx")
+  @@map("email_challenges")
+}
+
+model Session {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @db.Uuid
+  tokenHash      String    @unique(map: "sessions_token_hash_key")
+  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+  lastActivityAt DateTime  @default(now()) @db.Timestamptz(6)
+  expiresAt      DateTime  @db.Timestamptz(6)
+  revokedAt      DateTime? @db.Timestamptz(6)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt, expiresAt], map: "sessions_user_active_idx")
+  @@index([expiresAt], map: "sessions_expiry_idx")
+  @@map("sessions")
+}
+
+model OutboxMessage {
+  id                String       @id @default(uuid()) @db.Uuid
+  eventType         String
+  status            OutboxStatus @default(PENDING)
+  payloadCiphertext String?
+  payloadIv         String?
+  payloadAuthTag    String?
+  attemptCount      Int          @default(0)
+  nextAttemptAt     DateTime     @default(now()) @db.Timestamptz(6)
+  createdAt         DateTime     @default(now()) @db.Timestamptz(6)
+  deliveredAt       DateTime?    @db.Timestamptz(6)
+
+  @@index([status, nextAttemptAt], map: "outbox_messages_pending_idx")
+  @@map("outbox_messages")
+}

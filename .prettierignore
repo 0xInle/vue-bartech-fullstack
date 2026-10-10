@@ -1,0 +1,6 @@
+**/.nuxt/
+**/.output/
+**/dist/
+packages/api-client/src/generated/
+packages/database/src/generated/
+pnpm-lock.yaml

@@ -1,0 +1,176 @@
+enum CompanyRole {
+  CHEF_BARTENDER
+}
+
+enum VenueRole {
+  BARTENDER
+  SENIOR_BARTENDER
+  BAR_MANAGER
+}
+
+enum DelegatedPermissionCode {
+  MANAGE_PRODUCTS
+  MANAGE_PRODUCT_ARCHIVE
+  DELETE_PRODUCTS_PERMANENTLY
+  EXPORT_DATA
+  INVITE_EMPLOYEES
+}
+
+enum VenueStatus {
+  ACTIVE
+}
+
+enum InvitationStatus {
+  ACTIVE
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+}
+
+enum InvitationPurpose {
+  JOIN_EXISTING_VENUE
+  JOIN_COMPANY_AS_CHEF
+}
+
+model Company {
+  id             String              @id @default(uuid()) @db.Uuid
+  name           String
+  nameNormalized String
+  createdAt      DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime            @updatedAt @db.Timestamptz(6)
+  venues         Venue[]
+  memberships    CompanyMembership[]
+  invitations    Invitation[]
+  auditEvents    AuditEvent[]
+
+  @@map("companies")
+}
+
+model Venue {
+  id                      String                   @id @default(uuid()) @db.Uuid
+  companyId               String                   @db.Uuid
+  name                    String
+  nameNormalized          String
+  status                  VenueStatus              @default(ACTIVE)
+  createdAt               DateTime                 @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime                 @updatedAt @db.Timestamptz(6)
+  company                 Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  memberships             VenueMembership[]
+  temporaryResponsibility TemporaryResponsibility?
+  invitations             Invitation[]
+  auditEvents             AuditEvent[]
+
+  @@unique([id, companyId], map: "venues_id_company_id_key")
+  @@unique([companyId, nameNormalized], map: "venues_company_normalized_name_key")
+  @@index([companyId], map: "venues_company_id_idx")
+  @@map("venues")
+}
+
+model CompanyMembership {
+  id               String            @id @default(uuid()) @db.Uuid
+  userId           String            @db.Uuid
+  companyId        String            @db.Uuid
+  companyRole      CompanyRole?
+  createdAt        DateTime          @default(now()) @db.Timestamptz(6)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  venueMemberships VenueMembership[]
+
+  @@unique([userId, companyId], map: "company_memberships_user_company_key")
+  @@index([companyId], map: "company_memberships_company_id_idx")
+  @@map("company_memberships")
+}
+
+model VenueMembership {
+  id                      String                   @id @default(uuid()) @db.Uuid
+  userId                  String                   @db.Uuid
+  companyId               String                   @db.Uuid
+  venueId                 String                   @db.Uuid
+  role                    VenueRole                @default(BAR_MANAGER)
+  createdAt               DateTime                 @default(now()) @db.Timestamptz(6)
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue                   Venue                    @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
+  companyMembership       CompanyMembership        @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
+  delegatedPermissions    DelegatedPermission[]
+  temporaryResponsibility TemporaryResponsibility?
+
+  @@unique([userId, venueId], map: "venue_memberships_user_venue_key")
+  @@unique([id, venueId], map: "venue_memberships_id_venue_key")
+  @@index([companyId, venueId], map: "venue_memberships_company_venue_idx")
+  @@map("venue_memberships")
+}
+
+model DelegatedPermission {
+  id                String                  @id @default(uuid()) @db.Uuid
+  venueMembershipId String                  @db.Uuid
+  code              DelegatedPermissionCode
+  grantedByUserId   String                  @db.Uuid
+  grantedAt         DateTime                @default(now()) @db.Timestamptz(6)
+  venueMembership   VenueMembership         @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
+  grantedBy         User                    @relation(fields: [grantedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([venueMembershipId, code], map: "delegated_permissions_membership_code_key")
+  @@index([grantedByUserId], map: "delegated_permissions_granted_by_idx")
+  @@map("delegated_permissions")
+}
+
+model TemporaryResponsibility {
+  id                String          @id @default(uuid()) @db.Uuid
+  venueId           String          @unique(map: "temporary_responsibilities_venue_key") @db.Uuid
+  venueMembershipId String          @db.Uuid
+  assignedByUserId  String          @db.Uuid
+  reason            String
+  assignedAt        DateTime        @default(now()) @db.Timestamptz(6)
+  venue             Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venueMembership   VenueMembership @relation(fields: [venueMembershipId, venueId], references: [id, venueId], onDelete: Cascade)
+  assignedBy        User            @relation(fields: [assignedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([venueMembershipId, venueId], map: "temporary_responsibilities_membership_venue_key")
+  @@index([assignedByUserId], map: "temporary_responsibilities_assigned_by_idx")
+  @@map("temporary_responsibilities")
+}
+
+model Invitation {
+  id                String                       @id @default(uuid()) @db.Uuid
+  purpose           InvitationPurpose            @default(JOIN_EXISTING_VENUE)
+  companyId         String                       @db.Uuid
+  venueId           String?                      @db.Uuid
+  email             String
+  emailNormalized   String
+  role              VenueRole?
+  tokenHash         String                       @unique(map: "invitations_token_hash_key")
+  createdByUserId   String?                      @db.Uuid
+  status            InvitationStatus             @default(ACTIVE)
+  createdAt         DateTime                     @default(now()) @db.Timestamptz(6)
+  expiresAt         DateTime                     @db.Timestamptz(6)
+  completedAt       DateTime?                    @db.Timestamptz(6)
+  closedAt          DateTime?                    @db.Timestamptz(6)
+  company           Company                      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  venue             Venue?                       @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
+  createdBy         User?                        @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  acceptanceSession InvitationAcceptanceSession?
+
+  @@index([venueId, status, expiresAt], map: "invitations_venue_status_expiry_idx")
+  @@index([emailNormalized, venueId], map: "invitations_email_venue_idx")
+  @@index([companyId, purpose, status, expiresAt], map: "invitations_company_purpose_status_expiry_idx")
+  @@map("invitations")
+}
+
+model InvitationAcceptanceSession {
+  id              String           @id @default(uuid()) @db.Uuid
+  invitationId    String           @unique(map: "invitation_acceptance_sessions_invitation_key") @db.Uuid
+  tokenHash       String           @unique(map: "invitation_acceptance_sessions_token_hash_key")
+  emailNormalized String
+  startedAt       DateTime         @default(now()) @db.Timestamptz(6)
+  expiresAt       DateTime         @db.Timestamptz(6)
+  userId          String?          @db.Uuid
+  fullName        String?
+  passwordHash    String?
+  emailVerifiedAt DateTime?        @db.Timestamptz(6)
+  invitation      Invitation       @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  user            User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenges      EmailChallenge[]
+
+  @@index([expiresAt], map: "invitation_acceptance_sessions_expiry_idx")
+  @@map("invitation_acceptance_sessions")
+}

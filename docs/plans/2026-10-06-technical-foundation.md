@@ -1,4 +1,4 @@
-# Технический фундамент BarTech — план реализации
+# Технический фундамент IndieBar — план реализации
 
 > **Для агента-исполнителя:** выполнять пункты последовательно и отмечать чекбоксы по мере завершения. Тесты, тестовые библиотеки и тестовую инфраструктуру не создавать и не запускать без отдельного прямого разрешения пользователя.
 
@@ -25,29 +25,29 @@
 ## Файловая карта
 
 ```text
-pnpm-workspace.yaml              # workspace пакеты
-package.json                     # корневые команды и закреплённый package manager
+pnpm-workspace.yaml              # пакеты workspace
+package.json                     # корневые команды и закреплённый менеджер пакетов
 pnpm-lock.yaml                   # единый lock-файл
-.npmrc                           # только необходимые настройки pnpm
-.node-version                    # выбранная Node.js LTS для локальной разработки и CI
+.npmrc                           # настройки pnpm
+.node-version                    # версия Node.js для локальной разработки и CI
 .editorconfig                    # общие правила редактора
-eslint.config.mjs                # общий flat config и настройки Vue/TypeScript
-.prettierrc.json                 # общее форматирование
+eslint.config.mjs                # общие правила ESLint для Vue/TypeScript
+.prettierrc.json                 # общие правила форматирования
 apps/
-  web/                           # Nuxt 4, публичная стартовая страница, app shell
-  backend/                       # NestJS HTTP API и worker entrypoint
+  web/                           # Nuxt 4, публичная стартовая страница и оболочка приложения
+  backend/                       # HTTP API на NestJS и точка входа worker
 packages/
-  database/                      # Prisma schema, Prisma client и миграции
-  api-client/                    # Orval config и сгенерированный API-клиент
+  database/                      # схема Prisma, Prisma client и миграции
+  api-client/                    # настройки Orval и сгенерированный API-клиент
 tooling/                         # только фактически используемые общие настройки
 infrastructure/
-  compose.yaml                   # PostgreSQL, Redis, MinIO и Mailpit для разработки
+  compose.yaml                   # PostgreSQL, Redis и Mailpit для разработки
 .github/workflows/ci.yml         # статические проверки без тестов
 ```
 
 `packages/backend-*` создаются в тех этапах, где появляются соответствующие доменные модули. Nuxt Layers добавляются вместе с первыми предметными разделами, а не как пустые каталоги.
 
-## Review Focus
+## На что обратить внимание
 
 - **Повторяемая установка зависимостей:** версии package manager, Node.js и пакетов согласованы между локальной средой и CI; frozen install не изменяет lock-файл.
 - **Публикация OpenAPI:** спецификация и Orval-клиент воспроизводимо генерируются из единого backend-контракта; CI умеет обнаружить рассинхронизацию.
@@ -73,33 +73,33 @@ infrastructure/
 - Node.js LTS выбирается на момент реализации по официальному lifecycle; один и тот же диапазон применяется локально и в CI.
 - ESLint flat config и Prettier имеют общие правила, Vue/TypeScript поддерживаются без дублирования конфигурации во всех пакетах.
 
-- [ ] Проверить актуальные стабильные версии pnpm и Node.js LTS по официальным источникам.
-- [ ] Создать корневую конфигурацию workspace и закрепить `packageManager`.
-- [ ] Настроить общие EditorConfig, Prettier и ESLint flat config.
-- [ ] Разрешить Git отслеживать только безопасные `.env.example`, сохранив игнорирование локальных `.env`.
-- [ ] Добавить корневые команды workspace, пока срабатывающие только для созданных приложений и пакетов.
-- [ ] Выполнить frozen install и проверить, что `pnpm-lock.yaml` не меняется повторной установкой.
+- [x] Проверить актуальные стабильные версии pnpm и Node.js LTS по официальным источникам.
+- [x] Создать корневую конфигурацию workspace и закрепить `packageManager`.
+- [x] Настроить общие EditorConfig, Prettier и ESLint flat config.
+- [x] Разрешить Git отслеживать только безопасные `.env.example`, сохранив игнорирование локальных `.env`.
+- [x] Добавить корневые команды workspace, пока срабатывающие только для созданных приложений и пакетов.
+- [x] Выполнить frozen install и проверить, что `pnpm-lock.yaml` не меняется повторной установкой.
 
 ### Задача 2. Пустое Nuxt-приложение и базовая оболочка
 
 **Файлы:**
 
-- Создать: `apps/web/package.json`, `apps/web/nuxt.config.ts`, `apps/web/app.vue`, `apps/web/pages/index.vue`, директории Nuxt приложения, конфигурацию ESLint при необходимости.
+- Создать: `apps/web/package.json`, `apps/web/nuxt.config.ts`, `apps/web/app/app.vue`, `apps/web/app/pages/index.vue`, директории Nuxt приложения, конфигурацию ESLint при необходимости.
 - Создать: файлы manifest, иконки-заглушки бренда и service worker через выбранный стабильный Nuxt PWA-модуль, если требуются конфигурацией.
 
 **Результат и интерфейсы:**
 
-- Nuxt-приложение запускается, собирается и отображает нейтральную стартовую страницу BarTech.
+- Nuxt-приложение запускается, собирается и отображает нейтральную стартовую страницу IndieBar.
 - В проект подключены PrimeVue 4 Aura, Tailwind CSS, TanStack Query for Vue, VeeValidate и Zod в пределах утверждённой архитектуры.
 - PWA устанавливается и кеширует только оболочку/статические ресурсы; бизнес-данные офлайн не сохраняются.
 - `app.vue` является только технической оболочкой. Регистрация, лендинг как продукт, CRM-навигация и карточки продукции пока не реализуются.
 
-- [ ] Сверить официальные инструкции Nuxt 4 и совместимые стабильные версии интеграций.
-- [ ] Создать минимальный Nuxt app с TypeScript strict mode и стартовой страницей.
-- [ ] Подключить PrimeVue Aura и Tailwind CSS стандартным для Nuxt способом.
-- [ ] Подключить TanStack Query, VeeValidate и Zod без Pinia.
-- [ ] Подключить PWA-модуль с сеть-обязательным поведением для будущих бизнес-данных.
-- [ ] Проверить `pnpm --filter web lint`, `pnpm --filter web typecheck` и `pnpm --filter web build`.
+- [x] Сверить официальные инструкции Nuxt 4 и совместимые стабильные версии интеграций.
+- [x] Создать минимальный Nuxt app с TypeScript strict mode и стартовой страницей.
+- [x] Подключить PrimeVue Aura и Tailwind CSS стандартным для Nuxt способом.
+- [x] Подключить TanStack Query, VeeValidate и Zod без Pinia.
+- [x] Подключить PWA-модуль с сеть-обязательным поведением для будущих бизнес-данных.
+- [x] Проверить lint, typecheck и build Nuxt-приложения.
 
 ### Задача 3. NestJS HTTP API и worker entrypoint
 
@@ -117,13 +117,13 @@ infrastructure/
 - Минимальный endpoint `/api/v1/meta` предоставляет безопасный пример DTO для документации OpenAPI и генерации API-клиента.
 - Ошибки не выдают stack trace, SQL, секреты и персональные данные.
 
-- [ ] Сверить официальные инструкции NestJS 11, Express adapter, Swagger/OpenAPI, Pino и BullMQ.
-- [ ] Создать NestJS-модульный каркас с независимыми HTTP и worker entrypoints.
-- [ ] Реализовать безопасную загрузку конфигурации и fail-fast валидацию обязательных environment variables.
-- [ ] Добавить request ID, структурированные логи и маскирование секретных полей.
-- [ ] Добавить общий формат Problem Details, глобальную DTO-валидацию и минимальные health/meta endpoints.
-- [ ] Подключить Prisma/Redis readiness checks с корректным закрытием ресурсов при завершении процесса.
-- [ ] Проверить `pnpm --filter backend lint`, `pnpm --filter backend typecheck` и сборку обоих entrypoints.
+- [x] Сверить официальные инструкции NestJS 11, Express adapter, Swagger/OpenAPI, Pino и BullMQ.
+- [x] Создать NestJS-модульный каркас с независимыми HTTP и worker entrypoints.
+- [x] Реализовать безопасную загрузку конфигурации и fail-fast валидацию обязательных environment variables.
+- [x] Добавить request ID, структурированные логи и маскирование секретных полей.
+- [x] Добавить общий формат Problem Details, глобальную DTO-валидацию и минимальные health/meta endpoints.
+- [x] Подключить Prisma/Redis readiness checks с корректным закрытием ресурсов при завершении процесса.
+- [x] Проверить lint, typecheck и сборку HTTP API и worker entrypoint.
 
 ### Задача 4. Prisma package и генерируемый API-клиент
 
@@ -139,15 +139,15 @@ infrastructure/
 - Начальная схема содержит только технически необходимые настройки Prisma; продуктовые модели добавляются в следующих этапах из `DATA_MODEL.md`.
 - OpenAPI генерируется из Nest decorators/DTO и сохраняется в воспроизводимом виде для генерации Orval.
 - `packages/api-client` содержит генерируемые TypeScript-типы и TanStack Query composables для `/api/v1/meta`; сгенерированные файлы не редактируются вручную.
-- CI может повторно сгенерировать клиент и проверить отсутствие diff.
+- CI после фиксации сгенерированных файлов может проверить отсутствие расхождений при повторной генерации клиента.
 
-- [ ] Сверить официальные инструкции Prisma stable, multi-file schema, Prisma config и миграций.
-- [ ] Создать database workspace package и проверить Prisma schema.
-- [ ] Подключить Prisma client к backend lifecycle без обращения контроллеров напрямую к БД.
-- [ ] Экспортировать OpenAPI-схему из backend по повторяемой команде.
-- [ ] Настроить Orval на генерацию типов, функций запросов и Vue Query composables в `packages/api-client`.
-- [ ] Подключить generated client к Nuxt runtime config с относительным API base URL.
-- [ ] Проверить `pnpm prisma:validate`, повторную генерацию Orval и отсутствие незакоммиченных изменений после неё.
+- [x] Сверить официальные инструкции Prisma stable, multi-file schema, Prisma config и миграций.
+- [x] Создать database workspace package и проверить Prisma schema.
+- [x] Подключить Prisma client к backend lifecycle без обращения контроллеров напрямую к БД.
+- [x] Экспортировать OpenAPI-схему из backend по повторяемой команде.
+- [x] Настроить Orval на генерацию типов, функций запросов и Vue Query composables в `packages/api-client`.
+- [x] Подключить generated client к Nuxt runtime config с относительным API base URL и SSR fetcher.
+- [x] Проверить `pnpm prisma:validate` и выполнить генерацию OpenAPI/Orval; CI проверяет расхождения с зафиксированным клиентом.
 
 ### Задача 5. Локальная инфраструктура и CI
 
@@ -159,18 +159,18 @@ infrastructure/
 
 **Результат и интерфейсы:**
 
-- Локальный Compose предоставляет PostgreSQL, Redis, MinIO и Mailpit с фиксированными совместимыми образами, healthchecks и именованными volume.
+- Локальный Compose предоставляет PostgreSQL, Redis и Mailpit с фиксированными совместимыми образами, healthchecks и именованными volume; параметры отдельного dev-бакета Yandex Object Storage документированы, его создание выполняется отдельно.
 - Локальные пароли являются только безопасными dev-значениями; compose не использует production secrets.
 - CI устанавливает зависимости через frozen lockfile, затем выполняет lint, typecheck, Prisma validation, API generation/check и build.
 - CI не содержит тестовой стадии и не запускает тесты.
 - README содержит конкретные команды запуска и объясняет, какие локальные сервисы нужны для web, backend и worker.
 
-- [ ] Сверить совместимые стабильные Docker-образы и переменные сервисов по официальным источникам.
-- [ ] Создать Compose-файл для PostgreSQL, Redis, MinIO и Mailpit с healthchecks.
-- [ ] Настроить сборку web, backend HTTP и worker entrypoints.
-- [ ] Создать GitHub Actions workflow со статическими проверками и без тестов.
-- [ ] Документировать запуск, остановку инфраструктуры и требуемые локальные переменные.
-- [ ] Проверить, что секреты не попадают в Git и CI не требует секретов для статической сборки.
+- [x] Сверить совместимые стабильные Docker-образы и переменные сервисов по официальным источникам.
+- [x] Создать Compose-файл для PostgreSQL, Redis и Mailpit с healthchecks; документировать параметры отдельного Yandex dev-бакета и убрать локальный MinIO из конфигурации.
+- [x] Настроить сборку web, backend HTTP и worker entrypoints.
+- [x] Создать GitHub Actions workflow со статическими проверками и без тестов.
+- [x] Документировать запуск, остановку инфраструктуры и требуемые локальные переменные.
+- [x] Проверить, что секреты не попадают в Git и CI не требует секретов для статической сборки.
 
 ### Задача 6. Сквозная статическая проверка и завершение этапа
 
@@ -186,19 +186,19 @@ infrastructure/
 - OpenAPI-клиент воспроизводим, Prisma схема валидируется, локальная инфраструктура запускается.
 - Публичный пользовательский функционал ещё не добавлен.
 
-- [ ] Выполнить `pnpm install --frozen-lockfile`.
-- [ ] Выполнить `pnpm lint`.
-- [ ] Выполнить `pnpm typecheck`.
-- [ ] Выполнить `pnpm prisma:validate`.
-- [ ] Выполнить `pnpm api:generate` и `pnpm api:check`.
-- [ ] Выполнить `pnpm build` для web, backend и worker.
+- [x] Выполнить `pnpm install --frozen-lockfile`.
+- [x] Выполнить `pnpm lint`.
+- [x] Выполнить `pnpm typecheck`.
+- [x] Выполнить `pnpm prisma:validate`.
+- [x] Выполнить `pnpm api:generate` и `pnpm api:check`.
+- [x] Выполнить `pnpm build` для web, backend и worker.
 - [ ] Убедиться, что локальная инфраструктура поднимается и healthchecks достигают готового состояния.
-- [ ] Убедиться, что тестовые файлы, тестовые зависимости и тестовый workflow не созданы.
+- [x] Убедиться, что тестовые файлы, тестовые зависимости и тестовый workflow не созданы.
 - [ ] Провести отдельное ревью кода по запросу пользователя, не запуская тесты.
-- [ ] Обновить статусы этапа 1 в `DEVELOPMENT_PLAN.md`.
+- [x] Обновить статусы реализации этапа 1 в `DEVELOPMENT_PLAN.md`.
 
 ## Критерий готовности
 
-Этап завершён, когда все команды из задачи 6 проходят, web и backend запускаются как раздельные процессы одного workspace, worker собирается отдельно, OpenAPI-клиент и Prisma схема воспроизводимы, а локальные PostgreSQL/Redis/MinIO/Mailpit доступны через документированные команды.
+Этап завершён, когда все команды из задачи 6 проходят, web и backend запускаются как раздельные процессы одного workspace, worker собирается отдельно, OpenAPI-клиент и Prisma схема воспроизводимы, локальные PostgreSQL/Redis/Mailpit доступны через документированные команды, а параметры dev-бакета Yandex Object Storage документированы. Реальная отправка объектов проверяется после реализации `FileStorage`.
 
 При обнаружении расхождения между этим планом и `ARCHITECTURE.md` реализацию соответствующей части остановить и сначала согласовать правку документа. Успешная сборка не является подтверждением бизнес-корректности; продуктовые сценарии начнутся на этапе 2.

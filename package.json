@@ -1,0 +1,37 @@
+{
+  "name": "bartech",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22.21.0 <25",
+    "pnpm": "11.19.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @bartech/backend... build && pnpm --parallel --filter @bartech/web --filter @bartech/backend dev",
+    "dev:web": "pnpm --filter @bartech/web dev",
+    "dev:worker": "pnpm --filter @bartech/backend... build && pnpm --filter @bartech/backend dev:worker",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "pnpm --filter @bartech/backend^... build && pnpm --recursive --workspace-concurrency=1 --if-present typecheck",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,vue,json,md,yaml,yml}\" \"packages/**/*.{ts,tsx,vue,json,md,yaml,yml}\" \"infrastructure/**/*.{json,md,yaml,yml}\"",
+    "build": "pnpm --recursive --if-present build && pnpm --filter @bartech/backend build:worker",
+    "prisma:validate": "pnpm --filter @bartech/database prisma:validate",
+    "prisma:generate": "pnpm --filter @bartech/database prisma:generate",
+    "api:generate": "pnpm --filter @bartech/backend^... build && pnpm --filter @bartech/backend openapi:export && pnpm --filter @bartech/api-client generate",
+    "api:check": "pnpm api:generate && git diff --exit-code -- packages/api-client/openapi.json packages/api-client/src/generated",
+    "infra:up": "docker compose --env-file .env.local -f infrastructure/compose.yaml up -d postgres redis mailpit",
+    "infra:down": "docker compose --env-file .env.local -f infrastructure/compose.yaml down",
+    "verify": "pnpm lint && pnpm typecheck && pnpm prisma:validate && pnpm api:check && pnpm build",
+    "postinstall": "pnpm --filter @bartech/database prisma:generate"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.11.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.1",
+    "vue-eslint-parser": "^10.4.1"
+  }
+}
