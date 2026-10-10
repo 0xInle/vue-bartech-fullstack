@@ -970,6 +970,75 @@
           "invitations"
         ]
       }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/team/{membershipId}": {
+      "patch": {
+        "operationId": "TeamController_updateMember",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Должность и дополнительные права сохранены",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberUpdateResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Нет полномочий для выбранного изменения"
+          },
+          "404": {
+            "description": "Сотрудник или заведение не найдены"
+          },
+          "409": {
+            "description": "Изменение нарушает правила команды или управления"
+          }
+        },
+        "summary": "Изменить должность и дополнительные права сотрудника",
+        "tags": [
+          "team"
+        ]
+      }
     }
   },
   "info": {
@@ -1593,6 +1662,29 @@
             "items": {
               "type": "string"
             }
+          },
+          "availableRoles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "BARTENDER",
+                "SENIOR_BARTENDER",
+                "BAR_MANAGER"
+              ]
+            }
+          },
+          "availableDelegatedPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "canManageDelegatedPermissions": {
+            "type": "boolean"
+          },
+          "isCurrentUser": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1600,7 +1692,11 @@
           "fullName",
           "email",
           "role",
-          "delegatedPermissions"
+          "delegatedPermissions",
+          "availableRoles",
+          "availableDelegatedPermissions",
+          "canManageDelegatedPermissions",
+          "isCurrentUser"
         ]
       },
       "VenueInvitationDto": {
@@ -1820,6 +1916,50 @@
             "maxLength": 120
           }
         }
+      },
+      "UpdateTeamMemberDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BAR_MANAGER"
+            ]
+          },
+          "delegatedPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "manage_products",
+                "manage_product_archive",
+                "delete_products_permanently",
+                "export_data",
+                "invite_employees"
+              ]
+            }
+          }
+        },
+        "required": [
+          "role",
+          "delegatedPermissions"
+        ]
+      },
+      "TeamMemberUpdateResponseDto": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "accepted"
+        ]
       }
     }
   }

@@ -5,6 +5,7 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { VenueTeamMemberDtoAvailableRolesItem } from './venueTeamMemberDtoAvailableRolesItem';
 import type { VenueTeamMemberDtoRole } from './venueTeamMemberDtoRole';
 
 export interface VenueTeamMemberDto {
@@ -13,4 +14,8 @@ export interface VenueTeamMemberDto {
   email: string;
   role: VenueTeamMemberDtoRole;
   delegatedPermissions: string[];
+  availableRoles: VenueTeamMemberDtoAvailableRolesItem[];
+  availableDelegatedPermissions: string[];
+  canManageDelegatedPermissions: boolean;
+  isCurrentUser: boolean;
 }

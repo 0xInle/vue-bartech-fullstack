@@ -21,26 +21,41 @@
         @submit="invite"
       />
     </section>
-    <TeamMemberList :members="members" />
+    <TeamMemberList
+      :members="members"
+      :can-manage-team="workspace.permissions.includes('manage_team')"
+      @edit="selectedMember = $event"
+    />
+    <TeamMemberEditorDrawer
+      :member="selectedMember"
+      :busy="savingMember"
+      :error="memberError"
+      @close="selectedMember = null"
+      @save="saveMember"
+    />
     <InvitationList :invitations="invitations" :busy-id="busyId" @revoke="revoke" />
   </section>
 </template>
 
 <script setup lang="ts">
 import type { Workspace } from "~/types/user-workspaces";
-import { useVenueTeam, type VenueRole } from "../composables/useVenueTeam";
+import { useVenueTeam, type TeamMember, type VenueRole } from "../composables/useVenueTeam";
 import InviteEmployeeForm from "./InviteEmployeeForm.vue";
 import InvitationList from "./InvitationList.vue";
+import TeamMemberEditorDrawer from "./TeamMemberEditorDrawer.vue";
 import TeamMemberList from "./TeamMemberList.vue";
 
 const props = defineProps<{ workspace: Workspace }>();
-const { teamQuery, createInvitation, revokeInvitation } = useVenueTeam(
+const { teamQuery, createInvitation, revokeInvitation, updateMember } = useVenueTeam(
   props.workspace.company.id,
   props.workspace.venue.id,
 );
 const error = ref("");
 const busy = ref(false);
 const busyId = ref("");
+const selectedMember = ref<TeamMember | null>(null);
+const savingMember = ref(false);
+const memberError = ref("");
 const members = computed(() => teamQuery.data.value?.members ?? []);
 const invitations = computed(() => teamQuery.data.value?.invitations ?? []);
 const loading = computed(() => teamQuery.isLoading.value);
@@ -68,6 +83,23 @@ async function revoke(invitationId: string): Promise<void> {
     error.value = cause instanceof Error ? cause.message : "Не удалось отозвать приглашение";
   } finally {
     busyId.value = "";
+  }
+}
+
+async function saveMember(input: {
+  role: VenueRole;
+  delegatedPermissions: string[];
+}): Promise<void> {
+  if (!selectedMember.value) return;
+  savingMember.value = true;
+  memberError.value = "";
+  try {
+    await updateMember(selectedMember.value.id, input);
+    selectedMember.value = null;
+  } catch (cause) {
+    memberError.value = cause instanceof Error ? cause.message : "Не удалось сохранить изменения";
+  } finally {
+    savingMember.value = false;
   }
 }
 </script>

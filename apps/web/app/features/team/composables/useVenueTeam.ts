@@ -3,6 +3,7 @@ import {
   invitationsControllerCreate,
   invitationsControllerRevoke,
   invitationsControllerTeam,
+  teamControllerUpdateMember,
 } from "@bartech/api-client";
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
 import { requestApi } from "~/utils/api-response";
@@ -14,6 +15,10 @@ export type TeamMember = {
   email: string;
   role: VenueRole;
   delegatedPermissions: string[];
+  availableRoles: VenueRole[];
+  availableDelegatedPermissions: string[];
+  canManageDelegatedPermissions: boolean;
+  isCurrentUser: boolean;
 };
 export type VenueInvitation = {
   id: string;
@@ -77,5 +82,25 @@ export function useVenueTeam(companyId: string, venueId: string) {
     await queryClient.invalidateQueries({ queryKey });
   }
 
-  return { teamQuery, createInvitation, revokeInvitation };
+  async function updateMember(
+    membershipId: string,
+    input: Pick<TeamMember, "role" | "delegatedPermissions">,
+  ): Promise<void> {
+    await identity.refreshCsrf();
+    const response = await teamControllerUpdateMember(
+      companyId,
+      venueId,
+      membershipId,
+      input,
+      {
+        credentials: "include",
+        headers: { "x-csrf-token": identity.csrfToken.value },
+      },
+      identity.apiFetch,
+    );
+    await requestApi(Promise.resolve(response));
+    await queryClient.invalidateQueries({ queryKey });
+  }
+
+  return { teamQuery, createInvitation, revokeInvitation, updateMember };
 }

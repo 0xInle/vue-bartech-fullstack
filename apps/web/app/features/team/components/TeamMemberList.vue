@@ -10,8 +10,29 @@
         <div class="min-w-0">
           <p class="truncate text-sm font-medium">{{ member.fullName }}</p>
           <p class="truncate text-xs text-zinc-500">{{ member.email }}</p>
+          <p v-if="canManageTeam && member.isCurrentUser" class="mt-1 text-xs text-color-secondary">
+            Свою роль можно изменить только при выходе из заведения.
+          </p>
+          <p
+            v-else-if="
+              canManageTeam && member.role === 'BAR_MANAGER' && !member.availableRoles.length
+            "
+            class="mt-1 text-xs text-color-secondary"
+          >
+            Временный ответственный не может менять должность бар-менеджера.
+          </p>
         </div>
-        <Tag :value="roleLabel(member.role)" severity="secondary" />
+        <div class="flex items-center gap-3">
+          <Tag :value="roleLabel(member.role)" severity="secondary" />
+          <Button
+            v-if="canManage(member)"
+            label="Настроить"
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            @click="$emit('edit', member)"
+          />
+        </div>
       </li>
     </ul>
   </section>
@@ -20,7 +41,12 @@
 <script setup lang="ts">
 import type { TeamMember, VenueRole } from "../composables/useVenueTeam";
 
-defineProps<{ members: TeamMember[] }>();
+defineProps<{ members: TeamMember[]; canManageTeam: boolean }>();
+defineEmits<{ edit: [member: TeamMember] }>();
+
+function canManage(member: TeamMember): boolean {
+  return member.availableRoles.length > 0 || member.canManageDelegatedPermissions;
+}
 
 function roleLabel(role: VenueRole): string {
   return {

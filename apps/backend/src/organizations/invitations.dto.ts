@@ -100,6 +100,18 @@ export class VenueTeamMemberDto {
 
   @ApiProperty({ type: [String] })
   delegatedPermissions!: string[];
+
+  @ApiProperty({ enum: VENUE_INVITE_ROLES, isArray: true })
+  availableRoles!: (typeof VENUE_INVITE_ROLES)[number][];
+
+  @ApiProperty({ type: String, isArray: true })
+  availableDelegatedPermissions!: string[];
+
+  @ApiProperty()
+  canManageDelegatedPermissions!: boolean;
+
+  @ApiProperty()
+  isCurrentUser!: boolean;
 }
 
 export class VenueInvitationDto {

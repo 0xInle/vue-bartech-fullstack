@@ -23,6 +23,14 @@ export const permissionCatalog = {
 export type PermissionCode = keyof typeof permissionCatalog;
 export type WorkspaceRole = "bartender" | "senior_bartender" | "bar_manager" | "chef_bartender";
 
+export const DELEGATABLE_PERMISSION_CODES = [
+  "manage_products",
+  "manage_product_archive",
+  "delete_products_permanently",
+  "export_data",
+  "invite_employees",
+] as const satisfies readonly PermissionCode[];
+
 const READ_PERMISSIONS: PermissionCode[] = ["view_products", "view_archive", "view_team"];
 const TEMPORARY_OPERATIONAL_PERMISSIONS: PermissionCode[] = [
   "manage_products",
@@ -105,11 +113,7 @@ function isPermissionCode(value: string): value is PermissionCode {
 }
 
 function isDelegatablePermission(permission: PermissionCode): boolean {
-  return [
-    "manage_products",
-    "manage_product_archive",
-    "delete_products_permanently",
-    "export_data",
-    "invite_employees",
-  ].includes(permission);
+  return DELEGATABLE_PERMISSION_CODES.includes(
+    permission as (typeof DELEGATABLE_PERMISSION_CODES)[number],
+  );
 }

@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { DATABASE_CLIENT, Prisma, PrismaClient } from "@bartech/database";
 import {
+  DELEGATABLE_PERMISSION_CODES,
   PermissionService,
   type PermissionCode,
   type WorkspaceRole,
@@ -235,6 +236,9 @@ export class OrganizationsService {
       email: string;
       role: VenueInviteRole;
       delegatedPermissions: string[];
+      availableRoles: VenueInviteRole[];
+      availableDelegatedPermissions: string[];
+      canManageDelegatedPermissions: boolean;
     }>;
     invitations: Array<{
       id: string;
@@ -278,13 +282,52 @@ export class OrganizationsService {
     ]);
 
     return {
-      members: members.map((member) => ({
-        id: member.id,
-        fullName: member.user.profile?.fullName ?? "",
-        email: member.user.email,
-        role: member.role,
-        delegatedPermissions: member.delegatedPermissions.map(({ code }) => code.toLowerCase()),
-      })),
+      members: members.map((member) => {
+        const canManageTeam =
+          member.userId !== userId && workspace.permissions.includes("manage_team");
+        const canManageAllLocalRoles =
+          workspace.role === "bar_manager" || workspace.role === "chef_bartender";
+        const canManageAsTemporaryResponsible =
+          (workspace.role === "bartender" || workspace.role === "senior_bartender") &&
+          workspace.permissions.includes("manage_team");
+        const canChangeRole =
+          canManageTeam &&
+          !(
+            canManageAsTemporaryResponsible &&
+            member.delegatedPermissions.some(({ code }) => code === "DELETE_PRODUCTS_PERMANENTLY")
+          ) &&
+          (canManageAllLocalRoles ||
+            (canManageAsTemporaryResponsible && member.role !== "BAR_MANAGER"));
+
+        const canManageDelegatedPermissions =
+          canManageTeam &&
+          member.role !== "BAR_MANAGER" &&
+          workspace.permissions.includes("manage_delegated_permissions");
+        const actorIsTemporaryResponsible =
+          (workspace.role === "bartender" || workspace.role === "senior_bartender") &&
+          workspace.permissions.includes("manage_team");
+        const delegatedPermissions = member.delegatedPermissions.map(({ code }) =>
+          code.toLowerCase(),
+        );
+
+        return {
+          id: member.id,
+          fullName: member.user.profile?.fullName ?? "",
+          email: member.user.email,
+          role: member.role,
+          delegatedPermissions,
+          availableRoles: canChangeRole ? ["BARTENDER", "SENIOR_BARTENDER", "BAR_MANAGER"] : [],
+          availableDelegatedPermissions: canManageDelegatedPermissions
+            ? DELEGATABLE_PERMISSION_CODES.filter(
+                (code) =>
+                  (workspace.permissions.includes(code) || delegatedPermissions.includes(code)) &&
+                  !(actorIsTemporaryResponsible && code === "delete_products_permanently"),
+              )
+            : [],
+          canManageDelegatedPermissions,
+          isCurrentUser: member.userId === userId,
+        };
+      }),
       invitations: invitations.map((invitation) => ({
         id: invitation.id,
         email: invitation.email,
