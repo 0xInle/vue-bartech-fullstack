@@ -49,6 +49,13 @@ export class TeamService {
     }
 
     await this.database.$transaction(async (transaction) => {
+      const companies = await transaction.$queryRaw<Array<{ status: string }>>`
+        SELECT "status" FROM "companies" WHERE "id" = ${companyId}::uuid FOR UPDATE
+      `;
+      if (!companies.length) throw new NotFoundException("Команда не найдена");
+      if (companies[0].status !== "ACTIVE") {
+        throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
+      }
       const lockedVenues = await transaction.$queryRaw<Array<{ id: string }>>`
         SELECT "id"
         FROM "venues"
@@ -213,7 +220,11 @@ export class TeamService {
             venueId,
             entityType: "venue_membership",
             entityId: target.id,
-            metadata: { previousRole: target.role, newRole: input.role },
+            metadata: {
+              previousRole: target.role,
+              newRole: input.role,
+              subjectUserId: target.userId,
+            },
           },
         });
       }
@@ -231,6 +242,7 @@ export class TeamService {
             metadata: {
               granted: permissionsToGrant,
               revoked: permissionsToRevoke,
+              subjectUserId: target.userId,
             },
           },
         });
@@ -255,6 +267,7 @@ export class TeamService {
               venueId,
               entityType: "venue_membership",
               entityId: temporaryMembership.id,
+              metadata: { subjectUserId: temporaryMembership.userId },
             },
           });
         }

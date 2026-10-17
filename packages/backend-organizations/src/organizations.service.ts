@@ -38,9 +38,20 @@ export class OrganizationsService {
   ) {}
 
   async listWorkspacesForUser(userId: string): Promise<WorkspaceSummary[]> {
+    const now = new Date();
+    const companyOperationalOrInClosure = {
+      OR: [
+        { status: "ACTIVE" as const },
+        { status: "PENDING_CLOSURE" as const, closureDeadline: { gt: now } },
+      ],
+    };
     const [companyMemberships, venueMemberships] = await Promise.all([
       this.database.companyMembership.findMany({
-        where: { userId, companyRole: "CHEF_BARTENDER" },
+        where: {
+          userId,
+          companyRole: "CHEF_BARTENDER",
+          company: companyOperationalOrInClosure,
+        },
         include: {
           company: {
             include: {
@@ -53,7 +64,10 @@ export class OrganizationsService {
         },
       }),
       this.database.venueMembership.findMany({
-        where: { userId, venue: { status: "ACTIVE" } },
+        where: {
+          userId,
+          venue: { status: "ACTIVE", company: companyOperationalOrInClosure },
+        },
         include: {
           companyMembership: {
             select: {
@@ -62,6 +76,8 @@ export class OrganizationsService {
                 select: {
                   id: true,
                   name: true,
+                  status: true,
+                  closureDeadline: true,
                   memberships: { select: { companyRole: true } },
                 },
               },
@@ -92,17 +108,20 @@ export class OrganizationsService {
       const delegatedPermissions = membership.delegatedPermissions.map(({ code }) =>
         code.toLowerCase(),
       );
-      const permissions = this.permissions.evaluate({
-        role,
-        delegatedPermissions,
-        temporaryResponsibility:
-          !hasBarManager &&
-          !hasChefBartender &&
-          Boolean(membership.temporaryResponsibility) &&
-          (role === "bartender" || role === "senior_bartender"),
-        hasBarManager,
-        hasChefBartender,
-      });
+      const permissions = restrictCompanyPermissions(
+        this.permissions.evaluate({
+          role,
+          delegatedPermissions,
+          temporaryResponsibility:
+            !hasBarManager &&
+            !hasChefBartender &&
+            Boolean(membership.temporaryResponsibility) &&
+            (role === "bartender" || role === "senior_bartender"),
+          hasBarManager,
+          hasChefBartender,
+        }),
+        membership.companyMembership.company.status,
+      );
       const workspace = toWorkspaceSummary(
         membership.companyMembership.company,
         membership.venue,
@@ -116,11 +135,14 @@ export class OrganizationsService {
     for (const membership of companyMemberships) {
       for (const venue of membership.company.venues) {
         const hasBarManager = venue.memberships.some((item) => item.role === "BAR_MANAGER");
-        const permissions = this.permissions.evaluate({
-          role: "chef_bartender",
-          hasBarManager,
-          hasChefBartender: true,
-        });
+        const permissions = restrictCompanyPermissions(
+          this.permissions.evaluate({
+            role: "chef_bartender",
+            hasBarManager,
+            hasChefBartender: true,
+          }),
+          membership.company.status,
+        );
         const workspace = toWorkspaceSummary(
           membership.company,
           venue,
@@ -140,11 +162,15 @@ export class OrganizationsService {
   }
 
   async listEmptyCompaniesForUser(userId: string): Promise<CompanySummary[]> {
+    const now = new Date();
     const memberships = await this.database.companyMembership.findMany({
       where: {
         userId,
         companyRole: "CHEF_BARTENDER",
-        company: { venues: { none: {} } },
+        company: {
+          OR: [{ status: "ACTIVE" }, { status: "PENDING_CLOSURE", closureDeadline: { gt: now } }],
+          venues: { none: {} },
+        },
       },
       select: { company: { select: { id: true, name: true } } },
     });
@@ -353,6 +379,22 @@ export type WorkspaceSummary = {
   scope: "company" | "venue";
   permissions: PermissionCode[];
 };
+
+const readOnlyCompanyPermissions = new Set<PermissionCode>([
+  "view_products",
+  "view_archive",
+  "view_team",
+  "export_data",
+  "view_history",
+]);
+
+function restrictCompanyPermissions(
+  permissions: PermissionCode[],
+  companyStatus: "ACTIVE" | "PENDING_CLOSURE",
+): PermissionCode[] {
+  if (companyStatus === "ACTIVE") return permissions;
+  return permissions.filter((permission) => readOnlyCompanyPermissions.has(permission));
+}
 
 function toWorkspaceRole(role: "BARTENDER" | "SENIOR_BARTENDER" | "BAR_MANAGER"): WorkspaceRole {
   switch (role) {

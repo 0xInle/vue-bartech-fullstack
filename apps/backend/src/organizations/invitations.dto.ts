@@ -154,16 +154,16 @@ export class PublicInvitationDto {
   @ApiProperty()
   companyName!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   venueName!: string | null;
 
-  @ApiProperty({ enum: VENUE_INVITE_ROLES, nullable: true })
+  @ApiProperty({ type: String, enum: VENUE_INVITE_ROLES, nullable: true })
   role!: (typeof VENUE_INVITE_ROLES)[number] | null;
 
   @ApiProperty()
   roleLabel!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   accessDescription!: string | null;
 
   @ApiProperty()

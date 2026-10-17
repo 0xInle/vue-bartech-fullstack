@@ -11,6 +11,9 @@
   "scripts": {
     "prisma:validate": "prisma validate --config prisma7.config.ts",
     "prisma:generate": "prisma generate --config prisma7.config.ts",
+    "seed:global-ingredients": "pnpm build && pnpm exec tsc -p tsconfig.scripts.json && node dist/scripts/seed-global-ingredients.js",
+    "backfill:global-ingredient-ids": "pnpm build && pnpm exec tsc -p tsconfig.scripts.json && node dist/scripts/backfill-global-ingredient-ids.js",
+    "internal-user": "pnpm prisma:generate && pnpm exec tsc -p tsconfig.scripts.json && node dist/scripts/internal-user.js",
     "build": "pnpm prisma:generate && tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },

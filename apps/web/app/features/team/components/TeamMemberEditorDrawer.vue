@@ -84,7 +84,12 @@
 </template>
 
 <script setup lang="ts">
-import type { TeamMember, VenueRole } from "../composables/useVenueTeam";
+import type {
+  DelegatedPermission,
+  TeamMember,
+  UpdateTeamMemberInput,
+  VenueRole,
+} from "../composables/useVenueTeam";
 
 const props = defineProps<{
   member: TeamMember | null;
@@ -93,7 +98,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   close: [];
-  save: [input: { role: VenueRole; delegatedPermissions: string[] }];
+  save: [input: UpdateTeamMemberInput];
 }>();
 const visible = computed({
   get: () => props.member !== null,
@@ -102,7 +107,7 @@ const visible = computed({
   },
 });
 const role = ref<VenueRole>("BARTENDER");
-const delegatedPermissions = ref<string[]>([]);
+const delegatedPermissions = ref<DelegatedPermission[]>([]);
 const availableRoles: Array<{ label: string; value: VenueRole }> = [
   { label: "Бармен", value: "BARTENDER" },
   { label: "Старший бармен", value: "SENIOR_BARTENDER" },
@@ -114,7 +119,7 @@ const permissionOptions = [
   { label: "Безвозвратное удаление продукции", value: "delete_products_permanently" },
   { label: "Выгрузка данных", value: "export_data" },
   { label: "Приглашение сотрудников", value: "invite_employees" },
-];
+] satisfies Array<{ label: string; value: DelegatedPermission }>;
 const roleChanged = computed(() => Boolean(props.member && role.value !== props.member.role));
 const canEditPermissions = computed(
   () => Boolean(props.member?.canManageDelegatedPermissions) && !roleChanged.value,
@@ -145,7 +150,7 @@ watch(
   () => props.member,
   (member) => {
     role.value = member?.role ?? "BARTENDER";
-    delegatedPermissions.value = [...(member?.delegatedPermissions ?? [])];
+    delegatedPermissions.value = getEditablePermissions(member?.delegatedPermissions ?? []);
   },
   { immediate: true },
 );
@@ -153,7 +158,8 @@ watch(
 watch(role, (nextRole) => {
   const member = props.member;
   if (!member) return;
-  delegatedPermissions.value = nextRole === member.role ? [...member.delegatedPermissions] : [];
+  delegatedPermissions.value =
+    nextRole === member.role ? getEditablePermissions(member.delegatedPermissions) : [];
 });
 
 function save(): void {
@@ -162,6 +168,12 @@ function save(): void {
     role: role.value,
     delegatedPermissions: roleChanged.value ? [] : delegatedPermissions.value,
   });
+}
+
+function getEditablePermissions(codes: readonly string[]): DelegatedPermission[] {
+  return codes.filter((code): code is DelegatedPermission =>
+    permissionOptions.some((permission) => permission.value === code),
+  );
 }
 
 function permissionNames(codes: string[]): string {

@@ -11,6 +11,8 @@ export default defineConfig({
     path: "./prisma/migrations",
   },
   datasource: {
-    url: process.env.DATABASE_URL ?? "postgresql://bartech:bartech_local@localhost:5432/bartech?schema=public",
+    url:
+      process.env.DATABASE_URL ??
+      "postgresql://bartech:bartech_local@localhost:5432/indiebar?schema=public",
   },
 });

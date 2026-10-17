@@ -39,7 +39,12 @@
 
 <script setup lang="ts">
 import type { Workspace } from "~/types/user-workspaces";
-import { useVenueTeam, type TeamMember, type VenueRole } from "../composables/useVenueTeam";
+import {
+  useVenueTeam,
+  type TeamMember,
+  type UpdateTeamMemberInput,
+  type VenueRole,
+} from "../composables/useVenueTeam";
 import InviteEmployeeForm from "./InviteEmployeeForm.vue";
 import InvitationList from "./InvitationList.vue";
 import TeamMemberEditorDrawer from "./TeamMemberEditorDrawer.vue";
@@ -86,10 +91,7 @@ async function revoke(invitationId: string): Promise<void> {
   }
 }
 
-async function saveMember(input: {
-  role: VenueRole;
-  delegatedPermissions: string[];
-}): Promise<void> {
+async function saveMember(input: UpdateTeamMemberInput): Promise<void> {
   if (!selectedMember.value) return;
   savingMember.value = true;
   memberError.value = "";

@@ -12,12 +12,12 @@ import { requestApi } from "~/utils/api-response";
 
 export function useIdentityFlow() {
   const apiFetch = useApiFetch();
-  const csrfToken = ref("");
-  const currentUser = ref<CurrentUser | null>(null);
-  const sessionState = ref<"idle" | "loading" | "authenticated" | "unauthenticated" | "error">(
-    "idle",
-  );
-  const sessionErrorMessage = ref("");
+  const csrfToken = useState("identity-csrf-token", () => "");
+  const currentUser = useState<CurrentUser | null>("identity-current-user", () => null);
+  const sessionState = useState<
+    "idle" | "loading" | "authenticated" | "unauthenticated" | "error"
+  >("identity-session-state", () => "idle");
+  const sessionErrorMessage = useState("identity-session-error", () => "");
   const credentials = reactive({
     email: "",
     password: "",

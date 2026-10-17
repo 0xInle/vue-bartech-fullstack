@@ -33,7 +33,7 @@
       <Button
         type="submit"
         :label="busy ? 'Входим…' : 'Войти'"
-        :disabled="busy"
+        :disabled="disabled"
         :loading="busy"
         size="small"
         class="w-full"
@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ email: string; password: string; busy: boolean }>();
+defineProps<{ email: string; password: string; busy: boolean; disabled: boolean }>();
 defineEmits<{
   "update:email": [value: string];
   "update:password": [value: string];

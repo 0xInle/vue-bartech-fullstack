@@ -5,6 +5,33 @@
       <h1 class="mt-2 text-2xl font-semibold">Профиль</h1>
     </header>
 
+    <Message v-if="showInstallAction" severity="info" :closable="false">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span>Установите IndieBar как приложение на это устройство.</span>
+        <div class="flex flex-wrap gap-2">
+          <Button
+            label="Установить приложение"
+            size="small"
+            :loading="installing"
+            :disabled="installing"
+            @click="installApp"
+          />
+          <Button
+            label="Не сейчас"
+            severity="secondary"
+            variant="text"
+            size="small"
+            :disabled="installing"
+            @click="dismissInstall"
+          />
+        </div>
+      </div>
+    </Message>
+
+    <Message v-if="installError" severity="error" :closable="false">
+      {{ installError }}
+    </Message>
+
     <section class="rounded-xl border border-zinc-200 bg-white p-5">
       <h2 class="text-base font-semibold">Учётная запись</h2>
       <dl class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -95,6 +122,34 @@ defineProps<{
   errorMessage: string;
 }>();
 defineEmits<{ logout: []; "logout-all": [] }>();
+
+const pwa = useNuxtApp().$pwa;
+const installing = ref(false);
+const installedFromPrompt = ref(false);
+const installError = ref("");
+const showInstallAction = computed(() =>
+  Boolean(pwa?.showInstallPrompt && !pwa.isPWAInstalled && !installedFromPrompt.value),
+);
+
+async function installApp() {
+  if (!pwa || installing.value) return;
+
+  installing.value = true;
+  installError.value = "";
+
+  try {
+    const choice = await pwa.install();
+    installedFromPrompt.value = choice?.outcome === "accepted";
+  } catch {
+    installError.value = "Не удалось открыть предложение установки. Попробуйте позже.";
+  } finally {
+    installing.value = false;
+  }
+}
+
+function dismissInstall() {
+  pwa?.cancelInstall();
+}
 
 const permissionLabels: Record<string, string> = {
   view_products: "Просмотр продукции",

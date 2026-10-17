@@ -90,7 +90,7 @@
       <Button
         type="submit"
         :label="busy ? 'Отправляем…' : 'Продолжить'"
-        :disabled="busy"
+        :disabled="disabled"
         :loading="busy"
         size="small"
         class="w-full"
@@ -109,6 +109,7 @@ defineProps<{
   companyName: string;
   venueName: string;
   busy: boolean;
+  disabled: boolean;
 }>();
 defineEmits<{
   "update:fullName": [value: string];

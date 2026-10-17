@@ -1,0 +1,69 @@
+enum ProductExportType {
+  SINGLE_PDF
+  BATCH_PDF_ZIP
+  VENUE_BACKUP_ZIP
+  COMPANY_CLOSURE_BACKUP_ZIP
+}
+
+enum ProductExportStatus {
+  QUEUED
+  PROCESSING
+  READY
+  FAILED
+}
+
+model ProductExportRequest {
+  id            String             @id @default(uuid()) @db.Uuid
+  userId        String             @db.Uuid
+  companyId     String?            @db.Uuid
+  venueId       String?            @db.Uuid
+  closureOperationId String?       @unique(map: "product_export_requests_closure_operation_key") @db.Uuid
+  type          ProductExportType
+  parameters    Json
+  status        ProductExportStatus @default(QUEUED)
+  attemptCount  Int                @default(0)
+  createdAt     DateTime           @default(now()) @db.Timestamptz(6)
+  startedAt     DateTime?          @db.Timestamptz(6)
+  leaseUntil    DateTime?          @db.Timestamptz(6)
+  completedAt   DateTime?          @db.Timestamptz(6)
+  expiresAt     DateTime?          @db.Timestamptz(6)
+  objectKey     String?
+  fileName      String?
+  contentType   String?
+  fileSizeBytes BigInt?
+  errorCode     String?
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company       Company?           @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  venue         Venue?             @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: SetNull)
+  closureOperation ProductExportClosureOperation? @relation(fields: [closureOperationId], references: [id], onDelete: SetNull)
+  outbox        ProductExportOutbox?
+
+  @@index([userId, createdAt], map: "product_export_requests_user_created_idx")
+  @@index([status, createdAt], map: "product_export_requests_status_created_idx")
+  @@index([expiresAt], map: "product_export_requests_expiry_idx")
+  @@map("product_export_requests")
+}
+
+model ProductExportOutbox {
+  id          String    @id @default(uuid()) @db.Uuid
+  requestId   String    @unique(map: "product_export_outbox_request_key") @db.Uuid
+  attemptCount Int      @default(0)
+  nextAttemptAt DateTime @default(now()) @db.Timestamptz(6)
+  deliveredAt DateTime? @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  request     ProductExportRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([deliveredAt, nextAttemptAt], map: "product_export_outbox_pending_idx")
+  @@map("product_export_outbox")
+}
+
+model ProductExportCleanup {
+  requestId     String   @id @db.Uuid
+  attemptCount  Int
+  isScopePurge  Boolean  @default(false)
+  lastAttemptAt DateTime? @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([isScopePurge, lastAttemptAt], map: "product_export_cleanups_pending_idx")
+  @@map("product_export_cleanups")
+}

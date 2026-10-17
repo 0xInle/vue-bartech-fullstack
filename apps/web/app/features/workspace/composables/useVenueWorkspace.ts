@@ -31,6 +31,8 @@ export function useVenueWorkspace() {
   });
 
   onMounted(async () => {
+    if (identity.sessionState.value === "authenticated") return;
+
     await Promise.allSettled([identity.refreshCsrf()]);
     await identity.loadSession();
     if (identity.sessionState.value === "unauthenticated") await navigateTo("/");

@@ -1,7 +1,7 @@
 <template>
-  <VenueHomeScreen />
+  <NuxtPage />
 </template>
 
 <script setup lang="ts">
-import VenueHomeScreen from "~/features/workspace/components/VenueHomeScreen.vue";
+defineOptions({ name: "VenuePages" });
 </script>

@@ -19,6 +19,7 @@
       <Message severity="info" :closable="false" class="mt-8">
         Рабочее пространство готово. Основные разделы продукции появятся по мере реализации MVP.
       </Message>
+      <OrganizationLifecyclePanel :workspace="workspace" />
     </section>
   </WorkspaceShell>
 </template>
@@ -26,6 +27,7 @@
 <script setup lang="ts">
 import { useVenueWorkspace } from "~/features/workspace/composables/useVenueWorkspace";
 import WorkspaceShell from "~/features/workspace/components/WorkspaceShell.vue";
+import OrganizationLifecyclePanel from "~/features/organizations/components/OrganizationLifecyclePanel.vue";
 
 defineOptions({ name: "VenueHomeScreen" });
 

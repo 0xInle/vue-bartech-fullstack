@@ -19,7 +19,7 @@
         <Button
           type="submit"
           :label="busy ? 'Отправляем…' : 'Восстановить'"
-          :disabled="busy"
+          :disabled="disabled"
           :loading="busy"
           size="small"
           class="w-full"
@@ -66,7 +66,7 @@
         <Button
           type="submit"
           :label="busy ? 'Сохраняем…' : 'Сохранить пароль'"
-          :disabled="busy"
+          :disabled="disabled"
           :loading="busy"
           size="small"
           class="w-full"
@@ -93,6 +93,7 @@ defineProps<{
   newPassword: string;
   step: "email" | "code";
   busy: boolean;
+  disabled: boolean;
 }>();
 defineEmits<{
   "update:email": [value: string];

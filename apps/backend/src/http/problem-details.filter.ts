@@ -2,6 +2,7 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from
 import type { Request, Response } from "express";
 import { Logger } from "nestjs-pino";
 import { redactInvitationTokenFromPath } from "./redact-invitation-token.js";
+import { readArchiveProblem } from "../products/archive-problem-details.js";
 
 @Catch()
 export class ProblemDetailsFilter implements ExceptionFilter {
@@ -28,6 +29,11 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         : status < 500 && exception instanceof Error
           ? exception.message
           : undefined;
+    const preparationImpact =
+      status === HttpStatus.CONFLICT ? readPreparationImpact(exceptionBody) : null;
+    const garnishImpact = status === HttpStatus.CONFLICT ? readGarnishImpact(exceptionBody) : null;
+    const catalogCandidateProblem =
+      status === HttpStatus.CONFLICT ? readCatalogCandidateProblem(exceptionBody) : null;
 
     if (status >= 500) {
       this.logger.error(
@@ -61,6 +67,90 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         ...(detail ? { detail } : {}),
         instance: redactInvitationTokenFromPath(request.originalUrl),
         ...(request.id ? { requestId: request.id } : {}),
+        ...(preparationImpact ?? {}),
+        ...(garnishImpact ?? {}),
+        ...(catalogCandidateProblem ?? {}),
+        ...(status === HttpStatus.CONFLICT ? (readArchiveProblem(exceptionBody) ?? {}) : {}),
       });
   }
+}
+
+function readCatalogCandidateProblem(
+  value: unknown,
+): { code: "CATALOG_CANDIDATE_UNAVAILABLE" } | null {
+  if (typeof value !== "object" || value === null) return null;
+  const response = value as Record<string, unknown>;
+  return response.code === "CATALOG_CANDIDATE_UNAVAILABLE"
+    ? { code: "CATALOG_CANDIDATE_UNAVAILABLE" }
+    : null;
+}
+
+function readGarnishImpact(value: unknown): {
+  code: "GARNISH_DEPENDENCIES_CONFIRMATION_REQUIRED";
+  affectedProducts: Array<{ id: string; type: "COCKTAIL"; name: string }>;
+  confirmationFingerprint: string;
+} | null {
+  if (typeof value !== "object" || value === null) return null;
+  const response = value as Record<string, unknown>;
+  if (response.code !== "GARNISH_DEPENDENCIES_CONFIRMATION_REQUIRED") return null;
+  if (
+    !Array.isArray(response.affectedProducts) ||
+    !response.affectedProducts.every(
+      (item: unknown) =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof (item as Record<string, unknown>).id === "string" &&
+        typeof (item as Record<string, unknown>).name === "string" &&
+        (item as Record<string, unknown>).type === "COCKTAIL",
+    ) ||
+    typeof response.confirmationFingerprint !== "string" ||
+    !/^[a-f0-9]{64}$/.test(response.confirmationFingerprint)
+  ) {
+    return null;
+  }
+  return {
+    code: response.code,
+    affectedProducts: response.affectedProducts.map((item: Record<string, unknown>) => ({
+      id: item.id as string,
+      type: "COCKTAIL",
+      name: item.name as string,
+    })),
+    confirmationFingerprint: response.confirmationFingerprint,
+  };
+}
+
+function readPreparationImpact(value: unknown): {
+  code: "PREPARATION_DEPENDENCIES_CONFIRMATION_REQUIRED";
+  affectedProducts: Array<{
+    id: string;
+    type: "PREPARATION" | "GARNISH" | "COCKTAIL";
+    name: string;
+  }>;
+  confirmationFingerprint: string;
+} | null {
+  if (typeof value !== "object" || value === null) return null;
+  const response = value as Record<string, unknown>;
+  if (response.code !== "PREPARATION_DEPENDENCIES_CONFIRMATION_REQUIRED") return null;
+  if (
+    !Array.isArray(response.affectedProducts) ||
+    !response.affectedProducts.every(
+      (item: unknown) =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof (item as Record<string, unknown>).id === "string" &&
+        typeof (item as Record<string, unknown>).name === "string" &&
+        ["PREPARATION", "GARNISH", "COCKTAIL"].includes(
+          String((item as Record<string, unknown>).type),
+        ),
+    ) ||
+    typeof response.confirmationFingerprint !== "string" ||
+    !/^[a-f0-9]{64}$/.test(response.confirmationFingerprint)
+  ) {
+    return null;
+  }
+  return {
+    code: response.code,
+    affectedProducts: response.affectedProducts,
+    confirmationFingerprint: response.confirmationFingerprint,
+  };
 }

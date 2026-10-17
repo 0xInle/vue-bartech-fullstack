@@ -56,6 +56,11 @@ const BarTechTheme = definePreset(Aura, {
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
+  app: {
+    head: {
+      link: [{ rel: "icon", type: "image/png", href: "/favicon.png" }],
+    },
+  },
   devtools: { enabled: false },
   css: ["~/assets/css/main.css"],
   modules: ["@primevue/nuxt-module", "@vite-pwa/nuxt", "nuxt-security"],
@@ -96,6 +101,9 @@ export default defineNuxtConfig({
       include: [
         "Button",
         "Card",
+        "AutoComplete",
+        "MultiSelect",
+        "Textarea",
         "Divider",
         "Drawer",
         "FloatLabel",
@@ -120,6 +128,9 @@ export default defineNuxtConfig({
   },
   pwa: {
     registerType: "prompt",
+    client: {
+      installPrompt: "indiebar:pwa-install-dismissed",
+    },
     manifest: {
       name: "IndieBar",
       short_name: "IndieBar",
@@ -149,20 +160,29 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBaseUrl: "",
+      siteUrl: "",
     },
   },
   routeRules: {
     "/invitations": {
+      security: { headers: { referrerPolicy: "no-referrer" } },
       headers: {
         "cache-control": "no-store",
-        "referrer-policy": "no-referrer",
+        "X-Robots-Tag": "noindex, nofollow",
       },
     },
     "/invitations/**": {
+      security: { headers: { referrerPolicy: "no-referrer" } },
       headers: {
         "cache-control": "no-store",
-        "referrer-policy": "no-referrer",
+        "X-Robots-Tag": "noindex, nofollow",
       },
+    },
+    "/app/**": {
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
+    },
+    "/internal/**": {
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
     },
   },
   build: {

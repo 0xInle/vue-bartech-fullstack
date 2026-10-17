@@ -15,7 +15,13 @@
   },
   "dependencies": {
     "@bartech/backend-identity": "workspace:*",
+    "@bartech/backend-audit": "workspace:*",
+    "@bartech/backend-analytics": "workspace:*",
+    "@bartech/backend-exports": "workspace:*",
+    "@bartech/backend-files": "workspace:*",
     "@bartech/backend-organizations": "workspace:*",
+    "@bartech/backend-products": "workspace:*",
+    "@bartech/backend-support": "workspace:*",
     "@bartech/database": "workspace:*",
     "@nestjs/common": "11.2.7",
     "@nestjs/config": "4.0.4",

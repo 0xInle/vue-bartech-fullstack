@@ -31,8 +31,20 @@ import type {
 } from 'vue';
 
 import type {
+  AcceptedResponseDto,
+  CloseCompanyDto,
+  CloseVenueDto,
+  ClosureExportDto,
+  ClosureOperationPreparationResponseDto,
+  ClosureOperationResponseDto,
+  CompanyClosureResponseDto,
+  CompanyClosureStartedResponseDto,
   CreateCompanyDto,
   CreateCompanyResponseDto,
+  LeaveAndCloseAvailabilityDto,
+  ProductExportDownloadResponseDto,
+  ProductExportResponseDto,
+  VenueClosureResponseDto,
   WorkspaceSummaryDto
 } from '../models';
 
@@ -40,7 +52,1133 @@ import type {
 
 
 
-export type organizationsControllerGetWorkspaceResponse200 = {
+export type organizationsControllerGetCompanyClosureResponse200 = {
+  data: CompanyClosureResponseDto
+  status: 200
+}
+
+export type organizationsControllerGetCompanyClosureResponseSuccess = (organizationsControllerGetCompanyClosureResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsControllerGetCompanyClosureResponse = (organizationsControllerGetCompanyClosureResponseSuccess)
+
+export const getOrganizationsControllerGetCompanyClosureUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/closure`
+}
+
+/**
+ * @summary Получить состояние ожидания закрытия компании
+ */
+export const organizationsControllerGetCompanyClosure = async (companyId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerGetCompanyClosureResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getOrganizationsControllerGetCompanyClosureUrl(companyId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerGetCompanyClosureResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerGetCompanyClosureResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerGetCompanyClosureQueryKey = (companyId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'closure'
+    ] as const;
+    }
+
+
+export const getOrganizationsControllerGetCompanyClosureQueryOptions = <TData = Awaited<ReturnType<typeof organizationsControllerGetCompanyClosure>>, TError = unknown>(companyId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetCompanyClosure>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getOrganizationsControllerGetCompanyClosureQueryKey(companyId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsControllerGetCompanyClosure>>> = ({ signal }) => organizationsControllerGetCompanyClosure(toValue(companyId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetCompanyClosure>>, TError, TData>
+}
+
+export type OrganizationsControllerGetCompanyClosureQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerGetCompanyClosure>>>
+export type OrganizationsControllerGetCompanyClosureQueryError = unknown
+
+
+/**
+ * @summary Получить состояние ожидания закрытия компании
+ */
+
+export function useOrganizationsControllerGetCompanyClosure<TData = Awaited<ReturnType<typeof organizationsControllerGetCompanyClosure>>, TError = unknown>(
+ companyId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetCompanyClosure>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsControllerGetCompanyClosureQueryOptions(companyId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type organizationsControllerBeginCompanyClosureResponse201 = {
+  data: CompanyClosureStartedResponseDto
+  status: 201
+}
+
+export type organizationsControllerBeginCompanyClosureResponse409 = {
+  data: void
+  status: 409
+}
+
+export type organizationsControllerBeginCompanyClosureResponseSuccess = (organizationsControllerBeginCompanyClosureResponse201) & {
+  headers: Headers;
+};
+export type organizationsControllerBeginCompanyClosureResponseError = (organizationsControllerBeginCompanyClosureResponse409) & {
+  headers: Headers;
+};
+
+export type organizationsControllerBeginCompanyClosureResponse = (organizationsControllerBeginCompanyClosureResponseSuccess | organizationsControllerBeginCompanyClosureResponseError)
+
+export const getOrganizationsControllerBeginCompanyClosureUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/closure`
+}
+
+/**
+ * @summary Запустить закрытие компании на 168 часов
+ */
+export const organizationsControllerBeginCompanyClosure = async (companyId: string,
+    closeCompanyDto: CloseCompanyDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerBeginCompanyClosureResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getOrganizationsControllerBeginCompanyClosureUrl(companyId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(closeCompanyDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerBeginCompanyClosureResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerBeginCompanyClosureResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerBeginCompanyClosureMutationKey = () => ['organizationsControllerBeginCompanyClosure'] as const;
+
+export const getOrganizationsControllerBeginCompanyClosureMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerBeginCompanyClosure>>, TError,OrganizationsControllerBeginCompanyClosureMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerBeginCompanyClosure>>, TError,OrganizationsControllerBeginCompanyClosureMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerBeginCompanyClosureMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerBeginCompanyClosure>>, OrganizationsControllerBeginCompanyClosureMutationVariables> = (props) => {
+          const {companyId,data} = props ?? {};
+
+          return  organizationsControllerBeginCompanyClosure(companyId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerBeginCompanyClosureMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerBeginCompanyClosure>>>
+    export type OrganizationsControllerBeginCompanyClosureMutationBody = CloseCompanyDto
+    export type OrganizationsControllerBeginCompanyClosureMutationError = void
+    export type OrganizationsControllerBeginCompanyClosureMutationVariables = {companyId: string;data: CloseCompanyDto}
+
+    /**
+ * @summary Запустить закрытие компании на 168 часов
+ */
+export const useOrganizationsControllerBeginCompanyClosure = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerBeginCompanyClosure>>, TError,OrganizationsControllerBeginCompanyClosureMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerBeginCompanyClosure>>,
+        TError,
+        OrganizationsControllerBeginCompanyClosureMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerBeginCompanyClosureMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerPrepareCompanyClosureResponse201 = {
+  data: ClosureOperationPreparationResponseDto
+  status: 201
+}
+
+export type organizationsControllerPrepareCompanyClosureResponseSuccess = (organizationsControllerPrepareCompanyClosureResponse201) & {
+  headers: Headers;
+};
+;
+
+export type organizationsControllerPrepareCompanyClosureResponse = (organizationsControllerPrepareCompanyClosureResponseSuccess)
+
+export const getOrganizationsControllerPrepareCompanyClosureUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/closure-operations`
+}
+
+/**
+ * @summary Подготовить закрытие компании и связанную выгрузку
+ */
+export const organizationsControllerPrepareCompanyClosure = async (companyId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerPrepareCompanyClosureResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getOrganizationsControllerPrepareCompanyClosureUrl(companyId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerPrepareCompanyClosureResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerPrepareCompanyClosureResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerPrepareCompanyClosureMutationKey = () => ['organizationsControllerPrepareCompanyClosure'] as const;
+
+export const getOrganizationsControllerPrepareCompanyClosureMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerPrepareCompanyClosure>>, TError,OrganizationsControllerPrepareCompanyClosureMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerPrepareCompanyClosure>>, TError,OrganizationsControllerPrepareCompanyClosureMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerPrepareCompanyClosureMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerPrepareCompanyClosure>>, OrganizationsControllerPrepareCompanyClosureMutationVariables> = (props) => {
+          const {companyId} = props ?? {};
+
+          return  organizationsControllerPrepareCompanyClosure(companyId,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerPrepareCompanyClosureMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerPrepareCompanyClosure>>>
+
+    export type OrganizationsControllerPrepareCompanyClosureMutationError = unknown
+    export type OrganizationsControllerPrepareCompanyClosureMutationVariables = {companyId: string}
+
+    /**
+ * @summary Подготовить закрытие компании и связанную выгрузку
+ */
+export const useOrganizationsControllerPrepareCompanyClosure = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerPrepareCompanyClosure>>, TError,OrganizationsControllerPrepareCompanyClosureMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerPrepareCompanyClosure>>,
+        TError,
+        OrganizationsControllerPrepareCompanyClosureMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerPrepareCompanyClosureMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerPrepareVenueClosureResponse201 = {
+  data: ClosureOperationPreparationResponseDto
+  status: 201
+}
+
+export type organizationsControllerPrepareVenueClosureResponseSuccess = (organizationsControllerPrepareVenueClosureResponse201) & {
+  headers: Headers;
+};
+;
+
+export type organizationsControllerPrepareVenueClosureResponse = (organizationsControllerPrepareVenueClosureResponseSuccess)
+
+export const getOrganizationsControllerPrepareVenueClosureUrl = (companyId: string,
+    venueId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/closure-operations`
+}
+
+/**
+ * @summary Подготовить закрытие заведения и связанную выгрузку
+ */
+export const organizationsControllerPrepareVenueClosure = async (companyId: string,
+    venueId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerPrepareVenueClosureResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getOrganizationsControllerPrepareVenueClosureUrl(companyId,venueId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerPrepareVenueClosureResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerPrepareVenueClosureResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerPrepareVenueClosureMutationKey = () => ['organizationsControllerPrepareVenueClosure'] as const;
+
+export const getOrganizationsControllerPrepareVenueClosureMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerPrepareVenueClosure>>, TError,OrganizationsControllerPrepareVenueClosureMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerPrepareVenueClosure>>, TError,OrganizationsControllerPrepareVenueClosureMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerPrepareVenueClosureMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerPrepareVenueClosure>>, OrganizationsControllerPrepareVenueClosureMutationVariables> = (props) => {
+          const {companyId,venueId} = props ?? {};
+
+          return  organizationsControllerPrepareVenueClosure(companyId,venueId,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerPrepareVenueClosureMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerPrepareVenueClosure>>>
+
+    export type OrganizationsControllerPrepareVenueClosureMutationError = unknown
+    export type OrganizationsControllerPrepareVenueClosureMutationVariables = {companyId: string;venueId: string}
+
+    /**
+ * @summary Подготовить закрытие заведения и связанную выгрузку
+ */
+export const useOrganizationsControllerPrepareVenueClosure = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerPrepareVenueClosure>>, TError,OrganizationsControllerPrepareVenueClosureMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerPrepareVenueClosure>>,
+        TError,
+        OrganizationsControllerPrepareVenueClosureMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerPrepareVenueClosureMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerCreateClosureExportResponse201 = {
+  data: ProductExportResponseDto
+  status: 201
+}
+
+export type organizationsControllerCreateClosureExportResponseSuccess = (organizationsControllerCreateClosureExportResponse201) & {
+  headers: Headers;
+};
+;
+
+export type organizationsControllerCreateClosureExportResponse = (organizationsControllerCreateClosureExportResponseSuccess)
+
+export const getOrganizationsControllerCreateClosureExportUrl = (companyId: string,
+    operationId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/closure-operations/${operationId}/exports`
+}
+
+/**
+ * @summary Запросить выгрузку в контексте операции закрытия
+ */
+export const organizationsControllerCreateClosureExport = async (companyId: string,
+    operationId: string,
+    closureExportDto: ClosureExportDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerCreateClosureExportResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getOrganizationsControllerCreateClosureExportUrl(companyId,operationId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(closureExportDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerCreateClosureExportResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerCreateClosureExportResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerCreateClosureExportMutationKey = () => ['organizationsControllerCreateClosureExport'] as const;
+
+export const getOrganizationsControllerCreateClosureExportMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCreateClosureExport>>, TError,OrganizationsControllerCreateClosureExportMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCreateClosureExport>>, TError,OrganizationsControllerCreateClosureExportMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerCreateClosureExportMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerCreateClosureExport>>, OrganizationsControllerCreateClosureExportMutationVariables> = (props) => {
+          const {companyId,operationId,data} = props ?? {};
+
+          return  organizationsControllerCreateClosureExport(companyId,operationId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerCreateClosureExportMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerCreateClosureExport>>>
+    export type OrganizationsControllerCreateClosureExportMutationBody = ClosureExportDto
+    export type OrganizationsControllerCreateClosureExportMutationError = unknown
+    export type OrganizationsControllerCreateClosureExportMutationVariables = {companyId: string;operationId: string;data: ClosureExportDto}
+
+    /**
+ * @summary Запросить выгрузку в контексте операции закрытия
+ */
+export const useOrganizationsControllerCreateClosureExport = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCreateClosureExport>>, TError,OrganizationsControllerCreateClosureExportMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerCreateClosureExport>>,
+        TError,
+        OrganizationsControllerCreateClosureExportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerCreateClosureExportMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerGetClosureOperationResponse200 = {
+  data: ClosureOperationResponseDto
+  status: 200
+}
+
+export type organizationsControllerGetClosureOperationResponseSuccess = (organizationsControllerGetClosureOperationResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsControllerGetClosureOperationResponse = (organizationsControllerGetClosureOperationResponseSuccess)
+
+export const getOrganizationsControllerGetClosureOperationUrl = (operationId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/closure-operations/${operationId}`
+}
+
+/**
+ * @summary Получить состояние собственной операции закрытия
+ */
+export const organizationsControllerGetClosureOperation = async (operationId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerGetClosureOperationResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getOrganizationsControllerGetClosureOperationUrl(operationId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerGetClosureOperationResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerGetClosureOperationResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerGetClosureOperationQueryKey = (operationId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','organizations','closure-operations',operationId
+    ] as const;
+    }
+
+
+export const getOrganizationsControllerGetClosureOperationQueryOptions = <TData = Awaited<ReturnType<typeof organizationsControllerGetClosureOperation>>, TError = unknown>(operationId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetClosureOperation>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getOrganizationsControllerGetClosureOperationQueryKey(operationId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsControllerGetClosureOperation>>> = ({ signal }) => organizationsControllerGetClosureOperation(toValue(operationId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(operationId) !== null && toValue(operationId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetClosureOperation>>, TError, TData>
+}
+
+export type OrganizationsControllerGetClosureOperationQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerGetClosureOperation>>>
+export type OrganizationsControllerGetClosureOperationQueryError = unknown
+
+
+/**
+ * @summary Получить состояние собственной операции закрытия
+ */
+
+export function useOrganizationsControllerGetClosureOperation<TData = Awaited<ReturnType<typeof organizationsControllerGetClosureOperation>>, TError = unknown>(
+ operationId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetClosureOperation>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsControllerGetClosureOperationQueryOptions(operationId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type organizationsControllerGetClosureOperationDownloadResponse200 = {
+  data: ProductExportDownloadResponseDto
+  status: 200
+}
+
+export type organizationsControllerGetClosureOperationDownloadResponseSuccess = (organizationsControllerGetClosureOperationDownloadResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsControllerGetClosureOperationDownloadResponse = (organizationsControllerGetClosureOperationDownloadResponseSuccess)
+
+export const getOrganizationsControllerGetClosureOperationDownloadUrl = (operationId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/closure-operations/${operationId}/download`
+}
+
+/**
+ * @summary Получить ссылку только на выгрузку своей операции закрытия
+ */
+export const organizationsControllerGetClosureOperationDownload = async (operationId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerGetClosureOperationDownloadResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getOrganizationsControllerGetClosureOperationDownloadUrl(operationId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerGetClosureOperationDownloadResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerGetClosureOperationDownloadResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerGetClosureOperationDownloadQueryKey = (operationId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','organizations','closure-operations',operationId,'download'
+    ] as const;
+    }
+
+
+export const getOrganizationsControllerGetClosureOperationDownloadQueryOptions = <TData = Awaited<ReturnType<typeof organizationsControllerGetClosureOperationDownload>>, TError = unknown>(operationId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetClosureOperationDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getOrganizationsControllerGetClosureOperationDownloadQueryKey(operationId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsControllerGetClosureOperationDownload>>> = ({ signal }) => organizationsControllerGetClosureOperationDownload(toValue(operationId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(operationId) !== null && toValue(operationId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetClosureOperationDownload>>, TError, TData>
+}
+
+export type OrganizationsControllerGetClosureOperationDownloadQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerGetClosureOperationDownload>>>
+export type OrganizationsControllerGetClosureOperationDownloadQueryError = unknown
+
+
+/**
+ * @summary Получить ссылку только на выгрузку своей операции закрытия
+ */
+
+export function useOrganizationsControllerGetClosureOperationDownload<TData = Awaited<ReturnType<typeof organizationsControllerGetClosureOperationDownload>>, TError = unknown>(
+ operationId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetClosureOperationDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsControllerGetClosureOperationDownloadQueryOptions(operationId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type organizationsControllerCancelCompanyClosureResponse201 = {
+  data: AcceptedResponseDto
+  status: 201
+}
+
+export type organizationsControllerCancelCompanyClosureResponseSuccess = (organizationsControllerCancelCompanyClosureResponse201) & {
+  headers: Headers;
+};
+;
+
+export type organizationsControllerCancelCompanyClosureResponse = (organizationsControllerCancelCompanyClosureResponseSuccess)
+
+export const getOrganizationsControllerCancelCompanyClosureUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/closure/cancel`
+}
+
+/**
+ * @summary Отменить ожидающее закрытие компании
+ */
+export const organizationsControllerCancelCompanyClosure = async (companyId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerCancelCompanyClosureResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getOrganizationsControllerCancelCompanyClosureUrl(companyId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerCancelCompanyClosureResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerCancelCompanyClosureResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerCancelCompanyClosureMutationKey = () => ['organizationsControllerCancelCompanyClosure'] as const;
+
+export const getOrganizationsControllerCancelCompanyClosureMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCancelCompanyClosure>>, TError,OrganizationsControllerCancelCompanyClosureMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCancelCompanyClosure>>, TError,OrganizationsControllerCancelCompanyClosureMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerCancelCompanyClosureMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerCancelCompanyClosure>>, OrganizationsControllerCancelCompanyClosureMutationVariables> = (props) => {
+          const {companyId} = props ?? {};
+
+          return  organizationsControllerCancelCompanyClosure(companyId,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerCancelCompanyClosureMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerCancelCompanyClosure>>>
+
+    export type OrganizationsControllerCancelCompanyClosureMutationError = unknown
+    export type OrganizationsControllerCancelCompanyClosureMutationVariables = {companyId: string}
+
+    /**
+ * @summary Отменить ожидающее закрытие компании
+ */
+export const useOrganizationsControllerCancelCompanyClosure = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCancelCompanyClosure>>, TError,OrganizationsControllerCancelCompanyClosureMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerCancelCompanyClosure>>,
+        TError,
+        OrganizationsControllerCancelCompanyClosureMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerCancelCompanyClosureMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerCloseVenueResponse201 = {
+  data: VenueClosureResponseDto
+  status: 201
+}
+
+export type organizationsControllerCloseVenueResponse409 = {
+  data: void
+  status: 409
+}
+
+export type organizationsControllerCloseVenueResponseSuccess = (organizationsControllerCloseVenueResponse201) & {
+  headers: Headers;
+};
+export type organizationsControllerCloseVenueResponseError = (organizationsControllerCloseVenueResponse409) & {
+  headers: Headers;
+};
+
+export type organizationsControllerCloseVenueResponse = (organizationsControllerCloseVenueResponseSuccess | organizationsControllerCloseVenueResponseError)
+
+export const getOrganizationsControllerCloseVenueUrl = (companyId: string,
+    venueId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/closure`
+}
+
+/**
+ * @summary Немедленно закрыть заведение
+ */
+export const organizationsControllerCloseVenue = async (companyId: string,
+    venueId: string,
+    closeVenueDto: CloseVenueDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerCloseVenueResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getOrganizationsControllerCloseVenueUrl(companyId,venueId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(closeVenueDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerCloseVenueResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerCloseVenueResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerCloseVenueMutationKey = () => ['organizationsControllerCloseVenue'] as const;
+
+export const getOrganizationsControllerCloseVenueMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCloseVenue>>, TError,OrganizationsControllerCloseVenueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCloseVenue>>, TError,OrganizationsControllerCloseVenueMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerCloseVenueMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerCloseVenue>>, OrganizationsControllerCloseVenueMutationVariables> = (props) => {
+          const {companyId,venueId,data} = props ?? {};
+
+          return  organizationsControllerCloseVenue(companyId,venueId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerCloseVenueMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerCloseVenue>>>
+    export type OrganizationsControllerCloseVenueMutationBody = CloseVenueDto
+    export type OrganizationsControllerCloseVenueMutationError = void
+    export type OrganizationsControllerCloseVenueMutationVariables = {companyId: string;venueId: string;data: CloseVenueDto}
+
+    /**
+ * @summary Немедленно закрыть заведение
+ */
+export const useOrganizationsControllerCloseVenue = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCloseVenue>>, TError,OrganizationsControllerCloseVenueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerCloseVenue>>,
+        TError,
+        OrganizationsControllerCloseVenueMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerCloseVenueMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerGetLeaveAndCloseAvailabilityResponse200 = {
+  data: LeaveAndCloseAvailabilityDto
+  status: 200
+}
+
+export type organizationsControllerGetLeaveAndCloseAvailabilityResponseSuccess = (organizationsControllerGetLeaveAndCloseAvailabilityResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsControllerGetLeaveAndCloseAvailabilityResponse = (organizationsControllerGetLeaveAndCloseAvailabilityResponseSuccess)
+
+export const getOrganizationsControllerGetLeaveAndCloseAvailabilityUrl = (companyId: string,
+    venueId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/leave-and-close`
+}
+
+/**
+ * @summary Проверить доступность выхода с закрытием последнего локального сотрудника
+ */
+export const organizationsControllerGetLeaveAndCloseAvailability = async (companyId: string,
+    venueId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerGetLeaveAndCloseAvailabilityResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getOrganizationsControllerGetLeaveAndCloseAvailabilityUrl(companyId,venueId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerGetLeaveAndCloseAvailabilityResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerGetLeaveAndCloseAvailabilityResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerGetLeaveAndCloseAvailabilityQueryKey = (companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'venues',venueId,'leave-and-close'
+    ] as const;
+    }
+
+
+export const getOrganizationsControllerGetLeaveAndCloseAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof organizationsControllerGetLeaveAndCloseAvailability>>, TError = unknown>(companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetLeaveAndCloseAvailability>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getOrganizationsControllerGetLeaveAndCloseAvailabilityQueryKey(companyId,venueId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsControllerGetLeaveAndCloseAvailability>>> = ({ signal }) => organizationsControllerGetLeaveAndCloseAvailability(toValue(companyId),toValue(venueId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined && toValue(venueId) !== null && toValue(venueId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetLeaveAndCloseAvailability>>, TError, TData>
+}
+
+export type OrganizationsControllerGetLeaveAndCloseAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerGetLeaveAndCloseAvailability>>>
+export type OrganizationsControllerGetLeaveAndCloseAvailabilityQueryError = unknown
+
+
+/**
+ * @summary Проверить доступность выхода с закрытием последнего локального сотрудника
+ */
+
+export function useOrganizationsControllerGetLeaveAndCloseAvailability<TData = Awaited<ReturnType<typeof organizationsControllerGetLeaveAndCloseAvailability>>, TError = unknown>(
+ companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsControllerGetLeaveAndCloseAvailability>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsControllerGetLeaveAndCloseAvailabilityQueryOptions(companyId,venueId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type organizationsControllerLeaveAndCloseVenueResponse201 = {
+  data: VenueClosureResponseDto
+  status: 201
+}
+
+export type organizationsControllerLeaveAndCloseVenueResponse409 = {
+  data: void
+  status: 409
+}
+
+export type organizationsControllerLeaveAndCloseVenueResponseSuccess = (organizationsControllerLeaveAndCloseVenueResponse201) & {
+  headers: Headers;
+};
+export type organizationsControllerLeaveAndCloseVenueResponseError = (organizationsControllerLeaveAndCloseVenueResponse409) & {
+  headers: Headers;
+};
+
+export type organizationsControllerLeaveAndCloseVenueResponse = (organizationsControllerLeaveAndCloseVenueResponseSuccess | organizationsControllerLeaveAndCloseVenueResponseError)
+
+export const getOrganizationsControllerLeaveAndCloseVenueUrl = (companyId: string,
+    venueId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/leave-and-close`
+}
+
+/**
+ * @summary Покинуть и закрыть заведение последнему локальному сотруднику
+ */
+export const organizationsControllerLeaveAndCloseVenue = async (companyId: string,
+    venueId: string,
+    closeVenueDto: CloseVenueDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerLeaveAndCloseVenueResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getOrganizationsControllerLeaveAndCloseVenueUrl(companyId,venueId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(closeVenueDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerLeaveAndCloseVenueResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerLeaveAndCloseVenueResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerLeaveAndCloseVenueMutationKey = () => ['organizationsControllerLeaveAndCloseVenue'] as const;
+
+export const getOrganizationsControllerLeaveAndCloseVenueMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerLeaveAndCloseVenue>>, TError,OrganizationsControllerLeaveAndCloseVenueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerLeaveAndCloseVenue>>, TError,OrganizationsControllerLeaveAndCloseVenueMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerLeaveAndCloseVenueMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerLeaveAndCloseVenue>>, OrganizationsControllerLeaveAndCloseVenueMutationVariables> = (props) => {
+          const {companyId,venueId,data} = props ?? {};
+
+          return  organizationsControllerLeaveAndCloseVenue(companyId,venueId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerLeaveAndCloseVenueMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerLeaveAndCloseVenue>>>
+    export type OrganizationsControllerLeaveAndCloseVenueMutationBody = CloseVenueDto
+    export type OrganizationsControllerLeaveAndCloseVenueMutationError = void
+    export type OrganizationsControllerLeaveAndCloseVenueMutationVariables = {companyId: string;venueId: string;data: CloseVenueDto}
+
+    /**
+ * @summary Покинуть и закрыть заведение последнему локальному сотруднику
+ */
+export const useOrganizationsControllerLeaveAndCloseVenue = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerLeaveAndCloseVenue>>, TError,OrganizationsControllerLeaveAndCloseVenueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerLeaveAndCloseVenue>>,
+        TError,
+        OrganizationsControllerLeaveAndCloseVenueMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerLeaveAndCloseVenueMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerGetWorkspaceResponse200 = {
   data: WorkspaceSummaryDto
   status: 200
 }
@@ -149,12 +1287,12 @@ export function useOrganizationsControllerGetWorkspace<TData = Awaited<ReturnTyp
 
 
 
-export type organizationsControllerCreateResponse200 = {
+export type organizationsControllerCreateResponse201 = {
   data: CreateCompanyResponseDto
-  status: 200
+  status: 201
 }
 
-export type organizationsControllerCreateResponseSuccess = (organizationsControllerCreateResponse200) & {
+export type organizationsControllerCreateResponseSuccess = (organizationsControllerCreateResponse201) & {
   headers: Headers;
 };
 ;

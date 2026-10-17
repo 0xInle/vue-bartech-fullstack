@@ -9,6 +9,8 @@ export const REGISTRATION_TTL_MS = 30 * 60 * 1000;
 export const EMAIL_RESEND_DELAY_SECONDS = 60;
 export const LOGIN_WINDOW_SECONDS = 15 * 60;
 export const SESSION_IDLE_MS = 30 * 24 * 60 * 60 * 1000;
+export const INTERNAL_SESSION_IDLE_MS = SESSION_IDLE_MS;
+export const INTERNAL_SESSION_ABSOLUTE_MS = 90 * 24 * 60 * 60_000;
 export const LOGIN_BLOCKED_MESSAGE =
   "Слишком много попыток входа. Восстановите пароль или попробуйте снова через 15 минут";
 export const INVALID_LOGIN_MESSAGE = "Неверный email или пароль";

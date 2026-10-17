@@ -20,6 +20,23 @@ enum VenueStatus {
   ACTIVE
 }
 
+enum CompanyStatus {
+  ACTIVE
+  PENDING_CLOSURE
+}
+
+enum ProductExportClosureType {
+  VENUE
+  COMPANY
+}
+
+enum ProductExportClosureStatus {
+  PREPARING
+  PENDING_CLOSURE
+  CLOSED
+  CANCELLED
+}
+
 enum InvitationStatus {
   ACTIVE
   IN_PROGRESS
@@ -37,13 +54,20 @@ model Company {
   id             String              @id @default(uuid()) @db.Uuid
   name           String
   nameNormalized String
+  status         CompanyStatus        @default(ACTIVE)
+  closureDeadline DateTime?            @db.Timestamptz(6)
   createdAt      DateTime            @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime            @updatedAt @db.Timestamptz(6)
   venues         Venue[]
   memberships    CompanyMembership[]
   invitations    Invitation[]
   auditEvents    AuditEvent[]
+  productExports ProductExportRequest[]
+  productExportClosures ProductExportClosureOperation[]
+  supportRequests       SupportRequest[]
+  supportAccessGrants   SupportAccessGrant[]
 
+  @@index([status, closureDeadline], map: "companies_status_closure_deadline_idx")
   @@map("companies")
 }
 
@@ -60,11 +84,42 @@ model Venue {
   temporaryResponsibility TemporaryResponsibility?
   invitations             Invitation[]
   auditEvents             AuditEvent[]
+  products                Product[]
+  units                   Unit[]
+  referenceValues         ReferenceValue[]
+  productExports          ProductExportRequest[]
+  productExportClosures   ProductExportClosureOperation[]
+  supportRequests         SupportRequest[]
+  supportAccessGrants     SupportAccessGrant[]
 
   @@unique([id, companyId], map: "venues_id_company_id_key")
   @@unique([companyId, nameNormalized], map: "venues_company_normalized_name_key")
   @@index([companyId], map: "venues_company_id_idx")
   @@map("venues")
+}
+
+model ProductExportClosureOperation {
+  id                 String                       @id @default(uuid()) @db.Uuid
+  createdByUserId    String                       @db.Uuid
+  type               ProductExportClosureType
+  status             ProductExportClosureStatus   @default(PREPARING)
+  companyId          String?                      @db.Uuid
+  venueId            String?                      @db.Uuid
+  originalCompanyId  String                       @db.Uuid
+  originalVenueId    String?                      @db.Uuid
+  originalCompanyName String
+  originalVenueName  String?
+  createdAt          DateTime                     @default(now()) @db.Timestamptz(6)
+  closedAt           DateTime?                    @db.Timestamptz(6)
+  cancelledAt        DateTime?                    @db.Timestamptz(6)
+  createdBy          User                         @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  company            Company?                     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  venue              Venue?                       @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  exportRequest      ProductExportRequest?
+
+  @@index([originalCompanyId, type, status], map: "product_export_closures_company_status_idx")
+  @@index([createdByUserId, createdAt], map: "product_export_closures_author_created_idx")
+  @@map("product_export_closure_operations")
 }
 
 model CompanyMembership {

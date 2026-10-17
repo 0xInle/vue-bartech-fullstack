@@ -83,7 +83,7 @@ export class OrganizationInvitationsService {
       },
     });
     if (!company) throw new NotFoundException("Компания не найдена");
-    this.assertCompanyInvitationManager(company, userId);
+    this.assertCompanyInvitationManager(company, userId, true);
     const now = new Date();
     const invitations = await this.database.invitation.findMany({
       where: {
@@ -257,6 +257,7 @@ export class OrganizationInvitationsService {
     transaction: Prisma.TransactionClient,
     input: { actorId: string; companyId: string; invitationId: string },
   ): Promise<void> {
+    await this.lockCompanyForMutation(transaction, input.companyId);
     const invitation = await transaction.invitation.findFirst({
       where: {
         id: input.invitationId,
@@ -309,9 +310,12 @@ export class OrganizationInvitationsService {
     const nameNormalized = normalizeVenueName(name);
     const company = await transaction.company.findUnique({
       where: { id: input.companyId },
-      select: { id: true },
+      select: { id: true, status: true },
     });
     if (!company) throw new ConflictException("Компания больше недоступна");
+    if (company.status !== "ACTIVE") {
+      throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
+    }
     const existingVenue = await transaction.venue.findFirst({
       where: { companyId: input.companyId, nameNormalized },
       select: { id: true },
@@ -347,11 +351,16 @@ export class OrganizationInvitationsService {
 
   private assertCompanyInvitationManager(
     company: {
+      status: string;
       memberships: Array<{ userId: string; companyRole: string | null }>;
       venues: Array<{ memberships: Array<{ userId: string; role: string }> }>;
     },
     userId: string,
+    allowPendingClosure = false,
   ): void {
+    if (company.status !== "ACTIVE" && !allowPendingClosure) {
+      throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
+    }
     const isChef = company.memberships.some(
       (membership) => membership.userId === userId && membership.companyRole === "CHEF_BARTENDER",
     );
@@ -464,6 +473,9 @@ export class OrganizationInvitationsService {
       },
     });
     if (!venue) throw new NotFoundException("Заведение не найдено");
+    if (venue.company.status !== "ACTIVE") {
+      throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
+    }
 
     const companyMembership = venue.company.memberships.find(
       ({ userId }) => userId === input.actorId,
@@ -620,9 +632,23 @@ export class OrganizationInvitationsService {
   async lockInvitationTargetInTransaction(
     transaction: Prisma.TransactionClient,
     emailNormalized: string,
-    venueId: string,
+    companyId: string,
   ): Promise<void> {
-    await transaction.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${emailNormalized + ":" + venueId}, 721804))`;
+    await transaction.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${emailNormalized + ":" + companyId}, 721804))`;
+    await this.lockCompanyForMutation(transaction, companyId);
+  }
+
+  private async lockCompanyForMutation(
+    transaction: Prisma.TransactionClient,
+    companyId: string,
+  ): Promise<void> {
+    const companies = await transaction.$queryRaw<Array<{ status: string }>>`
+      SELECT "status" FROM "companies" WHERE "id" = ${companyId}::uuid FOR UPDATE
+    `;
+    if (!companies.length) throw new NotFoundException("Компания не найдена");
+    if (companies[0].status !== "ACTIVE") {
+      throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
+    }
   }
 
   private async closeExpiredTargetInvitationsInTransaction(
@@ -826,6 +852,9 @@ export class OrganizationInvitationsService {
       },
     });
     if (!company) throw new NotFoundException("Компания не найдена");
+    if (company.status !== "ACTIVE") {
+      throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
+    }
     const actorCompanyMembership = company.memberships.find(
       ({ userId }) => userId === input.actorId,
     );
@@ -972,6 +1001,7 @@ export class OrganizationInvitationsService {
     transaction: Prisma.TransactionClient,
     input: { actorId: string; companyId: string; invitationId: string },
   ): Promise<void> {
+    await this.lockCompanyForMutation(transaction, input.companyId);
     const invitation = await transaction.invitation.findFirst({
       where: {
         id: input.invitationId,
@@ -987,6 +1017,9 @@ export class OrganizationInvitationsService {
       include: { memberships: true, venues: { include: { memberships: true } } },
     });
     if (!company) throw new NotFoundException("Компания не найдена");
+    if (company.status !== "ACTIVE") {
+      throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
+    }
     const isCompanyChef = company.memberships.some(
       ({ userId, companyRole }) => userId === input.actorId && companyRole === "CHEF_BARTENDER",
     );
@@ -1032,6 +1065,13 @@ export class OrganizationInvitationsService {
       actorId: string;
     },
   ): Promise<void> {
+    const company = await transaction.company.findUnique({
+      where: { id: input.companyId },
+      select: { status: true },
+    });
+    if (!company || company.status !== "ACTIVE") {
+      throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
+    }
     const conflicts = await transaction.invitation.findMany({
       where: {
         companyId: input.companyId,
@@ -1084,6 +1124,7 @@ export class OrganizationInvitationsService {
     transaction: Prisma.TransactionClient,
     input: { actorId: string; companyId: string; venueId: string; invitationId: string },
   ): Promise<void> {
+    await this.lockCompanyForMutation(transaction, input.companyId);
     const invitation = await transaction.invitation.findFirst({
       where: {
         id: input.invitationId,
@@ -1101,6 +1142,9 @@ export class OrganizationInvitationsService {
       },
     });
     if (!invitation || !invitation.venue) throw new NotFoundException("Приглашение не найдено");
+    if (invitation.venue.company.status !== "ACTIVE") {
+      throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
+    }
 
     const companyMembership = invitation.venue.company.memberships.find(
       ({ userId }) => userId === input.actorId,

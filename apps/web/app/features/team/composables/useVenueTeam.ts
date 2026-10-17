@@ -5,10 +5,17 @@ import {
   invitationsControllerTeam,
   teamControllerUpdateMember,
 } from "@bartech/api-client";
+import type { TeamControllerUpdateMemberMutationBody } from "@bartech/api-client";
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
 import { requestApi } from "~/utils/api-response";
 
 export type VenueRole = "BARTENDER" | "SENIOR_BARTENDER" | "BAR_MANAGER";
+export type DelegatedPermission =
+  TeamControllerUpdateMemberMutationBody["delegatedPermissions"][number];
+export type UpdateTeamMemberInput = Pick<
+  TeamControllerUpdateMemberMutationBody,
+  "role" | "delegatedPermissions"
+>;
 export type TeamMember = {
   id: string;
   fullName: string;
@@ -82,10 +89,7 @@ export function useVenueTeam(companyId: string, venueId: string) {
     await queryClient.invalidateQueries({ queryKey });
   }
 
-  async function updateMember(
-    membershipId: string,
-    input: Pick<TeamMember, "role" | "delegatedPermissions">,
-  ): Promise<void> {
+  async function updateMember(membershipId: string, input: UpdateTeamMemberInput): Promise<void> {
     await identity.refreshCsrf();
     const response = await teamControllerUpdateMember(
       companyId,

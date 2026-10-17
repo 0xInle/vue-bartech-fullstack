@@ -24,7 +24,23 @@
           Пригласите бар-менеджера — он укажет название заведения при принятии приглашения.
         </p>
       </header>
-      <CompanyVenueInvitationScreen :company="company" :can-invite="true" />
+      <CompanyClosureBanner :company-id="company.id" />
+      <OrganizationLifecyclePanel
+        v-if="isClosureReady && closure?.status !== 'PENDING_CLOSURE'"
+        :company="company"
+      />
+      <CompanyVenueInvitationScreen
+        v-if="isClosureReady && closure?.status !== 'PENDING_CLOSURE'"
+        :company="company"
+        :can-invite="true"
+      />
+      <Message v-else-if="closure?.status === 'PENDING_CLOSURE'" severity="info" :closable="false">
+        Пока компания ожидает закрытия, создавать заведения и приглашения нельзя.
+      </Message>
+      <Message v-else-if="hasClosureError" severity="error" :closable="false">
+        Не удалось проверить состояние компании. Обновите страницу.
+      </Message>
+      <Message v-else severity="info" :closable="false">Проверяем состояние компании…</Message>
     </section>
   </main>
 </template>
@@ -32,17 +48,27 @@
 <script setup lang="ts">
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
 import CompanyVenueInvitationScreen from "./CompanyVenueInvitationScreen.vue";
+import CompanyClosureBanner from "./CompanyClosureBanner.vue";
+import OrganizationLifecyclePanel from "./OrganizationLifecyclePanel.vue";
+import { useOrganizationLifecycle } from "../composables/useOrganizationLifecycle";
 
 defineOptions({ name: "EmptyCompanyPageScreen" });
 
 const route = useRoute();
 const identity = useIdentityFlow();
 const companyId = computed(() => String(route.params.companyId ?? ""));
+const { closureQuery } = useOrganizationLifecycle(companyId);
+const closure = computed(() => closureQuery.data.value);
+const isClosureReady = computed(() => closureQuery.isSuccess.value);
+const hasClosureError = computed(() => closureQuery.isError.value);
 const company = computed(
   () => identity.currentUser.value?.companies.find((item) => item.id === companyId.value) ?? null,
 );
 const loading = computed(
-  () => identity.sessionState.value === "idle" || identity.sessionState.value === "loading",
+  () =>
+    identity.sessionState.value === "idle" ||
+    identity.sessionState.value === "loading" ||
+    (Boolean(company.value) && !isClosureReady.value && !hasClosureError.value),
 );
 
 onMounted(async () => {

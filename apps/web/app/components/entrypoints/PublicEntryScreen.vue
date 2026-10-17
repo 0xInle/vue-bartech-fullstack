@@ -21,7 +21,7 @@
         :class="{ 'public-entry-layout--active': isEntryPanelVisible }"
       >
         <section key="hero" class="public-entry-hero">
-          <p class="brand-eyebrow text-sm font-semibold uppercase tracking-[0.22em]">IndieBar</p>
+          <h1 class="brand-eyebrow text-sm font-semibold uppercase tracking-[0.22em]">IndieBar</h1>
           <p class="brand-description mt-3 max-w-xl text-base leading-7">
             Рабочее пространство для барной команды.
           </p>
@@ -79,14 +79,16 @@
             v-model:password="flow.registration.form.password"
             v-model:password-confirmation="flow.registration.form.passwordConfirmation"
             :password-confirmation-error="flow.registration.passwordConfirmationError.value"
-            :busy="flow.formsDisabled.value"
+            :busy="flow.busy.value"
+            :disabled="flow.formsDisabled.value"
             @submit="flow.run(flow.submitRegistration)"
           />
           <EmailConfirmationForm
             v-else-if="flow.mode.value === 'register'"
             v-model:code="flow.registration.form.code"
             :email="flow.registration.form.email"
-            :busy="flow.formsDisabled.value"
+            :busy="flow.busy.value"
+            :disabled="flow.formsDisabled.value"
             @submit="flow.run(flow.verifyRegistration)"
             @resend="flow.run(flow.resendRegistrationCode)"
             @edit="flow.registration.editDetails"
@@ -95,7 +97,8 @@
             v-else-if="flow.mode.value === 'login'"
             v-model:email="flow.identity.credentials.email"
             v-model:password="flow.identity.credentials.password"
-            :busy="flow.formsDisabled.value"
+            :busy="flow.busy.value"
+            :disabled="flow.formsDisabled.value"
             @submit="flow.run(flow.login)"
             @recover="flow.changeMode('recover')"
           />
@@ -105,7 +108,8 @@
             v-model:code="flow.identity.credentials.recoveryCode"
             v-model:new-password="flow.identity.credentials.newPassword"
             :step="flow.recoveryStep.value"
-            :busy="flow.formsDisabled.value"
+            :busy="flow.busy.value"
+            :disabled="flow.formsDisabled.value"
             @request="flow.run(flow.requestRecovery)"
             @complete="flow.run(flow.completeRecovery)"
             @back="flow.changeMode('login')"

@@ -24,7 +24,7 @@
       <Button
         type="submit"
         :label="busy ? 'Проверяем…' : 'Подтвердить и создать'"
-        :disabled="busy"
+        :disabled="disabled"
         :loading="busy"
         size="small"
         class="w-full"
@@ -37,7 +37,7 @@
         variant="text"
         size="small"
         class="inline-link"
-        :disabled="busy"
+        :disabled="disabled"
         @click="$emit('resend')"
       />
       <Button
@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ email: string; code: string; busy: boolean }>();
+defineProps<{ email: string; code: string; busy: boolean; disabled: boolean }>();
 defineEmits<{
   "update:code": [value: string];
   submit: [];

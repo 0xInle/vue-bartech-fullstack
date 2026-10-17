@@ -4,6 +4,7 @@ datasource db {
 
 enum AuditActorType {
   USER
+  INTERNAL_USER
   SYSTEM
 }
 
@@ -12,6 +13,8 @@ model AuditEvent {
   eventType  String
   actorType  AuditActorType
   actorId    String?        @db.Uuid
+  internalUserId String?    @db.Uuid
+  serviceSessionId String?  @db.Uuid
   companyId  String?        @db.Uuid
   venueId    String?        @db.Uuid
   entityType String
@@ -19,11 +22,14 @@ model AuditEvent {
   metadata   Json?
   createdAt  DateTime       @default(now()) @db.Timestamptz(6)
   actor      User?          @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  internalUser InternalUser? @relation(fields: [internalUserId], references: [id], onDelete: SetNull)
+  serviceSession ServiceSession? @relation(fields: [serviceSessionId], references: [id], onDelete: SetNull)
   company    Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
   venue      Venue?         @relation(fields: [venueId], references: [id], onDelete: SetNull)
 
   @@index([companyId, createdAt], map: "audit_events_company_created_idx")
   @@index([venueId, createdAt], map: "audit_events_venue_created_idx")
   @@index([entityType, entityId, createdAt], map: "audit_events_entity_created_idx")
+  @@index([internalUserId, createdAt], map: "audit_events_internal_user_created_idx")
   @@map("audit_events")
 }

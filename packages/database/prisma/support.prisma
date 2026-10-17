@@ -1,0 +1,126 @@
+enum SupportRequestReason {
+  DATA_MIGRATION
+  ERROR
+  OTHER
+}
+
+enum SupportRequestStatus {
+  NEW
+  IN_PROGRESS
+  CLOSED
+}
+
+enum SupportAttachmentStatus {
+  PENDING_SCAN
+  CLEAN
+  REJECTED
+}
+
+enum SupportAccessScopeType {
+  COMPANY
+  VENUE
+}
+
+model SupportRequest {
+  id                String               @id @default(uuid()) @db.Uuid
+  authorUserId      String?              @db.Uuid
+  companyId         String?              @db.Uuid
+  venueId           String?              @db.Uuid
+  assignedToId      String?              @db.Uuid
+  reason            SupportRequestReason
+  message           String
+  status            SupportRequestStatus @default(NEW)
+  technicalContext  Json?
+  createdAt         DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime             @updatedAt @db.Timestamptz(6)
+  author            User?                @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+  company           Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  venue             Venue?               @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: SetNull)
+  assignedTo        InternalUser?        @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  attachment        SupportAttachment?
+  accessGrants      SupportAccessGrant[]
+
+  @@index([authorUserId, createdAt], map: "support_requests_author_created_idx")
+  @@index([status, createdAt], map: "support_requests_status_created_idx")
+  @@index([assignedToId, status, updatedAt], map: "support_requests_assignee_status_updated_idx")
+  @@map("support_requests")
+}
+
+model SupportAccessGrant {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  authorUserId       String                 @db.Uuid
+  companyId          String                 @db.Uuid
+  venueId            String?                @db.Uuid
+  scopeType          SupportAccessScopeType
+  requestId          String?                @db.Uuid
+  createdAt          DateTime               @default(now()) @db.Timestamptz(6)
+  expiresAt          DateTime               @db.Timestamptz(6)
+  revokedAt          DateTime?              @db.Timestamptz(6)
+  revokedByUserId    String?                @db.Uuid
+  revocationReason   String?
+  author             User                   @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+  revokedBy          User?                  @relation("SupportAccessGrantRevoker", fields: [revokedByUserId], references: [id], onDelete: SetNull)
+  company            Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  venue              Venue?                 @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
+  request            SupportRequest?        @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  sessions           ServiceSession[]
+
+  @@index([companyId, scopeType, venueId, revokedAt, expiresAt], map: "support_access_grants_scope_active_idx")
+  @@index([authorUserId, createdAt], map: "support_access_grants_author_created_idx")
+  @@index([requestId], map: "support_access_grants_request_idx")
+  @@map("support_access_grants")
+}
+
+model ServiceSession {
+  id             String                @id @default(uuid()) @db.Uuid
+  grantId        String                @db.Uuid
+  internalUserId String                @db.Uuid
+  internalSessionId String?             @db.Uuid
+  startedAt      DateTime              @default(now()) @db.Timestamptz(6)
+  expiresAt      DateTime              @db.Timestamptz(6)
+  endedAt        DateTime?             @db.Timestamptz(6)
+  endReason      String?
+  grant          SupportAccessGrant    @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  internalUser   InternalUser          @relation(fields: [internalUserId], references: [id], onDelete: Cascade)
+  internalSession InternalSession?     @relation(fields: [internalSessionId], references: [id], onDelete: Cascade)
+  auditEvents    AuditEvent[]
+  internalAuditEvents InternalAuditEvent[]
+
+  @@index([grantId, endedAt, expiresAt], map: "service_sessions_grant_active_idx")
+  @@index([internalUserId, endedAt, expiresAt], map: "service_sessions_user_active_idx")
+  @@index([internalSessionId, endedAt], map: "service_sessions_internal_session_active_idx")
+  @@map("service_sessions")
+}
+
+model SupportAttachment {
+  id               String                  @id @default(uuid()) @db.Uuid
+  requestId        String                  @unique(map: "support_attachments_request_key") @db.Uuid
+  uploadedByUserId String?                 @db.Uuid
+  originalName     String
+  contentType      String
+  sizeBytes        BigInt
+  objectKey        String                  @unique(map: "support_attachments_object_key")
+  status           SupportAttachmentStatus @default(PENDING_SCAN)
+  scanErrorCode    String?
+  createdAt        DateTime                @default(now()) @db.Timestamptz(6)
+  scannedAt        DateTime?               @db.Timestamptz(6)
+  request          SupportRequest          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  uploadedBy       User?                   @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  outbox           SupportAttachmentOutbox?
+
+  @@index([status, createdAt], map: "support_attachments_scan_status_created_idx")
+  @@map("support_attachments")
+}
+
+model SupportAttachmentOutbox {
+  id            String           @id @default(uuid()) @db.Uuid
+  attachmentId  String           @unique(map: "support_attachment_outbox_attachment_key") @db.Uuid
+  attemptCount  Int              @default(0)
+  nextAttemptAt DateTime         @default(now()) @db.Timestamptz(6)
+  deliveredAt   DateTime?        @db.Timestamptz(6)
+  createdAt     DateTime         @default(now()) @db.Timestamptz(6)
+  attachment    SupportAttachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@index([deliveredAt, nextAttemptAt], map: "support_attachment_outbox_pending_idx")
+  @@map("support_attachment_outbox")
+}

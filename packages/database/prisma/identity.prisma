@@ -10,6 +10,61 @@ enum OutboxStatus {
   FAILED
 }
 
+enum InternalUserStatus {
+  PENDING_ENROLLMENT
+  ACTIVE
+  RECOVERY_REQUIRED
+  DISABLED
+}
+
+enum InternalChallengePurpose {
+  LOGIN
+  ENROLLMENT
+  RECOVERY
+}
+
+enum InternalAuditActorType {
+  OPERATOR
+  INTERNAL_USER
+  SYSTEM
+}
+
+enum ProductAnalyticsEventType {
+  SEARCH_USED
+  SEARCH_EMPTY
+  PRODUCT_OPENED
+  PRODUCT_CREATE_STARTED
+  PRODUCT_CREATE_COMPLETED
+  PRODUCT_ARCHIVED
+  PRODUCT_RESTORED
+  TECHNICAL_ERROR
+}
+
+enum AnalyticsDeviceType {
+  DESKTOP
+  MOBILE
+  TABLET
+  UNKNOWN
+}
+
+enum AnalyticsProductType {
+  INGREDIENT
+  PREPARATION
+  GARNISH
+  COCKTAIL
+}
+
+enum AnalyticsErrorCategory {
+  NETWORK
+  API
+  VALIDATION
+  UNKNOWN
+}
+
+enum AnalyticsEventResult {
+  FAILURE
+}
+
 model User {
   id                                String                        @id @default(uuid()) @db.Uuid
   email                             String
@@ -28,6 +83,16 @@ model User {
   createdInvitations                Invitation[]
   invitationAcceptanceSessions      InvitationAcceptanceSession[]
   auditEvents                       AuditEvent[]
+  productsCreated                   Product[]                     @relation("ProductCreatedBy")
+  productsUpdated                   Product[]                     @relation("ProductUpdatedBy")
+  unitsCreated                      Unit[]                        @relation("UnitCreatedBy")
+  referenceValuesCreated             ReferenceValue[]              @relation("ReferenceValueCreatedBy")
+  productExportRequests              ProductExportRequest[]
+  productExportClosures              ProductExportClosureOperation[]
+  supportRequests                    SupportRequest[]
+  supportAttachments                 SupportAttachment[]
+  supportAccessGrants                SupportAccessGrant[]
+  revokedSupportAccessGrants         SupportAccessGrant[] @relation("SupportAccessGrantRevoker")
 
   @@map("users")
 }
@@ -95,6 +160,115 @@ model Session {
   @@index([userId, revokedAt, expiresAt], map: "sessions_user_active_idx")
   @@index([expiresAt], map: "sessions_expiry_idx")
   @@map("sessions")
+}
+
+model InternalUser {
+  id                          String                 @id @default(uuid()) @db.Uuid
+  email                       String
+  emailNormalized             String                 @unique(map: "internal_users_email_normalized_key")
+  passwordHash                String?
+  status                      InternalUserStatus     @default(PENDING_ENROLLMENT)
+  permissions                 String[]               @default([])
+  totpSecretCiphertext         String?
+  totpSecretIv                 String?
+  totpSecretAuthTag            String?
+  lastAcceptedTotpStep         BigInt                 @default(-1)
+  totpFailureCount             Int                    @default(0)
+  totpAuthenticatorDisabledAt  DateTime?              @db.Timestamptz(6)
+  setupTokenHash               String?                @unique(map: "internal_users_setup_token_hash_key")
+  setupTokenExpiresAt          DateTime?              @db.Timestamptz(6)
+  createdAt                    DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt                    DateTime               @updatedAt @db.Timestamptz(6)
+  sessions                     InternalSession[]
+  challenges                   InternalAuthChallenge[]
+  recoveryCodes                InternalRecoveryCode[]
+  auditEvents                  InternalAuditEvent[]
+  serviceSessions              ServiceSession[]
+  businessAuditEvents          AuditEvent[]
+  assignedSupportRequests      SupportRequest[]
+
+  @@index([status, createdAt], map: "internal_users_status_created_idx")
+  @@map("internal_users")
+}
+
+model InternalSession {
+  id             String       @id @default(uuid()) @db.Uuid
+  internalUserId String       @db.Uuid
+  tokenHash      String       @unique(map: "internal_sessions_token_hash_key")
+  createdAt      DateTime     @default(now()) @db.Timestamptz(6)
+  lastActivityAt DateTime     @default(now()) @db.Timestamptz(6)
+  expiresAt      DateTime     @db.Timestamptz(6)
+  revokedAt      DateTime?    @db.Timestamptz(6)
+  internalUser   InternalUser @relation(fields: [internalUserId], references: [id], onDelete: Cascade)
+  serviceSessions ServiceSession[]
+
+  @@index([internalUserId, revokedAt, expiresAt], map: "internal_sessions_user_active_idx")
+  @@index([expiresAt], map: "internal_sessions_expiry_idx")
+  @@map("internal_sessions")
+}
+
+model InternalAuthChallenge {
+  id             String                   @id @default(uuid()) @db.Uuid
+  internalUserId String                   @db.Uuid
+  purpose        InternalChallengePurpose
+  tokenHash      String                   @unique(map: "internal_auth_challenges_token_hash_key")
+  attemptCount   Int                      @default(0)
+  expiresAt      DateTime                 @db.Timestamptz(6)
+  consumedAt     DateTime?                @db.Timestamptz(6)
+  createdAt      DateTime                 @default(now()) @db.Timestamptz(6)
+  internalUser   InternalUser             @relation(fields: [internalUserId], references: [id], onDelete: Cascade)
+
+  @@index([internalUserId, purpose, expiresAt], map: "internal_auth_challenges_user_purpose_expiry_idx")
+  @@index([expiresAt], map: "internal_auth_challenges_expiry_idx")
+  @@map("internal_auth_challenges")
+}
+
+model InternalRecoveryCode {
+  id             String       @id @default(uuid()) @db.Uuid
+  internalUserId String       @db.Uuid
+  codeHash       String       @unique(map: "internal_recovery_codes_code_hash_key")
+  consumedAt     DateTime?    @db.Timestamptz(6)
+  createdAt      DateTime     @default(now()) @db.Timestamptz(6)
+  internalUser   InternalUser @relation(fields: [internalUserId], references: [id], onDelete: Cascade)
+
+  @@index([internalUserId, consumedAt], map: "internal_recovery_codes_user_consumed_idx")
+  @@map("internal_recovery_codes")
+}
+
+model InternalAuditEvent {
+  id             String                 @id @default(uuid()) @db.Uuid
+  eventType      String
+  actorType      InternalAuditActorType
+  actorId        String?                @db.Uuid
+  internalUserId String?                @db.Uuid
+  companyId      String?                @db.Uuid
+  venueId        String?                @db.Uuid
+  serviceSessionId String?              @db.Uuid
+  metadata       Json?
+  createdAt      DateTime               @default(now()) @db.Timestamptz(6)
+  internalUser   InternalUser?          @relation(fields: [internalUserId], references: [id], onDelete: SetNull)
+  serviceSession ServiceSession?        @relation(fields: [serviceSessionId], references: [id], onDelete: SetNull)
+
+  @@index([internalUserId, createdAt], map: "internal_audit_events_user_created_idx")
+  @@index([eventType, createdAt], map: "internal_audit_events_type_created_idx")
+  @@index([companyId, createdAt], map: "internal_audit_events_company_created_idx")
+  @@index([createdAt, id], map: "internal_audit_events_created_id_idx")
+  @@map("internal_audit_events")
+}
+
+model ProductAnalyticsEvent {
+  id            String                    @id @default(uuid()) @db.Uuid
+  eventId       String                    @unique(map: "product_analytics_events_event_id_key") @db.Uuid
+  eventType     ProductAnalyticsEventType
+  deviceType    AnalyticsDeviceType
+  productType   AnalyticsProductType?
+  errorCategory AnalyticsErrorCategory?
+  result        AnalyticsEventResult?
+  createdAt     DateTime                  @default(now()) @db.Timestamptz(6)
+
+  @@index([createdAt, eventType], map: "product_analytics_events_created_type_idx")
+  @@index([createdAt, errorCategory], map: "product_analytics_events_created_error_idx")
+  @@map("product_analytics_events")
 }
 
 model OutboxMessage {

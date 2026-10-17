@@ -16,9 +16,11 @@
     "build": "pnpm --recursive --if-present build && pnpm --filter @bartech/backend build:worker",
     "prisma:validate": "pnpm --filter @bartech/database prisma:validate",
     "prisma:generate": "pnpm --filter @bartech/database prisma:generate",
+    "catalog:seed": "pnpm --filter @bartech/database seed:global-ingredients",
+    "catalog:backfill-ids": "pnpm --filter @bartech/database backfill:global-ingredient-ids",
     "api:generate": "pnpm --filter @bartech/backend^... build && pnpm --filter @bartech/backend openapi:export && pnpm --filter @bartech/api-client generate",
     "api:check": "pnpm api:generate && git diff --exit-code -- packages/api-client/openapi.json packages/api-client/src/generated",
-    "infra:up": "docker compose --env-file .env.local -f infrastructure/compose.yaml up -d postgres redis mailpit",
+    "infra:up": "docker compose --env-file .env.local -f infrastructure/compose.yaml up -d postgres redis mailpit clamav",
     "infra:down": "docker compose --env-file .env.local -f infrastructure/compose.yaml down",
     "verify": "pnpm lint && pnpm typecheck && pnpm prisma:validate && pnpm api:check && pnpm build",
     "postinstall": "pnpm --filter @bartech/database prisma:generate"

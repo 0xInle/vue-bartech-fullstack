@@ -4,13 +4,13 @@ services:
     environment:
       POSTGRES_USER: bartech
       POSTGRES_PASSWORD: bartech_local
-      POSTGRES_DB: bartech
+      POSTGRES_DB: indiebar
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bartech -d bartech"]
+      test: ["CMD-SHELL", "pg_isready -U bartech -d indiebar"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -39,6 +39,24 @@ services:
       timeout: 3s
       retries: 20
 
+  clamav:
+    image: clamav/clamav:1.5.4-debian13-slim
+    environment:
+      CLAMAV_NO_MILTERD: "true"
+      CLAMD_STARTUP_TIMEOUT: "1800"
+      FRESHCLAM_CHECKS: "1"
+    ports:
+      - "127.0.0.1:3310:3310"
+    volumes:
+      - clamav-data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdscan", "--ping", "3"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20m
+
 volumes:
   postgres-data:
   redis-data:
+  clamav-data:

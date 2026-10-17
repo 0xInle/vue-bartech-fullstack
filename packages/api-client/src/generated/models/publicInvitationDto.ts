@@ -5,21 +5,19 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
-import type { PublicInvitationDtoAccessDescription } from './publicInvitationDtoAccessDescription';
 import type { PublicInvitationDtoPurpose } from './publicInvitationDtoPurpose';
 import type { PublicInvitationDtoRole } from './publicInvitationDtoRole';
-import type { PublicInvitationDtoVenueName } from './publicInvitationDtoVenueName';
 
 export interface PublicInvitationDto {
   purpose: PublicInvitationDtoPurpose;
   companyName: string;
   /** @nullable */
-  venueName: PublicInvitationDtoVenueName;
+  venueName: string | null;
   /** @nullable */
   role: PublicInvitationDtoRole;
   roleLabel: string;
   /** @nullable */
-  accessDescription: PublicInvitationDtoAccessDescription;
+  accessDescription: string | null;
   email: string;
   expiresAt: string;
 }
