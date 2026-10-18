@@ -11,7 +11,13 @@ import {
   PermissionService,
 } from "../permissions/permission.service.js";
 
-export const venueRoles = ["BARTENDER", "SENIOR_BARTENDER", "BAR_MANAGER"] as const;
+export const venueRoles = [
+  "BARTENDER",
+  "SENIOR_BARTENDER",
+  "BARBACK",
+  "TRAINEE",
+  "BAR_MANAGER",
+] as const;
 export type ManagedVenueRole = (typeof venueRoles)[number];
 
 export const delegatedPermissionCodes = DELEGATABLE_PERMISSION_CODES;
@@ -100,7 +106,11 @@ export class TeamService {
       const hasBarManager = venue.memberships.some(({ role }) => role === "BAR_MANAGER");
       const hasChefBartender = venue.company.memberships.length > 0;
       const actorIsTemporaryResponsible = Boolean(
-        actorMembership?.temporaryResponsibility && !hasBarManager && !hasChefBartender,
+        actorMembership &&
+        (actorMembership.role === "BARTENDER" || actorMembership.role === "SENIOR_BARTENDER") &&
+        actorMembership.temporaryResponsibility &&
+        !hasBarManager &&
+        !hasChefBartender,
       );
 
       if (!actorMembership && !actorIsChef) throw new NotFoundException("Команда не найдена");
@@ -229,6 +239,29 @@ export class TeamService {
         });
       }
 
+      const targetVenueMembership = venue.memberships.find(({ id }) => id === target.id);
+      if (
+        roleChanged &&
+        (input.role === "BARBACK" || input.role === "TRAINEE") &&
+        targetVenueMembership?.temporaryResponsibility
+      ) {
+        await transaction.temporaryResponsibility.deleteMany({
+          where: { venueMembershipId: target.id },
+        });
+        await transaction.auditEvent.create({
+          data: {
+            eventType: "temporary_responsibility.ended",
+            actorType: "USER",
+            actorId,
+            companyId,
+            venueId,
+            entityType: "venue_membership",
+            entityId: target.id,
+            metadata: { subjectUserId: target.userId },
+          },
+        });
+      }
+
       if (permissionsToGrant.length || permissionsToRevoke.length) {
         await transaction.auditEvent.create({
           data: {
@@ -285,6 +318,8 @@ function samePermissions(first: readonly string[], second: readonly string[]): b
 function toWorkspaceRole(role: ManagedVenueRole): "bartender" | "senior_bartender" | "bar_manager" {
   switch (role) {
     case "BARTENDER":
+    case "BARBACK":
+    case "TRAINEE":
       return "bartender";
     case "SENIOR_BARTENDER":
       return "senior_bartender";

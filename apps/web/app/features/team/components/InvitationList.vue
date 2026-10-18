@@ -1,45 +1,70 @@
 <template>
-  <section>
-    <h2 class="text-lg font-semibold">Ожидают ответа</h2>
-    <p v-if="!invitations.length" class="mt-3 text-sm text-zinc-500">Активных приглашений нет.</p>
-    <ul v-else class="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
-      <li
-        v-for="invitation in invitations"
-        :key="invitation.id"
-        class="flex flex-wrap items-center justify-between gap-3 p-3"
-      >
-        <div class="min-w-0">
-          <p class="truncate text-sm font-medium">{{ invitation.email }}</p>
-          <p class="text-xs text-zinc-500">
-            {{ roleLabel(invitation.role) }} · до {{ formatDate(invitation.expiresAt) }}
-          </p>
+  <section class="space-y-2">
+    <h3 class="text-base font-semibold">Ожидают ответа</h3>
+    <p v-if="!invitations.length" class="mt-3 text-sm text-zinc-500">
+      Нет приглашенных сотрудников
+    </p>
+    <ul v-else class="divide-y divide-surface overflow-hidden rounded-lg border border-surface">
+      <li v-for="invitation in invitations" :key="invitation.id" class="space-y-2 p-3 text-sm">
+        <div class="flex items-center gap-2">
+          <p class="min-w-0 flex-1 truncate font-medium">{{ invitation.email }}</p>
+          <Button
+            v-if="invitation.canRevoke"
+            icon="pi pi-times"
+            aria-label="Отозвать приглашение"
+            severity="secondary"
+            variant="text"
+            size="small"
+            :disabled="busyId === invitation.id"
+            :loading="busyId === invitation.id"
+            @click="$emit('revoke', invitation)"
+          />
         </div>
-        <Button
-          v-if="invitation.canRevoke"
-          label="Отозвать"
-          severity="secondary"
-          variant="text"
-          size="small"
-          :disabled="busyId === invitation.id"
-          :loading="busyId === invitation.id"
-          @click="$emit('revoke', invitation.id)"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <Tag :value="roleLabel(invitation.role)" severity="contrast" :pt="compactTagPt" />
+          <div class="ml-auto flex items-center gap-2">
+            <Tag
+              :value="`до ${formatDate(invitation.expiresAt)}`"
+              severity="secondary"
+              :pt="compactTagPt"
+            />
+          </div>
+        </div>
       </li>
     </ul>
   </section>
 </template>
 
 <script setup lang="ts">
-import type { VenueInvitation, VenueRole } from "../composables/useVenueTeam";
+import type { VenueRole } from "../composables/useVenueTeam";
 
-defineProps<{ invitations: VenueInvitation[]; busyId: string }>();
-defineEmits<{ revoke: [id: string] }>();
+type InviteRole = VenueRole | "CHEF_BARTENDER";
+type PendingInvitation = {
+  id: string;
+  email: string;
+  role: InviteRole;
+  expiresAt: string;
+  canRevoke: boolean;
+  scope: "venue" | "company";
+};
 
-function roleLabel(role: VenueRole): string {
+defineProps<{ invitations: PendingInvitation[]; busyId: string }>();
+defineEmits<{ revoke: [invitation: PendingInvitation] }>();
+
+const compactTagPt = {
+  root: {
+    style: { fontSize: "0.6875rem", fontWeight: "500", padding: "0.125rem 0.375rem" },
+  },
+};
+
+function roleLabel(role: InviteRole): string {
   return {
     BARTENDER: "Бармен",
+    BARBACK: "Барбек",
+    TRAINEE: "Стажёр",
     SENIOR_BARTENDER: "Старший бармен",
     BAR_MANAGER: "Бар-менеджер",
+    CHEF_BARTENDER: "Шеф-бармен",
   }[role];
 }
 

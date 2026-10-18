@@ -61,6 +61,7 @@ export class RegistrationService {
           companyNameNormalized: companyName.toLocaleLowerCase("ru-RU"),
           venueName,
           venueNameNormalized: venueName.toLocaleLowerCase("ru-RU").replaceAll("ё", "е"),
+          initialRole: input.initialRole,
           tokenHash,
           expiresAt,
         },
@@ -156,6 +157,7 @@ export class RegistrationService {
       const workspace = await this.organizations.createInTransaction(transaction, user.id, {
         companyName: attempt.companyName,
         venueName: attempt.venueName,
+        initialRole: attempt.initialRole,
       });
       await transaction.session.create({
         data: {

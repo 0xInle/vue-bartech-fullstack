@@ -6461,6 +6461,15 @@
             "type": "string",
             "example": "Гадкий Шпрот",
             "maxLength": 120
+          },
+          "initialRole": {
+            "type": "string",
+            "enum": [
+              "CHEF_BARTENDER",
+              "BAR_MANAGER",
+              "SENIOR_BARTENDER",
+              "BARTENDER"
+            ]
           }
         },
         "required": [
@@ -6468,7 +6477,8 @@
           "password",
           "fullName",
           "companyName",
-          "venueName"
+          "venueName",
+          "initialRole"
         ]
       },
       "AcceptedDto": {
@@ -7602,6 +7612,8 @@
             "enum": [
               "BARTENDER",
               "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
               "BAR_MANAGER"
             ]
           },
@@ -7618,6 +7630,8 @@
               "enum": [
                 "BARTENDER",
                 "SENIOR_BARTENDER",
+                "BARBACK",
+                "TRAINEE",
                 "BAR_MANAGER"
               ]
             }
@@ -7662,6 +7676,8 @@
             "enum": [
               "BARTENDER",
               "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
               "BAR_MANAGER"
             ]
           },
@@ -7727,6 +7743,8 @@
             "enum": [
               "BARTENDER",
               "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
               "BAR_MANAGER"
             ]
           }
@@ -7772,6 +7790,8 @@
             "enum": [
               "BARTENDER",
               "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
               "BAR_MANAGER"
             ],
             "nullable": true
@@ -7873,6 +7893,8 @@
             "enum": [
               "BARTENDER",
               "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
               "BAR_MANAGER"
             ]
           },

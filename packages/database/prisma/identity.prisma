@@ -117,6 +117,7 @@ model RegistrationAttempt {
   companyNameNormalized String
   venueName             String
   venueNameNormalized   String
+  initialRole           InitialRegistrationRole @default(BAR_MANAGER)
   tokenHash             String           @unique(map: "registration_attempts_token_hash_key")
   expiresAt             DateTime         @db.Timestamptz(6)
   createdAt             DateTime         @default(now()) @db.Timestamptz(6)

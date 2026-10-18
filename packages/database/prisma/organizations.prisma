@@ -5,7 +5,16 @@ enum CompanyRole {
 enum VenueRole {
   BARTENDER
   SENIOR_BARTENDER
+  BARBACK
+  TRAINEE
   BAR_MANAGER
+}
+
+enum InitialRegistrationRole {
+  CHEF_BARTENDER
+  BAR_MANAGER
+  SENIOR_BARTENDER
+  BARTENDER
 }
 
 enum DelegatedPermissionCode {

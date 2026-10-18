@@ -102,6 +102,7 @@ export default defineNuxtConfig({
         "Button",
         "Card",
         "AutoComplete",
+        "CascadeSelect",
         "MultiSelect",
         "Textarea",
         "Divider",

@@ -37,6 +37,8 @@ export function roleLabel(role: VenueInviteRole): string {
   return {
     BARTENDER: "Бармен",
     SENIOR_BARTENDER: "Старший бармен",
+    BARBACK: "Барбек",
+    TRAINEE: "Стажёр",
     BAR_MANAGER: "Бар-менеджер",
   }[role];
 }

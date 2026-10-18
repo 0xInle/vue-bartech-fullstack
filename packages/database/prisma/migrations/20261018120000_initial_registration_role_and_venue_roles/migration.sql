@@ -1,0 +1,12 @@
+ALTER TYPE "VenueRole" ADD VALUE 'BARBACK' BEFORE 'BAR_MANAGER';
+ALTER TYPE "VenueRole" ADD VALUE 'TRAINEE' BEFORE 'BAR_MANAGER';
+
+CREATE TYPE "InitialRegistrationRole" AS ENUM (
+  'CHEF_BARTENDER',
+  'BAR_MANAGER',
+  'SENIOR_BARTENDER',
+  'BARTENDER'
+);
+
+ALTER TABLE "registration_attempts"
+ADD COLUMN "initialRole" "InitialRegistrationRole" NOT NULL DEFAULT 'BAR_MANAGER';

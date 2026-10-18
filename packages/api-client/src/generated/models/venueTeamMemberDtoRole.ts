@@ -12,5 +12,7 @@ export type VenueTeamMemberDtoRole = typeof VenueTeamMemberDtoRole[keyof typeof 
 export const VenueTeamMemberDtoRole = {
   BARTENDER: 'BARTENDER',
   SENIOR_BARTENDER: 'SENIOR_BARTENDER',
+  BARBACK: 'BARBACK',
+  TRAINEE: 'TRAINEE',
   BAR_MANAGER: 'BAR_MANAGER',
 } as const;

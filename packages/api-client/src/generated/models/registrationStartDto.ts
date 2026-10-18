@@ -5,6 +5,7 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { RegistrationStartDtoInitialRole } from './registrationStartDtoInitialRole';
 
 export interface RegistrationStartDto {
   email: string;
@@ -19,4 +20,5 @@ export interface RegistrationStartDto {
   companyName: string;
   /** @maxLength 120 */
   venueName: string;
+  initialRole: RegistrationStartDtoInitialRole;
 }

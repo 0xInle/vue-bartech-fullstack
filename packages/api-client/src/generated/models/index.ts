@@ -245,6 +245,7 @@ export * from './referenceValueResponseDto';
 export * from './referenceValueResponseDtoType';
 export * from './registrationCompleteResponseDto';
 export * from './registrationStartDto';
+export * from './registrationStartDtoInitialRole';
 export * from './revokeInvitationDto';
 export * from './startInvitationRegistrationDto';
 export * from './supportAttachmentResponseDto';

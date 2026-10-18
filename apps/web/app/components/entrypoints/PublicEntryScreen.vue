@@ -75,6 +75,7 @@
             v-model:company-name="flow.registration.form.companyName"
             v-model:venue-name="flow.registration.form.venueName"
             v-model:full-name="flow.registration.form.fullName"
+            v-model:initial-role="flow.registration.form.initialRole"
             v-model:email="flow.registration.form.email"
             v-model:password="flow.registration.form.password"
             v-model:password-confirmation="flow.registration.form.passwordConfirmation"

@@ -12,5 +12,7 @@ export type CreateVenueInvitationDtoRole = typeof CreateVenueInvitationDtoRole[k
 export const CreateVenueInvitationDtoRole = {
   BARTENDER: 'BARTENDER',
   SENIOR_BARTENDER: 'SENIOR_BARTENDER',
+  BARBACK: 'BARBACK',
+  TRAINEE: 'TRAINEE',
   BAR_MANAGER: 'BAR_MANAGER',
 } as const;

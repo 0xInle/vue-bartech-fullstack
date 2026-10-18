@@ -9,7 +9,13 @@ import {
   MaxLength,
 } from "class-validator";
 
-export const VENUE_INVITE_ROLES = ["BARTENDER", "SENIOR_BARTENDER", "BAR_MANAGER"] as const;
+export const VENUE_INVITE_ROLES = [
+  "BARTENDER",
+  "SENIOR_BARTENDER",
+  "BARBACK",
+  "TRAINEE",
+  "BAR_MANAGER",
+] as const;
 
 export class CreateVenueInvitationDto {
   @ApiProperty({ example: "bartender@example.ru" })

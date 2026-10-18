@@ -110,6 +110,8 @@ const role = ref<VenueRole>("BARTENDER");
 const delegatedPermissions = ref<DelegatedPermission[]>([]);
 const availableRoles: Array<{ label: string; value: VenueRole }> = [
   { label: "Бармен", value: "BARTENDER" },
+  { label: "Барбек", value: "BARBACK" },
+  { label: "Стажёр", value: "TRAINEE" },
   { label: "Старший бармен", value: "SENIOR_BARTENDER" },
   { label: "Бар-менеджер", value: "BAR_MANAGER" },
 ];

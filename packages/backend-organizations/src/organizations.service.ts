@@ -16,11 +16,13 @@ import {
 export type WorkspaceInput = {
   companyName: string;
   venueName: string;
+  initialRole?: "CHEF_BARTENDER" | "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER";
 };
 
 export type CompanySummary = { id: string; name: string };
 
-export type VenueInviteRole = "BARTENDER" | "SENIOR_BARTENDER" | "BAR_MANAGER";
+export type VenueInviteRole =
+  "BARTENDER" | "SENIOR_BARTENDER" | "BARBACK" | "TRAINEE" | "BAR_MANAGER";
 
 export function normalizeName(value: string): string {
   return value.trim().replace(/\s+/gu, " ");
@@ -116,7 +118,7 @@ export class OrganizationsService {
             !hasBarManager &&
             !hasChefBartender &&
             Boolean(membership.temporaryResponsibility) &&
-            (role === "bartender" || role === "senior_bartender"),
+            (membership.role === "BARTENDER" || membership.role === "SENIOR_BARTENDER"),
           hasBarManager,
           hasChefBartender,
         }),
@@ -292,21 +294,17 @@ export class OrganizationsService {
       },
     });
 
-    await transaction.companyMembership.create({
-      data: {
-        userId,
-        companyId: company.id,
-      },
-    });
-
-    await transaction.venueMembership.create({
-      data: {
-        userId,
-        companyId: company.id,
-        venueId: venue.id,
-        role: "BAR_MANAGER",
-      },
-    });
+    const initialRole = input.initialRole ?? "BAR_MANAGER";
+    if (initialRole === "CHEF_BARTENDER") {
+      await transaction.companyMembership.create({
+        data: { userId, companyId: company.id, companyRole: "CHEF_BARTENDER" },
+      });
+    } else {
+      await transaction.companyMembership.create({ data: { userId, companyId: company.id } });
+      await transaction.venueMembership.create({
+        data: { userId, companyId: company.id, venueId: venue.id, role: initialRole },
+      });
+    }
 
     return { company, venue };
   }
@@ -369,12 +367,13 @@ export class OrganizationsService {
 
     return {
       members: members.map((member) => {
+        const actorMembership = members.find(({ userId: memberUserId }) => memberUserId === userId);
         const canManageTeam =
           member.userId !== userId && workspace.permissions.includes("manage_team");
         const canManageAllLocalRoles =
           workspace.role === "bar_manager" || workspace.role === "chef_bartender";
         const canManageAsTemporaryResponsible =
-          (workspace.role === "bartender" || workspace.role === "senior_bartender") &&
+          (actorMembership?.role === "BARTENDER" || actorMembership?.role === "SENIOR_BARTENDER") &&
           workspace.permissions.includes("manage_team");
         const canChangeRole =
           canManageTeam &&
@@ -402,7 +401,9 @@ export class OrganizationsService {
           email: member.user.email,
           role: member.role,
           delegatedPermissions,
-          availableRoles: canChangeRole ? ["BARTENDER", "SENIOR_BARTENDER", "BAR_MANAGER"] : [],
+          availableRoles: canChangeRole
+            ? ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
+            : [],
           availableDelegatedPermissions: canManageDelegatedPermissions
             ? DELEGATABLE_PERMISSION_CODES.filter(
                 (code) =>
@@ -456,9 +457,11 @@ function restrictCompanyPermissions(
   return permissions.filter((permission) => readOnlyCompanyPermissions.has(permission));
 }
 
-function toWorkspaceRole(role: "BARTENDER" | "SENIOR_BARTENDER" | "BAR_MANAGER"): WorkspaceRole {
+function toWorkspaceRole(role: VenueInviteRole): WorkspaceRole {
   switch (role) {
     case "BARTENDER":
+    case "BARBACK":
+    case "TRAINEE":
       return "bartender";
     case "SENIOR_BARTENDER":
       return "senior_bartender";

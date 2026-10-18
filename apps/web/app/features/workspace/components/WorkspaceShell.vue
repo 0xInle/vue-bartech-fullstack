@@ -68,7 +68,7 @@
     </div>
 
     <main class="min-w-0 flex-1 px-4 pb-24 pt-28 sm:px-6 lg:px-8 lg:pb-8 lg:pt-4">
-      <div v-if="!isHome" class="mb-5 flex justify-end">
+      <div v-if="!isHome" class="mb-5 flex justify-end xl:hidden">
         <WorkspaceProductSearch :workspace="workspace" mode="trigger" />
       </div>
       <CompanyClosureBanner :company-id="workspace.company.id" />
@@ -195,6 +195,9 @@ function linkItem(label: string, to: string, active: boolean): MenuItem {
 
 const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = [linkItem("Главная", homePath.value, isHome.value)];
+  if (props.workspace.permissions.includes("view_team")) {
+    items.push(linkItem("Команда", paths.value.team, isPathActive(paths.value.team)));
+  }
   if (props.workspace.permissions.includes("view_products")) {
     items.push({
       key: "catalog",
@@ -205,9 +208,6 @@ const menuItems = computed<MenuItem[]>(() => {
         linkItem("Гарниры", paths.value.garnishes, isPathActive(paths.value.garnishes)),
       ],
     });
-  }
-  if (props.workspace.permissions.includes("view_team")) {
-    items.push(linkItem("Команда", paths.value.team, isPathActive(paths.value.team)));
   }
   const managementItems: MenuItem[] = [];
   if (props.workspace.permissions.includes("view_archive")) {

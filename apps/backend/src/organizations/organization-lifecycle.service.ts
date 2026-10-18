@@ -141,7 +141,10 @@ export class OrganizationLifecycleService {
       venue &&
       (actorMember?.role === "BAR_MANAGER" ||
         workspace.role === "chef_bartender" ||
-        (actorMember?.temporaryResponsibility && !hasManager && !hasChef) ||
+        (actorMember?.temporaryResponsibility &&
+          (actorMember.role === "BARTENDER" || actorMember.role === "SENIOR_BARTENDER") &&
+          !hasManager &&
+          !hasChef) ||
         isLastLocalEmployee),
     );
     if (!isAuthorized || !venue || !workspace) {
@@ -457,7 +460,11 @@ export class OrganizationLifecycleService {
       const isChef = actorCompanyMembership?.companyRole === "CHEF_BARTENDER";
       const isManager = actorVenueMembership?.role === "BAR_MANAGER";
       const isTemporaryResponsible = Boolean(
-        actorVenueMembership?.temporaryResponsibility && !hasChef && !hasManager,
+        actorVenueMembership?.temporaryResponsibility &&
+        (actorVenueMembership.role === "BARTENDER" ||
+          actorVenueMembership.role === "SENIOR_BARTENDER") &&
+        !hasChef &&
+        !hasManager,
       );
       if (actorCompanyMembership?.companyRole && actorVenueMembership) {
         throw new ConflictException("У сотрудника обнаружены несовместимые полномочия");

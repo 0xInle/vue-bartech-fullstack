@@ -16,13 +16,14 @@ export type CompanyChefInvitation = {
   expiresAt: string;
 };
 
-export function useCompanyChefTeam(companyId: string) {
+export function useCompanyChefTeam(companyId: string, enabled = true) {
   const identity = useIdentityFlow();
   const queryClient = useQueryClient();
   const queryKey = ["company-chef-team", companyId];
   const teamQuery = useQuery({
     queryKey,
     retry: false,
+    enabled,
     queryFn: async ({ signal }) => {
       const response = await invitationsControllerCompanyChefTeam(
         companyId,

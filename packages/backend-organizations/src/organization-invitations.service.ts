@@ -497,7 +497,10 @@ export class OrganizationInvitationsService {
       delegatedPermissions: localMembership?.delegatedPermissions.map(({ code }) =>
         code.toLowerCase(),
       ),
-      temporaryResponsibility: Boolean(localMembership?.temporaryResponsibility),
+      temporaryResponsibility: Boolean(
+        localMembership?.temporaryResponsibility &&
+        (localMembership.role === "BARTENDER" || localMembership.role === "SENIOR_BARTENDER"),
+      ),
       hasBarManager,
       hasChefBartender,
     });
@@ -1163,7 +1166,10 @@ export class OrganizationInvitationsService {
           delegatedPermissions: localMembership?.delegatedPermissions.map(({ code }) =>
             code.toLowerCase(),
           ),
-          temporaryResponsibility: Boolean(localMembership?.temporaryResponsibility),
+          temporaryResponsibility: Boolean(
+            localMembership?.temporaryResponsibility &&
+            (localMembership.role === "BARTENDER" || localMembership.role === "SENIOR_BARTENDER"),
+          ),
           hasBarManager: invitation.venue.memberships.some(({ role }) => role === "BAR_MANAGER"),
           hasChefBartender: invitation.venue.company.memberships.some(
             ({ companyRole }) => companyRole === "CHEF_BARTENDER",
@@ -1280,6 +1286,8 @@ export class OrganizationInvitationsService {
         : {
             BARTENDER: "Бармен",
             SENIOR_BARTENDER: "Старший бармен",
+            BARBACK: "Барбек",
+            TRAINEE: "Стажёр",
             BAR_MANAGER: "Бар-менеджер",
           }[invitation.role!];
     return {
@@ -1295,9 +1303,11 @@ export class OrganizationInvitationsService {
     };
   }
 }
-function toWorkspaceRole(role: "BARTENDER" | "SENIOR_BARTENDER" | "BAR_MANAGER"): WorkspaceRole {
+function toWorkspaceRole(role: VenueInviteRole): WorkspaceRole {
   switch (role) {
     case "BARTENDER":
+    case "BARBACK":
+    case "TRAINEE":
       return "bartender";
     case "SENIOR_BARTENDER":
       return "senior_bartender";

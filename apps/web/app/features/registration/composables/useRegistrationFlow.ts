@@ -12,6 +12,7 @@ type RegistrationForm = {
   fullName: string;
   companyName: string;
   venueName: string;
+  initialRole: "CHEF_BARTENDER" | "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER" | "";
   code: string;
 };
 
@@ -27,6 +28,7 @@ export function useRegistrationFlow(
     fullName: "",
     companyName: "",
     venueName: "",
+    initialRole: "",
     code: "",
   });
   const passwordConfirmationError = ref("");
@@ -40,6 +42,7 @@ export function useRegistrationFlow(
       passwordConfirmationError.value = "Пароли не совпадают.";
       return false;
     }
+    if (!form.initialRole) return false;
 
     await requestApi<{ accepted: true }>(
       identityControllerStartRegistration(
@@ -49,6 +52,7 @@ export function useRegistrationFlow(
           fullName: form.fullName,
           companyName: form.companyName,
           venueName: form.venueName,
+          initialRole: form.initialRole,
         },
         mutationOptions(),
         apiFetch,

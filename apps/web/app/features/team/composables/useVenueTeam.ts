@@ -9,7 +9,7 @@ import type { TeamControllerUpdateMemberMutationBody } from "@bartech/api-client
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
 import { requestApi } from "~/utils/api-response";
 
-export type VenueRole = "BARTENDER" | "SENIOR_BARTENDER" | "BAR_MANAGER";
+export type VenueRole = "BARTENDER" | "SENIOR_BARTENDER" | "BARBACK" | "TRAINEE" | "BAR_MANAGER";
 export type DelegatedPermission =
   TeamControllerUpdateMemberMutationBody["delegatedPermissions"][number];
 export type UpdateTeamMemberInput = Pick<

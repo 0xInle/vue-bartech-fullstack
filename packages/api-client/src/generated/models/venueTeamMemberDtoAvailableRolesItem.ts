@@ -12,5 +12,7 @@ export type VenueTeamMemberDtoAvailableRolesItem = typeof VenueTeamMemberDtoAvai
 export const VenueTeamMemberDtoAvailableRolesItem = {
   BARTENDER: 'BARTENDER',
   SENIOR_BARTENDER: 'SENIOR_BARTENDER',
+  BARBACK: 'BARBACK',
+  TRAINEE: 'TRAINEE',
   BAR_MANAGER: 'BAR_MANAGER',
 } as const;

@@ -15,5 +15,7 @@ export type PublicInvitationDtoRole = typeof PublicInvitationDtoRole[keyof typeo
 export const PublicInvitationDtoRole = {
   BARTENDER: 'BARTENDER',
   SENIOR_BARTENDER: 'SENIOR_BARTENDER',
+  BARBACK: 'BARBACK',
+  TRAINEE: 'TRAINEE',
   BAR_MANAGER: 'BAR_MANAGER',
 } as const;

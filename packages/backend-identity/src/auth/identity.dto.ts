@@ -1,6 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { WorkspaceSummaryDto } from "@bartech/backend-organizations";
-import { IsEmail, IsNotEmpty, IsString, Length, MaxLength, MinLength } from "class-validator";
+import { IsEmail, IsIn, IsNotEmpty, IsString, Length, MaxLength, MinLength } from "class-validator";
+
+export const INITIAL_REGISTRATION_ROLES = [
+  "CHEF_BARTENDER",
+  "BAR_MANAGER",
+  "SENIOR_BARTENDER",
+  "BARTENDER",
+] as const;
 
 export class RegistrationStartDto {
   @ApiProperty({ example: "bar.manager@example.ru" })
@@ -31,6 +38,10 @@ export class RegistrationStartDto {
   @IsNotEmpty()
   @MaxLength(120)
   venueName!: string;
+
+  @ApiProperty({ enum: INITIAL_REGISTRATION_ROLES })
+  @IsIn(INITIAL_REGISTRATION_ROLES)
+  initialRole!: (typeof INITIAL_REGISTRATION_ROLES)[number];
 }
 
 export class VerifyEmailDto {
