@@ -62,6 +62,25 @@ class CreateCompanyResponseDto {
   redirectTo!: string;
 }
 
+class CreateVenueDto {
+  @ApiProperty({ example: "Гадкий Шпрот — Восток", maxLength: 120 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  venueName!: string;
+}
+
+class CreateVenueResponseDto {
+  @ApiProperty({ type: CompanySummaryDto })
+  company!: CompanySummaryDto;
+
+  @ApiProperty({ type: VenueSummaryDto })
+  venue!: VenueSummaryDto;
+
+  @ApiProperty()
+  redirectTo!: string;
+}
+
 class CloseVenueDto {
   @ApiProperty({ example: "Гадкий Шпрот", maxLength: 120 })
   @IsString()
@@ -435,6 +454,25 @@ export class OrganizationsController {
       companyName: body.companyName,
       venueName: body.venueName,
     });
+    return {
+      company: { id: result.company.id, name: result.company.name },
+      venue: { id: result.venue.id, name: result.venue.name },
+      redirectTo: `/app/companies/${result.company.id}/venues/${result.venue.id}`,
+    };
+  }
+
+  @Post("companies/:companyId/venues")
+  @ApiOperation({ summary: "Создать дополнительное заведение в своей компании" })
+  @ApiParam({ name: "companyId", format: "uuid" })
+  @ApiCreatedResponse({ type: CreateVenueResponseDto })
+  @ApiNotFoundResponse({ description: "Компания недоступна или отсутствует право создания" })
+  @ApiConflictResponse({ description: "В компании уже есть заведение с таким названием" })
+  async createVenue(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId", new ParseUUIDPipe()) companyId: string,
+    @Body() body: CreateVenueDto,
+  ) {
+    const result = await this.organizations.createVenueForUser(user.id, companyId, body.venueName);
     return {
       company: { id: result.company.id, name: result.company.name },
       venue: { id: result.venue.id, name: result.venue.name },

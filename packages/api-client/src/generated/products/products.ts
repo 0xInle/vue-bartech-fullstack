@@ -41,6 +41,8 @@ import type {
   CocktailCardResponseDto,
   CocktailGarnishOptionResponseDto,
   CocktailListItemResponseDto,
+  CompanyProductsControllerGetCompanyProductParams,
+  CompanyProductsControllerSearchCompanyParams,
   CreateCocktailDto,
   CreateGarnishDto,
   CreateLocalIngredientDto,
@@ -56,6 +58,7 @@ import type {
   ProductCreatedDto,
   ProductReferencesResponseDto,
   ProductSearchItemResponseDto,
+  ProductSearchPageResponseDto,
   ProductsControllerListArchiveIngredientOptionsParams,
   ProductsControllerListArchiveParams,
   ProductsControllerListCocktailGarnishesParams,
@@ -63,6 +66,7 @@ import type {
   ProductsControllerListGarnishesParams,
   ProductsControllerListPreparationsParams,
   ProductsControllerSearchParams,
+  ProductsControllerSearchWorkspaceParams,
   UpdateCocktailDto,
   UpdateGarnishDto,
   UpdatePreparationDto
@@ -2611,6 +2615,132 @@ export function useProductsControllerSearch<TData = Awaited<ReturnType<typeof pr
 
 
 
+export type productsControllerSearchWorkspaceResponse200 = {
+  data: ProductSearchPageResponseDto
+  status: 200
+}
+
+export type productsControllerSearchWorkspaceResponse400 = {
+  data: void
+  status: 400
+}
+
+export type productsControllerSearchWorkspaceResponse404 = {
+  data: void
+  status: 404
+}
+
+export type productsControllerSearchWorkspaceResponseSuccess = (productsControllerSearchWorkspaceResponse200) & {
+  headers: Headers;
+};
+export type productsControllerSearchWorkspaceResponseError = (productsControllerSearchWorkspaceResponse400 | productsControllerSearchWorkspaceResponse404) & {
+  headers: Headers;
+};
+
+export type productsControllerSearchWorkspaceResponse = (productsControllerSearchWorkspaceResponseSuccess | productsControllerSearchWorkspaceResponseError)
+
+export const getProductsControllerSearchWorkspaceUrl = (companyId: string,
+    venueId: string,
+    params: ProductsControllerSearchWorkspaceParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/workspace-search?${stringifiedParams}` : `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/workspace-search`
+}
+
+/**
+ * @summary Постранично найти продукцию текущего заведения
+ */
+export const productsControllerSearchWorkspace = async (companyId: string,
+    venueId: string,
+    params: ProductsControllerSearchWorkspaceParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerSearchWorkspaceResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getProductsControllerSearchWorkspaceUrl(companyId,venueId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: productsControllerSearchWorkspaceResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as productsControllerSearchWorkspaceResponse
+}
+
+
+
+
+
+export const getProductsControllerSearchWorkspaceQueryKey = (companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    params?: MaybeRefOrGetter<ProductsControllerSearchWorkspaceParams>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'venues',venueId,'products','workspace-search', ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getProductsControllerSearchWorkspaceQueryOptions = <TData = Awaited<ReturnType<typeof productsControllerSearchWorkspace>>, TError = void>(companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    params: MaybeRefOrGetter<ProductsControllerSearchWorkspaceParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerSearchWorkspace>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getProductsControllerSearchWorkspaceQueryKey(companyId,venueId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof productsControllerSearchWorkspace>>> = ({ signal }) => productsControllerSearchWorkspace(toValue(companyId),toValue(venueId),toValue(params), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined && toValue(venueId) !== null && toValue(venueId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof productsControllerSearchWorkspace>>, TError, TData>
+}
+
+export type ProductsControllerSearchWorkspaceQueryResult = NonNullable<Awaited<ReturnType<typeof productsControllerSearchWorkspace>>>
+export type ProductsControllerSearchWorkspaceQueryError = void
+
+
+/**
+ * @summary Постранично найти продукцию текущего заведения
+ */
+
+export function useProductsControllerSearchWorkspace<TData = Awaited<ReturnType<typeof productsControllerSearchWorkspace>>, TError = void>(
+ companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    params: MaybeRefOrGetter<ProductsControllerSearchWorkspaceParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerSearchWorkspace>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProductsControllerSearchWorkspaceQueryOptions(companyId,venueId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
 export type productsControllerCreateIngredientResponse201 = {
   data: ProductCreatedDto
   status: 201
@@ -2965,3 +3095,244 @@ export const useProductsControllerCreateReferenceValue = <TError = void,
       > => {
       return useMutation(getProductsControllerCreateReferenceValueMutationOptions(options), queryClient);
     }
+    export type companyProductsControllerSearchCompanyResponse200 = {
+  data: ProductSearchPageResponseDto
+  status: 200
+}
+
+export type companyProductsControllerSearchCompanyResponse400 = {
+  data: void
+  status: 400
+}
+
+export type companyProductsControllerSearchCompanyResponse404 = {
+  data: void
+  status: 404
+}
+
+export type companyProductsControllerSearchCompanyResponseSuccess = (companyProductsControllerSearchCompanyResponse200) & {
+  headers: Headers;
+};
+export type companyProductsControllerSearchCompanyResponseError = (companyProductsControllerSearchCompanyResponse400 | companyProductsControllerSearchCompanyResponse404) & {
+  headers: Headers;
+};
+
+export type companyProductsControllerSearchCompanyResponse = (companyProductsControllerSearchCompanyResponseSuccess | companyProductsControllerSearchCompanyResponseError)
+
+export const getCompanyProductsControllerSearchCompanyUrl = (companyId: string,
+    params: CompanyProductsControllerSearchCompanyParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/organizations/companies/${companyId}/products/search?${stringifiedParams}` : `/api/v1/organizations/companies/${companyId}/products/search`
+}
+
+/**
+ * @summary Найти активную продукцию во всех заведениях компании шеф-бармена
+ */
+export const companyProductsControllerSearchCompany = async (companyId: string,
+    params: CompanyProductsControllerSearchCompanyParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<companyProductsControllerSearchCompanyResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getCompanyProductsControllerSearchCompanyUrl(companyId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: companyProductsControllerSearchCompanyResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as companyProductsControllerSearchCompanyResponse
+}
+
+
+
+
+
+export const getCompanyProductsControllerSearchCompanyQueryKey = (companyId: MaybeRefOrGetter<string>,
+    params?: MaybeRefOrGetter<CompanyProductsControllerSearchCompanyParams>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'products','search', ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCompanyProductsControllerSearchCompanyQueryOptions = <TData = Awaited<ReturnType<typeof companyProductsControllerSearchCompany>>, TError = void>(companyId: MaybeRefOrGetter<string>,
+    params: MaybeRefOrGetter<CompanyProductsControllerSearchCompanyParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof companyProductsControllerSearchCompany>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getCompanyProductsControllerSearchCompanyQueryKey(companyId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof companyProductsControllerSearchCompany>>> = ({ signal }) => companyProductsControllerSearchCompany(toValue(companyId),toValue(params), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof companyProductsControllerSearchCompany>>, TError, TData>
+}
+
+export type CompanyProductsControllerSearchCompanyQueryResult = NonNullable<Awaited<ReturnType<typeof companyProductsControllerSearchCompany>>>
+export type CompanyProductsControllerSearchCompanyQueryError = void
+
+
+/**
+ * @summary Найти активную продукцию во всех заведениях компании шеф-бармена
+ */
+
+export function useCompanyProductsControllerSearchCompany<TData = Awaited<ReturnType<typeof companyProductsControllerSearchCompany>>, TError = void>(
+ companyId: MaybeRefOrGetter<string>,
+    params: MaybeRefOrGetter<CompanyProductsControllerSearchCompanyParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof companyProductsControllerSearchCompany>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCompanyProductsControllerSearchCompanyQueryOptions(companyId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type companyProductsControllerGetCompanyProductResponse200 = {
+  data: CocktailCardResponseDto | PreparationCardResponseDto | GarnishCardResponseDto
+  status: 200
+}
+
+export type companyProductsControllerGetCompanyProductResponse404 = {
+  data: void
+  status: 404
+}
+
+export type companyProductsControllerGetCompanyProductResponseSuccess = (companyProductsControllerGetCompanyProductResponse200) & {
+  headers: Headers;
+};
+export type companyProductsControllerGetCompanyProductResponseError = (companyProductsControllerGetCompanyProductResponse404) & {
+  headers: Headers;
+};
+
+export type companyProductsControllerGetCompanyProductResponse = (companyProductsControllerGetCompanyProductResponseSuccess | companyProductsControllerGetCompanyProductResponseError)
+
+export const getCompanyProductsControllerGetCompanyProductUrl = (companyId: string,
+    type: string,
+    productId: string,
+    params: CompanyProductsControllerGetCompanyProductParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/organizations/companies/${companyId}/products/${type}/${productId}?${stringifiedParams}` : `/api/v1/organizations/companies/${companyId}/products/${type}/${productId}`
+}
+
+/**
+ * @summary Прочитать карточку продукции другого заведения компании
+ */
+export const companyProductsControllerGetCompanyProduct = async (companyId: string,
+    type: string,
+    productId: string,
+    params: CompanyProductsControllerGetCompanyProductParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<companyProductsControllerGetCompanyProductResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getCompanyProductsControllerGetCompanyProductUrl(companyId,type,productId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: companyProductsControllerGetCompanyProductResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as companyProductsControllerGetCompanyProductResponse
+}
+
+
+
+
+
+export const getCompanyProductsControllerGetCompanyProductQueryKey = (companyId: MaybeRefOrGetter<string>,
+    type: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>,
+    params?: MaybeRefOrGetter<CompanyProductsControllerGetCompanyProductParams>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'products',type,productId, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCompanyProductsControllerGetCompanyProductQueryOptions = <TData = Awaited<ReturnType<typeof companyProductsControllerGetCompanyProduct>>, TError = void>(companyId: MaybeRefOrGetter<string>,
+    type: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>,
+    params: MaybeRefOrGetter<CompanyProductsControllerGetCompanyProductParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof companyProductsControllerGetCompanyProduct>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getCompanyProductsControllerGetCompanyProductQueryKey(companyId,type,productId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof companyProductsControllerGetCompanyProduct>>> = ({ signal }) => companyProductsControllerGetCompanyProduct(toValue(companyId),toValue(type),toValue(productId),toValue(params), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined && toValue(type) !== null && toValue(type) !== undefined && toValue(productId) !== null && toValue(productId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof companyProductsControllerGetCompanyProduct>>, TError, TData>
+}
+
+export type CompanyProductsControllerGetCompanyProductQueryResult = NonNullable<Awaited<ReturnType<typeof companyProductsControllerGetCompanyProduct>>>
+export type CompanyProductsControllerGetCompanyProductQueryError = void
+
+
+/**
+ * @summary Прочитать карточку продукции другого заведения компании
+ */
+
+export function useCompanyProductsControllerGetCompanyProduct<TData = Awaited<ReturnType<typeof companyProductsControllerGetCompanyProduct>>, TError = void>(
+ companyId: MaybeRefOrGetter<string>,
+    type: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>,
+    params: MaybeRefOrGetter<CompanyProductsControllerGetCompanyProductParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof companyProductsControllerGetCompanyProduct>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCompanyProductsControllerGetCompanyProductQueryOptions(companyId,type,productId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}

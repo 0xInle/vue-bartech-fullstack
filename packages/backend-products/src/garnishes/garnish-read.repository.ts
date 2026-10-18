@@ -13,7 +13,7 @@ export class GarnishReadRepository {
 
   async list(
     venueId: string,
-    query?: string,
+    matchingIds?: string[],
     sort: GarnishListSort = "name",
   ): Promise<GarnishListItem[]> {
     const garnishes = await this.database.product.findMany({
@@ -21,7 +21,7 @@ export class GarnishReadRepository {
         venueId,
         type: "GARNISH",
         status: "ACTIVE",
-        ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
+        ...(matchingIds ? { id: { in: matchingIds } } : {}),
       },
       orderBy: sort === "updated" ? [{ updatedAt: "desc" }, { name: "asc" }] : { name: "asc" },
       select: {

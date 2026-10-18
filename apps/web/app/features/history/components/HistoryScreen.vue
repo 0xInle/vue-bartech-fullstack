@@ -45,9 +45,7 @@
       </label>
     </div>
 
-    <Message v-if="historyQuery.isLoading.value" severity="info" :closable="false">
-      Загружаем историю…
-    </Message>
+    <LoadingIndicator v-if="historyQuery.isLoading.value" screen />
     <Message v-else-if="historyQuery.isError.value" severity="error" :closable="false">
       Историю не удалось загрузить. Проверьте доступ к рабочему пространству и повторите попытку.
       <Button label="Повторить" size="small" text @click="historyQuery.refetch()" />

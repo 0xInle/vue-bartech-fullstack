@@ -170,9 +170,7 @@
         </Card>
       </div>
 
-      <Message v-if="loadingProducts" severity="info" :closable="false"
-        >Загружаем продукцию…</Message
-      >
+      <LoadingIndicator v-if="loadingProducts" screen />
       <Button
         label="Завершить служебную сессию"
         severity="danger"

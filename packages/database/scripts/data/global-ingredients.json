@@ -212,7 +212,8 @@
   {
     "id": "0b9b08c0-369a-4e9f-9a5a-31bbec914c96",
     "name": "Аперитив Aperol",
-    "category": "aperitif"
+    "category": "aperitif",
+    "aliases": ["Апероль"]
   },
   {
     "id": "ae3cc6f6-1b3a-4b8d-9356-a82820023b4a",

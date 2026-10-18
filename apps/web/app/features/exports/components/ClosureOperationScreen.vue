@@ -5,7 +5,7 @@
         IndieBar
       </NuxtLink>
       <div v-if="identity.sessionState.value === 'loading'" class="mt-8">
-        <Message severity="info" :closable="false">Проверяем сессию…</Message>
+        <LoadingIndicator screen />
       </div>
       <Message
         v-else-if="!identity.currentUser.value"
@@ -15,14 +15,7 @@
       >
         Войдите в аккаунт инициатора закрытия, чтобы открыть результат.
       </Message>
-      <Message
-        v-else-if="operationQuery.isLoading.value"
-        severity="info"
-        :closable="false"
-        class="mt-8"
-      >
-        Загружаем результат закрытия…
-      </Message>
+      <LoadingIndicator v-else-if="operationQuery.isLoading.value" screen />
       <Message
         v-else-if="operationQuery.isError.value"
         severity="error"

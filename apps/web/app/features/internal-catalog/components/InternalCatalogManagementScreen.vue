@@ -15,9 +15,7 @@
       >
     </header>
 
-    <Message v-if="loadingSession" severity="info" :closable="false"
-      >Проверяем внутреннюю сессию…</Message
-    >
+    <LoadingIndicator v-if="loadingSession" screen />
     <Message v-else-if="!authorized" severity="error" :closable="false">
       Нет разрешения на управление глобальным каталогом.
     </Message>
@@ -44,9 +42,7 @@
             aria-label="Статус карточек"
           />
         </div>
-        <Message v-if="catalog.listQuery.isLoading.value" severity="info" :closable="false"
-          >Загружаем каталог…</Message
-        >
+        <LoadingIndicator v-if="catalog.listQuery.isLoading.value" screen />
         <Message v-else-if="catalog.listQuery.error.value" severity="error" :closable="false"
           >Не удалось загрузить каталог.</Message
         >
@@ -353,12 +349,10 @@
           </div>
         </section>
       </section>
-      <Message
+      <LoadingIndicator
         v-else-if="catalog.selectedId.value && catalog.cardQuery.isLoading.value"
-        severity="info"
-        :closable="false"
-        >Загружаем карточку…</Message
-      >
+        screen
+      />
       <Message v-else-if="catalog.cardQuery.error.value" severity="error" :closable="false"
         >Не удалось загрузить карточку.</Message
       >

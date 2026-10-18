@@ -41,6 +41,8 @@ import type {
   CompanyClosureStartedResponseDto,
   CreateCompanyDto,
   CreateCompanyResponseDto,
+  CreateVenueDto,
+  CreateVenueResponseDto,
   LeaveAndCloseAvailabilityDto,
   ProductExportDownloadResponseDto,
   ProductExportResponseDto,
@@ -1392,4 +1394,123 @@ export const useOrganizationsControllerCreate = <TError = unknown,
         TContext
       > => {
       return useMutation(getOrganizationsControllerCreateMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerCreateVenueResponse201 = {
+  data: CreateVenueResponseDto
+  status: 201
+}
+
+export type organizationsControllerCreateVenueResponse404 = {
+  data: void
+  status: 404
+}
+
+export type organizationsControllerCreateVenueResponse409 = {
+  data: void
+  status: 409
+}
+
+export type organizationsControllerCreateVenueResponseSuccess = (organizationsControllerCreateVenueResponse201) & {
+  headers: Headers;
+};
+export type organizationsControllerCreateVenueResponseError = (organizationsControllerCreateVenueResponse404 | organizationsControllerCreateVenueResponse409) & {
+  headers: Headers;
+};
+
+export type organizationsControllerCreateVenueResponse = (organizationsControllerCreateVenueResponseSuccess | organizationsControllerCreateVenueResponseError)
+
+export const getOrganizationsControllerCreateVenueUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues`
+}
+
+/**
+ * @summary Создать дополнительное заведение в своей компании
+ */
+export const organizationsControllerCreateVenue = async (companyId: string,
+    createVenueDto: CreateVenueDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerCreateVenueResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getOrganizationsControllerCreateVenueUrl(companyId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createVenueDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerCreateVenueResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerCreateVenueResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerCreateVenueMutationKey = () => ['organizationsControllerCreateVenue'] as const;
+
+export const getOrganizationsControllerCreateVenueMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCreateVenue>>, TError,OrganizationsControllerCreateVenueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCreateVenue>>, TError,OrganizationsControllerCreateVenueMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerCreateVenueMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerCreateVenue>>, OrganizationsControllerCreateVenueMutationVariables> = (props) => {
+          const {companyId,data} = props ?? {};
+
+          return  organizationsControllerCreateVenue(companyId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerCreateVenueMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerCreateVenue>>>
+    export type OrganizationsControllerCreateVenueMutationBody = CreateVenueDto
+    export type OrganizationsControllerCreateVenueMutationError = void
+    export type OrganizationsControllerCreateVenueMutationVariables = {companyId: string;data: CreateVenueDto}
+
+    /**
+ * @summary Создать дополнительное заведение в своей компании
+ */
+export const useOrganizationsControllerCreateVenue = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerCreateVenue>>, TError,OrganizationsControllerCreateVenueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerCreateVenue>>,
+        TError,
+        OrganizationsControllerCreateVenueMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerCreateVenueMutationOptions(options), queryClient);
     }

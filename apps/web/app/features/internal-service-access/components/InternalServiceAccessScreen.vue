@@ -10,15 +10,14 @@
       </p>
     </header>
 
-    <Message v-if="loadingSession" severity="info" :closable="false"
-      >Проверяем внутреннюю сессию…</Message
-    >
+    <LoadingIndicator v-if="loadingSession" screen />
     <Message
       v-else-if="!auth.state.user || !auth.state.user.permissions.includes('service_access')"
       severity="error"
       :closable="false"
-      >Нет разрешения на служебный доступ.</Message
     >
+      Нет разрешения на служебный доступ.
+    </Message>
     <Message v-else-if="error" severity="error" :closable="false">{{ error }}</Message>
     <Message v-else-if="!access.grantsQuery.data.value?.length" severity="info" :closable="false"
       >Действующих временных доступов пока нет.</Message

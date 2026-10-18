@@ -1,9 +1,6 @@
-<template>
-  <CompanyVenueInvitationPageScreen />
-</template>
-
 <script setup lang="ts">
-import CompanyVenueInvitationPageScreen from "~/features/organizations/components/CompanyVenueInvitationPageScreen.vue";
-
-defineOptions({ name: "NewVenueInvitationPage" });
+const route = useRoute();
+await navigateTo(
+  `/app/companies/${route.params.companyId}/venues/${route.params.venueId}/management`,
+);
 </script>

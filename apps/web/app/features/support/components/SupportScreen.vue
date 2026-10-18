@@ -8,13 +8,7 @@
       </p>
     </header>
 
-    <Message
-      v-if="sessionState === 'loading' || sessionState === 'idle'"
-      severity="info"
-      :closable="false"
-    >
-      Проверяем вход…
-    </Message>
+    <LoadingIndicator v-if="sessionState === 'loading' || sessionState === 'idle'" screen />
     <Message v-else-if="sessionState === 'unauthenticated'" severity="warn" :closable="false">
       Чтобы отправить обращение, войдите в аккаунт.
       <NuxtLink to="/" class="ml-1 underline">Перейти ко входу</NuxtLink>
@@ -92,13 +86,7 @@
           <Message v-if="grantError" severity="error" :closable="false" class="mt-3">{{
             grantError
           }}</Message>
-          <Message
-            v-if="grants.grantsQuery.isLoading.value"
-            severity="info"
-            :closable="false"
-            class="mt-3"
-            >Загружаем доступы…</Message
-          >
+          <LoadingIndicator v-if="grants.grantsQuery.isLoading.value" class="mt-3" />
           <ul v-else-if="grants.grantsQuery.data.value?.length" class="mt-4 space-y-2">
             <li
               v-for="grant in grants.grantsQuery.data.value"
@@ -129,9 +117,7 @@
 
       <section>
         <h2 class="mb-3 text-lg font-semibold">Мои обращения</h2>
-        <Message v-if="requests.requestsQuery.isLoading.value" severity="info" :closable="false">
-          Загружаем обращения…
-        </Message>
+        <LoadingIndicator v-if="requests.requestsQuery.isLoading.value" />
         <Message
           v-else-if="requests.requestsQuery.isError.value"
           severity="error"

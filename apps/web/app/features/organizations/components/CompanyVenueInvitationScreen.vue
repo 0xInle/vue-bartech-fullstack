@@ -1,14 +1,14 @@
 <template>
   <div v-if="invitationsQuery.isLoading.value" class="mx-auto max-w-5xl pt-8">
-    <Message severity="info" :closable="false">Загружаем приглашения…</Message>
+    <LoadingIndicator screen />
   </div>
   <div v-else-if="invitationsQuery.isError.value" class="mx-auto max-w-5xl pt-8">
     <Message severity="error" :closable="false">
       Не удалось загрузить приглашения. Обновите страницу и попробуйте ещё раз.
     </Message>
   </div>
-  <section v-else class="mx-auto max-w-5xl space-y-6">
-    <header>
+  <section v-else class="space-y-6">
+    <header v-if="showHeader">
       <p class="text-sm font-medium text-emerald-700">{{ company.name }}</p>
       <h1 class="mt-1 text-2xl font-semibold">Новое заведение</h1>
       <p class="mt-2 text-sm text-zinc-600">
@@ -30,7 +30,10 @@ import { useCompanyVenueInvitations } from "../composables/useCompanyVenueInvita
 import CompanyVenueInvitationForm from "./CompanyVenueInvitationForm.vue";
 import CompanyVenueInvitationList from "./CompanyVenueInvitationList.vue";
 
-const props = defineProps<{ company: CompanySummary; canInvite: boolean }>();
+const props = withDefaults(
+  defineProps<{ company: CompanySummary; canInvite: boolean; showHeader?: boolean }>(),
+  { showHeader: true },
+);
 const { invitationsQuery, createInvitation, revokeInvitation } = useCompanyVenueInvitations(
   props.company.id,
 );

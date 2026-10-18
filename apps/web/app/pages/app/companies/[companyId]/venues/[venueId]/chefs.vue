@@ -1,9 +1,6 @@
-<template>
-  <CompanyChefPageScreen />
-</template>
-
 <script setup lang="ts">
-import CompanyChefPageScreen from "~/features/team/components/CompanyChefPageScreen.vue";
+defineOptions({ name: "CompanyChefsRedirectPage" });
 
-defineOptions({ name: "CompanyChefPage" });
+const route = useRoute();
+await navigateTo(`/app/companies/${route.params.companyId}/venues/${route.params.venueId}/team`);
 </script>

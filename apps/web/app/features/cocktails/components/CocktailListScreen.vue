@@ -1,6 +1,6 @@
 <template>
   <div v-if="loading" class="mx-auto max-w-5xl pt-8">
-    <Message severity="info" :closable="false">Загружаем рабочее пространство…</Message>
+    <LoadingIndicator screen />
   </div>
   <div v-else-if="errorMessage" class="mx-auto max-w-5xl pt-8">
     <Message severity="error" :closable="false">{{ errorMessage }}</Message>
@@ -35,7 +35,7 @@
         Не удалось загрузить коктейли. Попробуйте обновить страницу.
       </Message>
       <div v-else-if="listQuery.isLoading.value" class="mt-5">
-        <Message severity="info" :closable="false">Загружаем коктейли…</Message>
+        <LoadingIndicator screen />
       </div>
       <div v-else-if="cocktails.length" class="mt-5 grid gap-3">
         <NuxtLink

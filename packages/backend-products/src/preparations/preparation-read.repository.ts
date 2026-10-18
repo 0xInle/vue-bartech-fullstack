@@ -17,7 +17,7 @@ export class PreparationReadRepository {
 
   async list(
     venueId: string,
-    query?: string,
+    matchingIds?: string[],
     categoryCode?: string,
     sort: PreparationListSort = "name",
   ): Promise<PreparationListItem[]> {
@@ -26,7 +26,7 @@ export class PreparationReadRepository {
         venueId,
         type: "PREPARATION",
         status: "ACTIVE",
-        ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
+        ...(matchingIds ? { id: { in: matchingIds } } : {}),
         ...(categoryCode ? { preparation: { categoryCode } } : {}),
       },
       orderBy: sort === "updated" ? [{ updatedAt: "desc" }, { name: "asc" }] : { name: "asc" },

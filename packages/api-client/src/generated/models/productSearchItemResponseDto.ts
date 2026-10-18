@@ -15,6 +15,8 @@ export interface ProductSearchItemResponseDto {
   name: string;
   /** @nullable */
   venueId: string | null;
+  /** @nullable */
+  venueName: string | null;
   scope: ProductSearchItemResponseDtoScope;
   matchReason: ProductSearchItemResponseDtoMatchReason;
   /** @nullable */

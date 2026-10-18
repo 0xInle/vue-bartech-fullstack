@@ -23,7 +23,7 @@
         @click="openDialog('venue')"
       />
       <Button
-        v-if="canCloseCompany && canOperate"
+        v-if="showCompanyActions && canCloseCompany && canOperate"
         label="Закрыть компанию"
         icon="pi pi-building"
         severity="danger"
@@ -105,8 +105,10 @@ import type { CompanySummary, Workspace } from "~/types/user-workspaces";
 
 defineOptions({ name: "OrganizationLifecyclePanel" });
 
-const props = defineProps<{ workspace?: Workspace; company?: CompanySummary }>();
-const route = useRoute();
+const props = withDefaults(
+  defineProps<{ workspace?: Workspace; company?: CompanySummary; showCompanyActions?: boolean }>(),
+  { workspace: undefined, company: undefined, showCompanyActions: true },
+);
 const {
   closeVenue,
   leaveAndCloseVenue,
@@ -174,6 +176,7 @@ const confirmLabel = computed(() =>
         : "Закрыть с выгрузкой",
 );
 const companyId = computed(() => props.workspace?.company.id ?? props.company?.id ?? "");
+const venueId = computed(() => props.workspace?.venue.id ?? "");
 const hasChosenClosurePath = computed(() =>
   dialogMode.value === "company"
     ? exportRequested.value || withoutExport.value
@@ -192,9 +195,7 @@ async function openDialog(mode: "venue" | "leaveVenue" | "company") {
   preparingOperation.value = true;
   try {
     const operation =
-      mode === "company"
-        ? await prepareCompanyClosure()
-        : await prepareVenueClosure(String(route.params.venueId));
+      mode === "company" ? await prepareCompanyClosure() : await prepareVenueClosure(venueId.value);
     operationId.value = operation.id;
   } catch (error) {
     errorMessage.value =
@@ -223,10 +224,9 @@ async function confirmClosure() {
   errorMessage.value = "";
   try {
     if (dialogMode.value !== "company") {
-      const venueId = String(route.params.venueId);
       if (dialogMode.value === "leaveVenue") {
         await leaveAndCloseVenue(
-          venueId,
+          venueId.value,
           confirmationName.value,
           operationId.value,
           selectedExportId.value || undefined,
@@ -234,7 +234,7 @@ async function confirmClosure() {
         );
       } else {
         await closeVenue(
-          venueId,
+          venueId.value,
           confirmationName.value,
           operationId.value,
           selectedExportId.value || undefined,

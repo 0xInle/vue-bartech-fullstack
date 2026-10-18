@@ -9,9 +9,7 @@
     </header>
 
     <template v-if="exportId">
-      <Message v-if="exports.statusQuery.isLoading.value" severity="info" :closable="false">
-        Получаем состояние выгрузки…
-      </Message>
+      <LoadingIndicator v-if="exports.statusQuery.isLoading.value" screen />
       <Message v-else-if="exports.statusQuery.isError.value" severity="error" :closable="false">
         Запрос выгрузки недоступен. Проверьте доступ к рабочему пространству.
       </Message>
@@ -60,9 +58,7 @@
       <Message v-if="pageError" severity="error" :closable="false" class="mb-4">
         {{ pageError }}
       </Message>
-      <Message v-if="productsQuery.isLoading.value" severity="info" :closable="false">
-        Загружаем техкарты…
-      </Message>
+      <LoadingIndicator v-if="productsQuery.isLoading.value" screen />
       <Message v-else-if="productsQuery.isError.value" severity="error" :closable="false">
         Не удалось загрузить продукцию. Проверьте доступ и повторите попытку.
         <Button label="Повторить" size="small" text @click="productsQuery.refetch()" />

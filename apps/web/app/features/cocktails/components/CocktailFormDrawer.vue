@@ -7,7 +7,8 @@
     :header="mode === 'edit' ? 'Редактировать коктейль' : 'Создать коктейль'"
     @update:visible="requestVisibilityChange"
   >
-    <form class="flex flex-col gap-5" @submit.prevent="submit">
+    <LoadingIndicator v-if="referencesQuery.isLoading.value" class="py-8" />
+    <form v-else class="flex flex-col gap-5" @submit.prevent="submit">
       <Message v-if="saveError" severity="error" :closable="false">{{ saveError }}</Message>
       <Message v-if="referencesQuery.isError.value" severity="error" :closable="false">
         Не удалось загрузить справочники. Обновите страницу и попробуйте ещё раз.

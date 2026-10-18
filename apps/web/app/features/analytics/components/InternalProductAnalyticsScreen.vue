@@ -10,9 +10,7 @@
       </p>
     </header>
 
-    <Message v-if="loadingSession" severity="info" :closable="false"
-      >Проверяем внутреннюю сессию…</Message
-    >
+    <LoadingIndicator v-if="loadingSession" screen />
     <Message v-else-if="!authorized" severity="error" :closable="false">
       Нет разрешения на просмотр продуктовой аналитики.
     </Message>
@@ -28,9 +26,7 @@
           @click="days = period.days"
         />
       </div>
-      <Message v-if="analytics.query.isLoading.value" severity="info" :closable="false">
-        Загружаем агрегаты…
-      </Message>
+      <LoadingIndicator v-if="analytics.query.isLoading.value" screen />
       <Message v-else-if="analytics.query.isError.value" severity="error" :closable="false">
         Показатели не удалось загрузить. Проверьте доступ и повторите попытку.
         <Button label="Повторить" size="small" text @click="analytics.query.refetch()" />

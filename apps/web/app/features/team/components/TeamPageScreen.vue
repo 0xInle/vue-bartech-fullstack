@@ -1,6 +1,6 @@
 <template>
   <div v-if="loading" class="mx-auto max-w-5xl pt-8">
-    <Message severity="info" :closable="false">Загружаем рабочее пространство…</Message>
+    <LoadingIndicator screen />
   </div>
   <div v-else-if="errorMessage" class="mx-auto max-w-5xl pt-8">
     <Message severity="error" :closable="false">{{ errorMessage }}</Message>

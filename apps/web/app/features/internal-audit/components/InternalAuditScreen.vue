@@ -10,9 +10,7 @@
       </p>
     </header>
 
-    <Message v-if="loadingSession" severity="info" :closable="false">
-      Проверяем внутреннюю сессию…
-    </Message>
+    <LoadingIndicator v-if="loadingSession" screen />
     <Message
       v-else-if="!auth.state.user || !auth.state.user.permissions.includes('internal_audit')"
       severity="error"
@@ -20,9 +18,7 @@
     >
       Нет разрешения на просмотр внутреннего журнала.
     </Message>
-    <Message v-else-if="audit.query.isLoading.value" severity="info" :closable="false">
-      Загружаем журнал…
-    </Message>
+    <LoadingIndicator v-else-if="audit.query.isLoading.value" screen />
     <Message v-else-if="audit.query.isError.value" severity="error" :closable="false">
       Журнал не удалось загрузить. Проверьте доступ и повторите попытку.
       <Button label="Повторить" size="small" text @click="audit.query.refetch()" />

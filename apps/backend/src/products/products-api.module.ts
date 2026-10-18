@@ -9,10 +9,16 @@ import { ServiceAccessPermissionGuard } from "../support/service-access.controll
 import { WorkspacePermissionGuard } from "../organizations/workspace-permission.guard.js";
 import { InternalCatalogController } from "./internal-catalog.controller.js";
 import { InternalCatalogPermissionGuard } from "./internal-catalog-permission.guard.js";
+import { CompanyProductsController } from "./company-products.controller.js";
 
 @Module({
   imports: [IdentityModule, OrganizationsModule, ProductsModule, SupportAccessModule],
-  controllers: [ProductsController, InternalServiceProductsController, InternalCatalogController],
+  controllers: [
+    ProductsController,
+    CompanyProductsController,
+    InternalServiceProductsController,
+    InternalCatalogController,
+  ],
   providers: [
     WorkspacePermissionGuard,
     ServiceAccessPermissionGuard,

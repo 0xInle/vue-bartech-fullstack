@@ -1,6 +1,6 @@
 <template>
   <div v-if="loading" class="mx-auto max-w-5xl pt-8">
-    <Message severity="info" :closable="false">Загружаем рабочее пространство…</Message>
+    <LoadingIndicator screen />
   </div>
   <div v-else-if="errorMessage" class="mx-auto max-w-5xl pt-8">
     <Message severity="error" :closable="false">{{ errorMessage }}</Message>
@@ -20,13 +20,7 @@
         :closable="false"
         class="mt-5"
         >Заготовка не найдена или недоступна в этом заведении.</Message
-      ><Message
-        v-else-if="preparationQuery.isLoading.value"
-        severity="info"
-        :closable="false"
-        class="mt-5"
-        >Загружаем техкарту…</Message
-      >
+      ><LoadingIndicator v-else-if="preparationQuery.isLoading.value" screen />
       <article v-else-if="preparation" class="mt-5">
         <header class="border-b border-surface pb-5">
           <div class="flex flex-wrap items-start justify-between gap-3">

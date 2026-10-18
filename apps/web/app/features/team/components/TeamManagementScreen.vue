@@ -1,6 +1,6 @@
 <template>
   <div v-if="loading" class="mx-auto max-w-5xl pt-8">
-    <Message severity="info" :closable="false">Загружаем команду…</Message>
+    <LoadingIndicator screen />
   </div>
   <div v-else-if="!hasTeamData" class="mx-auto max-w-5xl pt-8">
     <Message severity="error" :closable="false">
@@ -34,6 +34,10 @@
       @save="saveMember"
     />
     <InvitationList :invitations="invitations" :busy-id="busyId" @revoke="revoke" />
+    <ChefTeamSection
+      v-if="workspace.permissions.includes('invite_chef_bartender')"
+      :workspace="workspace"
+    />
   </section>
 </template>
 
@@ -49,6 +53,7 @@ import InviteEmployeeForm from "./InviteEmployeeForm.vue";
 import InvitationList from "./InvitationList.vue";
 import TeamMemberEditorDrawer from "./TeamMemberEditorDrawer.vue";
 import TeamMemberList from "./TeamMemberList.vue";
+import ChefTeamSection from "./ChefTeamSection.vue";
 
 const props = defineProps<{ workspace: Workspace }>();
 const { teamQuery, createInvitation, revokeInvitation, updateMember } = useVenueTeam(

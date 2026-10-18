@@ -192,11 +192,71 @@ export class OrganizationsService {
     );
   }
 
+  async assertChefBartenderInCompany(userId: string, companyId: string): Promise<void> {
+    const now = new Date();
+    const membership = await this.database.companyMembership.findFirst({
+      where: {
+        userId,
+        companyId,
+        companyRole: "CHEF_BARTENDER",
+        company: {
+          OR: [{ status: "ACTIVE" }, { status: "PENDING_CLOSURE", closureDeadline: { gt: now } }],
+        },
+      },
+      select: { userId: true },
+    });
+    if (!membership) throw new NotFoundException("Компания недоступна");
+  }
+
   async createForUser(userId: string, input: WorkspaceInput) {
     try {
       return await this.database.$transaction((transaction) =>
         this.createInTransaction(transaction, userId, input),
       );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new ConflictException("В этой компании уже есть заведение с таким названием");
+      }
+      throw error;
+    }
+  }
+
+  async createVenueForUser(userId: string, companyId: string, venueNameInput: string) {
+    const venueName = normalizeName(venueNameInput);
+    if (!venueName) throw new ConflictException("Укажите название заведения");
+
+    const workspaces = await this.listWorkspacesForUser(userId);
+    const canCreateVenue = workspaces.some(
+      (workspace) =>
+        workspace.company.id === companyId && workspace.permissions.includes("create_venues"),
+    );
+    if (!canCreateVenue) throw new NotFoundException("Компания недоступна");
+
+    try {
+      return await this.database.$transaction(async (transaction) => {
+        const lockedCompanies = await transaction.$queryRaw<Array<{ id: string }>>`
+          SELECT "id" FROM "companies" WHERE "id" = ${companyId}::uuid FOR UPDATE
+        `;
+        if (!lockedCompanies.length) throw new NotFoundException("Компания недоступна");
+        const company = await transaction.company.findUnique({ where: { id: companyId } });
+        if (!company || company.status !== "ACTIVE") {
+          throw new NotFoundException("Компания недоступна");
+        }
+
+        const venue = await transaction.venue.create({
+          data: {
+            companyId,
+            name: venueName,
+            nameNormalized: normalizeVenueName(venueName),
+          },
+        });
+
+        await transaction.venueMembership.create({
+          data: { userId, companyId, venueId: venue.id, role: "BAR_MANAGER" },
+        });
+
+        return { company, venue };
+      });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
         throw new ConflictException("В этой компании уже есть заведение с таким названием");

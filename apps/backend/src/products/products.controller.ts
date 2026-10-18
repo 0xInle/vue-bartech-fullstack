@@ -42,6 +42,8 @@ import {
   GarnishImpactResponseDto,
   ProductSearchItemResponseDto,
   ProductSearchQueryDto,
+  WorkspaceProductSearchQueryDto,
+  ProductSearchPageResponseDto,
   ProductCreatedDto,
   ProductReferencesResponseDto,
   CocktailCardResponseDto,
@@ -332,6 +334,20 @@ export class ProductsController {
     @Query() query: ProductSearchQueryDto,
   ) {
     return this.searchProducts.search(context(user, companyId, venueId), query);
+  }
+
+  @Get("workspace-search")
+  @RequirePermissions("view_products")
+  @ApiOperation({ summary: "Постранично найти продукцию текущего заведения" })
+  @ApiOkResponse({ type: ProductSearchPageResponseDto })
+  @ApiBadRequestResponse({ description: "Параметры поиска некорректны" })
+  searchWorkspace(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Query() query: WorkspaceProductSearchQueryDto,
+  ) {
+    return this.searchProducts.searchWorkspacePage(context(user, companyId, venueId), query);
   }
 
   @Post("ingredients")

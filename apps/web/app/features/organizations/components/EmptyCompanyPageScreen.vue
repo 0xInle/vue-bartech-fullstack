@@ -1,7 +1,7 @@
 <template>
   <main class="min-h-screen bg-zinc-50 px-4 py-8 text-zinc-900 sm:px-6">
     <div v-if="loading" class="mx-auto max-w-5xl pt-8">
-      <Message severity="info" :closable="false">Загружаем компанию…</Message>
+      <LoadingIndicator screen />
     </div>
     <div v-else-if="identity.sessionState.value === 'error'" class="mx-auto max-w-5xl pt-8">
       <Message severity="error" :closable="false">
@@ -40,7 +40,7 @@
       <Message v-else-if="hasClosureError" severity="error" :closable="false">
         Не удалось проверить состояние компании. Обновите страницу.
       </Message>
-      <Message v-else severity="info" :closable="false">Проверяем состояние компании…</Message>
+      <LoadingIndicator v-else screen />
     </section>
   </main>
 </template>

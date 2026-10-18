@@ -3,7 +3,7 @@
     <section class="space-y-5 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-8">
       <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">IndieBar</p>
       <div v-if="stage === 'loading'">
-        <Message severity="info" :closable="false">Проверяем приглашение…</Message>
+        <LoadingIndicator screen />
       </div>
       <div v-else-if="invitation" class="space-y-4">
         <div>

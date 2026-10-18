@@ -1,5 +1,5 @@
 <template>
-  <main class="public-page min-h-screen px-4 py-6 sm:px-6">
+  <main class="public-page min-h-screen px-4 pt-2 py-6 sm:px-6">
     <div class="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
       <header class="flex items-center justify-between">
         <LandingClock />

@@ -15,9 +15,7 @@
       />
     </div>
     <template v-else>
-      <Message v-if="productsQuery.isLoading.value" severity="info" :closable="false" class="mt-4">
-        Загружаем доступные техкарты…
-      </Message>
+      <LoadingIndicator v-if="productsQuery.isLoading.value" class="mt-4" />
       <div v-else-if="productsQuery.isSuccess.value" class="mt-4">
         <label v-if="canViewArchive" class="mb-3 flex items-center gap-2 text-sm">
           <Checkbox v-model="includeArchived" input-id="closure-include-archive" binary />

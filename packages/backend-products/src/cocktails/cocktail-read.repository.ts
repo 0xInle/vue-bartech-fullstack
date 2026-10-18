@@ -11,13 +11,13 @@ import type { CocktailCard, CocktailGarnishOption, CocktailListItem } from "./co
 export class CocktailReadRepository {
   constructor(@Inject(DATABASE_CLIENT) private readonly database: PrismaClient) {}
 
-  async list(venueId: string, query?: string): Promise<CocktailListItem[]> {
+  async list(venueId: string, matchingIds?: string[]): Promise<CocktailListItem[]> {
     const cocktails = await this.database.product.findMany({
       where: {
         venueId,
         type: "COCKTAIL",
         status: "ACTIVE",
-        ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
+        ...(matchingIds ? { id: { in: matchingIds } } : {}),
       },
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       select: {
@@ -132,13 +132,13 @@ export class CocktailReadRepository {
     };
   }
 
-  async listGarnishes(venueId: string, query?: string): Promise<CocktailGarnishOption[]> {
+  async listGarnishes(venueId: string, matchingIds?: string[]): Promise<CocktailGarnishOption[]> {
     return this.database.product.findMany({
       where: {
         venueId,
         type: "GARNISH",
         status: "ACTIVE",
-        ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
+        ...(matchingIds ? { id: { in: matchingIds } } : {}),
       },
       orderBy: { name: "asc" },
       select: { id: true, name: true },

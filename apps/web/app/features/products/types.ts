@@ -6,8 +6,9 @@ import type {
 export type ProductSearchItemResponse = productsControllerSearchResponse200["data"][number];
 
 /** Позиция каталога, доступная для выбора в составе технологической карты. */
-export type ProductSearchItem = Omit<ProductSearchItemResponse, "venueId"> & {
+export type ProductSearchItem = Omit<ProductSearchItemResponse, "venueId" | "venueName"> & {
   venueId: string | null;
+  venueName?: string | null;
 };
 
 /** Результат создания локального ингредиента в текущем заведении. */

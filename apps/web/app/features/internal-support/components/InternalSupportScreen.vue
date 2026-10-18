@@ -10,9 +10,7 @@
       </p>
     </header>
 
-    <Message v-if="loadingSession" severity="info" :closable="false"
-      >Проверяем внутреннюю сессию…</Message
-    >
+    <LoadingIndicator v-if="loadingSession" screen />
     <Message v-else-if="!canAccess" severity="error" :closable="false">
       {{
         auth.state.user ? "У вас нет доступа к очереди поддержки." : "Внутренняя сессия недоступна."
@@ -32,9 +30,7 @@
             @update:model-value="page = 1"
           />
         </div>
-        <Message v-if="queue.queueQuery.isLoading.value" severity="info" :closable="false"
-          >Загружаем очередь…</Message
-        >
+        <LoadingIndicator v-if="queue.queueQuery.isLoading.value" screen />
         <Message v-else-if="queue.queueQuery.isError.value" severity="error" :closable="false"
           >Не удалось загрузить очередь.</Message
         >

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { ProductContextAccess } from "../product-context-access.js";
 import type { CreateProductContext } from "../product.dto.js";
+import { ProductSearchService } from "../search/product-search.service.js";
 import type { PreparationListSort } from "./preparation-read.dto.js";
 import { PreparationReadRepository } from "./preparation-read.repository.js";
 
@@ -9,13 +10,18 @@ export class PreparationReadService {
   constructor(
     private readonly repository: PreparationReadRepository,
     private readonly access: ProductContextAccess,
+    private readonly search: ProductSearchService,
   ) {}
 
   async list(context: CreateProductContext, query?: string, categoryCode?: string, sort?: string) {
     await this.assertViewAccess(context);
+    const normalizedQuery = normalizeQuery(query);
+    const matchingIds = normalizedQuery
+      ? await this.search.findWorkspaceMatches(context, "PREPARATION", normalizedQuery)
+      : undefined;
     return this.repository.list(
       context.venueId,
-      normalizeQuery(query),
+      matchingIds,
       normalizeCategoryCode(categoryCode),
       normalizeSort(sort),
     );

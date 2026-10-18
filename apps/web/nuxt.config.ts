@@ -110,6 +110,8 @@ export default defineNuxtConfig({
         "InputText",
         "Message",
         "Password",
+        "PanelMenu",
+        "ProgressSpinner",
         "Select",
         "Tag",
       ],

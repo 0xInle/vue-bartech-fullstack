@@ -7,7 +7,8 @@
     :header="mode === 'edit' ? 'Редактировать гарнир' : 'Создать гарнир'"
     @update:visible="requestVisibilityChange"
   >
-    <div class="flex flex-col gap-5">
+    <LoadingIndicator v-if="referencesQuery.isLoading.value" class="py-8" />
+    <div v-else class="flex flex-col gap-5">
       <Message v-if="saveError" severity="error" :closable="false">{{ saveError }}</Message>
       <Message v-if="referencesQuery.isError.value" severity="error" :closable="false">
         Не удалось загрузить справочники. Обновите страницу и попробуйте ещё раз.

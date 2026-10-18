@@ -1,100 +1,76 @@
 <template>
   <div class="min-h-screen bg-surface-50 text-color lg:flex">
-    <aside class="hidden w-64 shrink-0 flex-col border-r border-surface bg-surface-0 p-4 lg:flex">
-      <NuxtLink to="/" class="mb-6 text-sm font-bold uppercase tracking-[0.2em] text-primary">
+    <aside
+      class="hidden w-72 shrink-0 flex-col border-r border-surface bg-surface-0 p-4 lg:flex"
+      style="border-color: var(--p-content-border-color)"
+    >
+      <NuxtLink
+        to="/"
+        class="mb-6 text-sm font-bold uppercase tracking-[0.2em]"
+        style="color: var(--p-button-text-primary-color)"
+      >
         IndieBar
       </NuxtLink>
-
-      <div class="mb-6">
-        <p class="mb-2 text-xs font-medium text-color-secondary">Рабочие пространства</p>
-        <Select
-          v-if="workspaceOptions.length > 1"
-          :model-value="workspaceKey"
-          :options="workspaceOptions"
-          option-label="label"
-          option-value="key"
-          size="small"
-          class="w-full"
-          aria-label="Выбрать заведение"
-          @update:model-value="selectWorkspace"
-        />
-        <div v-else class="rounded-lg border border-surface p-3">
-          <p class="truncate text-xs font-semibold uppercase tracking-wide text-primary">
-            {{ workspace.venue.name }}
-          </p>
-          <p class="mt-1 truncate text-xs text-color-secondary">{{ workspace.company.name }}</p>
-        </div>
-      </div>
-
-      <nav aria-label="Основная навигация" class="flex flex-col gap-1">
-        <Button
-          v-for="item in navigationItems"
-          :key="item.key"
-          :label="item.label"
-          :icon="item.icon"
-          :to="item.to"
-          as="router-link"
-          severity="secondary"
-          variant="text"
-          size="small"
-          class="w-full justify-start"
-          :class="{ 'workspace-nav-active': item.active }"
-          :aria-current="item.active ? 'page' : undefined"
-        />
-      </nav>
-
-      <Button
-        label="Помощь"
-        icon="pi pi-question-circle"
-        :to="supportPath"
-        as="router-link"
-        severity="secondary"
-        variant="text"
-        size="small"
-        class="mt-2 w-full justify-start"
+      <PanelMenu
+        v-model:expanded-keys="expandedKeys"
+        :model="menuItems"
+        class="workspace-panel-menu w-full flex-1"
       />
-
-      <div class="mt-auto border-t border-surface pt-4">
-        <p class="truncate px-3 text-sm font-medium">{{ fullName }}</p>
-        <Button
-          :to="profilePath"
-          as="router-link"
-          label="Профиль"
-          icon="pi pi-user"
-          severity="secondary"
-          variant="text"
-          size="small"
-          class="mt-2 w-full justify-start"
-          :class="{ 'workspace-nav-active': isProfile }"
-          :aria-current="isProfile ? 'page' : undefined"
+      <div
+        class="mt-auto border-t border-surface pt-4"
+        style="border-color: var(--p-content-border-color)"
+      >
+        <WorkspaceIdentity
+          :workspace="workspace"
+          :workplaces="workplaces"
+          :full-name="fullName"
+          :show-full-name="false"
+          class="mb-2"
+          @switch="emit('switch', $event)"
         />
+        <p class="truncate px-3 text-center text-xs text-color-secondary">
+          {{ fullName }}
+        </p>
+        <div class="mt-2 flex justify-center">
+          <Button
+            :to="profilePath"
+            as="router-link"
+            label="Профиль"
+            severity="primary"
+            variant="text"
+            size="small"
+            class="w-fit justify-center"
+            :aria-current="isProfile ? 'page' : undefined"
+          />
+        </div>
       </div>
     </aside>
 
-    <div class="fixed inset-x-0 top-0 z-10 border-b border-surface bg-surface-0 p-3 lg:hidden">
+    <div
+      class="fixed inset-x-0 top-0 z-10 border-b border-surface bg-surface-0 p-3 lg:hidden"
+      style="border-color: var(--p-content-border-color)"
+    >
       <div class="mb-2">
-        <NuxtLink to="/" class="text-sm font-bold uppercase tracking-[0.2em] text-primary">
+        <NuxtLink
+          to="/"
+          class="text-sm font-bold uppercase tracking-[0.2em]"
+          style="color: var(--p-button-text-primary-color)"
+        >
           IndieBar
         </NuxtLink>
       </div>
-      <Select
-        v-if="workspaceOptions.length > 1"
-        :model-value="workspaceKey"
-        :options="workspaceOptions"
-        option-label="label"
-        option-value="key"
-        size="small"
-        class="w-full"
-        aria-label="Выбрать заведение"
-        @update:model-value="selectWorkspace"
+      <WorkspaceIdentity
+        :workspace="workspace"
+        :workplaces="workplaces"
+        :full-name="fullName"
+        @switch="emit('switch', $event)"
       />
-      <div v-else class="text-sm">
-        <span class="font-medium">{{ workspace.venue.name }}</span>
-        <span class="text-color-secondary"> · {{ workspace.company.name }}</span>
-      </div>
     </div>
 
-    <main class="min-w-0 flex-1 px-4 pb-24 pt-28 sm:px-6 lg:px-8 lg:pb-8 lg:pt-8">
+    <main class="min-w-0 flex-1 px-4 pb-24 pt-28 sm:px-6 lg:px-8 lg:pb-8 lg:pt-4">
+      <div v-if="!isHome" class="mb-5 flex justify-end">
+        <WorkspaceProductSearch :workspace="workspace" mode="trigger" />
+      </div>
       <CompanyClosureBanner :company-id="workspace.company.id" />
       <slot />
     </main>
@@ -102,72 +78,86 @@
     <nav
       aria-label="Мобильная навигация"
       class="fixed inset-x-0 bottom-0 z-10 flex border-t border-surface bg-surface-0 p-1 lg:hidden"
+      style="border-color: var(--p-content-border-color)"
     >
       <Button
-        v-for="item in navigationItems"
+        v-for="item in mobileQuickItems"
         :key="item.key"
-        :label="item.mobileLabel"
-        :icon="item.icon"
-        icon-pos="top"
+        :label="item.label"
         :to="item.to"
         as="router-link"
         severity="secondary"
         variant="text"
         size="small"
-        class="min-w-0 flex-1 flex-col gap-1 px-1 text-xs"
+        class="min-w-0 flex-1 px-1 text-xs"
         :class="{ 'workspace-nav-active': item.active }"
         :aria-current="item.active ? 'page' : undefined"
       />
       <Button
-        label="Помощь"
-        icon="pi pi-question-circle"
-        icon-pos="top"
-        :to="supportPath"
-        as="router-link"
+        label="Ещё"
         severity="secondary"
         variant="text"
         size="small"
-        class="min-w-0 flex-1 flex-col gap-1 px-1 text-xs"
-      />
-      <Button
-        :label="'Профиль'"
-        icon="pi pi-user"
-        icon-pos="top"
-        :to="profilePath"
-        as="router-link"
-        severity="secondary"
-        variant="text"
-        size="small"
-        class="min-w-0 flex-1 flex-col gap-1 px-1 text-xs"
-        :class="{ 'workspace-nav-active': isProfile }"
-        :aria-current="isProfile ? 'page' : undefined"
+        class="min-w-0 flex-1 px-1 text-xs"
+        :class="{ 'workspace-nav-active': isMoreActive }"
+        @click="moreVisible = true"
       />
     </nav>
+
+    <Drawer v-model:visible="moreVisible" header="Разделы" position="right" class="w-full sm:!w-96">
+      <WorkspaceIdentity
+        :workspace="workspace"
+        :workplaces="workplaces"
+        :full-name="fullName"
+        :show-full-name="false"
+        class="mb-6 border-b border-surface pb-4"
+        style="border-color: var(--p-content-border-color)"
+        @switch="emit('switch', $event)"
+      />
+      <PanelMenu
+        v-model:expanded-keys="expandedKeys"
+        :model="moreMenuItems"
+        class="workspace-panel-menu w-full"
+      />
+      <div
+        class="mt-6 border-t border-surface pt-4"
+        style="border-color: var(--p-content-border-color)"
+      >
+        <p class="truncate px-3 text-center text-xs text-color-secondary">
+          {{ fullName }}
+        </p>
+        <div class="mt-2 flex justify-center">
+          <Button
+            :to="profilePath"
+            as="router-link"
+            label="Профиль"
+            severity="primary"
+            variant="text"
+            size="small"
+            class="w-fit justify-center"
+            @click="moreVisible = false"
+          />
+        </div>
+      </div>
+    </Drawer>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { MenuItem } from "primevue/menuitem";
 import type { Workspace } from "~/types/user-workspaces";
 import CompanyClosureBanner from "~/features/organizations/components/CompanyClosureBanner.vue";
+import WorkspaceIdentity from "./WorkspaceIdentity.vue";
+import WorkspaceProductSearch from "~/features/products/components/WorkspaceProductSearch.vue";
 
 defineOptions({ name: "WorkspaceShell" });
 
-const props = defineProps<{
-  workspace: Workspace;
-  workplaces: Workspace[];
-  fullName: string;
-}>();
+const props = defineProps<{ workspace: Workspace; workplaces: Workspace[]; fullName: string }>();
 const emit = defineEmits<{ switch: [workspace: Workspace] }>();
 const route = useRoute();
+const moreVisible = ref(false);
+const expandedKeys = ref<Record<string, boolean>>({ catalog: true, management: true });
 
-const workspaceKey = computed(() => `${props.workspace.company.id}:${props.workspace.venue.id}`);
-const workspaceOptions = computed(() =>
-  props.workplaces.map((item) => ({
-    ...item,
-    key: `${item.company.id}:${item.venue.id}`,
-    label: `${item.company.name} · ${item.venue.name}`,
-  })),
-);
 const homePath = computed(
   () => `/app/companies/${props.workspace.company.id}/venues/${props.workspace.venue.id}`,
 );
@@ -175,153 +165,153 @@ const profilePath = computed(() => `${homePath.value}/profile`);
 const supportPath = computed(
   () => `/app/support?companyId=${props.workspace.company.id}&venueId=${props.workspace.venue.id}`,
 );
-const teamPath = computed(() => `${homePath.value}/team`);
-const cocktailsPath = computed(() => `${homePath.value}/cocktails`);
-const preparationsPath = computed(() => `${homePath.value}/preparations`);
-const garnishesPath = computed(() => `${homePath.value}/garnishes`);
-const archivePath = computed(() => `${homePath.value}/archive`);
-const historyPath = computed(() => `${homePath.value}/history`);
-const exportsPath = computed(() => `${homePath.value}/exports`);
-const companyChefPath = computed(() => `${homePath.value}/chefs`);
-const newVenuePath = computed(() => `${homePath.value}/new-venue`);
+const paths = computed(() => ({
+  archive: `${homePath.value}/archive`,
+  cocktails: `${homePath.value}/cocktails`,
+  garnishes: `${homePath.value}/garnishes`,
+  history: `${homePath.value}/history`,
+  management: `${homePath.value}/management`,
+  preparations: `${homePath.value}/preparations`,
+  team: `${homePath.value}/team`,
+  exports: `${homePath.value}/exports`,
+}));
 const isHome = computed(() => route.path === homePath.value);
 const isProfile = computed(() => route.path === profilePath.value);
-const isTeam = computed(() => route.path === teamPath.value);
-const isCocktails = computed(
-  () => route.path === cocktailsPath.value || route.path.startsWith(`${cocktailsPath.value}/`),
-);
-const isPreparations = computed(
-  () =>
-    route.path === preparationsPath.value || route.path.startsWith(`${preparationsPath.value}/`),
-);
-const isGarnishes = computed(
-  () => route.path === garnishesPath.value || route.path.startsWith(`${garnishesPath.value}/`),
-);
-const isCompanyChefs = computed(() => route.path === companyChefPath.value);
-const isNewVenue = computed(() => route.path === newVenuePath.value);
-const navigationItems = computed(() => {
-  const items = [
-    {
-      key: "home",
-      label: "Главная",
-      mobileLabel: "Главная",
-      icon: "pi pi-home",
-      to: homePath.value,
-      active: isHome.value,
-    },
-  ];
 
+function isPathActive(path: string): boolean {
+  return route.path === path || route.path.startsWith(`${path}/`);
+}
+
+function linkItem(label: string, to: string, active: boolean): MenuItem {
+  return {
+    label,
+    class: active ? "workspace-menu-item-active" : undefined,
+    command: () => {
+      moreVisible.value = false;
+      return navigateTo(to);
+    },
+  };
+}
+
+const menuItems = computed<MenuItem[]>(() => {
+  const items: MenuItem[] = [linkItem("Главная", homePath.value, isHome.value)];
   if (props.workspace.permissions.includes("view_products")) {
     items.push({
-      key: "cocktails",
-      label: "Коктейли",
-      mobileLabel: "Коктейли",
-      icon: "pi pi-book",
-      to: cocktailsPath.value,
-      active: isCocktails.value,
-    });
-    items.push({
-      key: "preparations",
-      label: "Заготовки",
-      mobileLabel: "Заготовки",
-      icon: "pi pi-box",
-      to: preparationsPath.value,
-      active: isPreparations.value,
-    });
-    items.push({
-      key: "garnishes",
-      label: "Гарниры",
-      mobileLabel: "Гарниры",
-      icon: "pi pi-sparkles",
-      to: garnishesPath.value,
-      active: isGarnishes.value,
+      key: "catalog",
+      label: "Каталог",
+      items: [
+        linkItem("Коктейли", paths.value.cocktails, isPathActive(paths.value.cocktails)),
+        linkItem("Заготовки", paths.value.preparations, isPathActive(paths.value.preparations)),
+        linkItem("Гарниры", paths.value.garnishes, isPathActive(paths.value.garnishes)),
+      ],
     });
   }
-
-  if (props.workspace.permissions.includes("view_archive")) {
-    items.push({
-      key: "archive",
-      label: "Архив",
-      mobileLabel: "Архив",
-      icon: "pi pi-inbox",
-      to: archivePath.value,
-      active: route.path === archivePath.value || route.path.startsWith(`${archivePath.value}/`),
-    });
-  }
-
-  if (props.workspace.permissions.includes("export_data")) {
-    items.push({
-      key: "exports",
-      label: "Выгрузка данных",
-      mobileLabel: "Выгрузка",
-      icon: "pi pi-download",
-      to: exportsPath.value,
-      active: route.path === exportsPath.value || route.path.startsWith(`${exportsPath.value}/`),
-    });
-  }
-
   if (props.workspace.permissions.includes("view_team")) {
-    items.push({
-      key: "team",
-      label: "Команда",
-      mobileLabel: "Команда",
-      icon: "pi pi-users",
-      to: teamPath.value,
-      active: isTeam.value,
-    });
+    items.push(linkItem("Команда", paths.value.team, isPathActive(paths.value.team)));
   }
-
+  const managementItems: MenuItem[] = [];
+  if (props.workspace.permissions.includes("view_archive")) {
+    managementItems.push(linkItem("Архив", paths.value.archive, isPathActive(paths.value.archive)));
+  }
+  if (props.workspace.permissions.includes("export_data")) {
+    managementItems.push(
+      linkItem("Выгрузка", paths.value.exports, isPathActive(paths.value.exports)),
+    );
+  }
   if (
     props.workspace.permissions.includes("view_history") ||
     props.workspace.permissions.includes("view_products")
   ) {
-    items.push({
-      key: "history",
-      label: "История",
-      mobileLabel: "История",
-      icon: "pi pi-history",
-      to: historyPath.value,
-      active: route.path === historyPath.value,
-    });
-  }
-
-  if (props.workspace.permissions.includes("invite_chef_bartender")) {
-    items.push(
-      {
-        key: "chefs",
-        label: "Шеф-бармены компании",
-        mobileLabel: "Шеф-бармены",
-        icon: "pi pi-briefcase",
-        to: companyChefPath.value,
-        active: isCompanyChefs.value,
-      },
-      {
-        key: "new-venue",
-        label: "Новое заведение",
-        mobileLabel: "Новое заведение",
-        icon: "pi pi-plus-circle",
-        to: newVenuePath.value,
-        active: isNewVenue.value,
-      },
+    managementItems.push(
+      linkItem("История", paths.value.history, isPathActive(paths.value.history)),
     );
   }
-
+  const canManageCompanyVenues = props.workplaces.some(
+    (workspace) =>
+      workspace.company.id === props.workspace.company.id &&
+      ["create_venues", "manage_venue", "manage_venues"].some((permission) =>
+        workspace.permissions.includes(permission),
+      ),
+  );
+  if (canManageCompanyVenues) {
+    managementItems.push(
+      linkItem("Заведения", paths.value.management, isPathActive(paths.value.management)),
+    );
+  }
+  if (managementItems.length) {
+    items.push({ key: "management", label: "Управление", items: managementItems });
+  }
+  items.push(linkItem("Техподдержка", supportPath.value, route.path.startsWith("/app/support")));
   return items;
 });
+const moreMenuItems = computed(() => menuItems.value.filter((item) => item.label !== "Главная"));
+const mobileQuickItems = computed(() =>
+  menuItems.value
+    .flatMap((item) => item.items ?? [item])
+    .filter(
+      (item) =>
+        typeof item.label === "string" &&
+        ["Главная", "Коктейли", "Заготовки", "Гарниры"].includes(item.label),
+    )
+    .map((item) => {
+      const { to, label } = getMenuLink(typeof item.label === "string" ? item.label : "");
+      return { key: label, label, to, active: isPathActive(to) };
+    }),
+);
+const isMoreActive = computed(
+  () => mobileQuickItems.value.every((item) => !item.active) && !isProfile.value,
+);
 
-function selectWorkspace(key: string): void {
-  const selected = props.workplaces.find((item) => `${item.company.id}:${item.venue.id}` === key);
-  if (selected) emit("switch", selected);
+function getMenuLink(label: string): { label: string; to: string } {
+  const links: Record<string, string> = {
+    Главная: homePath.value,
+    Коктейли: paths.value.cocktails,
+    Заготовки: paths.value.preparations,
+    Гарниры: paths.value.garnishes,
+  };
+  return { label, to: links[label] ?? homePath.value };
 }
 </script>
 
 <style scoped>
+:deep(.workspace-panel-menu .p-panelmenu-item-link) {
+  color: var(--p-text-color-secondary);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+}
+
+:deep(.workspace-panel-menu .p-panelmenu-header-link) {
+  display: flex;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+}
+
+:deep(.workspace-panel-menu .p-panelmenu-submenu-icon) {
+  order: 1;
+  margin-left: auto;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+:deep(.workspace-panel-menu .workspace-menu-item-active .p-panelmenu-item-link) {
+  color: var(--p-text-color);
+  background: var(--p-surface-100);
+}
+
+:deep(.workspace-panel-menu .workspace-menu-item-active .p-panelmenu-item-link:hover) {
+  background: var(--p-surface-200);
+}
+
 :deep(.p-button.workspace-nav-active) {
-  color: var(--p-primary-color);
-  background: var(--p-primary-50);
+  color: var(--p-text-color);
+  background: var(--p-surface-100);
 }
 
 :deep(.p-button.workspace-nav-active:hover) {
-  background: var(--p-primary-100);
+  background: var(--p-surface-200);
 }
 </style>

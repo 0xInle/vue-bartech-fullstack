@@ -10,18 +10,11 @@
       </p>
     </header>
 
-    <Message v-if="loadingSession" severity="info" :closable="false"
-      >Проверяем внутреннюю сессию…</Message
-    >
+    <LoadingIndicator v-if="loadingSession" screen />
     <Message v-else-if="!authorized" severity="error" :closable="false">
       Нет разрешения на управление глобальным каталогом.
     </Message>
-    <Message
-      v-else-if="categories.categoriesQuery.isLoading.value"
-      severity="info"
-      :closable="false"
-      >Загружаем категории…</Message
-    >
+    <LoadingIndicator v-else-if="categories.categoriesQuery.isLoading.value" screen />
     <Message v-else-if="categories.categoriesQuery.error.value" severity="error" :closable="false">
       {{ errorMessage(categories.categoriesQuery.error.value) }}
     </Message>

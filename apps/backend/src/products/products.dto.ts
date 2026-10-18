@@ -4,12 +4,14 @@ import {
   ArrayUnique,
   IsArray,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   Max,
   MaxLength,
+  MinLength,
   Min,
   IsUUID,
   ValidateNested,
@@ -466,6 +468,55 @@ export class ProductSearchQueryDto {
   categoryCode?: string;
 }
 
+export class CompanyProductSearchQueryDto {
+  @ApiProperty({ minLength: 2, maxLength: 160 })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(160)
+  query!: string;
+
+  @ApiPropertyOptional({ description: "Типы продукции через запятую" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  types?: string;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  limit?: number;
+
+  @ApiPropertyOptional({ enum: ["INGREDIENT", "PREPARATION"] })
+  @IsOptional()
+  @IsIn(["INGREDIENT", "PREPARATION"])
+  categoryType?: "INGREDIENT" | "PREPARATION";
+
+  @ApiPropertyOptional({ maxLength: 80 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  categoryCode?: string;
+}
+
+export class WorkspaceProductSearchQueryDto extends CompanyProductSearchQueryDto {}
+
+export class CompanyProductCardQueryDto {
+  @ApiProperty({ format: "uuid" })
+  @IsUUID()
+  venueId!: string;
+}
+
 export class ProductSearchItemResponseDto {
   @ApiProperty({ format: "uuid" })
   id!: string;
@@ -478,6 +529,9 @@ export class ProductSearchItemResponseDto {
 
   @ApiProperty({ type: String, format: "uuid", nullable: true })
   venueId!: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  venueName!: string | null;
 
   @ApiProperty({ enum: ["GLOBAL", "VENUE"] })
   scope!: "GLOBAL" | "VENUE";
@@ -495,6 +549,28 @@ export class ProductSearchItemResponseDto {
 
   @ApiProperty({ type: Number, nullable: true })
   strength!: number | null;
+}
+
+export class ProductSearchCategoryResponseDto {
+  @ApiProperty({ enum: ["INGREDIENT", "PREPARATION"] })
+  type!: "INGREDIENT" | "PREPARATION";
+
+  @ApiProperty()
+  code!: string;
+
+  @ApiProperty()
+  name!: string;
+}
+
+export class ProductSearchPageResponseDto {
+  @ApiProperty({ type: [ProductSearchItemResponseDto] })
+  items!: ProductSearchItemResponseDto[];
+
+  @ApiProperty()
+  totalRecords!: number;
+
+  @ApiProperty({ type: [ProductSearchCategoryResponseDto] })
+  categories!: ProductSearchCategoryResponseDto[];
 }
 
 export class CocktailListQueryDto {

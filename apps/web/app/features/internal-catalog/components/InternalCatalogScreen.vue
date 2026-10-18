@@ -21,16 +21,12 @@
       </div>
     </header>
 
-    <Message v-if="loadingSession" severity="info" :closable="false"
-      >Проверяем внутреннюю сессию…</Message
-    >
+    <LoadingIndicator v-if="loadingSession" screen />
     <Message v-else-if="!authorized" severity="error" :closable="false"
       >Нет разрешения на управление глобальным каталогом.</Message
     >
     <Message v-else-if="error" severity="error" :closable="false">{{ error }}</Message>
-    <Message v-else-if="catalog.candidatesQuery.isLoading.value" severity="info" :closable="false"
-      >Загружаем кандидатов…</Message
-    >
+    <LoadingIndicator v-else-if="catalog.candidatesQuery.isLoading.value" screen />
     <Message v-else-if="catalog.candidatesQuery.error.value" severity="error" :closable="false"
       >Не удалось загрузить очередь кандидатов.</Message
     >
@@ -131,9 +127,7 @@
             :closable="false"
             >Введите не менее двух символов.</Message
           >
-          <Message v-else-if="catalog.searchQuery.isLoading.value" severity="info" :closable="false"
-            >Ищем в глобальном каталоге…</Message
-          >
+          <LoadingIndicator v-else-if="catalog.searchQuery.isLoading.value" />
           <Message v-else-if="catalog.searchQuery.error.value" severity="error" :closable="false"
             >Не удалось выполнить поиск.</Message
           >
