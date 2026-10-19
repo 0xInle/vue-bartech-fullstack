@@ -59,7 +59,12 @@ export class OrganizationsService {
             include: {
               venues: {
                 where: { status: "ACTIVE" },
-                include: { memberships: { select: { role: true } } },
+                include: {
+                  memberships: {
+                    where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+                    select: { role: true },
+                  },
+                },
               },
             },
           },
@@ -68,6 +73,7 @@ export class OrganizationsService {
       this.database.venueMembership.findMany({
         where: {
           userId,
+          OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
           venue: { status: "ACTIVE", company: companyOperationalOrInClosure },
         },
         include: {
@@ -85,7 +91,14 @@ export class OrganizationsService {
               },
             },
           },
-          venue: { include: { memberships: { select: { role: true } } } },
+          venue: {
+            include: {
+              memberships: {
+                where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+                select: { role: true },
+              },
+            },
+          },
           delegatedPermissions: { select: { code: true } },
           temporaryResponsibility: { select: { id: true } },
         },
@@ -253,8 +266,16 @@ export class OrganizationsService {
           },
         });
 
+        const startedOn = currentDate();
         await transaction.venueMembership.create({
-          data: { userId, companyId, venueId: venue.id, role: "BAR_MANAGER" },
+          data: {
+            userId,
+            companyId,
+            venueId: venue.id,
+            role: "BAR_MANAGER",
+            startedOn,
+            rolePeriods: { create: { role: "BAR_MANAGER", startedOn } },
+          },
         });
 
         return { company, venue };
@@ -302,7 +323,16 @@ export class OrganizationsService {
     } else {
       await transaction.companyMembership.create({ data: { userId, companyId: company.id } });
       await transaction.venueMembership.create({
-        data: { userId, companyId: company.id, venueId: venue.id, role: initialRole },
+        data: {
+          userId,
+          companyId: company.id,
+          venueId: venue.id,
+          role: initialRole,
+          startedOn: currentDate(),
+          rolePeriods: {
+            create: { role: initialRole, startedOn: currentDate() },
+          },
+        },
       });
     }
 
@@ -342,7 +372,7 @@ export class OrganizationsService {
     const now = new Date();
     const [members, invitations] = await Promise.all([
       this.database.venueMembership.findMany({
-        where: { companyId, venueId },
+        where: { companyId, venueId, OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
         include: { user: { include: { profile: true } }, delegatedPermissions: true },
         orderBy: [{ role: "asc" }, { createdAt: "asc" }],
       }),
@@ -408,7 +438,8 @@ export class OrganizationsService {
             ? DELEGATABLE_PERMISSION_CODES.filter(
                 (code) =>
                   (workspace.permissions.includes(code) || delegatedPermissions.includes(code)) &&
-                  !(actorIsTemporaryResponsible && code === "delete_products_permanently"),
+                  !(actorIsTemporaryResponsible && code === "delete_products_permanently") &&
+                  !(code === "manage_schedule" && member.role !== "SENIOR_BARTENDER"),
               )
             : [],
           canManageDelegatedPermissions,
@@ -445,6 +476,7 @@ const readOnlyCompanyPermissions = new Set<PermissionCode>([
   "view_products",
   "view_archive",
   "view_team",
+  "view_schedule",
   "export_data",
   "view_history",
 ]);
@@ -455,6 +487,11 @@ function restrictCompanyPermissions(
 ): PermissionCode[] {
   if (companyStatus === "ACTIVE") return permissions;
   return permissions.filter((permission) => readOnlyCompanyPermissions.has(permission));
+}
+
+function currentDate(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
 function toWorkspaceRole(role: VenueInviteRole): WorkspaceRole {

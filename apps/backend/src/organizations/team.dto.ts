@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { ArrayMaxSize, ArrayUnique, IsArray, IsIn } from "class-validator";
+import { ArrayMaxSize, ArrayUnique, IsArray, IsDateString, IsIn } from "class-validator";
 import { delegatedPermissionCodes, venueRoles } from "@bartech/backend-organizations";
 
 export class UpdateTeamMemberDto {
@@ -18,4 +18,10 @@ export class UpdateTeamMemberDto {
 export class TeamMemberUpdateResponseDto {
   @ApiProperty({ enum: [true] })
   accepted!: true;
+}
+
+export class EndTeamMemberDto {
+  @ApiProperty({ format: "date", example: "2026-10-18" })
+  @IsDateString({ strict: true })
+  lastWorkingDay!: string;
 }

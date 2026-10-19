@@ -23,6 +23,7 @@ enum DelegatedPermissionCode {
   DELETE_PRODUCTS_PERMANENTLY
   EXPORT_DATA
   INVITE_EMPLOYEES
+  MANAGE_SCHEDULE
 }
 
 enum VenueStatus {
@@ -60,18 +61,18 @@ enum InvitationPurpose {
 }
 
 model Company {
-  id             String              @id @default(uuid()) @db.Uuid
-  name           String
-  nameNormalized String
-  status         CompanyStatus        @default(ACTIVE)
-  closureDeadline DateTime?            @db.Timestamptz(6)
-  createdAt      DateTime            @default(now()) @db.Timestamptz(6)
-  updatedAt      DateTime            @updatedAt @db.Timestamptz(6)
-  venues         Venue[]
-  memberships    CompanyMembership[]
-  invitations    Invitation[]
-  auditEvents    AuditEvent[]
-  productExports ProductExportRequest[]
+  id                    String                          @id @default(uuid()) @db.Uuid
+  name                  String
+  nameNormalized        String
+  status                CompanyStatus                   @default(ACTIVE)
+  closureDeadline       DateTime?                       @db.Timestamptz(6)
+  createdAt             DateTime                        @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime                        @updatedAt @db.Timestamptz(6)
+  venues                Venue[]
+  memberships           CompanyMembership[]
+  invitations           Invitation[]
+  auditEvents           AuditEvent[]
+  productExports        ProductExportRequest[]
   productExportClosures ProductExportClosureOperation[]
   supportRequests       SupportRequest[]
   supportAccessGrants   SupportAccessGrant[]
@@ -81,14 +82,14 @@ model Company {
 }
 
 model Venue {
-  id                      String                   @id @default(uuid()) @db.Uuid
-  companyId               String                   @db.Uuid
+  id                      String                          @id @default(uuid()) @db.Uuid
+  companyId               String                          @db.Uuid
   name                    String
   nameNormalized          String
-  status                  VenueStatus              @default(ACTIVE)
-  createdAt               DateTime                 @default(now()) @db.Timestamptz(6)
-  updatedAt               DateTime                 @updatedAt @db.Timestamptz(6)
-  company                 Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  status                  VenueStatus                     @default(ACTIVE)
+  createdAt               DateTime                        @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime                        @updatedAt @db.Timestamptz(6)
+  company                 Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   memberships             VenueMembership[]
   temporaryResponsibility TemporaryResponsibility?
   invitations             Invitation[]
@@ -100,6 +101,9 @@ model Venue {
   productExportClosures   ProductExportClosureOperation[]
   supportRequests         SupportRequest[]
   supportAccessGrants     SupportAccessGrant[]
+  scheduleSettings        VenueScheduleSettings?
+  scheduleTemplates       ScheduleTemplate[]
+  schedules               Schedule[]
 
   @@unique([id, companyId], map: "venues_id_company_id_key")
   @@unique([companyId, nameNormalized], map: "venues_company_normalized_name_key")
@@ -108,23 +112,23 @@ model Venue {
 }
 
 model ProductExportClosureOperation {
-  id                 String                       @id @default(uuid()) @db.Uuid
-  createdByUserId    String                       @db.Uuid
-  type               ProductExportClosureType
-  status             ProductExportClosureStatus   @default(PREPARING)
-  companyId          String?                      @db.Uuid
-  venueId            String?                      @db.Uuid
-  originalCompanyId  String                       @db.Uuid
-  originalVenueId    String?                      @db.Uuid
+  id                  String                     @id @default(uuid()) @db.Uuid
+  createdByUserId     String                     @db.Uuid
+  type                ProductExportClosureType
+  status              ProductExportClosureStatus @default(PREPARING)
+  companyId           String?                    @db.Uuid
+  venueId             String?                    @db.Uuid
+  originalCompanyId   String                     @db.Uuid
+  originalVenueId     String?                    @db.Uuid
   originalCompanyName String
-  originalVenueName  String?
-  createdAt          DateTime                     @default(now()) @db.Timestamptz(6)
-  closedAt           DateTime?                    @db.Timestamptz(6)
-  cancelledAt        DateTime?                    @db.Timestamptz(6)
-  createdBy          User                         @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
-  company            Company?                     @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  venue              Venue?                       @relation(fields: [venueId], references: [id], onDelete: SetNull)
-  exportRequest      ProductExportRequest?
+  originalVenueName   String?
+  createdAt           DateTime                   @default(now()) @db.Timestamptz(6)
+  closedAt            DateTime?                  @db.Timestamptz(6)
+  cancelledAt         DateTime?                  @db.Timestamptz(6)
+  createdBy           User                       @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  company             Company?                   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  venue               Venue?                     @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  exportRequest       ProductExportRequest?
 
   @@index([originalCompanyId, type, status], map: "product_export_closures_company_status_idx")
   @@index([createdByUserId, createdAt], map: "product_export_closures_author_created_idx")
@@ -152,17 +156,38 @@ model VenueMembership {
   companyId               String                   @db.Uuid
   venueId                 String                   @db.Uuid
   role                    VenueRole                @default(BAR_MANAGER)
+  startedOn               DateTime                 @default(dbgenerated("CURRENT_DATE")) @db.Date
+  endedOn                 DateTime?                @db.Date
   createdAt               DateTime                 @default(now()) @db.Timestamptz(6)
   user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   venue                   Venue                    @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
   companyMembership       CompanyMembership        @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
   delegatedPermissions    DelegatedPermission[]
   temporaryResponsibility TemporaryResponsibility?
+  rolePeriods             VenueRolePeriod[]
+  scheduleDays            ScheduleDay[]
+  scheduleAssignment      ScheduleAssignment?
+  scheduleSnapshots       ScheduleMemberSnapshot[]
 
-  @@unique([userId, venueId], map: "venue_memberships_user_venue_key")
   @@unique([id, venueId], map: "venue_memberships_id_venue_key")
-  @@index([companyId, venueId], map: "venue_memberships_company_venue_idx")
+  @@index([companyId, venueId, endedOn], map: "venue_memberships_company_venue_idx")
   @@map("venue_memberships")
+}
+
+model VenueRolePeriod {
+  id                String          @id @default(uuid()) @db.Uuid
+  venueMembershipId String          @db.Uuid
+  role              VenueRole
+  startedOn         DateTime        @db.Date
+  endedOn           DateTime?       @db.Date
+  changedByUserId   String?         @db.Uuid
+  reason            String?
+  createdAt         DateTime        @default(now()) @db.Timestamptz(6)
+  membership        VenueMembership @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
+  changedBy         User?           @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([venueMembershipId, startedOn], map: "venue_role_periods_membership_start_idx")
+  @@map("venue_role_periods")
 }
 
 model DelegatedPermission {

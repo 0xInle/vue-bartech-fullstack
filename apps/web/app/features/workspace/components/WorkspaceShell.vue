@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-surface-50 text-color lg:flex">
     <aside
-      class="hidden w-72 shrink-0 flex-col border-r border-surface bg-surface-0 p-4 lg:flex"
+      class="hidden w-[16rem] shrink-0 flex-col border-r border-surface bg-surface-0 p-4 lg:flex"
       style="border-color: var(--p-content-border-color)"
     >
       <NuxtLink

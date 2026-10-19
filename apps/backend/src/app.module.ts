@@ -18,6 +18,7 @@ import { ExportsApiModule } from "./exports/exports-api.module.js";
 import { SupportApiModule } from "./support/support-api.module.js";
 import { InternalAuditApiModule } from "./internal-audit/internal-audit-api.module.js";
 import { AnalyticsApiModule } from "./analytics/analytics-api.module.js";
+import { SchedulesApiModule } from "./schedules/schedules-api.module.js";
 
 const environmentSchema = z
   .object({
@@ -131,6 +132,7 @@ function validateEnvironment(environment: Record<string, unknown>): Record<strin
     SupportApiModule,
     InternalAuditApiModule,
     AnalyticsApiModule,
+    SchedulesApiModule,
   ],
 })
 export class AppModule {}

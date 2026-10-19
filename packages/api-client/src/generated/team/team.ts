@@ -16,6 +16,7 @@ import type {
 } from '@tanstack/vue-query';
 
 import type {
+  EndTeamMemberDto,
   TeamMemberUpdateResponseDto,
   UpdateTeamMemberDto
 } from '../models';
@@ -151,4 +152,115 @@ export const useTeamControllerUpdateMember = <TError = void,
         TContext
       > => {
       return useMutation(getTeamControllerUpdateMemberMutationOptions(options), queryClient);
+    }
+    export type teamControllerEndMembershipResponse200 = {
+  data: TeamMemberUpdateResponseDto
+  status: 200
+}
+
+export type teamControllerEndMembershipResponseSuccess = (teamControllerEndMembershipResponse200) & {
+  headers: Headers;
+};
+;
+
+export type teamControllerEndMembershipResponse = (teamControllerEndMembershipResponseSuccess)
+
+export const getTeamControllerEndMembershipUrl = (companyId: string,
+    venueId: string,
+    membershipId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/team/${membershipId}/end`
+}
+
+/**
+ * @summary Завершить период членства сотрудника
+ */
+export const teamControllerEndMembership = async (companyId: string,
+    venueId: string,
+    membershipId: string,
+    endTeamMemberDto: EndTeamMemberDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<teamControllerEndMembershipResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getTeamControllerEndMembershipUrl(companyId,venueId,membershipId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(endTeamMemberDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: teamControllerEndMembershipResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as teamControllerEndMembershipResponse
+}
+
+
+
+
+
+export const getTeamControllerEndMembershipMutationKey = () => ['teamControllerEndMembership'] as const;
+
+export const getTeamControllerEndMembershipMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamControllerEndMembership>>, TError,TeamControllerEndMembershipMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof teamControllerEndMembership>>, TError,TeamControllerEndMembershipMutationVariables, TContext> => {
+
+const mutationKey = getTeamControllerEndMembershipMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof teamControllerEndMembership>>, TeamControllerEndMembershipMutationVariables> = (props) => {
+          const {companyId,venueId,membershipId,data} = props ?? {};
+
+          return  teamControllerEndMembership(companyId,venueId,membershipId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TeamControllerEndMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof teamControllerEndMembership>>>
+    export type TeamControllerEndMembershipMutationBody = EndTeamMemberDto
+    export type TeamControllerEndMembershipMutationError = unknown
+    export type TeamControllerEndMembershipMutationVariables = {companyId: string;venueId: string;membershipId: string;data: EndTeamMemberDto}
+
+    /**
+ * @summary Завершить период членства сотрудника
+ */
+export const useTeamControllerEndMembership = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamControllerEndMembership>>, TError,TeamControllerEndMembershipMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof teamControllerEndMembership>>,
+        TError,
+        TeamControllerEndMembershipMutationVariables,
+        TContext
+      > => {
+      return useMutation(getTeamControllerEndMembershipMutationOptions(options), queryClient);
     }

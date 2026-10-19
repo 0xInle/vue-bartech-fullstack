@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, UseGuards } from "@nestjs/common";
+import { Body, Controller, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import {
   ApiConflictResponse,
   ApiForbiddenResponse,
@@ -11,7 +11,7 @@ import {
 import { CurrentUser, SessionGuard, type AuthenticatedUser } from "@bartech/backend-identity";
 import { TeamService } from "@bartech/backend-organizations";
 import { RequirePermissions, WorkspacePermissionGuard } from "./workspace-permission.guard.js";
-import { TeamMemberUpdateResponseDto, UpdateTeamMemberDto } from "./team.dto.js";
+import { EndTeamMemberDto, TeamMemberUpdateResponseDto, UpdateTeamMemberDto } from "./team.dto.js";
 
 @ApiTags("team")
 @Controller()
@@ -43,5 +43,22 @@ export class TeamController {
       role: body.role,
       delegatedPermissions: body.delegatedPermissions,
     });
+  }
+
+  @Post("organizations/companies/:companyId/venues/:venueId/team/:membershipId/end")
+  @RequirePermissions("manage_team")
+  @ApiOperation({ summary: "Завершить период членства сотрудника" })
+  @ApiParam({ name: "companyId", format: "uuid" })
+  @ApiParam({ name: "venueId", format: "uuid" })
+  @ApiParam({ name: "membershipId", format: "uuid" })
+  @ApiOkResponse({ type: TeamMemberUpdateResponseDto })
+  endMembership(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Param("membershipId") membershipId: string,
+    @Body() body: EndTeamMemberDto,
+  ): Promise<TeamMemberUpdateResponseDto> {
+    return this.team.endMembership(user.id, companyId, venueId, membershipId, body.lastWorkingDay);
   }
 }

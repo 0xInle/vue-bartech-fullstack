@@ -79,7 +79,14 @@ export class OrganizationInvitationsService {
       where: { id: companyId },
       include: {
         memberships: true,
-        venues: { where: { status: "ACTIVE" }, include: { memberships: true } },
+        venues: {
+          where: { status: "ACTIVE" },
+          include: {
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+            },
+          },
+        },
       },
     });
     if (!company) throw new NotFoundException("Компания не найдена");
@@ -149,7 +156,14 @@ export class OrganizationInvitationsService {
       where: { id: input.companyId },
       include: {
         memberships: true,
-        venues: { where: { status: "ACTIVE" }, include: { memberships: true } },
+        venues: {
+          where: { status: "ACTIVE" },
+          include: {
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+            },
+          },
+        },
       },
     });
     if (!company) throw new NotFoundException("Компания не найдена");
@@ -272,7 +286,14 @@ export class OrganizationInvitationsService {
       where: { id: input.companyId },
       include: {
         memberships: true,
-        venues: { where: { status: "ACTIVE" }, include: { memberships: true } },
+        venues: {
+          where: { status: "ACTIVE" },
+          include: {
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+            },
+          },
+        },
       },
     });
     if (!company) throw new NotFoundException("Приглашение не найдено");
@@ -332,6 +353,8 @@ export class OrganizationInvitationsService {
         venueId: venue.id,
         userId: input.userId,
         role: "BAR_MANAGER",
+        startedOn: currentDate(),
+        rolePeriods: { create: { role: "BAR_MANAGER", startedOn: currentDate() } },
       },
     });
     await transaction.auditEvent.create({
@@ -468,7 +491,10 @@ export class OrganizationInvitationsService {
     const venue = await transaction.venue.findFirst({
       where: { id: input.venueId, companyId: input.companyId, status: "ACTIVE" },
       include: {
-        memberships: { include: { delegatedPermissions: true, temporaryResponsibility: true } },
+        memberships: {
+          where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+          include: { delegatedPermissions: true, temporaryResponsibility: true },
+        },
         company: { include: { memberships: true } },
       },
     });
@@ -528,8 +554,12 @@ export class OrganizationInvitationsService {
     });
     if (
       existingUser &&
-      (await transaction.venueMembership.findUnique({
-        where: { userId_venueId: { userId: existingUser.id, venueId: input.venueId } },
+      (await transaction.venueMembership.findFirst({
+        where: {
+          userId: existingUser.id,
+          venueId: input.venueId,
+          OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
+        },
       }))
     ) {
       throw new ConflictException(
@@ -740,7 +770,10 @@ export class OrganizationInvitationsService {
         venues: {
           where: { status: "ACTIVE" },
           include: {
-            memberships: { include: { delegatedPermissions: true, temporaryResponsibility: true } },
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+              include: { delegatedPermissions: true, temporaryResponsibility: true },
+            },
           },
         },
       },
@@ -849,7 +882,10 @@ export class OrganizationInvitationsService {
         venues: {
           where: { status: "ACTIVE" },
           include: {
-            memberships: { include: { delegatedPermissions: true, temporaryResponsibility: true } },
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+              include: { delegatedPermissions: true, temporaryResponsibility: true },
+            },
           },
         },
       },
@@ -1017,7 +1053,16 @@ export class OrganizationInvitationsService {
     if (!invitation) throw new NotFoundException("Приглашение не найдено");
     const company = await transaction.company.findUnique({
       where: { id: input.companyId },
-      include: { memberships: true, venues: { include: { memberships: true } } },
+      include: {
+        memberships: true,
+        venues: {
+          include: {
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+            },
+          },
+        },
+      },
     });
     if (!company) throw new NotFoundException("Компания не найдена");
     if (company.status !== "ACTIVE") {
@@ -1138,7 +1183,10 @@ export class OrganizationInvitationsService {
       include: {
         venue: {
           include: {
-            memberships: { include: { delegatedPermissions: true, temporaryResponsibility: true } },
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+              include: { delegatedPermissions: true, temporaryResponsibility: true },
+            },
             company: { include: { memberships: true } },
           },
         },
@@ -1314,4 +1362,9 @@ function toWorkspaceRole(role: VenueInviteRole): WorkspaceRole {
     case "BAR_MANAGER":
       return "bar_manager";
   }
+}
+
+function currentDate(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }

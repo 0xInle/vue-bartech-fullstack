@@ -509,6 +509,10 @@ export class InvitationAcceptanceService {
               venueId: activeSession.invitation.venueId!,
               userId: user.id,
               role: activeSession.invitation.role!,
+              startedOn: dateOnly(now),
+              rolePeriods: {
+                create: { role: activeSession.invitation.role!, startedOn: dateOnly(now) },
+              },
             },
           });
         }
@@ -627,7 +631,11 @@ export class InvitationAcceptanceService {
         if (isChefInvitation) {
           await transaction.$queryRaw`SELECT lock_company_membership_pair(${user.id}::UUID, ${activeSession.invitation.companyId}::UUID)`;
           const localMembership = await transaction.venueMembership.findFirst({
-            where: { userId: user.id, companyId: activeSession.invitation.companyId },
+            where: {
+              userId: user.id,
+              companyId: activeSession.invitation.companyId,
+              OR: [{ endedOn: null }, { endedOn: { gte: dateOnly(now) } }],
+            },
             select: { id: true },
           });
           if (localMembership) {
@@ -653,9 +661,11 @@ export class InvitationAcceptanceService {
         if (
           !isChefInvitation &&
           !createsVenue &&
-          (await transaction.venueMembership.findUnique({
+          (await transaction.venueMembership.findFirst({
             where: {
-              userId_venueId: { userId: user.id, venueId: activeSession.invitation.venueId! },
+              userId: user.id,
+              venueId: activeSession.invitation.venueId!,
+              OR: [{ endedOn: null }, { endedOn: { gte: dateOnly(now) } }],
             },
           }))
         ) {
@@ -723,6 +733,10 @@ export class InvitationAcceptanceService {
               venueId: activeSession.invitation.venueId!,
               userId: user.id,
               role: activeSession.invitation.role!,
+              startedOn: dateOnly(now),
+              rolePeriods: {
+                create: { role: activeSession.invitation.role!, startedOn: dateOnly(now) },
+              },
             },
           });
         }
@@ -860,4 +874,8 @@ function isVenueNameConflict(error: Prisma.PrismaClientKnownRequestError): boole
     return target.includes("companyId") && target.includes("nameNormalized");
   }
   return typeof target === "string" && target.includes("venues_company_normalized_name_key");
+}
+
+function dateOnly(value: Date): Date {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
 }

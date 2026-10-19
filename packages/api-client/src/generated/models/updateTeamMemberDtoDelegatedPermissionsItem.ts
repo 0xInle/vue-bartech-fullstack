@@ -15,4 +15,5 @@ export const UpdateTeamMemberDtoDelegatedPermissionsItem = {
   delete_products_permanently: 'delete_products_permanently',
   export_data: 'export_data',
   invite_employees: 'invite_employees',
+  manage_schedule: 'manage_schedule',
 } as const;

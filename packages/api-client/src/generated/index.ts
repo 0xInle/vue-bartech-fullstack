@@ -14,6 +14,7 @@ export * from './invitations/invitations';
 export * from './meta/meta';
 export * from './organizations/organizations';
 export * from './products/products';
+export * from './schedules/schedules';
 export * from './support/support';
 export * from './support-access/support-access';
 export * from './team/team';

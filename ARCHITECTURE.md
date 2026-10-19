@@ -11,6 +11,7 @@
 - `ROLES_AND_PERMISSIONS.md`;
 - `PRODUCT_MODEL.md`;
 - `COMPANY_AND_VENUE_LIFECYCLE.md`;
+- `EMPLOYEE_SCHEDULE.md`;
 - `MVP_SCOPE.md`.
 
 Концептуальные сущности определены в `DATA_MODEL.md`, а пользовательское представление — в `UI_AND_NAVIGATION.md`. Если техническое решение расходится с этими документами, реализация не выбирает новое поведение самостоятельно: сначала уточняется документация нужного уровня.

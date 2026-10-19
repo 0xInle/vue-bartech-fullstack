@@ -437,7 +437,11 @@ export class OrganizationLifecycleService {
           select: { userId: true, companyRole: true },
         }),
         transaction.venueMembership.findMany({
-          where: { companyId, venueId },
+          where: {
+            companyId,
+            venueId,
+            OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
+          },
           include: {
             temporaryResponsibility: { select: { id: true } },
             delegatedPermissions: { select: { code: true } },
@@ -588,7 +592,11 @@ export class OrganizationLifecycleService {
         );
         if (companyMembership?.companyRole === "CHEF_BARTENDER") continue;
         const otherVenueMembership = await transaction.venueMembership.findFirst({
-          where: { companyId, userId },
+          where: {
+            companyId,
+            userId,
+            OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
+          },
           select: { id: true },
         });
         if (!otherVenueMembership) {
@@ -932,4 +940,9 @@ export class OrganizationLifecycleService {
       });
     }
   }
+}
+
+function currentDate(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }

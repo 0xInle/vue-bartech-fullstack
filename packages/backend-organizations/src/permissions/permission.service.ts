@@ -18,6 +18,8 @@ export const permissionCatalog = {
   manage_venues: "Управление заведениями компании",
   manage_company: "Управление компанией",
   view_history: "Просмотр истории действий",
+  view_schedule: "Просмотр графика сотрудников",
+  manage_schedule: "Управление графиком сотрудников",
 } as const;
 
 export type PermissionCode = keyof typeof permissionCatalog;
@@ -29,9 +31,15 @@ export const DELEGATABLE_PERMISSION_CODES = [
   "delete_products_permanently",
   "export_data",
   "invite_employees",
+  "manage_schedule",
 ] as const satisfies readonly PermissionCode[];
 
-const READ_PERMISSIONS: PermissionCode[] = ["view_products", "view_archive", "view_team"];
+const READ_PERMISSIONS: PermissionCode[] = [
+  "view_products",
+  "view_archive",
+  "view_team",
+  "view_schedule",
+];
 const TEMPORARY_OPERATIONAL_PERMISSIONS: PermissionCode[] = [
   "manage_products",
   "manage_product_archive",
@@ -39,6 +47,7 @@ const TEMPORARY_OPERATIONAL_PERMISSIONS: PermissionCode[] = [
   "invite_bar_manager",
   "manage_team",
   "manage_delegated_permissions",
+  "manage_schedule",
 ];
 const BAR_MANAGER_PERMISSIONS: PermissionCode[] = [
   ...READ_PERMISSIONS,
@@ -54,6 +63,7 @@ const BAR_MANAGER_PERMISSIONS: PermissionCode[] = [
   "manage_delegated_permissions",
   "manage_venue",
   "view_history",
+  "manage_schedule",
 ];
 const CHEF_BARTENDER_PERMISSIONS: PermissionCode[] = [
   ...READ_PERMISSIONS,

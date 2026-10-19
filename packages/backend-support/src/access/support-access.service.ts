@@ -34,6 +34,16 @@ export class SupportAccessService {
               userId,
               companyId: input.companyId,
               venueId: input.venueId,
+              OR: [
+                { endedOn: null },
+                {
+                  endedOn: {
+                    gte: new Date(
+                      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+                    ),
+                  },
+                },
+              ],
               role: "BAR_MANAGER",
               venue: { status: "ACTIVE" },
             },
@@ -55,7 +65,22 @@ export class SupportAccessService {
             where: { userId, companyId: input.companyId, companyRole: "CHEF_BARTENDER" },
             select: { userId: true },
           }),
-          transaction.venueMembership.findFirst({ where: { userId, companyId: input.companyId } }),
+          transaction.venueMembership.findFirst({
+            where: {
+              userId,
+              companyId: input.companyId,
+              OR: [
+                { endedOn: null },
+                {
+                  endedOn: {
+                    gte: new Date(
+                      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+                    ),
+                  },
+                },
+              ],
+            },
+          }),
         ]);
         if (!membership || venueMembership) {
           throw new NotFoundException("Область временного доступа недоступна");

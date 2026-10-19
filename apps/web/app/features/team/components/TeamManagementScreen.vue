@@ -1,13 +1,13 @@
 <template>
-  <div v-if="loading" class="mx-auto max-w-5xl pt-8">
+  <div v-if="loading" class="pt-8">
     <LoadingIndicator screen />
   </div>
-  <div v-else-if="!hasTeamData" class="mx-auto max-w-5xl pt-8">
+  <div v-else-if="!hasTeamData" class="pt-8">
     <Message severity="error" :closable="false">
       Не удалось загрузить команду. Обновите страницу и попробуйте ещё раз.
     </Message>
   </div>
-  <section v-else class="mx-auto max-w-5xl space-y-8">
+  <section v-else class="space-y-6">
     <header class="flex items-center justify-between gap-4">
       <h1 class="text-2xl font-semibold">Команда</h1>
       <Button
@@ -17,14 +17,7 @@
         @click="invitationDrawerVisible = true"
       />
     </header>
-    <TeamMemberList :members="members" @edit="selectedMember = $event" />
-    <TeamMemberEditorDrawer
-      :member="selectedMember"
-      :busy="savingMember"
-      :error="memberError"
-      @close="selectedMember = null"
-      @save="saveMember"
-    />
+    <ScheduleScreen :workspace="workspace" :preview-mode="previewMode" />
     <Drawer
       v-model:visible="invitationDrawerVisible"
       header="Пригласить сотрудника"
@@ -68,20 +61,15 @@
 
 <script setup lang="ts">
 import type { Workspace } from "~/types/user-workspaces";
-import {
-  useVenueTeam,
-  type TeamMember,
-  type UpdateTeamMemberInput,
-  type VenueRole,
-} from "../composables/useVenueTeam";
+import { useVenueTeam, type VenueRole } from "../composables/useVenueTeam";
 import { useCompanyChefTeam } from "../composables/useCompanyChefTeam";
+import ScheduleScreen from "~/features/schedule/components/ScheduleScreen.vue";
 import InviteEmployeeForm from "./InviteEmployeeForm.vue";
 import InvitationList from "./InvitationList.vue";
-import TeamMemberEditorDrawer from "./TeamMemberEditorDrawer.vue";
-import TeamMemberList from "./TeamMemberList.vue";
 
 const props = defineProps<{ workspace: Workspace }>();
-const { teamQuery, createInvitation, revokeInvitation, updateMember } = useVenueTeam(
+const previewMode = import.meta.dev;
+const { teamQuery, createInvitation, revokeInvitation } = useVenueTeam(
   props.workspace.company.id,
   props.workspace.venue.id,
 );
@@ -93,10 +81,6 @@ const error = ref("");
 const busy = ref(false);
 const busyId = ref("");
 const invitationDrawerVisible = ref(false);
-const selectedMember = ref<TeamMember | null>(null);
-const savingMember = ref(false);
-const memberError = ref("");
-const members = computed(() => teamQuery.data.value?.members ?? []);
 const invitations = computed(() => teamQuery.data.value?.invitations ?? []);
 const pendingInvitations = computed(() => [
   ...invitations.value.map((invitation) => ({ ...invitation, scope: "venue" as const })),
@@ -141,20 +125,6 @@ async function revoke(invitation: { id: string; scope: "venue" | "company" }): P
     error.value = cause instanceof Error ? cause.message : "Не удалось отозвать приглашение";
   } finally {
     busyId.value = "";
-  }
-}
-
-async function saveMember(input: UpdateTeamMemberInput): Promise<void> {
-  if (!selectedMember.value) return;
-  savingMember.value = true;
-  memberError.value = "";
-  try {
-    await updateMember(selectedMember.value.id, input);
-    selectedMember.value = null;
-  } catch (cause) {
-    memberError.value = cause instanceof Error ? cause.message : "Не удалось сохранить изменения";
-  } finally {
-    savingMember.value = false;
   }
 }
 </script>

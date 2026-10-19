@@ -22,6 +22,7 @@
     "@bartech/backend-organizations": "workspace:*",
     "@bartech/backend-products": "workspace:*",
     "@bartech/backend-support": "workspace:*",
+    "@bartech/backend-schedules": "workspace:*",
     "@bartech/database": "workspace:*",
     "@nestjs/common": "11.2.7",
     "@nestjs/config": "4.0.4",

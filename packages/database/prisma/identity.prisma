@@ -66,13 +66,13 @@ enum AnalyticsEventResult {
 }
 
 model User {
-  id                                String                        @id @default(uuid()) @db.Uuid
+  id                                String                          @id @default(uuid()) @db.Uuid
   email                             String
-  emailNormalized                   String                        @unique(map: "users_email_normalized_key")
+  emailNormalized                   String                          @unique(map: "users_email_normalized_key")
   passwordHash                      String
-  emailVerifiedAt                   DateTime                      @db.Timestamptz(6)
-  createdAt                         DateTime                      @default(now()) @db.Timestamptz(6)
-  updatedAt                         DateTime                      @updatedAt @db.Timestamptz(6)
+  emailVerifiedAt                   DateTime                        @db.Timestamptz(6)
+  createdAt                         DateTime                        @default(now()) @db.Timestamptz(6)
+  updatedAt                         DateTime                        @updatedAt @db.Timestamptz(6)
   profile                           UserProfile?
   sessions                          Session[]
   challenges                        EmailChallenge[]
@@ -83,16 +83,24 @@ model User {
   createdInvitations                Invitation[]
   invitationAcceptanceSessions      InvitationAcceptanceSession[]
   auditEvents                       AuditEvent[]
-  productsCreated                   Product[]                     @relation("ProductCreatedBy")
-  productsUpdated                   Product[]                     @relation("ProductUpdatedBy")
-  unitsCreated                      Unit[]                        @relation("UnitCreatedBy")
-  referenceValuesCreated             ReferenceValue[]              @relation("ReferenceValueCreatedBy")
-  productExportRequests              ProductExportRequest[]
-  productExportClosures              ProductExportClosureOperation[]
-  supportRequests                    SupportRequest[]
-  supportAttachments                 SupportAttachment[]
-  supportAccessGrants                SupportAccessGrant[]
-  revokedSupportAccessGrants         SupportAccessGrant[] @relation("SupportAccessGrantRevoker")
+  productsCreated                   Product[]                       @relation("ProductCreatedBy")
+  productsUpdated                   Product[]                       @relation("ProductUpdatedBy")
+  unitsCreated                      Unit[]                          @relation("UnitCreatedBy")
+  referenceValuesCreated            ReferenceValue[]                @relation("ReferenceValueCreatedBy")
+  productExportRequests             ProductExportRequest[]
+  productExportClosures             ProductExportClosureOperation[]
+  supportRequests                   SupportRequest[]
+  supportAttachments                SupportAttachment[]
+  supportAccessGrants               SupportAccessGrant[]
+  venueRoleChanges                  VenueRolePeriod[]
+  scheduleDaysUpdated               ScheduleDay[]
+  scheduleDayChanges                ScheduleDayChange[]
+  scheduleCommentsUpdated           ScheduleDayComment[]
+  scheduleCommentVersions           ScheduleDayCommentVersion[]
+  scheduleTemplatesCreated          ScheduleTemplate[]
+  scheduleTemplateVersionsCreated   ScheduleTemplateVersion[]
+  scheduleAssignments               ScheduleAssignment[]
+  revokedSupportAccessGrants        SupportAccessGrant[]            @relation("SupportAccessGrantRevoker")
 
   @@map("users")
 }
@@ -108,7 +116,7 @@ model UserProfile {
 }
 
 model RegistrationAttempt {
-  id                    String           @id @default(uuid()) @db.Uuid
+  id                    String                  @id @default(uuid()) @db.Uuid
   email                 String
   emailNormalized       String
   fullName              String
@@ -118,9 +126,9 @@ model RegistrationAttempt {
   venueName             String
   venueNameNormalized   String
   initialRole           InitialRegistrationRole @default(BAR_MANAGER)
-  tokenHash             String           @unique(map: "registration_attempts_token_hash_key")
-  expiresAt             DateTime         @db.Timestamptz(6)
-  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  tokenHash             String                  @unique(map: "registration_attempts_token_hash_key")
+  expiresAt             DateTime                @db.Timestamptz(6)
+  createdAt             DateTime                @default(now()) @db.Timestamptz(6)
   challenges            EmailChallenge[]
 
   @@index([emailNormalized, expiresAt], map: "registration_attempts_email_expiry_idx")
@@ -164,43 +172,43 @@ model Session {
 }
 
 model InternalUser {
-  id                          String                 @id @default(uuid()) @db.Uuid
+  id                          String                  @id @default(uuid()) @db.Uuid
   email                       String
-  emailNormalized             String                 @unique(map: "internal_users_email_normalized_key")
+  emailNormalized             String                  @unique(map: "internal_users_email_normalized_key")
   passwordHash                String?
-  status                      InternalUserStatus     @default(PENDING_ENROLLMENT)
-  permissions                 String[]               @default([])
-  totpSecretCiphertext         String?
-  totpSecretIv                 String?
-  totpSecretAuthTag            String?
-  lastAcceptedTotpStep         BigInt                 @default(-1)
-  totpFailureCount             Int                    @default(0)
-  totpAuthenticatorDisabledAt  DateTime?              @db.Timestamptz(6)
-  setupTokenHash               String?                @unique(map: "internal_users_setup_token_hash_key")
-  setupTokenExpiresAt          DateTime?              @db.Timestamptz(6)
-  createdAt                    DateTime               @default(now()) @db.Timestamptz(6)
-  updatedAt                    DateTime               @updatedAt @db.Timestamptz(6)
-  sessions                     InternalSession[]
-  challenges                   InternalAuthChallenge[]
-  recoveryCodes                InternalRecoveryCode[]
-  auditEvents                  InternalAuditEvent[]
-  serviceSessions              ServiceSession[]
-  businessAuditEvents          AuditEvent[]
-  assignedSupportRequests      SupportRequest[]
+  status                      InternalUserStatus      @default(PENDING_ENROLLMENT)
+  permissions                 String[]                @default([])
+  totpSecretCiphertext        String?
+  totpSecretIv                String?
+  totpSecretAuthTag           String?
+  lastAcceptedTotpStep        BigInt                  @default(-1)
+  totpFailureCount            Int                     @default(0)
+  totpAuthenticatorDisabledAt DateTime?               @db.Timestamptz(6)
+  setupTokenHash              String?                 @unique(map: "internal_users_setup_token_hash_key")
+  setupTokenExpiresAt         DateTime?               @db.Timestamptz(6)
+  createdAt                   DateTime                @default(now()) @db.Timestamptz(6)
+  updatedAt                   DateTime                @updatedAt @db.Timestamptz(6)
+  sessions                    InternalSession[]
+  challenges                  InternalAuthChallenge[]
+  recoveryCodes               InternalRecoveryCode[]
+  auditEvents                 InternalAuditEvent[]
+  serviceSessions             ServiceSession[]
+  businessAuditEvents         AuditEvent[]
+  assignedSupportRequests     SupportRequest[]
 
   @@index([status, createdAt], map: "internal_users_status_created_idx")
   @@map("internal_users")
 }
 
 model InternalSession {
-  id             String       @id @default(uuid()) @db.Uuid
-  internalUserId String       @db.Uuid
-  tokenHash      String       @unique(map: "internal_sessions_token_hash_key")
-  createdAt      DateTime     @default(now()) @db.Timestamptz(6)
-  lastActivityAt DateTime     @default(now()) @db.Timestamptz(6)
-  expiresAt      DateTime     @db.Timestamptz(6)
-  revokedAt      DateTime?    @db.Timestamptz(6)
-  internalUser   InternalUser @relation(fields: [internalUserId], references: [id], onDelete: Cascade)
+  id              String           @id @default(uuid()) @db.Uuid
+  internalUserId  String           @db.Uuid
+  tokenHash       String           @unique(map: "internal_sessions_token_hash_key")
+  createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+  lastActivityAt  DateTime         @default(now()) @db.Timestamptz(6)
+  expiresAt       DateTime         @db.Timestamptz(6)
+  revokedAt       DateTime?        @db.Timestamptz(6)
+  internalUser    InternalUser     @relation(fields: [internalUserId], references: [id], onDelete: Cascade)
   serviceSessions ServiceSession[]
 
   @@index([internalUserId, revokedAt, expiresAt], map: "internal_sessions_user_active_idx")
@@ -237,18 +245,18 @@ model InternalRecoveryCode {
 }
 
 model InternalAuditEvent {
-  id             String                 @id @default(uuid()) @db.Uuid
-  eventType      String
-  actorType      InternalAuditActorType
-  actorId        String?                @db.Uuid
-  internalUserId String?                @db.Uuid
-  companyId      String?                @db.Uuid
-  venueId        String?                @db.Uuid
-  serviceSessionId String?              @db.Uuid
-  metadata       Json?
-  createdAt      DateTime               @default(now()) @db.Timestamptz(6)
-  internalUser   InternalUser?          @relation(fields: [internalUserId], references: [id], onDelete: SetNull)
-  serviceSession ServiceSession?        @relation(fields: [serviceSessionId], references: [id], onDelete: SetNull)
+  id               String                 @id @default(uuid()) @db.Uuid
+  eventType        String
+  actorType        InternalAuditActorType
+  actorId          String?                @db.Uuid
+  internalUserId   String?                @db.Uuid
+  companyId        String?                @db.Uuid
+  venueId          String?                @db.Uuid
+  serviceSessionId String?                @db.Uuid
+  metadata         Json?
+  createdAt        DateTime               @default(now()) @db.Timestamptz(6)
+  internalUser     InternalUser?          @relation(fields: [internalUserId], references: [id], onDelete: SetNull)
+  serviceSession   ServiceSession?        @relation(fields: [serviceSessionId], references: [id], onDelete: SetNull)
 
   @@index([internalUserId, createdAt], map: "internal_audit_events_user_created_idx")
   @@index([eventType, createdAt], map: "internal_audit_events_type_created_idx")

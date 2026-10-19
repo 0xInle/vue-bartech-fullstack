@@ -26,6 +26,28 @@
             </Message>
           </section>
 
+          <section
+            v-if="member.availableRoles.length"
+            class="space-y-3 border-t border-surface pt-4"
+          >
+            <h3 class="text-sm font-medium">Завершение членства</h3>
+            <DatePicker
+              v-model="lastWorkingDay"
+              date-format="dd.mm.yy"
+              size="small"
+              class="w-full"
+              placeholder="Последний рабочий день"
+            />
+            <Button
+              label="Завершить членство"
+              severity="danger"
+              variant="outlined"
+              size="small"
+              :disabled="busy || !lastWorkingDay"
+              @click="endMembership"
+            />
+          </section>
+
           <section class="space-y-3">
             <h3 class="text-sm font-medium">Дополнительные права</h3>
             <p
@@ -99,6 +121,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
   save: [input: UpdateTeamMemberInput];
+  end: [lastWorkingDay: string];
 }>();
 const visible = computed({
   get: () => props.member !== null,
@@ -108,6 +131,7 @@ const visible = computed({
 });
 const role = ref<VenueRole>("BARTENDER");
 const delegatedPermissions = ref<DelegatedPermission[]>([]);
+const lastWorkingDay = ref<Date | null>(null);
 const availableRoles: Array<{ label: string; value: VenueRole }> = [
   { label: "Бармен", value: "BARTENDER" },
   { label: "Барбек", value: "BARBACK" },
@@ -121,6 +145,7 @@ const permissionOptions = [
   { label: "Безвозвратное удаление продукции", value: "delete_products_permanently" },
   { label: "Выгрузка данных", value: "export_data" },
   { label: "Приглашение сотрудников", value: "invite_employees" },
+  { label: "Управление графиком сотрудников", value: "manage_schedule" },
 ] satisfies Array<{ label: string; value: DelegatedPermission }>;
 const roleChanged = computed(() => Boolean(props.member && role.value !== props.member.role));
 const canEditPermissions = computed(
@@ -153,6 +178,7 @@ watch(
   (member) => {
     role.value = member?.role ?? "BARTENDER";
     delegatedPermissions.value = getEditablePermissions(member?.delegatedPermissions ?? []);
+    lastWorkingDay.value = null;
   },
   { immediate: true },
 );
@@ -170,6 +196,15 @@ function save(): void {
     role: role.value,
     delegatedPermissions: roleChanged.value ? [] : delegatedPermissions.value,
   });
+}
+
+function endMembership(): void {
+  if (!lastWorkingDay.value) return;
+  const date = lastWorkingDay.value;
+  emit(
+    "end",
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
+  );
 }
 
 function getEditablePermissions(codes: readonly string[]): DelegatedPermission[] {

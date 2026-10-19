@@ -3,6 +3,7 @@ import {
   invitationsControllerCreate,
   invitationsControllerRevoke,
   invitationsControllerTeam,
+  teamControllerEndMembership,
   teamControllerUpdateMember,
 } from "@bartech/api-client";
 import type { TeamControllerUpdateMemberMutationBody } from "@bartech/api-client";
@@ -106,5 +107,23 @@ export function useVenueTeam(companyId: string, venueId: string) {
     await queryClient.invalidateQueries({ queryKey });
   }
 
-  return { teamQuery, createInvitation, revokeInvitation, updateMember };
+  async function endMembership(membershipId: string, lastWorkingDay: string): Promise<void> {
+    await identity.refreshCsrf();
+    const response = await teamControllerEndMembership(
+      companyId,
+      venueId,
+      membershipId,
+      { lastWorkingDay },
+      {
+        credentials: "include",
+        headers: { "x-csrf-token": identity.csrfToken.value },
+      },
+      identity.apiFetch,
+    );
+    await requestApi(Promise.resolve(response));
+    await queryClient.invalidateQueries({ queryKey });
+    await queryClient.invalidateQueries({ queryKey: ["workspace"] });
+  }
+
+  return { teamQuery, createInvitation, revokeInvitation, updateMember, endMembership };
 }

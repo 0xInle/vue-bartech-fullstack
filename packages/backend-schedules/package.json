@@ -1,0 +1,27 @@
+{
+  "name": "@bartech/backend-schedules",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src --max-warnings 0"
+  },
+  "dependencies": {
+    "@bartech/database": "workspace:*",
+    "@nestjs/common": "11.2.7",
+    "@nestjs/swagger": "11.4.7",
+    "@fontsource/noto-sans": "5.3.0",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.15.1",
+    "exceljs": "4.4.0",
+    "pdfkit": "0.20.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "@types/pdfkit": "0.17.6",
+    "typescript": "5.9.3"
+  }
+}
