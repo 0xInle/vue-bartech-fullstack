@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import {
   schedulesControllerCreateTemplate,
+  schedulesControllerDeleteTemplate,
   schedulesControllerExtend,
   schedulesControllerGenerate,
   schedulesControllerGetMonth,
@@ -8,13 +9,11 @@ import {
   schedulesControllerSaveComment,
   schedulesControllerUpdateCell,
   schedulesControllerUpdateCells,
-  schedulesControllerUpdateSettings,
   schedulesControllerUpdateTemplate,
 } from "@bartech/api-client";
 import type {
   ScheduleCellDto,
   ScheduleGenerateDto,
-  ScheduleSettingsDto,
   ScheduleTemplateDto,
 } from "@bartech/api-client";
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
@@ -42,6 +41,9 @@ export type ScheduleRow = {
   fullName: string;
   role: string;
   roleLabel: string;
+  previousTemplateName?: string | null;
+  assignedTemplateName?: string | null;
+  hasScheduleAssignment?: boolean;
   cells: ScheduleCell[];
   totalHours: number;
   totalShifts: number;
@@ -50,7 +52,6 @@ export type ScheduleMonth = {
   year: number;
   month: number;
   daysInMonth: number;
-  standardShiftDurationHours: number;
   rows: ScheduleRow[];
 };
 export type ScheduleTemplate = {
@@ -66,13 +67,14 @@ export type ScheduleTemplate = {
     durationHours: number;
     shiftType: "NORMAL" | "NIGHT";
   };
+  _count?: { assignments: number };
 };
 
 export function useSchedule(
   companyId: string,
   venueId: string,
-  year: Ref<number>,
-  month: Ref<number>,
+  year: Readonly<Ref<number>>,
+  month: Readonly<Ref<number>>,
   enabled: Ref<boolean> = ref(true),
 ) {
   const identity = useIdentityFlow();
@@ -82,6 +84,7 @@ export function useSchedule(
     queryKey,
     enabled,
     retry: false,
+    placeholderData: (previousMonth) => previousMonth,
     queryFn: async ({ signal }) => {
       const response = await schedulesControllerGetMonth(
         companyId,
@@ -138,20 +141,16 @@ export function useSchedule(
         identity.apiFetch,
       ),
     );
-  const updateSettings = (body: ScheduleSettingsDto) =>
-    mutate(() =>
-      schedulesControllerUpdateSettings(companyId, venueId, body, options(), identity.apiFetch),
-    );
   const generate = (body: ScheduleGenerateDto) =>
     mutate(() =>
       schedulesControllerGenerate(companyId, venueId, body, options(), identity.apiFetch),
     );
-  const extend = (targetYear: number, targetMonth: number) =>
+  const extend = (targetYear: number, targetMonth: number, membershipIds: string[]) =>
     mutate(() =>
       schedulesControllerExtend(
         companyId,
         venueId,
-        { year: targetYear, month: targetMonth },
+        { year: targetYear, month: targetMonth, membershipIds },
         options(),
         identity.apiFetch,
       ),
@@ -168,6 +167,10 @@ export function useSchedule(
             identity.apiFetch,
           )
         : schedulesControllerCreateTemplate(companyId, venueId, body, options(), identity.apiFetch),
+    );
+  const deleteTemplate = (id: string) =>
+    mutate(() =>
+      schedulesControllerDeleteTemplate(companyId, venueId, id, options(), identity.apiFetch),
     );
   async function exportSchedule(format: "xlsx" | "pdf"): Promise<void> {
     const response = await identity.apiFetch(
@@ -188,10 +191,10 @@ export function useSchedule(
     updateCell,
     updateCells,
     saveComment,
-    updateSettings,
     generate,
     extend,
     saveTemplate,
+    deleteTemplate,
     exportSchedule,
   };
 }

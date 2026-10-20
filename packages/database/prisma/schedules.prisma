@@ -10,15 +10,6 @@ enum ScheduleDayStatus {
   NO_SHOW
 }
 
-model VenueScheduleSettings {
-  venueId                    String   @id @db.Uuid
-  standardShiftDurationHours Int      @default(12)
-  updatedAt                  DateTime @updatedAt @db.Timestamptz(6)
-  venue                      Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
-
-  @@map("venue_schedule_settings")
-}
-
 model Schedule {
   id        String        @id @default(uuid()) @db.Uuid
   venueId   String        @db.Uuid

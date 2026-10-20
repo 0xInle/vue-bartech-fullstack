@@ -2,7 +2,7 @@
   <section class="mx-auto max-w-5xl">
     <header class="mb-6">
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Продукция</p>
-      <h1 class="mt-2 text-2xl font-semibold tracking-tight">Выгрузка данных</h1>
+      <h1 class="text-xl mt-2 font-semibold tracking-tight">Выгрузка данных</h1>
       <p class="mt-2 text-sm text-color-secondary">
         Подготовьте PDF техкарты, пакет выбранных карточек или резервную копию продукции заведения.
       </p>
@@ -17,7 +17,7 @@
         {{ pageError }}
       </Message>
       <div v-else-if="request" class="rounded-lg border border-surface p-5">
-        <h2 class="text-lg font-semibold">{{ statusTitle(request.status) }}</h2>
+        <h2 class="text-base font-semibold">{{ statusTitle(request.status) }}</h2>
         <p class="mt-2 text-sm text-color-secondary">
           {{ exportTypeLabel(request.type) }} · создано {{ formatDate(request.createdAt) }}
         </p>

@@ -4,7 +4,7 @@
       <NuxtLink to="/internal/service-access" class="text-sm font-semibold text-primary"
         >К списку доступов</NuxtLink
       >
-      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Служебная работа с продукцией</h1>
+      <h1 class="text-xl mt-4 font-semibold tracking-tight">Служебная работа с продукцией</h1>
       <Message severity="info" :closable="false" class="mt-3">
         Активная сессия · компания {{ companyId }} · заведение {{ venueId }}. Доступ действует
         только в этой области; состояние сессии проверяется сервером при каждом запросе.

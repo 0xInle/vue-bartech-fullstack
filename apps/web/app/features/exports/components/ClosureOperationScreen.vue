@@ -26,7 +26,7 @@
       </Message>
       <section v-else-if="operation" class="mt-8 rounded-xl border border-surface bg-surface-0 p-6">
         <p class="text-sm font-medium text-primary">Операция закрытия</p>
-        <h1 class="mt-2 text-2xl font-semibold">
+        <h1 class="text-xl mt-2 font-semibold">
           {{
             operation.type === "COMPANY"
               ? operation.originalCompanyName

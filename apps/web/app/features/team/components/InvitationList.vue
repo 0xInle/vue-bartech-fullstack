@@ -1,6 +1,6 @@
 <template>
   <section class="space-y-2">
-    <h3 class="text-base font-semibold">Ожидают ответа</h3>
+    <h3 class="text-sm font-semibold">Ожидают ответа</h3>
     <p v-if="!invitations.length" class="mt-3 text-sm text-zinc-500">
       Нет приглашенных сотрудников
     </p>

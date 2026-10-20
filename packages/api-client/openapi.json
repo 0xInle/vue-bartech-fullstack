@@ -6259,14 +6259,20 @@
             "description": ""
           }
         },
-        "summary": "Создать новую версию пользовательского шаблона",
+        "summary": "Переименовать пользовательский шаблон или создать его новую версию",
         "tags": ["schedules"]
-      }
-    },
-    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/settings": {
-      "patch": {
-        "operationId": "SchedulesController_updateSettings",
+      },
+      "delete": {
+        "operationId": "SchedulesController_deleteTemplate",
         "parameters": [
+          {
+            "name": "templateId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "venueId",
             "required": true,
@@ -6284,22 +6290,12 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScheduleSettingsDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": ""
           }
         },
-        "summary": "Изменить стандартную длительность смены",
+        "summary": "Удалить пользовательский шаблон и снять назначения, сохранив заполненные графики",
         "tags": ["schedules"]
       }
     },
@@ -6449,7 +6445,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ScheduleMonthQueryDto"
+                "$ref": "#/components/schemas/ScheduleExtendDto"
               }
             }
           }
@@ -6459,7 +6455,7 @@
             "description": ""
           }
         },
-        "summary": "Продолжить сохранённые циклы на следующий месяц",
+        "summary": "Продолжить сохранённые циклы выбранных сотрудников на целевой месяц",
         "tags": ["schedules"]
       }
     },
@@ -10429,17 +10425,6 @@
         },
         "required": ["name", "workDays", "offDays", "durationHours", "shiftType"]
       },
-      "ScheduleSettingsDto": {
-        "type": "object",
-        "properties": {
-          "standardShiftDurationHours": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 24
-          }
-        },
-        "required": ["standardShiftDurationHours"]
-      },
       "ScheduleValueDto": {
         "type": "object",
         "properties": {
@@ -10552,7 +10537,7 @@
         },
         "required": ["year", "month", "assignments"]
       },
-      "ScheduleMonthQueryDto": {
+      "ScheduleExtendDto": {
         "type": "object",
         "properties": {
           "year": {
@@ -10564,9 +10549,18 @@
             "type": "number",
             "minimum": 1,
             "maximum": 12
+          },
+          "membershipIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 200
           }
         },
-        "required": ["year", "month"]
+        "required": ["year", "month", "membershipIds"]
       },
       "ScheduleCommentDto": {
         "type": "object",

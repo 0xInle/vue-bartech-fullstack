@@ -9,7 +9,7 @@
   </div>
   <section v-else class="space-y-6">
     <header class="flex items-center justify-between gap-4">
-      <h1 class="text-2xl font-semibold">Команда</h1>
+      <h1 class="text-xl font-semibold">Команда</h1>
       <Button
         v-if="canInvite"
         label="Пригласить"
@@ -24,7 +24,7 @@
       position="right"
       class="w-full sm:!w-96"
       :pt="{
-        title: { style: { fontSize: '1.125rem', fontWeight: '600' } },
+        title: { style: { fontSize: '1rem', fontWeight: '600' } },
         pcCloseButton: { root: { class: '!rounded-md' } },
       }"
     >

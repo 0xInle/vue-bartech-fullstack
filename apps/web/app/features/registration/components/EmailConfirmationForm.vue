@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h2 class="mt-5 text-2xl font-semibold">Подтвердите почту</h2>
+    <h2 class="text-base mt-5 font-semibold">Подтвердите почту</h2>
     <p class="brand-description mt-2 text-sm">
       Введите шестизначный код из письма для {{ email }}.
     </p>

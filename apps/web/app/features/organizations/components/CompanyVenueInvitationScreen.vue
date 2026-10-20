@@ -10,14 +10,14 @@
   <section v-else class="space-y-6">
     <header v-if="showHeader">
       <p class="text-sm font-medium text-emerald-700">{{ company.name }}</p>
-      <h1 class="mt-1 text-2xl font-semibold">Новое заведение</h1>
+      <h1 class="text-xl mt-1 font-semibold">Новое заведение</h1>
       <p class="mt-2 text-sm text-zinc-600">
         Пригласите бар-менеджера. Он укажет название заведения при принятии приглашения.
       </p>
     </header>
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
     <section v-if="canInvite" class="space-y-3">
-      <h2 class="text-lg font-semibold">Пригласить бар-менеджера</h2>
+      <h2 class="text-base font-semibold">Пригласить бар-менеджера</h2>
       <CompanyVenueInvitationForm :busy="busy" @submit="invite" />
     </section>
     <CompanyVenueInvitationList :invitations="invitations" :busy-id="busyId" @revoke="revoke" />

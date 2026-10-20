@@ -51,8 +51,6 @@ function selectWorkspace(key: string): void {
 
 <style scoped>
 :deep(.workspace-identity-select .p-select-label) {
-  font-size: 0.75rem;
-  line-height: 1rem;
   text-align: center;
 }
 </style>

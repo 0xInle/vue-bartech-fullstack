@@ -23,7 +23,7 @@
               <p class="text-xs font-semibold uppercase text-primary">
                 {{ productTypeLabels[product.type] }} · В архиве
               </p>
-              <h1 class="mt-2 text-xl font-semibold">{{ product.name }}</h1>
+              <h1 class="text-xl mt-2 font-semibold">{{ product.name }}</h1>
             </div>
             <Button
               v-if="canManage"

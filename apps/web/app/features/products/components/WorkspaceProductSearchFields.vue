@@ -1,14 +1,20 @@
 <template>
   <div class="space-y-3">
-    <InputText
-      :model-value="searchText"
-      :maxlength="160"
-      size="small"
-      class="w-full"
-      placeholder="Название, ингредиент или часть состава"
-      aria-label="Поиск продукции"
-      @update:model-value="emit('update:searchText', String($event ?? ''))"
-    />
+    <FloatLabel variant="on">
+      <IconField>
+        <InputIcon class="pi pi-search" />
+        <InputText
+          id="product-search"
+          :model-value="searchText"
+          :maxlength="160"
+          size="small"
+          class="w-full"
+          aria-label="Поиск продукции"
+          @update:model-value="emit('update:searchText', String($event ?? ''))"
+        />
+      </IconField>
+      <label for="product-search" class="text-xs">Поиск</label>
+    </FloatLabel>
     <div v-if="isChef" class="flex items-center gap-2">
       <label class="flex items-center gap-2 text-sm text-color-secondary">
         <Checkbox
@@ -24,6 +30,8 @@
 </template>
 
 <script setup lang="ts">
+import IconField from "primevue/iconfield";
+import InputIcon from "primevue/inputicon";
 import type { WorkspaceSearchScope } from "../composables/useWorkspaceProductSearch";
 
 defineProps<{

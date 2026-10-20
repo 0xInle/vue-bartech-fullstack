@@ -101,7 +101,6 @@ model Venue {
   productExportClosures   ProductExportClosureOperation[]
   supportRequests         SupportRequest[]
   supportAccessGrants     SupportAccessGrant[]
-  scheduleSettings        VenueScheduleSettings?
   scheduleTemplates       ScheduleTemplate[]
   schedules               Schedule[]
 

@@ -28,7 +28,7 @@
                 {{ cocktail.type === "COCKTAIL" ? "Коктейль" : cocktail.type }} ·
                 {{ cocktail.status === "ACTIVE" ? "Активен" : cocktail.status }}
               </p>
-              <h1 class="mt-2 text-2xl font-semibold tracking-tight">{{ cocktail.name }}</h1>
+              <h1 class="text-xl mt-2 font-semibold tracking-tight">{{ cocktail.name }}</h1>
             </div>
             <Button
               v-if="canManage"

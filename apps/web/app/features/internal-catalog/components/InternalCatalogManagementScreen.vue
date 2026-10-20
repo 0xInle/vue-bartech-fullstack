@@ -4,7 +4,7 @@
       <NuxtLink to="/internal" class="text-sm font-semibold text-primary"
         >Внутренняя панель</NuxtLink
       >
-      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Управление глобальным каталогом</h1>
+      <h1 class="text-xl mt-4 font-semibold tracking-tight">Управление глобальным каталогом</h1>
       <p class="mt-2 text-sm text-color-secondary">
         Карточки и алиасы каталога. Сведения о заведениях и рецептурах здесь не отображаются.
       </p>
@@ -99,7 +99,7 @@
         class="space-y-6 rounded-lg border border-surface bg-surface-0 p-4 sm:p-6"
       >
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-xl font-semibold">{{ card.name }}</h2>
+          <h2 class="text-base font-semibold">{{ card.name }}</h2>
           <Tag
             :value="card.status === 'ACTIVE' ? 'Активная' : 'Архивная'"
             :severity="card.status === 'ACTIVE' ? 'success' : 'secondary'"
@@ -110,7 +110,7 @@
         >
 
         <form class="space-y-3" @submit.prevent="saveCard">
-          <h3 class="font-semibold">Данные карточки</h3>
+          <h3 class="text-sm font-semibold">Данные карточки</h3>
           <FloatLabel variant="on"
             ><InputText
               id="manage-name"
@@ -193,7 +193,7 @@
         </form>
 
         <section class="space-y-3 border-t border-surface pt-4">
-          <h3 class="font-semibold">Алиасы</h3>
+          <h3 class="text-sm font-semibold">Алиасы</h3>
           <p class="text-sm text-color-secondary">
             Новые алиасы не участвуют в поиске, пока их отдельно не подтвердят.
           </p>
@@ -264,7 +264,7 @@
         </section>
 
         <section class="space-y-3 border-t border-surface pt-4">
-          <h3 class="font-semibold">Слияние дубликатов</h3>
+          <h3 class="text-sm font-semibold">Слияние дубликатов</h3>
           <p class="text-sm text-color-secondary">
             Выберите каноническую карточку и карточку-дубликат. Ссылки всех заведений будут
             перенесены автоматически.

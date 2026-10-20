@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h2 class="text-lg font-semibold">Ожидают ответа</h2>
+    <h2 class="text-base font-semibold">Ожидают ответа</h2>
     <p v-if="!invitations.length" class="mt-3 text-sm text-zinc-500">Активных приглашений нет.</p>
     <ul v-else class="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
       <li

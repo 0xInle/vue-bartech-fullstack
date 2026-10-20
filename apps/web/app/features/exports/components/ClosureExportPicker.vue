@@ -1,6 +1,6 @@
 <template>
   <section class="mt-4 rounded-lg border border-surface p-4">
-    <h3 class="font-semibold">Выгрузка для закрытия</h3>
+    <h3 class="text-sm font-semibold">Выгрузка для закрытия</h3>
     <p class="mt-1 text-sm text-color-secondary">
       Файл будет связан только с этой операцией и будет доступен до исходного срока хранения.
     </p>

@@ -1,6 +1,6 @@
 <template>
   <form class="space-y-3" @submit.prevent="submit">
-    <FloatLabel variant="on">
+    <FloatLabel variant="on" class="mt-2">
       <InputText
         id="invite-email"
         v-model="email"

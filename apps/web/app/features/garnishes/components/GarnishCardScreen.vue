@@ -25,7 +25,7 @@
               <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                 Гарнир · Активен
               </p>
-              <h1 class="mt-2 text-2xl font-semibold tracking-tight">{{ garnish.name }}</h1>
+              <h1 class="text-xl mt-2 font-semibold tracking-tight">{{ garnish.name }}</h1>
             </div>
             <Button
               v-if="canManage"

@@ -4,13 +4,26 @@
       class="hidden w-[16rem] shrink-0 flex-col border-r border-surface bg-surface-0 p-4 lg:flex"
       style="border-color: var(--p-content-border-color)"
     >
-      <NuxtLink
-        to="/"
-        class="mb-6 text-sm font-bold uppercase tracking-[0.2em]"
-        style="color: var(--p-button-text-primary-color)"
-      >
-        IndieBar
-      </NuxtLink>
+      <div class="mb-6 flex items-center justify-between">
+        <NuxtLink
+          to="/"
+          class="text-sm font-bold uppercase tracking-[0.2em]"
+          style="color: var(--p-button-text-primary-color)"
+        >
+          IndieBar
+        </NuxtLink>
+        <Button
+          type="button"
+          :icon="colorScheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
+          :aria-label="colorScheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'"
+          :aria-pressed="colorScheme === 'dark'"
+          class="landing-icon-button"
+          severity="secondary"
+          variant="outlined"
+          size="small"
+          @click="toggleColorScheme"
+        />
+      </div>
       <PanelMenu
         v-model:expanded-keys="expandedKeys"
         :model="menuItems"
@@ -50,7 +63,7 @@
       class="fixed inset-x-0 top-0 z-10 border-b border-surface bg-surface-0 p-3 lg:hidden"
       style="border-color: var(--p-content-border-color)"
     >
-      <div class="mb-2">
+      <div class="mb-2 flex items-center justify-between">
         <NuxtLink
           to="/"
           class="text-sm font-bold uppercase tracking-[0.2em]"
@@ -58,6 +71,17 @@
         >
           IndieBar
         </NuxtLink>
+        <Button
+          type="button"
+          :icon="colorScheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
+          :aria-label="colorScheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'"
+          :aria-pressed="colorScheme === 'dark'"
+          class="landing-icon-button"
+          severity="secondary"
+          variant="outlined"
+          size="small"
+          @click="toggleColorScheme"
+        />
       </div>
       <WorkspaceIdentity
         :workspace="workspace"
@@ -146,6 +170,7 @@
 <script setup lang="ts">
 import type { MenuItem } from "primevue/menuitem";
 import type { Workspace } from "~/types/user-workspaces";
+import { useColorScheme } from "~/composables/useColorScheme";
 import CompanyClosureBanner from "~/features/organizations/components/CompanyClosureBanner.vue";
 import WorkspaceIdentity from "./WorkspaceIdentity.vue";
 import WorkspaceProductSearch from "~/features/products/components/WorkspaceProductSearch.vue";
@@ -155,6 +180,7 @@ defineOptions({ name: "WorkspaceShell" });
 const props = defineProps<{ workspace: Workspace; workplaces: Workspace[]; fullName: string }>();
 const emit = defineEmits<{ switch: [workspace: Workspace] }>();
 const route = useRoute();
+const { colorScheme, toggleColorScheme } = useColorScheme();
 const moreVisible = ref(false);
 const expandedKeys = ref<Record<string, boolean>>({ catalog: true, management: true });
 
@@ -272,6 +298,22 @@ function getMenuLink(label: string): { label: string; to: string } {
   return { label, to: links[label] ?? homePath.value };
 }
 </script>
+
+<style scoped>
+:deep(.p-button.landing-icon-button .p-button-icon) {
+  color: var(--p-primary-color);
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+  line-height: 0.875rem;
+}
+
+:deep(.p-button.landing-icon-button) {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+}
+</style>
 
 <style scoped>
 :deep(.workspace-panel-menu .p-panelmenu-item-link) {

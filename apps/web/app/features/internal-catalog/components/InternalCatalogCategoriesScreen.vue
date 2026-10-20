@@ -4,7 +4,7 @@
       <NuxtLink to="/internal/catalog/manage" class="text-sm font-semibold text-primary"
         >Управление каталогом</NuxtLink
       >
-      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Категории ингредиентов</h1>
+      <h1 class="text-xl mt-4 font-semibold tracking-tight">Категории ингредиентов</h1>
       <p class="mt-2 text-sm text-color-secondary">
         Общие категории глобального каталога и временных локальных ингредиентов.
       </p>

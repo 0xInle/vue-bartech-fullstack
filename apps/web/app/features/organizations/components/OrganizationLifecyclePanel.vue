@@ -1,6 +1,6 @@
 <template>
   <section class="mt-8 rounded-xl border border-surface bg-surface-0 p-5">
-    <h2 class="text-lg font-semibold">Закрытие</h2>
+    <h2 class="text-base font-semibold">Закрытие</h2>
     <p v-if="workspace" class="mt-2 text-sm text-color-secondary">
       Закрытие заведения удалит его команду, продукцию и рабочие данные без возможности
       восстановления.

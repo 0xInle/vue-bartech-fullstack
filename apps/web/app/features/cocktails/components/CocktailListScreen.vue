@@ -16,7 +16,7 @@
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Продукция</p>
-          <h1 class="mt-1 text-2xl font-semibold tracking-tight">Коктейли</h1>
+          <h1 class="text-xl mt-1 font-semibold tracking-tight">Коктейли</h1>
         </div>
         <Button
           v-if="canManage"

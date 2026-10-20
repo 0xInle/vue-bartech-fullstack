@@ -4,7 +4,7 @@
       <NuxtLink to="/internal" class="text-sm font-semibold text-primary"
         >Внутренняя панель</NuxtLink
       >
-      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Продуктовая аналитика</h1>
+      <h1 class="text-xl mt-4 font-semibold tracking-tight">Продуктовая аналитика</h1>
       <p class="mt-2 text-sm text-color-secondary">
         Только агрегированные показатели за выбранный период.
       </p>
@@ -41,7 +41,7 @@
           </Card>
         </section>
         <section class="rounded-lg border border-surface p-4">
-          <h2 class="font-semibold">Технические ошибки</h2>
+          <h2 class="text-base font-semibold">Технические ошибки</h2>
           <p
             v-if="!Object.keys(data.errors ?? {}).length"
             class="mt-2 text-sm text-color-secondary"

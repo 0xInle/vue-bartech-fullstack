@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface ScheduleMonthQueryDto {
+export interface ScheduleExtendDto {
   /**
      * @minimum 2000
      * @maximum 2200
@@ -17,4 +17,9 @@ export interface ScheduleMonthQueryDto {
      * @maximum 12
      */
   month: number;
+  /**
+     * @minItems 1
+     * @maxItems 200
+     */
+  membershipIds: string[];
 }

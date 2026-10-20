@@ -4,7 +4,7 @@
       <NuxtLink to="/internal" class="text-sm font-semibold text-primary"
         >Внутренняя панель</NuxtLink
       >
-      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Временный доступ к продукции</h1>
+      <h1 class="text-xl mt-4 font-semibold tracking-tight">Временный доступ к продукции</h1>
       <p class="mt-2 text-sm text-color-secondary">
         Доступ ограничен продуктами выбранного заведения и сроком grant.
       </p>
@@ -30,7 +30,7 @@
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 class="font-semibold">
+            <h2 class="text-base font-semibold">
               {{ grant.scopeType === "COMPANY" ? grant.company.name : grant.venue?.name }}
             </h2>
             <p class="mt-1 text-sm text-color-secondary">

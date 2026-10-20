@@ -4,6 +4,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  ArrayUnique,
   IsDateString,
   IsIn,
   IsInt,
@@ -34,14 +35,6 @@ export class ScheduleMonthQueryDto {
   @Min(1)
   @Max(12)
   month!: number;
-}
-
-export class ScheduleSettingsDto {
-  @ApiProperty({ minimum: 1, maximum: 24 })
-  @IsInt()
-  @Min(1)
-  @Max(24)
-  standardShiftDurationHours!: number;
 }
 
 export class ScheduleValueDto {
@@ -125,6 +118,21 @@ export class ScheduleGenerateDto extends ScheduleMonthQueryDto {
   @ApiPropertyOptional({ default: false })
   @IsOptional()
   overwrite?: boolean;
+}
+
+export class ScheduleExtendDto extends ScheduleMonthQueryDto {
+  @ApiProperty({
+    type: "array",
+    items: { type: "string", format: "uuid" },
+    minItems: 1,
+    maxItems: 200,
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(200)
+  @ArrayUnique()
+  @IsUUID(undefined, { each: true })
+  membershipIds!: string[];
 }
 
 export class ScheduleTemplateDto {

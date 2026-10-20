@@ -19,7 +19,7 @@
           IndieBar
         </NuxtLink>
         <p class="mt-6 text-sm font-medium text-emerald-700">{{ company.name }}</p>
-        <h1 class="mt-1 text-2xl font-semibold">Добавить заведение</h1>
+        <h1 class="text-xl mt-1 font-semibold">Добавить заведение</h1>
         <p class="mt-2 text-sm text-zinc-600">
           Пригласите бар-менеджера — он укажет название заведения при принятии приглашения.
         </p>

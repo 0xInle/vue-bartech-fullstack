@@ -27,7 +27,7 @@
       </form>
     </template>
     <template v-else>
-      <h2 class="mb-2 text-base font-semibold">Задайте новый пароль</h2>
+      <h2 class="text-base mb-2 font-semibold">Задайте новый пароль</h2>
       <p class="brand-description mb-3 text-sm">
         Введите код из письма и новый пароль, чтобы восстановить доступ.
       </p>

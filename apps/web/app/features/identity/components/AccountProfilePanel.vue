@@ -2,7 +2,7 @@
   <section class="mx-auto max-w-3xl space-y-6">
     <header>
       <p class="text-sm font-medium uppercase tracking-wide text-emerald-700">IndieBar</p>
-      <h1 class="mt-2 text-2xl font-semibold">Профиль</h1>
+      <h1 class="text-xl mt-2 font-semibold">Профиль</h1>
     </header>
 
     <Message v-if="showInstallAction" severity="info" :closable="false">

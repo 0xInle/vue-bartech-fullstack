@@ -2,7 +2,7 @@
   <section class="mx-auto max-w-5xl">
     <header class="mb-6">
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Управление</p>
-      <h1 class="mt-2 text-2xl font-semibold tracking-tight">История действий</h1>
+      <h1 class="text-xl mt-2 font-semibold tracking-tight">История действий</h1>
       <p class="mt-2 text-sm text-color-secondary">
         Значимые действия в доступном рабочем пространстве.
       </p>

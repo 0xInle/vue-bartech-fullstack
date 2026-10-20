@@ -4,7 +4,7 @@
       <NuxtLink to="/internal" class="text-sm font-semibold text-primary"
         >Внутренняя панель</NuxtLink
       >
-      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Внутренний журнал действий</h1>
+      <h1 class="text-xl mt-4 font-semibold tracking-tight">Внутренний журнал действий</h1>
       <p class="mt-2 text-sm text-color-secondary">
         Служебные события IndieBar в обратном хронологическом порядке.
       </p>

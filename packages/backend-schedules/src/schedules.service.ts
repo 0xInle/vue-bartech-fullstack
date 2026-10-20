@@ -62,6 +62,7 @@ export class SchedulesService {
       },
       include: {
         user: { include: { profile: true } },
+        scheduleAssignment: { include: { template: true } },
         rolePeriods: {
           where: {
             startedOn: { lte: end },
@@ -148,6 +149,13 @@ export class SchedulesService {
           fullName: namesByMembership.get(membership.id) ?? "",
           role: rolePeriod.role,
           roleLabel: roleLabel(rolePeriod.role),
+          previousTemplateName:
+            membership.scheduleAssignment &&
+            membership.scheduleAssignment.applyFromDate <= new Date(start.getTime() - DAY_MS)
+              ? membership.scheduleAssignment.template.name
+              : null,
+          assignedTemplateName: membership.scheduleAssignment?.template.name ?? null,
+          hasScheduleAssignment: Boolean(membership.scheduleAssignment),
           roleStartedOn: dateKey(rolePeriod.startedOn),
           roleEndedOn: rolePeriod.endedOn ? dateKey(rolePeriod.endedOn) : null,
           cells,
@@ -156,16 +164,10 @@ export class SchedulesService {
         };
       }),
     );
-    const settings = await this.database.venueScheduleSettings.upsert({
-      where: { venueId },
-      create: { venueId },
-      update: {},
-    });
     return {
       year,
       month,
       daysInMonth,
-      standardShiftDurationHours: settings.standardShiftDurationHours,
       rows,
     };
   }
@@ -173,7 +175,7 @@ export class SchedulesService {
   async listTemplates(venueId: string) {
     return this.database.scheduleTemplate.findMany({
       where: { OR: [{ isSystem: true }, { venueId, isSystem: false }] },
-      include: { currentVersion: true },
+      include: { currentVersion: true, _count: { select: { assignments: true } } },
       orderBy: [{ isSystem: "desc" }, { name: "asc" }],
     });
   }
@@ -212,10 +214,24 @@ export class SchedulesService {
         include: { versions: { orderBy: { version: "desc" }, take: 1 } },
       });
       if (!template) throw new NotFoundException("Шаблон заведения не найден");
+      const latestVersion = template.versions[0];
+      if (
+        latestVersion &&
+        latestVersion.workDays === input.workDays &&
+        latestVersion.offDays === input.offDays &&
+        latestVersion.durationHours === input.durationHours &&
+        latestVersion.shiftType === input.shiftType
+      ) {
+        return tx.scheduleTemplate.update({
+          where: { id: templateId },
+          data: { name },
+          include: { currentVersion: true },
+        });
+      }
       const version = await tx.scheduleTemplateVersion.create({
         data: {
           templateId,
-          version: (template.versions[0]?.version ?? 0) + 1,
+          version: (latestVersion?.version ?? 0) + 1,
           ...versionInput(input),
           createdByUserId: userId,
         },
@@ -228,14 +244,20 @@ export class SchedulesService {
     });
   }
 
-  async updateSettings(venueId: string, hours: number) {
-    if (!Number.isInteger(hours) || hours < 1 || hours > 24) {
-      throw new ConflictException("Длительность смены должна быть целым числом от 1 до 24");
-    }
-    return this.database.venueScheduleSettings.upsert({
-      where: { venueId },
-      create: { venueId, standardShiftDurationHours: hours },
-      update: { standardShiftDurationHours: hours },
+  async deleteTemplate(venueId: string, templateId: string) {
+    return this.database.$transaction(async (tx) => {
+      const template = await tx.scheduleTemplate.findFirst({
+        where: { id: templateId, venueId, isSystem: false },
+        select: { id: true },
+      });
+      if (!template) throw new NotFoundException("Пользовательский шаблон не найден");
+      const assignments = await tx.scheduleAssignment.deleteMany({ where: { templateId } });
+      await tx.scheduleTemplate.update({
+        where: { id: templateId },
+        data: { currentVersionId: null },
+      });
+      await tx.scheduleTemplate.delete({ where: { id: templateId } });
+      return { deleted: true, removedAssignments: assignments.count };
     });
   }
 
@@ -266,6 +288,7 @@ export class SchedulesService {
       applyFromDate: string;
     }>,
     overwrite = false,
+    persistAssignments = true,
   ) {
     assertMonth(year, month);
     assertAvailableMonth(year, month);
@@ -294,24 +317,26 @@ export class SchedulesService {
         if (!version) throw new NotFoundException("Версия шаблона недоступна в этом заведении");
         const anchor = parseDate(assignmentInput.cycleAnchorDate);
         const applyFrom = parseDate(assignmentInput.applyFromDate);
-        await tx.scheduleAssignment.upsert({
-          where: { venueMembershipId: membership.id },
-          create: {
-            venueMembershipId: membership.id,
-            templateId: assignmentInput.templateId,
-            templateVersionId: version.id,
-            cycleAnchorDate: anchor,
-            applyFromDate: applyFrom,
-            assignedByUserId: userId,
-          },
-          update: {
-            templateId: assignmentInput.templateId,
-            templateVersionId: version.id,
-            cycleAnchorDate: anchor,
-            applyFromDate: applyFrom,
-            assignedByUserId: userId,
-          },
-        });
+        if (persistAssignments) {
+          await tx.scheduleAssignment.upsert({
+            where: { venueMembershipId: membership.id },
+            create: {
+              venueMembershipId: membership.id,
+              templateId: assignmentInput.templateId,
+              templateVersionId: version.id,
+              cycleAnchorDate: anchor,
+              applyFromDate: applyFrom,
+              assignedByUserId: userId,
+            },
+            update: {
+              templateId: assignmentInput.templateId,
+              templateVersionId: version.id,
+              cycleAnchorDate: anchor,
+              applyFromDate: applyFrom,
+              assignedByUserId: userId,
+            },
+          });
+        }
         for (let index = 0; index < daysInMonth; index += 1) {
           const date = new Date(start.getTime() + index * DAY_MS);
           if (date < applyFrom || !membershipCovers(membership, date)) continue;
@@ -372,14 +397,29 @@ export class SchedulesService {
     });
   }
 
-  async extend(companyId: string, venueId: string, userId: string, year: number, month: number) {
-    const next = nextMonth(year, month);
-    assertAvailableMonth(next.year, next.month);
+  async extend(
+    companyId: string,
+    venueId: string,
+    userId: string,
+    year: number,
+    month: number,
+    membershipIds: string[],
+  ) {
+    assertMonth(year, month);
+    assertAvailableMonth(year, month);
+    const uniqueMembershipIds = [...new Set(membershipIds)];
     const assignments = await this.database.scheduleAssignment.findMany({
-      where: { membership: { companyId, venueId } },
+      where: {
+        venueMembershipId: { in: uniqueMembershipIds },
+        membership: { companyId, venueId },
+      },
       include: { membership: { include: { rolePeriods: true } } },
     });
-    const skippedMemberships: string[] = [];
+    if (assignments.length !== uniqueMembershipIds.length) {
+      throw new ConflictException(
+        "Нельзя продлить график: у одного или нескольких выбранных сотрудников нет назначенного цикла. Для выбранных сотрудников график не изменён.",
+      );
+    }
     const values: Array<{
       membershipId: string;
       templateId: string;
@@ -387,7 +427,7 @@ export class SchedulesService {
       cycleAnchorDate: string;
       applyFromDate: string;
     }> = [];
-    const { start, daysInMonth } = monthRange(next.year, next.month);
+    const { start, daysInMonth } = monthRange(year, month);
     for (const assignment of assignments) {
       const anyInScope = Array.from(
         { length: daysInMonth },
@@ -402,33 +442,7 @@ export class SchedulesService {
         applyFromDate: dateKey(assignment.applyFromDate),
       });
     }
-    const assignedMemberships = new Set(
-      assignments.map(({ venueMembershipId }) => venueMembershipId),
-    );
-    const active = await this.database.venueMembership.findMany({
-      where: {
-        companyId,
-        venueId,
-        endedOn: null,
-        startedOn: { lte: endOfMonth(next.year, next.month) },
-      },
-      select: { id: true },
-    });
-    for (const membership of active) {
-      if (!assignedMemberships.has(membership.id)) skippedMemberships.push(membership.id);
-    }
-    const result = values.length
-      ? await this.assignAndGenerate(
-          companyId,
-          venueId,
-          userId,
-          next.year,
-          next.month,
-          values,
-          false,
-        )
-      : { written: 0, skipped: 0 };
-    return { ...result, skippedMemberships };
+    return this.assignAndGenerate(companyId, venueId, userId, year, month, values, false, false);
   }
 
   async saveComment(
@@ -690,10 +704,6 @@ function monthRange(year: number, month: number) {
   return { start, end: new Date(Date.UTC(year, month - 1, daysInMonth)), daysInMonth };
 }
 
-function endOfMonth(year: number, month: number): Date {
-  return monthRange(year, month).end;
-}
-
 function assertMonth(year: number, month: number): void {
   if (
     !Number.isInteger(year) ||
@@ -731,11 +741,6 @@ function minDate(defaultDate: Date, ...dates: (Date | null)[]): Date | null {
   return values.length
     ? new Date(Math.min(defaultDate.getTime(), ...values.map((date) => date.getTime())))
     : null;
-}
-
-function nextMonth(year: number, month: number) {
-  const date = new Date(Date.UTC(year, month, 1));
-  return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1 };
 }
 
 function roleLabel(role: string): string {

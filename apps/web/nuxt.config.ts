@@ -1,6 +1,7 @@
 import tailwindcss from "@tailwindcss/vite";
 import { definePreset } from "@primeuix/themes";
 import Aura from "@primeuix/themes/aura";
+import { primeVueRussianLocale } from "./primevue-locale";
 
 const BarTechTheme = definePreset(Aura, {
   semantic: {
@@ -123,6 +124,7 @@ export default defineNuxtConfig({
         preset: BarTechTheme,
         options: { darkModeSelector: ".app-dark" },
       },
+      locale: primeVueRussianLocale,
     },
   },
   vite: {

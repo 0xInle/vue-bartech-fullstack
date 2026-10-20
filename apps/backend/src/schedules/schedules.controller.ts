@@ -1,10 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
-  Patch,
   Post,
   Put,
   Query,
@@ -37,9 +37,9 @@ import {
   ScheduleCellsDto,
   ScheduleCommentDto,
   ScheduleExportQueryDto,
+  ScheduleExtendDto,
   ScheduleGenerateDto,
   ScheduleMonthQueryDto,
-  ScheduleSettingsDto,
   ScheduleTemplateDto,
 } from "./schedules.dto.js";
 
@@ -88,7 +88,7 @@ export class SchedulesController {
 
   @Put("templates/:templateId")
   @RequirePermissions("manage_schedule")
-  @ApiOperation({ summary: "Создать новую версию пользовательского шаблона" })
+  @ApiOperation({ summary: "Переименовать пользовательский шаблон или создать его новую версию" })
   updateTemplate(
     @Param("templateId", new ParseUUIDPipe()) templateId: string,
     @CurrentUser() user: AuthenticatedUser,
@@ -98,14 +98,16 @@ export class SchedulesController {
     return this.schedules.saveTemplate(workspace.venue.id, user.id, body, templateId);
   }
 
-  @Patch("settings")
+  @Delete("templates/:templateId")
   @RequirePermissions("manage_schedule")
-  @ApiOperation({ summary: "Изменить стандартную длительность смены" })
-  updateSettings(
+  @ApiOperation({
+    summary: "Удалить пользовательский шаблон и снять назначения, сохранив заполненные графики",
+  })
+  deleteTemplate(
+    @Param("templateId", new ParseUUIDPipe()) templateId: string,
     @CurrentWorkspace() workspace: WorkspaceSummary,
-    @Body() body: ScheduleSettingsDto,
   ) {
-    return this.schedules.updateSettings(workspace.venue.id, body.standardShiftDurationHours);
+    return this.schedules.deleteTemplate(workspace.venue.id, templateId);
   }
 
   @Put("cells")
@@ -151,11 +153,11 @@ export class SchedulesController {
 
   @Post("extend")
   @RequirePermissions("manage_schedule")
-  @ApiOperation({ summary: "Продолжить сохранённые циклы на следующий месяц" })
+  @ApiOperation({ summary: "Продолжить сохранённые циклы выбранных сотрудников на целевой месяц" })
   extend(
     @CurrentUser() user: AuthenticatedUser,
     @CurrentWorkspace() workspace: WorkspaceSummary,
-    @Body() body: ScheduleMonthQueryDto,
+    @Body() body: ScheduleExtendDto,
   ) {
     return this.schedules.extend(
       workspace.company.id,
@@ -163,6 +165,7 @@ export class SchedulesController {
       user.id,
       body.year,
       body.month,
+      body.membershipIds,
     );
   }
 

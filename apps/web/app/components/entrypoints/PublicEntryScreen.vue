@@ -5,12 +5,14 @@
         <LandingClock />
         <Button
           type="button"
-          icon="pi pi-moon"
-          aria-label="Тема"
+          :icon="colorScheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
+          :aria-label="colorScheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'"
+          :aria-pressed="colorScheme === 'dark'"
           class="landing-icon-button"
           severity="secondary"
           variant="outlined"
           size="small"
+          @click="toggleColorScheme"
         />
       </header>
 
@@ -196,9 +198,12 @@ import PasswordRecoveryForm from "~/features/identity/components/PasswordRecover
 import AccountSessionPanel from "~/features/identity/components/AccountSessionPanel.vue";
 import OrganizationsPanel from "~/features/organizations/components/OrganizationsPanel.vue";
 import LandingClock from "~/components/entrypoints/LandingClock.vue";
+import { useColorScheme } from "~/composables/useColorScheme";
 import { usePublicEntryFlow } from "~/composables/usePublicEntryFlow";
 
 defineOptions({ name: "PublicEntryScreen" });
+
+const { colorScheme, toggleColorScheme } = useColorScheme();
 
 const flow = usePublicEntryFlow();
 const isEntryPanelVisible = computed(

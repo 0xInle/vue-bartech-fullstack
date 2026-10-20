@@ -3,7 +3,7 @@
     <template v-if="member">
       <div class="space-y-6">
         <header>
-          <h2 class="text-lg font-semibold">{{ member.fullName }}</h2>
+          <h2 class="text-base font-semibold">{{ member.fullName }}</h2>
           <p class="mt-1 text-sm text-color-secondary">{{ member.email }}</p>
         </header>
 

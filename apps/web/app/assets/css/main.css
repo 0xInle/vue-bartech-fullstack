@@ -1,2 +1,69 @@
 @import "tailwindcss";
 @import "primeicons/primeicons.css";
+
+.p-drawer-title,
+.p-dialog-title {
+  font-size: 16px !important;
+  font-weight: 600;
+}
+
+button,
+.p-button,
+.p-togglebutton,
+.p-datepicker-dropdown,
+.p-inputnumber-button {
+  box-sizing: border-box;
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+button,
+.p-button,
+.p-togglebutton {
+  font-size: var(--p-form-field-sm-font-size, 0.875rem) !important;
+}
+
+.p-select,
+.p-multiselect,
+.p-cascadeselect,
+.p-autocomplete,
+.p-inputnumber,
+.p-password,
+.p-datepicker,
+.p-inputtext {
+  box-sizing: border-box;
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+.p-select,
+.p-select-label,
+.p-select-option,
+.p-multiselect,
+.p-multiselect-label,
+.p-multiselect-option,
+.p-cascadeselect,
+.p-cascadeselect-label,
+.p-cascadeselect-option,
+.p-autocomplete,
+.p-autocomplete-input,
+.p-autocomplete-option,
+.p-inputtext,
+.p-inputnumber-input,
+.p-password-input,
+.p-datepicker-input,
+.p-textarea {
+  font-size: var(--p-form-field-sm-font-size, 0.875rem) !important;
+}
+
+.p-inputtext::placeholder,
+.p-autocomplete-input::placeholder,
+.p-datepicker-input::placeholder,
+.p-textarea::placeholder {
+  font-size: 12px !important;
+}
+
+.p-textarea {
+  box-sizing: border-box;
+  min-height: 32px !important;
+}

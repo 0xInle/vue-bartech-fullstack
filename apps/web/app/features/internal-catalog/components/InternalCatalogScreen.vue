@@ -6,7 +6,7 @@
       >
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 class="mt-4 text-2xl font-semibold tracking-tight">Проверка ингредиентов каталога</h1>
+          <h1 class="text-xl mt-4 font-semibold tracking-tight">Проверка ингредиентов каталога</h1>
           <p class="mt-2 text-sm text-color-secondary">
             Очередь содержит только локальную карточку ингредиента и данные сопоставления.
           </p>
@@ -38,7 +38,7 @@
     >
     <div v-else class="grid gap-6 lg:grid-cols-[minmax(16rem,0.8fr)_minmax(0,1.2fr)]">
       <section aria-label="Очередь кандидатов" class="space-y-3">
-        <h2 class="text-lg font-semibold">Очередь</h2>
+        <h2 class="text-base font-semibold">Очередь</h2>
         <button
           v-for="candidate in catalog.candidatesQuery.data.value.items"
           :key="candidate.id"
@@ -82,7 +82,7 @@
         class="space-y-5 rounded-lg border border-surface bg-surface-0 p-4 sm:p-6"
       >
         <div>
-          <h2 class="text-xl font-semibold">{{ selected.local.name }}</h2>
+          <h2 class="text-base font-semibold">{{ selected.local.name }}</h2>
           <p class="mt-1 text-sm text-color-secondary">
             Основание: {{ reasonLabel(selected.reason)
             }}<span v-if="selected.confidence != null">
@@ -114,7 +114,7 @@
         </div>
 
         <div class="space-y-3 border-t border-surface pt-4">
-          <h3 class="font-semibold">Связать с глобальным ингредиентом</h3>
+          <h3 class="text-sm font-semibold">Связать с глобальным ингредиентом</h3>
           <InputText
             v-model="catalog.searchText.value"
             size="small"
@@ -177,7 +177,7 @@
         </div>
 
         <form class="space-y-3 border-t border-surface pt-4" @submit.prevent="requestCreate">
-          <h3 class="font-semibold">Создать новый глобальный ингредиент</h3>
+          <h3 class="text-sm font-semibold">Создать новый глобальный ингредиент</h3>
           <FloatLabel variant="on"
             ><InputText
               id="global-name"

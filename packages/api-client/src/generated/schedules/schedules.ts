@@ -34,9 +34,8 @@ import type {
   ScheduleCellDto,
   ScheduleCellsDto,
   ScheduleCommentDto,
+  ScheduleExtendDto,
   ScheduleGenerateDto,
-  ScheduleMonthQueryDto,
-  ScheduleSettingsDto,
   ScheduleTemplateDto,
   SchedulesControllerExportParams,
   SchedulesControllerGetMonthParams
@@ -394,7 +393,7 @@ export const getSchedulesControllerUpdateTemplateUrl = (companyId: unknown,
 }
 
 /**
- * @summary Создать новую версию пользовательского шаблона
+ * @summary Переименовать пользовательский шаблон или создать его новую версию
  */
 export const schedulesControllerUpdateTemplate = async (companyId: unknown,
     venueId: unknown,
@@ -470,7 +469,7 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
     export type SchedulesControllerUpdateTemplateMutationVariables = {companyId: unknown;venueId: unknown;templateId: string;data: ScheduleTemplateDto}
 
     /**
- * @summary Создать новую версию пользовательского шаблона
+ * @summary Переименовать пользовательский шаблон или создать его новую версию
  */
 export const useSchedulesControllerUpdateTemplate = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerUpdateTemplate>>, TError,SchedulesControllerUpdateTemplateMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
@@ -482,75 +481,62 @@ export const useSchedulesControllerUpdateTemplate = <TError = unknown,
       > => {
       return useMutation(getSchedulesControllerUpdateTemplateMutationOptions(options), queryClient);
     }
-    export type schedulesControllerUpdateSettingsResponse200 = {
+    export type schedulesControllerDeleteTemplateResponse200 = {
   data: void
   status: 200
 }
 
-export type schedulesControllerUpdateSettingsResponseSuccess = (schedulesControllerUpdateSettingsResponse200) & {
+export type schedulesControllerDeleteTemplateResponseSuccess = (schedulesControllerDeleteTemplateResponse200) & {
   headers: Headers;
 };
 ;
 
-export type schedulesControllerUpdateSettingsResponse = (schedulesControllerUpdateSettingsResponseSuccess)
+export type schedulesControllerDeleteTemplateResponse = (schedulesControllerDeleteTemplateResponseSuccess)
 
-export const getSchedulesControllerUpdateSettingsUrl = (companyId: unknown,
-    venueId: unknown,) => {
+export const getSchedulesControllerDeleteTemplateUrl = (companyId: unknown,
+    venueId: unknown,
+    templateId: string,) => {
 
 
 
 
-  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/schedule/settings`
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/schedule/templates/${templateId}`
 }
 
 /**
- * @summary Изменить стандартную длительность смены
+ * @summary Удалить пользовательский шаблон и снять назначения, сохранив заполненные графики
  */
-export const schedulesControllerUpdateSettings = async (companyId: unknown,
+export const schedulesControllerDeleteTemplate = async (companyId: unknown,
     venueId: unknown,
-    scheduleSettingsDto: ScheduleSettingsDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<schedulesControllerUpdateSettingsResponse> => {
+    templateId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<schedulesControllerDeleteTemplateResponse> => {
 
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-const res = await (fetchFn ?? fetch)(getSchedulesControllerUpdateSettingsUrl(companyId,venueId),
+  const res = await (fetchFn ?? fetch)(getSchedulesControllerDeleteTemplateUrl(companyId,venueId,templateId),
   {
     ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(scheduleSettingsDto)
+    method: 'DELETE'
+
+
   }
 )
 
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: schedulesControllerUpdateSettingsResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as schedulesControllerUpdateSettingsResponse
+  const data: schedulesControllerDeleteTemplateResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as schedulesControllerDeleteTemplateResponse
 }
 
 
 
 
 
-export const getSchedulesControllerUpdateSettingsMutationKey = () => ['schedulesControllerUpdateSettings'] as const;
+export const getSchedulesControllerDeleteTemplateMutationKey = () => ['schedulesControllerDeleteTemplate'] as const;
 
-export const getSchedulesControllerUpdateSettingsMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerUpdateSettings>>, TError,SchedulesControllerUpdateSettingsMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
-): UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerUpdateSettings>>, TError,SchedulesControllerUpdateSettingsMutationVariables, TContext> => {
+export const getSchedulesControllerDeleteTemplateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerDeleteTemplate>>, TError,SchedulesControllerDeleteTemplateMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerDeleteTemplate>>, TError,SchedulesControllerDeleteTemplateMutationVariables, TContext> => {
 
-const mutationKey = getSchedulesControllerUpdateSettingsMutationKey();
+const mutationKey = getSchedulesControllerDeleteTemplateMutationKey();
 const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -560,10 +546,10 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof schedulesControllerUpdateSettings>>, SchedulesControllerUpdateSettingsMutationVariables> = (props) => {
-          const {companyId,venueId,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof schedulesControllerDeleteTemplate>>, SchedulesControllerDeleteTemplateMutationVariables> = (props) => {
+          const {companyId,venueId,templateId} = props ?? {};
 
-          return  schedulesControllerUpdateSettings(companyId,venueId,data,fetchOptions, fetcherFn)
+          return  schedulesControllerDeleteTemplate(companyId,venueId,templateId,fetchOptions, fetcherFn)
         }
 
 
@@ -573,23 +559,23 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type SchedulesControllerUpdateSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof schedulesControllerUpdateSettings>>>
-    export type SchedulesControllerUpdateSettingsMutationBody = ScheduleSettingsDto
-    export type SchedulesControllerUpdateSettingsMutationError = unknown
-    export type SchedulesControllerUpdateSettingsMutationVariables = {companyId: unknown;venueId: unknown;data: ScheduleSettingsDto}
+    export type SchedulesControllerDeleteTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof schedulesControllerDeleteTemplate>>>
+
+    export type SchedulesControllerDeleteTemplateMutationError = unknown
+    export type SchedulesControllerDeleteTemplateMutationVariables = {companyId: unknown;venueId: unknown;templateId: string}
 
     /**
- * @summary Изменить стандартную длительность смены
+ * @summary Удалить пользовательский шаблон и снять назначения, сохранив заполненные графики
  */
-export const useSchedulesControllerUpdateSettings = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerUpdateSettings>>, TError,SchedulesControllerUpdateSettingsMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+export const useSchedulesControllerDeleteTemplate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerDeleteTemplate>>, TError,SchedulesControllerDeleteTemplateMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
  , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof schedulesControllerUpdateSettings>>,
+        Awaited<ReturnType<typeof schedulesControllerDeleteTemplate>>,
         TError,
-        SchedulesControllerUpdateSettingsMutationVariables,
+        SchedulesControllerDeleteTemplateMutationVariables,
         TContext
       > => {
-      return useMutation(getSchedulesControllerUpdateSettingsMutationOptions(options), queryClient);
+      return useMutation(getSchedulesControllerDeleteTemplateMutationOptions(options), queryClient);
     }
     export type schedulesControllerUpdateCellResponse200 = {
   data: void
@@ -940,11 +926,11 @@ export const getSchedulesControllerExtendUrl = (companyId: unknown,
 }
 
 /**
- * @summary Продолжить сохранённые циклы на следующий месяц
+ * @summary Продолжить сохранённые циклы выбранных сотрудников на целевой месяц
  */
 export const schedulesControllerExtend = async (companyId: unknown,
     venueId: unknown,
-    scheduleMonthQueryDto: ScheduleMonthQueryDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<schedulesControllerExtendResponse> => {
+    scheduleExtendDto: ScheduleExtendDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<schedulesControllerExtendResponse> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -965,7 +951,7 @@ const res = await (fetchFn ?? fetch)(getSchedulesControllerExtendUrl(companyId,v
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(scheduleMonthQueryDto)
+    body: JSON.stringify(scheduleExtendDto)
   }
 )
 
@@ -1010,12 +996,12 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
   return  { mutationFn, ...mutationOptions }}
 
     export type SchedulesControllerExtendMutationResult = NonNullable<Awaited<ReturnType<typeof schedulesControllerExtend>>>
-    export type SchedulesControllerExtendMutationBody = ScheduleMonthQueryDto
+    export type SchedulesControllerExtendMutationBody = ScheduleExtendDto
     export type SchedulesControllerExtendMutationError = unknown
-    export type SchedulesControllerExtendMutationVariables = {companyId: unknown;venueId: unknown;data: ScheduleMonthQueryDto}
+    export type SchedulesControllerExtendMutationVariables = {companyId: unknown;venueId: unknown;data: ScheduleExtendDto}
 
     /**
- * @summary Продолжить сохранённые циклы на следующий месяц
+ * @summary Продолжить сохранённые циклы выбранных сотрудников на целевой месяц
  */
 export const useSchedulesControllerExtend = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerExtend>>, TError,SchedulesControllerExtendMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}

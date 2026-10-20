@@ -18,7 +18,7 @@
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
             {{ typeLabel(product.type) }} · Только чтение
           </p>
-          <h2 class="mt-2 text-xl font-semibold tracking-tight">{{ product.name }}</h2>
+          <h2 class="text-base mt-2 font-semibold tracking-tight">{{ product.name }}</h2>
           <p class="mt-2 text-sm text-color-secondary">{{ item.venueName }}</p>
           <p v-if="product.type === 'PREPARATION'" class="mt-2 text-sm text-color-secondary">
             {{ product.categoryName }}

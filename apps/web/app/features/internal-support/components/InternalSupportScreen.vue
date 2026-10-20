@@ -4,7 +4,7 @@
       <NuxtLink to="/internal" class="text-sm font-semibold text-primary"
         >Внутренняя панель</NuxtLink
       >
-      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Обращения в поддержку</h1>
+      <h1 class="text-xl mt-4 font-semibold tracking-tight">Обращения в поддержку</h1>
       <p class="mt-2 text-sm text-color-secondary">
         Обращения не открывают доступ к продукции компании.
       </p>
@@ -19,7 +19,7 @@
     <div v-else class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
       <section>
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold">Очередь</h2>
+          <h2 class="text-base font-semibold">Очередь</h2>
           <Select
             v-model="status"
             :options="statusOptions"

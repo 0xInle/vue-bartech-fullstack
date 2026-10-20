@@ -2,7 +2,7 @@
   <main class="mx-auto max-w-4xl px-4 py-8 sm:px-6">
     <header class="mb-6">
       <NuxtLink to="/" class="text-sm font-semibold text-primary">IndieBar</NuxtLink>
-      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Помощь</h1>
+      <h1 class="text-xl mt-4 font-semibold tracking-tight">Помощь</h1>
       <p class="mt-2 text-sm text-color-secondary">
         Напишите команде IndieBar. Обращение не предоставляет сотрудникам доступ к данным заведения.
       </p>
@@ -116,7 +116,7 @@
       </Card>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold">Мои обращения</h2>
+        <h2 class="text-base mb-3 font-semibold">Мои обращения</h2>
         <LoadingIndicator v-if="requests.requestsQuery.isLoading.value" />
         <Message
           v-else-if="requests.requestsQuery.isError.value"
@@ -138,7 +138,7 @@
             class="rounded-lg border border-surface bg-surface-0 p-4"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <h3 class="font-medium">{{ reasonLabel(request.reason) }}</h3>
+              <h3 class="text-sm font-medium">{{ reasonLabel(request.reason) }}</h3>
               <Tag
                 :value="statusLabel(request.status)"
                 :severity="statusSeverity(request.status)"

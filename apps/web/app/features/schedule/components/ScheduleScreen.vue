@@ -1,6 +1,5 @@
 <template>
-  <LoadingIndicator v-if="!previewMode && schedule.monthQuery.isLoading.value" screen />
-  <section v-else class="space-y-5">
+  <section class="space-y-5">
     <header class="flex flex-wrap items-center gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <Button
@@ -12,7 +11,7 @@
           :disabled="!canMove(-1)"
           @click="moveMonth(-1)"
         />
-        <span class="min-w-36 text-center text-sm font-medium">{{ monthLabel }}</span>
+        <span class="min-w-36 text-center text-sm">{{ monthLabel }}</span>
         <Button
           icon="pi pi-chevron-right"
           severity="secondary"
@@ -22,39 +21,14 @@
           :disabled="!canMove(1)"
           @click="moveMonth(1)"
         />
-        <Button
-          v-if="canManage"
-          label="Настроить"
-          severity="secondary"
-          variant="outlined"
-          size="small"
-          :disabled="previewMode"
-          @click="settingsVisible = true"
-        />
-        <Button
-          v-if="canManage"
-          label="Сформировать"
-          size="small"
-          :disabled="previewMode"
-          @click="openGenerate"
-        />
-        <Button
-          v-if="canManage"
-          label="Продлить"
-          severity="secondary"
-          variant="outlined"
-          size="small"
-          :disabled="previewMode"
-          @click="extendSchedule"
-        />
+        <Button v-if="canManage" label="Сформировать" size="small" @click="openGenerate" />
         <Button
           v-if="canManage"
           label="Шаблон смены"
           severity="secondary"
           variant="outlined"
           size="small"
-          :disabled="previewMode"
-          @click="openTemplateEditor"
+          @click="openTemplates"
         />
         <SelectButton
           v-if="canManage"
@@ -64,7 +38,6 @@
           option-value="value"
           size="small"
           aria-label="Формат выгрузки"
-          :disabled="previewMode"
         />
         <Button
           v-if="canManage"
@@ -73,7 +46,6 @@
           variant="outlined"
           size="small"
           :loading="busy"
-          :disabled="previewMode"
           @click="download"
         />
       </div>
@@ -139,27 +111,40 @@
       />
     </div>
 
-    <div class="overflow-x-auto">
+    <div
+      class="schedule-table-viewport relative"
+      :aria-busy="(!previewMode && schedule.monthQuery.isFetching.value) || previewMonthLoading"
+    >
       <DataTable
         :value="rows"
         size="small"
         scrollable
         show-gridlines
         row-hover
-        class="schedule-table text-xs"
+        class="schedule-table text-sm"
         :pt="tablePt"
       >
         <Column
           field="fullName"
-          header="ФИО"
           frozen
-          header-class="relative z-20 whitespace-nowrap"
-          body-class="relative z-10 whitespace-nowrap"
-          header-style="padding: 0.25rem 0.5rem"
-          body-style="height: 29px; padding: 0 0.5rem"
+          header-class="whitespace-nowrap !font-semibold"
+          body-class="whitespace-nowrap"
+          :header-style="{
+            padding: '0.25rem 0.5rem',
+          }"
+          :body-style="{
+            padding: '0.25rem 0.5rem',
+          }"
         >
+          <template #header>
+            <span class="font-semibold">Сотрудник</span>
+          </template>
           <template #body="{ data }">
-            <span class="whitespace-nowrap text-xs font-normal">
+            <span
+              class="whitespace-nowrap text-sm font-normal"
+              :class="{ 'cursor-pointer': canEdit && selectedCells.length > 0 }"
+              @click.stop="toggleEmployeeSelection(data)"
+            >
               {{ data.fullName }}
             </span>
           </template>
@@ -167,13 +152,18 @@
         <Column
           field="roleLabel"
           frozen
-          header-class="relative z-20 whitespace-nowrap"
-          body-class="relative z-10 whitespace-nowrap"
-          header-style="padding: 0.25rem 0.5rem; text-align: center"
-          body-style="height: 29px; padding: 0 0.5rem"
+          header-class="whitespace-nowrap !font-semibold"
+          body-class="whitespace-nowrap"
+          :header-style="{
+            padding: '0.25rem 0.5rem',
+            textAlign: 'center',
+          }"
+          :body-style="{
+            padding: '0.25rem 0.5rem',
+          }"
         >
           <template #header>
-            <div class="flex w-full items-center justify-center">Должность</div>
+            <div class="flex w-full items-center justify-center font-semibold">Должность</div>
           </template>
           <template #body="{ data }">
             <div class="flex h-full w-full items-center justify-center">
@@ -186,54 +176,50 @@
           :key="day"
           :header-style="isWeekend(day) ? weekendBackgroundStyle : undefined"
           :body-style="dayBodyStyle(day)"
-          style="min-width: 30px; width: 30px; max-width: 30px"
+          style="min-width: 33px; width: 33px; max-width: 33px"
         >
           <template #header>
             <div class="flex flex-col items-center justify-center leading-tight">
               <span>{{ day }}</span>
-              <span class="text-xs text-color-secondary">{{ weekday(day) }}</span>
+              <span class="text-sm text-color-secondary">{{ weekday(day) }}</span>
             </div>
           </template>
           <template #body="{ data }">
             <div
-              class="relative flex h-full min-h-[29px] w-full items-center justify-center"
+              class="relative flex w-full items-center justify-center"
               :class="{ 'opacity-30': !data.cells[day - 1]?.applicable }"
               @click="handleDayCellClick($event, data, day - 1)"
             >
               <span
                 v-if="data.cells[day - 1]?.applicable"
-                class="flex h-full w-full shrink-0 cursor-pointer items-center justify-center text-center text-xs font-normal leading-none text-black hover:bg-emphasis"
+                class="flex min-h-[33px] w-full shrink-0 cursor-pointer items-center justify-center py-2.5 text-center text-xs font-normal leading-none hover:bg-emphasis"
                 :style="cellStyle(data.cells[day - 1].value, isCellSelected(data, day - 1))"
               >
                 {{ cellLabel(data.cells[day - 1].value) }}
               </span>
-              <span v-else class="text-color-secondary">—</span>
+              <span v-else class="py-2.5 text-color-secondary">—</span>
             </div>
           </template>
         </Column>
-        <Column
-          field="totalHours"
-          header="Часы"
-          body-style="height: 29px; padding: 0"
-          style="min-width: 3rem; width: 3rem"
-        >
+        <Column field="totalHours" body-style="padding: 0" style="min-width: 3rem; width: 3rem">
+          <template #header>
+            <span class="font-semibold">Часы</span>
+          </template>
           <template #body="{ data }">
             <div
-              class="flex h-[29px] items-center justify-center text-center text-xs font-normal leading-none text-black"
+              class="flex items-center justify-center py-2.5 text-center text-xs font-normal leading-none"
             >
               {{ data.totalHours }}
             </div>
           </template>
         </Column>
-        <Column
-          field="totalShifts"
-          header="Смены"
-          body-style="height: 29px; padding: 0"
-          style="min-width: 3rem; width: 3rem"
-        >
+        <Column field="totalShifts" body-style="padding: 0" style="min-width: 3rem; width: 3rem">
+          <template #header>
+            <span class="font-semibold">Смены</span>
+          </template>
           <template #body="{ data }">
             <div
-              class="flex h-[29px] items-center justify-center text-center text-xs font-normal leading-none text-black"
+              class="flex items-center justify-center py-2.5 text-center text-xs font-normal leading-none"
             >
               {{ data.totalShifts }}
             </div>
@@ -243,6 +229,12 @@
           <span class="text-color-secondary">В этом месяце нет сотрудников</span>
         </template>
       </DataTable>
+      <div
+        v-if="(!previewMode && schedule.monthQuery.isFetching.value) || previewMonthLoading"
+        class="absolute inset-0 z-50 flex items-center justify-center bg-surface-0/60"
+      >
+        <LoadingIndicator class="w-auto" />
+      </div>
     </div>
 
     <div
@@ -348,7 +340,7 @@
           <Button label="Сохранить значение" size="small" :loading="busy" @click="saveCell" />
         </section>
         <section class="space-y-2">
-          <h2 class="text-sm font-medium">Комментарий</h2>
+          <h2 class="text-base font-medium">Комментарий</h2>
           <Textarea
             v-model="commentText"
             rows="3"
@@ -395,161 +387,460 @@
       </div>
     </Dialog>
 
-    <Dialog
+    <Drawer
       v-model:visible="generateVisible"
-      modal
-      header="Сформировать график"
-      class="w-full max-w-3xl"
+      position="right"
+      class="h-screen max-h-screen h-dvh max-h-dvh w-full sm:!w-[42rem]"
+      :pt="{
+        header: { class: '!items-center' },
+        title: { style: { fontSize: '1rem', fontWeight: '600' } },
+        pcCloseButton: { root: { class: '!rounded-md' } },
+        content: { class: '!flex !min-h-0 !flex-col !overflow-hidden' },
+      }"
     >
-      <div class="space-y-4">
-        <p class="text-sm text-color-secondary">
-          Выберите шаблон и дату привязки для каждого периода членства. Уже заполненные ячейки
-          останутся без изменений.
-        </p>
-        <label class="flex items-center gap-2 text-sm"
-          ><Checkbox v-model="overwriteExisting" binary size="small" />Заменить существующие
-          значения (с подтверждением)</label
-        >
-        <DataTable :value="assignmentRows" size="small" scrollable>
-          <Column field="fullName" header="Сотрудник" />
-          <Column field="roleLabel" header="Должность" />
-          <Column header="Шаблон">
-            <template #body="{ data }">
-              <Select
-                v-model="data.templateId"
-                :options="templates"
-                option-label="name"
-                option-value="id"
-                size="small"
-                class="w-full"
-                placeholder="Шаблон"
-                @update:model-value="setAssignmentVersion(data)"
-              />
-            </template>
-          </Column>
-          <Column header="Начало цикла">
-            <template #body="{ data }">
-              <DatePicker v-model="data.anchor" date-format="dd.mm.yy" size="small" />
-            </template>
-          </Column>
-          <Column header="Заполнять с">
-            <template #body="{ data }">
-              <DatePicker v-model="data.applyFrom" date-format="dd.mm.yy" size="small" />
-            </template>
-          </Column>
-        </DataTable>
-        <div class="flex justify-end gap-2">
-          <Button
-            label="Отмена"
-            severity="secondary"
-            variant="text"
-            size="small"
-            @click="generateVisible = false"
-          /><Button label="Сформировать" size="small" :loading="busy" @click="generateSchedule" />
-        </div>
-      </div>
-    </Dialog>
-
-    <Dialog v-model:visible="templateVisible" modal header="Шаблон смены" class="w-full max-w-md">
-      <form class="space-y-4" @submit.prevent="saveTemplate">
-        <Select
-          v-model="selectedTemplateId"
-          :options="customTemplates"
-          option-label="name"
-          option-value="id"
-          size="small"
-          class="w-full"
-          show-clear
-          placeholder="Новый шаблон или выберите для новой версии"
-        />
-        <FloatLabel variant="on"
-          ><InputText
-            v-model="templateForm.name"
-            input-id="template-name"
-            size="small"
-            maxlength="80"
-            class="w-full"
-          /><label for="template-name">Название</label></FloatLabel
-        >
-        <div class="grid grid-cols-2 gap-3">
-          <FloatLabel variant="on"
-            ><InputNumber
-              v-model="templateForm.workDays"
-              input-id="template-work"
-              size="small"
-              :min="1"
-              :max="31"
-              class="w-full"
-            /><label for="template-work">Рабочих дней</label></FloatLabel
-          ><FloatLabel variant="on"
-            ><InputNumber
-              v-model="templateForm.offDays"
-              input-id="template-off"
-              size="small"
-              :min="1"
-              :max="31"
-              class="w-full"
-            /><label for="template-off">Выходных</label></FloatLabel
-          >
-        </div>
-        <div class="flex gap-2">
-          <FloatLabel variant="on" class="w-full"
-            ><InputNumber
-              v-model="templateForm.durationHours"
-              input-id="template-hours"
-              size="small"
-              :min="1"
-              :max="24"
-              class="w-full"
-            /><label for="template-hours">Часов в смене</label></FloatLabel
-          ><Select
-            v-model="templateForm.shiftType"
-            :options="shiftTypes"
+      <template #header="{ class: titleClass }">
+        <div class="flex min-w-0 flex-1 items-center gap-4 pr-4">
+          <span :class="[titleClass, 'leading-none']">Формирование графика</span>
+          <SelectButton
+            :model-value="generationMode"
+            :options="generationModeOptions"
             option-label="label"
             option-value="value"
             size="small"
-            class="w-full"
+            :allow-empty="false"
+            aria-label="Режим графика"
+            class="shrink-0"
+            @update:model-value="setGenerationMode"
           />
         </div>
-        <div class="flex justify-end gap-2">
+      </template>
+      <div class="flex h-full min-h-0 flex-col gap-4">
+        <Message v-if="error" severity="error" size="small" :closable="false">{{ error }}</Message>
+        <div
+          class="grid grid-cols-1 gap-3 pt-2 sm:items-end"
+          :class="
+            generationMode === 'assign' ? 'sm:grid-cols-3' : 'sm:grid-cols-[minmax(0,1fr)_auto]'
+          "
+        >
+          <FloatLabel variant="on">
+            <Select
+              v-model="generationPeriod"
+              input-id="generation-period"
+              :options="generationMonthOptions"
+              option-label="label"
+              option-value="value"
+              size="small"
+              class="w-full"
+            />
+            <label for="generation-period" class="text-xs">Месяц</label>
+          </FloatLabel>
+          <FloatLabel v-if="generationMode === 'assign'" variant="on">
+            <Select
+              v-model="generationTemplateId"
+              input-id="generation-template"
+              :options="templates"
+              option-label="name"
+              option-value="id"
+              size="small"
+              class="w-full"
+            />
+            <label for="generation-template" class="text-xs">Шаблон смен</label>
+          </FloatLabel>
+          <FloatLabel v-if="generationMode === 'assign'" variant="on">
+            <DatePicker
+              v-model="generationStartDate"
+              input-id="generation-start-date"
+              date-format="dd.mm.yy"
+              :manual-input="false"
+              size="small"
+              show-icon
+              icon-display="input"
+              show-clear
+              class="w-full"
+            />
+            <label for="generation-start-date" class="text-xs">Стартовая дата</label>
+          </FloatLabel>
+          <Button
+            v-if="generationMode === 'extend'"
+            label="Применить"
+            size="small"
+            :disabled="
+              !selectedMembershipIds.length ||
+              busy ||
+              generationPreviewLoading ||
+              (!previewMode && generationSchedule.monthQuery.isFetching.value)
+            "
+            @click="prepareExtension"
+          />
+        </div>
+        <div class="flex items-center justify-end gap-3 text-xs text-color-secondary">
+          <span v-if="generationMode === 'assign'"
+            >Назначено: {{ Object.keys(generationAssignments).length }}</span
+          >
+          <span v-else>С назначенным циклом: {{ extendableRows.length }}</span>
+          <Divider layout="vertical" class="!mx-0 !my-0 self-stretch" />
+          <span>Выделено: {{ selectedMembershipIds.length }}</span>
+          <Divider
+            v-if="generationMode === 'assign'"
+            layout="vertical"
+            class="!mx-0 !my-0 self-stretch"
+          />
+          <Button
+            v-if="generationMode === 'assign'"
+            label="Применить"
+            size="small"
+            :loading="busy"
+            :disabled="
+              !selectedMembershipIds.length ||
+              (generationMode === 'assign' && !generationTemplateId) ||
+              busy ||
+              generationPreviewLoading ||
+              (!previewMode && generationSchedule.monthQuery.isFetching.value)
+            "
+            @click="applyGenerationSettings"
+          />
+        </div>
+        <Message
+          v-if="!previewMode && generationSchedule.monthQuery.isError.value"
+          severity="error"
+          size="small"
+          :closable="false"
+        >
+          Не удалось загрузить список сотрудников для выбранного месяца.
+        </Message>
+        <div
+          class="relative min-h-0 flex-1 overflow-hidden"
+          :aria-busy="
+            (!previewMode && generationSchedule.monthQuery.isFetching.value) ||
+            generationPreviewLoading
+          "
+        >
+          <DataTable
+            :value="generationRows"
+            size="small"
+            scrollable
+            scroll-height="flex"
+            row-hover
+            class="generation-table h-full text-sm"
+            :pt="generationTablePt"
+            @row-click="toggleGenerationRowFromClick"
+          >
+            <Column field="fullName" header="Сотрудник" body-class="whitespace-nowrap">
+              <template #body="{ data }">
+                <span class="whitespace-nowrap text-sm font-normal">{{ data.fullName }}</span>
+              </template>
+            </Column>
+            <Column header="Шаблон">
+              <template #body="{ data }">
+                <Tag
+                  v-if="
+                    generationMode === 'extend'
+                      ? data.assignedTemplateName
+                      : data.previousTemplateName
+                  "
+                  :value="
+                    generationMode === 'extend'
+                      ? data.assignedTemplateName
+                      : data.previousTemplateName
+                  "
+                  severity="secondary"
+                  :pt="compactTagPt"
+                />
+                <span v-else class="text-xs text-color-secondary">
+                  {{ generationMode === "extend" ? "Нет назначения" : "—" }}
+                </span>
+              </template>
+            </Column>
+            <Column
+              v-if="generationMode === 'assign'"
+              header="Назначение"
+              header-class="whitespace-nowrap text-right"
+              body-class="whitespace-nowrap text-right"
+              header-style="width: 1%; white-space: nowrap"
+              body-style="width: 1%; white-space: nowrap"
+            >
+              <template #body="{ data }">
+                <div
+                  v-if="generationAssignments[data.membershipId]"
+                  class="flex flex-nowrap justify-end gap-1.5"
+                >
+                  <Tag
+                    :value="generationAssignments[data.membershipId].templateName"
+                    severity="secondary"
+                    :pt="compactTagPt"
+                  />
+                  <Tag
+                    :value="formatShortDate(generationAssignments[data.membershipId].startDate)"
+                    severity="secondary"
+                    :pt="compactTagPt"
+                  />
+                </div>
+                <span v-else class="text-xs text-color-secondary">—</span>
+              </template>
+            </Column>
+            <Column
+              header=""
+              header-class="align-middle whitespace-nowrap"
+              body-class="whitespace-nowrap"
+              header-style="width: 1%; white-space: nowrap"
+              body-style="width: 1%; white-space: nowrap"
+            >
+              <template #header>
+                <div class="flex items-center justify-center">
+                  <Checkbox
+                    :model-value="allGenerationRowsSelected"
+                    binary
+                    size="small"
+                    aria-label="Выбрать всех сотрудников"
+                    @update:model-value="toggleAllGenerationRows"
+                  />
+                </div>
+              </template>
+              <template #body="{ data }">
+                <div class="flex justify-center">
+                  <Checkbox
+                    :model-value="selectedMembershipIds.includes(data.membershipId)"
+                    binary
+                    size="small"
+                    :aria-label="`Выбрать ${data.fullName}`"
+                    @update:model-value="toggleGenerationRow(data.membershipId, $event)"
+                  />
+                </div>
+              </template>
+            </Column>
+          </DataTable>
+          <div
+            v-if="
+              (!previewMode && generationSchedule.monthQuery.isFetching.value) ||
+              generationPreviewLoading
+            "
+            class="absolute inset-0 z-50 flex items-center justify-center bg-surface-0/60"
+          >
+            <LoadingIndicator class="w-auto" />
+          </div>
+        </div>
+        <div class="mt-auto flex justify-end gap-2 pt-3">
           <Button
             label="Отмена"
             severity="secondary"
             variant="text"
             size="small"
-            @click="templateVisible = false"
-          /><Button
-            type="submit"
-            label="Сохранить шаблон"
+            @click="closeGenerate"
+          />
+          <Button
+            label="Сформировать"
             size="small"
             :loading="busy"
-            :disabled="!templateForm.name.trim()"
+            :disabled="
+              generationMode === 'assign'
+                ? !Object.keys(generationAssignments).length
+                : !isExtensionPrepared
+            "
+            @click="generationMode === 'assign' ? generateSchedule() : extendSelectedSchedule()"
           />
         </div>
-      </form>
-    </Dialog>
+      </div>
+    </Drawer>
+
+    <Drawer
+      v-model:visible="templateVisible"
+      position="right"
+      class="h-screen max-h-screen h-dvh max-h-dvh w-full sm:!w-[30rem]"
+      :pt="{
+        header: { class: '!items-center' },
+        title: { style: { fontSize: '1rem', fontWeight: '600' } },
+        pcCloseButton: { root: { class: '!rounded-md' } },
+        content: { class: '!flex !min-h-0 !flex-col' },
+      }"
+    >
+      <template #header="{ class: titleClass }">
+        <span :class="[titleClass, 'leading-none']">Шаблоны смен</span>
+      </template>
+      <Message v-if="error" severity="error" size="small" :closable="false">{{ error }}</Message>
+      <div v-if="templateEditorVisible" class="flex min-h-0 flex-1 flex-col gap-4 pt-2">
+        <div class="flex items-center gap-2">
+          <Button
+            label="К шаблонам"
+            severity="secondary"
+            variant="text"
+            size="small"
+            :disabled="busy"
+            @click="templateEditorVisible = false"
+          />
+          <span class="text-sm text-color-secondary">
+            {{ selectedTemplateId ? "Новая версия шаблона" : "Новый шаблон" }}
+          </span>
+        </div>
+        <form class="space-y-4" @submit.prevent="saveTemplate">
+          <FloatLabel variant="on"
+            ><InputText
+              v-model="templateForm.name"
+              input-id="template-name"
+              size="small"
+              maxlength="80"
+              class="w-full"
+            /><label for="template-name">Название</label></FloatLabel
+          >
+          <div class="grid grid-cols-2 gap-3">
+            <FloatLabel variant="on"
+              ><InputNumber
+                v-model="templateForm.workDays"
+                input-id="template-work"
+                size="small"
+                :min="1"
+                :max="31"
+                class="w-full"
+              /><label for="template-work">Рабочих дней</label></FloatLabel
+            ><FloatLabel variant="on"
+              ><InputNumber
+                v-model="templateForm.offDays"
+                input-id="template-off"
+                size="small"
+                :min="1"
+                :max="31"
+                class="w-full"
+              /><label for="template-off">Выходных</label></FloatLabel
+            >
+          </div>
+          <div class="flex gap-2">
+            <FloatLabel variant="on" class="w-full"
+              ><InputNumber
+                v-model="templateForm.durationHours"
+                input-id="template-hours"
+                size="small"
+                :min="1"
+                :max="24"
+                class="w-full"
+              /><label for="template-hours">Часов в смене</label></FloatLabel
+            ><Select
+              v-model="templateForm.shiftType"
+              :options="shiftTypes"
+              option-label="label"
+              option-value="value"
+              size="small"
+              class="w-full"
+            />
+          </div>
+          <div class="flex justify-end gap-2">
+            <Button
+              label="Отмена"
+              severity="secondary"
+              variant="text"
+              size="small"
+              :disabled="busy"
+              @click="templateEditorVisible = false"
+            /><Button
+              type="submit"
+              :label="selectedTemplateId ? 'Сохранить' : 'Создать шаблон'"
+              size="small"
+              :loading="busy"
+              :disabled="!templateForm.name.trim()"
+            />
+          </div>
+        </form>
+      </div>
+      <div v-else class="flex min-h-0 flex-1 flex-col gap-3 pt-2">
+        <div class="flex justify-end">
+          <Button label="Создать шаблон" size="small" @click="openTemplateEditor" />
+        </div>
+        <Message
+          v-if="!previewMode && schedule.templatesQuery.isError.value"
+          severity="error"
+          size="small"
+          :closable="false"
+        >
+          Не удалось загрузить шаблоны. Обновите страницу и попробуйте ещё раз.
+        </Message>
+        <div
+          v-if="!previewMode && schedule.templatesQuery.isLoading.value"
+          class="flex flex-1 items-center justify-center"
+        >
+          <LoadingIndicator class="w-auto" />
+        </div>
+        <DataTable
+          v-else
+          :value="customTemplates"
+          size="small"
+          scrollable
+          scroll-height="flex"
+          row-hover
+          class="min-h-0 flex-1 text-sm"
+          :pt="{ tableContainer: { class: 'overflow-y-auto' } }"
+        >
+          <Column field="name" header="Шаблон" />
+          <Column header="Цикл">
+            <template #body="{ data }">
+              <span class="whitespace-nowrap text-xs text-color-secondary">
+                {{ data.currentVersion.workDays }}/{{ data.currentVersion.offDays }} ·
+                {{ data.currentVersion.durationHours }} ч ·
+                {{ data.currentVersion.shiftType === "NIGHT" ? "ночная" : "обычная" }}
+              </span>
+            </template>
+          </Column>
+          <Column header="" header-style="width: 1%" body-style="width: 1%; white-space: nowrap">
+            <template #body="{ data }">
+              <div class="flex justify-end gap-1">
+                <Button
+                  icon="pi pi-pencil"
+                  severity="secondary"
+                  variant="text"
+                  size="small"
+                  aria-label="Редактировать шаблон"
+                  :disabled="busy"
+                  @click="editTemplate(data)"
+                />
+                <Button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  variant="text"
+                  size="small"
+                  aria-label="Удалить шаблон"
+                  :disabled="busy"
+                  @click="confirmDeleteTemplate(data)"
+                />
+              </div>
+            </template>
+          </Column>
+          <template #empty>
+            <span class="text-color-secondary">Пользовательских шаблонов пока нет</span>
+          </template>
+        </DataTable>
+      </div>
+    </Drawer>
 
     <Dialog
-      v-model:visible="settingsVisible"
+      v-model:visible="templateDeleteVisible"
       modal
-      header="Настройки графика"
-      class="w-full max-w-sm"
+      header="Удалить шаблон?"
+      class="w-full max-w-md"
     >
-      <form class="space-y-4" @submit.prevent="saveSettings">
-        <FloatLabel variant="on"
-          ><InputNumber
-            v-model="standardHours"
-            input-id="standard-hours"
-            size="small"
-            :min="1"
-            :max="24"
-            class="w-full"
-          /><label for="standard-hours">Стандартная длительность смены, ч</label></FloatLabel
-        >
-        <div class="flex justify-end">
-          <Button type="submit" label="Сохранить" size="small" :loading="busy" />
-        </div>
-      </form>
+      <p class="mb-4 text-sm text-color-secondary">
+        <template v-if="templateDeleteTarget?.assignmentCount">
+          Шаблон «{{ templateDeleteTarget.name }}» назначен сотрудникам. Их назначения и возможность
+          продолжать цикл будут удалены. Уже заполненные дни графика и история изменений сохранятся.
+        </template>
+        <template v-else>
+          Шаблон «{{ templateDeleteTarget?.name }}» будет удалён. Уже заполненные дни графика и
+          история изменений сохранятся.
+        </template>
+      </p>
+      <div class="flex justify-end gap-2">
+        <Button
+          label="Отмена"
+          severity="secondary"
+          variant="text"
+          size="small"
+          :disabled="busy"
+          @click="templateDeleteVisible = false"
+        />
+        <Button
+          label="Удалить"
+          severity="danger"
+          size="small"
+          :loading="busy"
+          @click="deleteTemplate"
+        />
+      </div>
     </Dialog>
   </section>
 </template>
@@ -560,6 +851,7 @@ import {
   useSchedule,
   type ScheduleMonth,
   type ScheduleRow,
+  type ScheduleTemplate,
   type ScheduleValue,
 } from "../composables/useSchedule";
 
@@ -571,6 +863,17 @@ const route = useRoute();
 const now = new Date();
 const year = ref(Number(route.query.year) || now.getFullYear());
 const month = ref(Number(route.query.month) || now.getMonth() + 1);
+const generationPeriod = ref(monthKey(now.getFullYear(), now.getMonth() + 1));
+const generationMode = ref<"assign" | "extend">("assign");
+const generationModeOptions = [
+  { label: "Формирование", value: "assign" },
+  { label: "Продление", value: "extend" },
+];
+const generationTemplateId = ref<string | null>(null);
+const generationStartDate = ref<Date | null>(null);
+const generateVisible = ref(false);
+const generationYear = computed(() => Number(generationPeriod.value.slice(0, 4)));
+const generationMonth = computed(() => Number(generationPeriod.value.slice(5, 7)));
 const schedule = useSchedule(
   props.workspace.company.id,
   props.workspace.venue.id,
@@ -578,14 +881,24 @@ const schedule = useSchedule(
   month,
   computed(() => !previewMode.value),
 );
+const generationSchedule = useSchedule(
+  props.workspace.company.id,
+  props.workspace.venue.id,
+  generationYear,
+  generationMonth,
+  computed(() => generateVisible.value && !previewMode.value),
+);
 const canManage = computed(() => props.workspace.permissions.includes("manage_schedule"));
-const canEdit = computed(() => canManage.value && !previewMode.value);
+const canEdit = computed(() => canManage.value);
 const busy = ref(false);
+const previewMonthLoading = ref(false);
+const generationPreviewLoading = ref(false);
 const error = ref("");
 const cellVisible = ref(false);
-const generateVisible = ref(false);
 const templateVisible = ref(false);
-const settingsVisible = ref(false);
+const templateEditorVisible = ref(false);
+const templateDeleteVisible = ref(false);
+const templateDeleteTarget = ref<(ScheduleTemplate & { assignmentCount: number }) | null>(null);
 const activeRow = ref<ScheduleRow | null>(null);
 const activeCellIndex = ref(-1);
 const editKind = ref<"SHIFT" | "STATUS" | "EMPTY">("SHIFT");
@@ -599,9 +912,7 @@ const bulkHours = ref(12);
 const bulkShiftType = ref<"NORMAL" | "NIGHT">("NORMAL");
 const bulkStatus = ref<"VACATION" | "SICK_LEAVE" | "NO_SHOW" | null>(null);
 const exportFormat = ref<"xlsx" | "pdf">("xlsx");
-const overwriteExisting = ref(false);
 const selectedTemplateId = ref<string | null>(null);
-const standardHours = ref(12);
 const templateForm = reactive({
   name: "",
   workDays: 2,
@@ -609,21 +920,118 @@ const templateForm = reactive({
   durationHours: 12,
   shiftType: "NORMAL" as "NORMAL" | "NIGHT",
 });
-const assignmentRows = ref<
-  Array<{
-    membershipId: string;
-    fullName: string;
-    roleLabel: string;
-    templateId: string;
-    templateVersionId: string;
-    anchor: Date;
-    applyFrom: Date;
-  }>
->([]);
-const templates = computed(() => schedule.templatesQuery.data.value ?? []);
+const selectedMembershipIds = ref<string[]>([]);
+const preparedExtension = ref<{ period: string; membershipIds: string[] } | null>(null);
+const isExtensionPrepared = computed(() => {
+  const prepared = preparedExtension.value;
+  if (!prepared || prepared.period !== generationPeriod.value) return false;
+  return (
+    prepared.membershipIds.length === selectedMembershipIds.value.length &&
+    prepared.membershipIds.every((id) => selectedMembershipIds.value.includes(id))
+  );
+});
+const generationAssignments = ref<
+  Record<
+    string,
+    { templateId: string; templateVersionId: string; templateName: string; startDate: string }
+  >
+>({});
+const previewTemplates = ref<ScheduleTemplate[]>(createPreviewTemplates());
+const previewMonths = new Map<string, ScheduleMonth>();
+const previewAssignments = reactive(
+  new Map<
+    string,
+    {
+      templateId: string;
+      version: ScheduleTemplate["currentVersion"];
+      anchor: string;
+      applyFrom: string;
+    }
+  >(),
+);
+const previewCycleSeeds = [
+  [2, 2, 0],
+  [3, 3, 2],
+  [2, 2, 1],
+  [3, 3, 4],
+  [4, 2, 3],
+  [5, 1, 5],
+  [6, 1, 1],
+  [2, 2, 3],
+  [4, 2, 0],
+  [3, 3, 1],
+  [5, 1, 2],
+] as const;
+for (const [index, [workDays, offDays, phaseOffset]] of previewCycleSeeds.slice(0, -1).entries()) {
+  const template = previewTemplates.value.find(
+    (candidate) =>
+      candidate.currentVersion.workDays === workDays &&
+      candidate.currentVersion.offDays === offDays,
+  );
+  if (!template) continue;
+  const anchor = isoDate(new Date(now.getFullYear(), 0, 1 - phaseOffset));
+  previewAssignments.set(`demo-membership-${index + 1}`, {
+    templateId: template.id,
+    version: template.currentVersion,
+    anchor,
+    applyFrom: `${now.getFullYear()}-01-01`,
+  });
+}
+const previewMonth = ref(createPreviewMonth(year.value, month.value));
+previewMonths.set(monthKey(year.value, month.value), previewMonth.value);
+const templates = computed(() =>
+  previewMode.value ? previewTemplates.value : (schedule.templatesQuery.data.value ?? []),
+);
+const generationMonthOptions = computed(() =>
+  Array.from({ length: 3 }, (_, offset) => {
+    const date = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    const value = monthKey(date.getFullYear(), date.getMonth() + 1);
+    return {
+      value,
+      label: new Intl.DateTimeFormat("ru-RU", { month: "long", year: "numeric" }).format(date),
+    };
+  }),
+);
+const generationRows = computed(() => {
+  const monthData = previewMode.value
+    ? createPreviewMonth(generationYear.value, generationMonth.value)
+    : generationSchedule.monthQuery.data.value;
+  const unique = new Map<string, ScheduleRow>();
+  const previousMonthEnd = new Date(generationYear.value, generationMonth.value - 1, 0);
+  for (const row of monthData?.rows ?? []) {
+    if (unique.has(row.membershipId)) continue;
+    if (previewMode.value) {
+      const assignment = previewAssignments.get(row.membershipId);
+      const applied = assignment ? new Date(`${assignment.applyFrom}T00:00:00`) : null;
+      row.previousTemplateName =
+        assignment && applied && applied <= previousMonthEnd
+          ? (previewTemplates.value.find((template) => template.id === assignment.templateId)
+              ?.name ?? null)
+          : null;
+      row.assignedTemplateName = assignment
+        ? (previewTemplates.value.find((template) => template.id === assignment.templateId)?.name ??
+          null)
+        : null;
+      row.hasScheduleAssignment = Boolean(assignment);
+    }
+    unique.set(row.membershipId, row);
+  }
+  return [...unique.values()];
+});
+const extendableRows = computed(() =>
+  generationRows.value.filter((row) => row.hasScheduleAssignment),
+);
+const selectableGenerationRows = computed(() => generationRows.value);
+const allGenerationRowsSelected = computed(
+  () =>
+    selectableGenerationRows.value.length > 0 &&
+    selectableGenerationRows.value.every((row) =>
+      selectedMembershipIds.value.includes(row.membershipId),
+    ),
+);
 const customTemplates = computed(() => templates.value.filter((template) => !template.isSystem));
 const monthResponse = computed(() => {
-  if (previewMode.value) return createPreviewMonth(year.value, month.value);
+  if (previewMode.value) return previewMonth.value;
   return schedule.monthQuery.data.value as unknown as
     import("../composables/useSchedule").ScheduleMonth | undefined;
 });
@@ -657,22 +1065,52 @@ const statusOptions = [
   { label: "Неявка — Н", value: "NO_SHOW" },
 ];
 const exportOptions = [
-  { label: "Excel", value: "xlsx" },
+  { label: previewMode.value ? "Excel (CSV)" : "Excel", value: "xlsx" },
   { label: "PDF", value: "pdf" },
 ];
 const tablePt = {
   root: {
     style: {
       "--p-datatable-border-color": "var(--p-content-border-color)",
+      "--p-datatable-header-cell-border-color": "var(--p-datatable-border-color)",
+      "--p-datatable-body-cell-border-color": "var(--p-datatable-border-color)",
     },
   },
   headerCell: {
-    class: "whitespace-nowrap px-1 py-1 text-xs",
-    style: { borderColor: "var(--p-content-border-color)", fontWeight: "400" },
+    class: "whitespace-nowrap px-1 py-1 text-sm",
+    style: { fontWeight: "400" },
   },
-  bodyCell: { class: "px-1 py-1 text-xs", style: { borderColor: "var(--p-content-border-color)" } },
+  bodyCell: { class: "px-1 py-1 text-sm" },
 };
-const weekendBackgroundStyle = { backgroundColor: "var(--p-content-hover-background)" };
+const generationTablePt = {
+  root: {
+    style: {
+      "--p-datatable-row-hover-background":
+        "color-mix(in srgb, var(--p-primary-100) 70%, var(--p-content-background))",
+      "--p-datatable-border-color": "var(--p-content-border-color)",
+    },
+  },
+  headerCell: {
+    class: "whitespace-nowrap px-1 py-1 text-sm",
+    style: {
+      borderTop: "0",
+      borderRight: "0",
+      borderLeft: "0",
+      borderBottom: "1px solid var(--p-content-border-color)",
+      fontWeight: "400",
+    },
+  },
+  bodyCell: {
+    class: "px-1 py-1 text-sm",
+    style: {
+      borderTop: "0",
+      borderRight: "0",
+      borderLeft: "0",
+      borderBottom: "1px solid var(--p-content-border-color)",
+    },
+  },
+};
+const weekendBackgroundStyle = { backgroundColor: "var(--p-highlight-background)" };
 const compactTagPt = {
   root: {
     style: { fontSize: "0.75rem", padding: "0.125rem 0.375rem" },
@@ -809,7 +1247,6 @@ function createPreviewMonth(selectedYear: number, selectedMonth: number): Schedu
     year: selectedYear,
     month: selectedMonth,
     daysInMonth,
-    standardShiftDurationHours: 12,
     rows: employees.map((employee, index) => {
       const cells = Array.from({ length: daysInMonth }, (_, dayIndex) => {
         const date = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(dayIndex + 1).padStart(2, "0")}`;
@@ -848,21 +1285,80 @@ function createPreviewMonth(selectedYear: number, selectedMonth: number): Schedu
   };
 }
 
+function createPreviewTemplates(): ScheduleTemplate[] {
+  return [
+    ["2/2", 2, 2],
+    ["3/3", 3, 3],
+    ["4/2", 4, 2],
+    ["5/1", 5, 1],
+    ["6/1", 6, 1],
+  ].map(([name, workDays, offDays], index) => {
+    const versionId = `demo-system-template-version-${index + 1}`;
+    return {
+      id: `demo-system-template-${index + 1}`,
+      name: String(name),
+      isSystem: true,
+      currentVersionId: versionId,
+      currentVersion: {
+        id: versionId,
+        version: 1,
+        workDays: Number(workDays),
+        offDays: Number(offDays),
+        durationHours: 12,
+        shiftType: "NORMAL",
+      },
+    };
+  });
+}
+
+function monthKey(selectedYear: number, selectedMonth: number): string {
+  return `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
+}
+
+let previewMonthRequest = 0;
 watch(
-  monthResponse,
-  (value) => {
-    if (value) standardHours.value = value.standardShiftDurationHours;
+  [year, month],
+  async ([selectedYear, selectedMonth]) => {
+    if (!previewMode.value) return;
+    const requestId = ++previewMonthRequest;
+    previewMonthLoading.value = true;
+    await waitForPreviewResponse();
+    if (requestId !== previewMonthRequest) return;
+    const key = monthKey(selectedYear, selectedMonth);
+    let target = previewMonths.get(key);
+    if (!target) {
+      target = createPreviewMonth(selectedYear, selectedMonth);
+      previewMonths.set(key, target);
+    }
+    previewMonth.value = target;
+    previewMonthLoading.value = false;
   },
   { immediate: true },
 );
-watch(selectedTemplateId, (templateId) => {
-  const template = customTemplates.value.find((item) => item.id === templateId);
-  if (!template) return;
-  templateForm.name = template.name;
-  templateForm.workDays = template.currentVersion.workDays;
-  templateForm.offDays = template.currentVersion.offDays;
-  templateForm.durationHours = template.currentVersion.durationHours;
-  templateForm.shiftType = template.currentVersion.shiftType;
+
+watch(generationMode, () => {
+  selectedMembershipIds.value = [];
+  preparedExtension.value = null;
+  generationTemplateId.value = null;
+  generationStartDate.value = null;
+});
+
+let generationPreviewRequest = 0;
+watch([generationPeriod, generateVisible], async ([, isVisible]) => {
+  selectedMembershipIds.value = [];
+  preparedExtension.value = null;
+  generationAssignments.value = {};
+  generationTemplateId.value = null;
+  generationStartDate.value = null;
+  if (!previewMode.value || !isVisible) {
+    generationPreviewLoading.value = false;
+    generationPreviewRequest += 1;
+    return;
+  }
+  const requestId = ++generationPreviewRequest;
+  generationPreviewLoading.value = true;
+  await waitForPreviewResponse();
+  if (requestId === generationPreviewRequest) generationPreviewLoading.value = false;
 });
 function canMove(offset: number): boolean {
   const target = new Date(year.value, month.value - 1 + offset, 1);
@@ -886,19 +1382,22 @@ function cellStyle(
   selected: boolean,
 ): Record<string, string> | undefined {
   const style: Record<string, string> = {};
-  if (value?.kind === "SHIFT" && value.shiftType === "NIGHT")
+  if (value?.kind === "SHIFT" && value.shiftType === "NIGHT") {
     style.backgroundColor = "var(--p-message-info-border-color)";
-  if (value?.kind === "STATUS")
+    style.color = "var(--p-surface-950)";
+  }
+  if (value?.kind === "STATUS") {
     style.backgroundColor =
       value.status === "NO_SHOW"
         ? "var(--p-message-error-border-color)"
         : "var(--p-message-warn-border-color)";
+    style.color = "var(--p-surface-950)";
+  }
   if (selected) style.boxShadow = "inset 0 0 0 2px var(--p-primary-color)";
   return Object.keys(style).length ? style : undefined;
 }
 function dayBodyStyle(day: number): Record<string, string> {
   return {
-    height: "29px",
     padding: "0",
     ...(isWeekend(day) ? weekendBackgroundStyle : {}),
   };
@@ -907,9 +1406,21 @@ function isCellSelected(row: ScheduleRow, index: number): boolean {
   const cell = row.cells[index];
   return !!cell && selectedCells.value.includes(`${row.membershipId}:${cell.date}`);
 }
+function toggleEmployeeSelection(row: ScheduleRow): void {
+  if (!canEdit.value || !selectedCells.value.length) return;
+  const keys = row.cells
+    .filter((cell) => cell.applicable)
+    .map((cell) => `${row.membershipId}:${cell.date}`);
+  const selected = new Set(selectedCells.value);
+  if (keys.every((key) => selected.has(key))) {
+    selectedCells.value = selectedCells.value.filter((key) => !keys.includes(key));
+    return;
+  }
+  selectedCells.value = [...new Set([...selectedCells.value, ...keys])];
+}
 function handleDayCellClick(event: MouseEvent, row: ScheduleRow, index: number): void {
   const cell = row.cells[index];
-  if (!cell?.applicable || previewMode.value) return;
+  if (!cell?.applicable) return;
 
   if ((event.ctrlKey || event.metaKey) && canEdit.value) {
     const key = `${row.membershipId}:${cell.date}`;
@@ -927,10 +1438,7 @@ function openCell(row: ScheduleRow, index: number): void {
   activeCellIndex.value = index;
   const value = row.cells[index].value;
   editKind.value = value?.kind ?? "SHIFT";
-  editHours.value =
-    value?.kind === "SHIFT"
-      ? value.durationHours
-      : (monthResponse.value?.standardShiftDurationHours ?? 12);
+  editHours.value = value?.kind === "SHIFT" ? value.durationHours : 12;
   editShiftType.value = value?.kind === "SHIFT" ? value.shiftType : "NORMAL";
   editStatus.value = value?.kind === "STATUS" ? value.status : null;
   commentText.value = row.cells[index].comment?.text ?? "";
@@ -947,10 +1455,87 @@ function valueFor(
   if (kind === "STATUS") return { kind, status: status ?? "VACATION" };
   return { kind };
 }
+
+function previewSetCell(
+  membershipId: string,
+  date: string,
+  value: ScheduleValue,
+  target = previewMonth.value,
+): void {
+  const row = target.rows.find((item) => item.membershipId === membershipId);
+  const cell = row?.cells.find((item) => item.date === date);
+  if (!row || !cell || !cell.applicable) return;
+  if (JSON.stringify(cell.value) !== JSON.stringify(value)) {
+    cell.history.unshift({
+      oldValue: cell.value,
+      newValue: value.kind === "EMPTY" ? null : value,
+      createdAt: new Date().toISOString(),
+      author: "Вы",
+    });
+  }
+  cell.value = value.kind === "EMPTY" ? null : value;
+  refreshPreviewTotals(row);
+}
+
+function refreshPreviewTotals(row: ScheduleRow): void {
+  row.totalHours = row.cells.reduce(
+    (total, cell) => total + (cell.value?.kind === "SHIFT" ? cell.value.durationHours : 0),
+    0,
+  );
+  row.totalShifts = row.cells.filter((cell) => cell.value?.kind === "SHIFT").length;
+}
+
+function previewApplySchedule(
+  target: ScheduleMonth,
+  assignments: Array<{
+    membershipId: string;
+    templateId: string;
+    versionId: string;
+    anchor: string;
+    applyFrom: string;
+    version?: ScheduleTemplate["currentVersion"];
+  }>,
+  overwrite: boolean,
+): void {
+  for (const item of assignments) {
+    const template = previewTemplates.value.find((candidate) => candidate.id === item.templateId);
+    const row = target.rows.find((candidate) => candidate.membershipId === item.membershipId);
+    if (!template || !row) continue;
+    const version = item.version ?? template.currentVersion;
+    previewAssignments.set(item.membershipId, {
+      templateId: item.templateId,
+      version: { ...version },
+      anchor: item.anchor,
+      applyFrom: item.applyFrom,
+    });
+    const cycleLength = version.workDays + version.offDays;
+    const anchor = new Date(`${item.anchor}T00:00:00`);
+    const applyFrom = new Date(`${item.applyFrom}T00:00:00`);
+    for (const cell of row.cells) {
+      const date = new Date(`${cell.date}T00:00:00`);
+      if (!cell.applicable || date < applyFrom) continue;
+      const offset = Math.floor((date.getTime() - anchor.getTime()) / 86_400_000);
+      const cycleDay = ((offset % cycleLength) + cycleLength) % cycleLength;
+      const nextValue: ScheduleValue =
+        cycleDay < version.workDays
+          ? {
+              kind: "SHIFT",
+              durationHours: version.durationHours,
+              shiftType: version.shiftType,
+            }
+          : { kind: "EMPTY" };
+      if (!overwrite && cell.value) continue;
+      if (nextValue.kind !== "EMPTY" || overwrite)
+        previewSetCell(row.membershipId, cell.date, nextValue, target);
+    }
+    refreshPreviewTotals(row);
+  }
+}
 async function run(action: () => Promise<void>): Promise<void> {
   busy.value = true;
   error.value = "";
   try {
+    if (previewMode.value) await waitForPreviewResponse();
     await action();
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : "Не удалось сохранить изменения";
@@ -958,25 +1543,49 @@ async function run(action: () => Promise<void>): Promise<void> {
     busy.value = false;
   }
 }
+function waitForPreviewResponse(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 450));
+}
 function saveCell(): void {
   if (!activeRow.value || !activeCell.value) return;
   void run(async () => {
-    await schedule.updateCell({
+    const cell = {
       membershipId: activeRow.value!.membershipId,
       date: activeCell.value!.date,
       value: valueFor(editKind.value, editHours.value, editShiftType.value, editStatus.value),
-    });
+    };
+    if (previewMode.value) previewSetCell(cell.membershipId, cell.date, cell.value);
+    else await schedule.updateCell(cell);
     cellVisible.value = false;
   });
 }
 function saveCellComment(): void {
   if (!activeRow.value || !activeCell.value) return;
   void run(async () => {
-    await schedule.saveComment(
-      activeRow.value!.membershipId,
-      activeCell.value!.date,
-      commentText.value.trim(),
-    );
+    if (previewMode.value) {
+      const comment = activeCell.value!.comment;
+      const text = commentText.value.trim();
+      const now = new Date().toISOString();
+      if (comment && comment.text !== text) {
+        comment.history.unshift({
+          text: comment.text,
+          createdAt: comment.updatedAt,
+          author: comment.updatedBy,
+        });
+      }
+      activeCell.value!.comment = {
+        text,
+        updatedAt: now,
+        updatedBy: "Вы",
+        history: comment?.history ?? [],
+      };
+    } else {
+      await schedule.saveComment(
+        activeRow.value!.membershipId,
+        activeCell.value!.date,
+        commentText.value.trim(),
+      );
+    }
     cellVisible.value = false;
   });
 }
@@ -995,96 +1604,342 @@ function applyBulk(): void {
     };
   });
   void run(async () => {
-    await schedule.updateCells(cells);
+    if (previewMode.value) {
+      for (const cell of cells) previewSetCell(cell.membershipId, cell.date, cell.value);
+    } else await schedule.updateCells(cells);
     selectedCells.value = [];
   });
 }
 function openGenerate(): void {
-  if (schedule.templatesQuery.isLoading.value) return;
-  const unique = new Map<string, ScheduleRow>();
-  for (const row of rows.value)
-    if (!unique.has(row.membershipId)) unique.set(row.membershipId, row);
-  assignmentRows.value = [...unique.values()].map((row) => ({
-    membershipId: row.membershipId,
-    fullName: row.fullName,
-    roleLabel: row.roleLabel,
-    templateId: "",
-    templateVersionId: "",
-    anchor: new Date(year.value, month.value - 1, 1),
-    applyFrom: new Date(year.value, month.value - 1, 1),
-  }));
+  if (!previewMode.value && schedule.templatesQuery.isLoading.value) return;
+  generationMode.value = "assign";
+  const defaultPeriod = monthKey(now.getFullYear(), now.getMonth() + 1);
+  generationPeriod.value = generationMonthOptions.value.some(({ value }) => value === defaultPeriod)
+    ? defaultPeriod
+    : monthKey(now.getFullYear(), now.getMonth() + 1);
+  generationTemplateId.value = null;
+  generationStartDate.value = null;
+  selectedMembershipIds.value = [];
+  preparedExtension.value = null;
+  generationAssignments.value = {};
   generateVisible.value = true;
 }
-function setAssignmentVersion(row: (typeof assignmentRows.value)[number]): void {
-  row.templateVersionId =
-    templates.value.find((item) => item.id === row.templateId)?.currentVersion.id ?? "";
+function setGenerationMode(mode: "assign" | "extend"): void {
+  generationMode.value = mode;
+  if (mode !== "extend") return;
+  const nextMonth = monthKey(year.value, month.value + 1);
+  if (generationMonthOptions.value.some(({ value }) => value === nextMonth))
+    generationPeriod.value = nextMonth;
+}
+function closeGenerate(): void {
+  generateVisible.value = false;
+  selectedMembershipIds.value = [];
+  preparedExtension.value = null;
+  generationAssignments.value = {};
+  generationTemplateId.value = null;
+  generationStartDate.value = null;
+}
+function toggleGenerationRow(membershipId: string, selected: boolean | undefined): void {
+  preparedExtension.value = null;
+  selectedMembershipIds.value = selected
+    ? [...new Set([...selectedMembershipIds.value, membershipId])]
+    : selectedMembershipIds.value.filter((id) => id !== membershipId);
+}
+function toggleGenerationRowFromClick(event: { data: ScheduleRow; originalEvent: Event }): void {
+  const target = event.originalEvent.target;
+  if (target instanceof Element && target.closest("button, input, [role='checkbox'], .p-checkbox"))
+    return;
+
+  const membershipId = event.data.membershipId;
+  toggleGenerationRow(membershipId, !selectedMembershipIds.value.includes(membershipId));
+}
+function toggleAllGenerationRows(selected: boolean | undefined): void {
+  preparedExtension.value = null;
+  selectedMembershipIds.value = selected
+    ? selectableGenerationRows.value.map((row) => row.membershipId)
+    : [];
+}
+function effectiveGenerationStartDate(): Date {
+  if (generationStartDate.value) return generationStartDate.value;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetStart = new Date(generationYear.value, generationMonth.value - 1, 1);
+  return generationYear.value === now.getFullYear() && generationMonth.value === now.getMonth() + 1
+    ? today
+    : targetStart;
+}
+function applyGenerationSettings(): void {
+  const template = templates.value.find((item) => item.id === generationTemplateId.value);
+  if (!template) return;
+  const startDate = isoDate(effectiveGenerationStartDate());
+  for (const membershipId of selectedMembershipIds.value) {
+    generationAssignments.value[membershipId] = {
+      templateId: template.id,
+      templateVersionId: template.currentVersion.id,
+      templateName: template.name,
+      startDate,
+    };
+  }
+  selectedMembershipIds.value = [];
+  generationTemplateId.value = null;
+  generationStartDate.value = null;
 }
 function isoDate(value: Date): string {
   return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
 }
+function formatShortDate(value: string): string {
+  const [, monthValue, dayValue] = value.split("-");
+  return `с ${dayValue}.${monthValue}`;
+}
 function generateSchedule(): void {
-  const assignments = assignmentRows.value
-    .filter((row) => row.templateId && row.templateVersionId)
-    .map((row) => ({
-      membershipId: row.membershipId,
-      templateId: row.templateId,
-      templateVersionId: row.templateVersionId,
-      cycleAnchorDate: isoDate(row.anchor),
-      applyFromDate: isoDate(row.applyFrom),
-    }));
+  const assignments = Object.entries(generationAssignments.value).map(([membershipId, item]) => ({
+    membershipId,
+    templateId: item.templateId,
+    templateVersionId: item.templateVersionId,
+    cycleAnchorDate: item.startDate,
+    applyFromDate: item.startDate,
+  }));
   if (!assignments.length) {
-    error.value = "Выберите шаблон хотя бы для одного сотрудника";
+    error.value = "Выберите сотрудников и назначьте им шаблон смен";
     return;
   }
-  if (
-    overwriteExisting.value &&
-    !confirm("Перезаписать существующие значения графика? История изменений сохранится.")
-  )
-    return;
   void run(async () => {
-    await schedule.generate({
-      year: year.value,
-      month: month.value,
+    const body = {
+      year: generationYear.value,
+      month: generationMonth.value,
       assignments,
-      overwrite: overwriteExisting.value,
-    });
-    generateVisible.value = false;
-    overwriteExisting.value = false;
+    };
+    if (previewMode.value) {
+      const assignments = membershipIds.flatMap((membershipId) => {
+        const assignment = previewAssignments.get(membershipId);
+        return assignment
+          ? [
+              {
+                membershipId,
+                templateId: assignment.templateId,
+                versionId: assignment.version.id,
+                anchor: assignment.anchor,
+                applyFrom: assignment.applyFrom,
+                version: assignment.version,
+              },
+            ]
+          : [];
+      });
+      if (assignments.length !== membershipIds.length) {
+        throw new Error(
+          "Невозможно продлить график: у одного или нескольких выбранных сотрудников нет назначенного цикла.",
+        );
+      }
+      const key = monthKey(generationYear.value, generationMonth.value);
+      let target = previewMonths.get(key);
+      if (!target) {
+        target = createPreviewMonth(generationYear.value, generationMonth.value);
+        previewMonths.set(key, target);
+      }
+      previewApplySchedule(
+        target,
+        assignments.map((item) => ({
+          membershipId: item.membershipId,
+          templateId: item.templateId,
+          versionId: item.templateVersionId,
+          anchor: item.cycleAnchorDate,
+          applyFrom: item.applyFromDate,
+        })),
+        false,
+      );
+    } else await schedule.generate(body);
+    closeGenerate();
   });
 }
 function saveTemplate(): void {
   void run(async () => {
-    await schedule.saveTemplate({ ...templateForm }, selectedTemplateId.value ?? undefined);
-    templateVisible.value = false;
-    templateForm.name = "";
-    selectedTemplateId.value = null;
+    const editingId = selectedTemplateId.value;
+    if (previewMode.value) {
+      const existing = previewTemplates.value.find((item) => item.id === selectedTemplateId.value);
+      const versionChanged =
+        !existing ||
+        existing.currentVersion.workDays !== templateForm.workDays ||
+        existing.currentVersion.offDays !== templateForm.offDays ||
+        existing.currentVersion.durationHours !== templateForm.durationHours ||
+        existing.currentVersion.shiftType !== templateForm.shiftType;
+      const version = versionChanged
+        ? {
+            id: `demo-template-version-${Date.now()}`,
+            version: (existing?.currentVersion.version ?? 0) + 1,
+            workDays: templateForm.workDays,
+            offDays: templateForm.offDays,
+            durationHours: templateForm.durationHours,
+            shiftType: templateForm.shiftType,
+          }
+        : null;
+      if (existing && !existing.isSystem) {
+        existing.name = templateForm.name.trim();
+        if (version) {
+          existing.currentVersion = version;
+          existing.currentVersionId = version.id;
+        }
+      } else {
+        const firstVersion = {
+          id: `demo-template-version-${Date.now()}`,
+          version: 1,
+          workDays: templateForm.workDays,
+          offDays: templateForm.offDays,
+          durationHours: templateForm.durationHours,
+          shiftType: templateForm.shiftType,
+        };
+        previewTemplates.value.push({
+          id: `demo-template-${Date.now()}`,
+          name: templateForm.name.trim(),
+          isSystem: false,
+          currentVersionId: firstVersion.id,
+          currentVersion: firstVersion,
+          _count: { assignments: 0 },
+        });
+      }
+    } else await schedule.saveTemplate({ ...templateForm }, editingId ?? undefined);
+    templateEditorVisible.value = false;
   });
 }
 function openTemplateEditor(): void {
   selectedTemplateId.value = null;
+  resetTemplateForm();
+  error.value = "";
+  templateEditorVisible.value = true;
+}
+function editTemplate(template: ScheduleTemplate): void {
+  if (template.isSystem) return;
+  selectedTemplateId.value = template.id;
+  templateForm.name = template.name;
+  templateForm.workDays = template.currentVersion.workDays;
+  templateForm.offDays = template.currentVersion.offDays;
+  templateForm.durationHours = template.currentVersion.durationHours;
+  templateForm.shiftType = template.currentVersion.shiftType;
+  error.value = "";
+  templateEditorVisible.value = true;
+}
+function confirmDeleteTemplate(template: ScheduleTemplate): void {
+  if (template.isSystem) return;
+  const assignmentCount = previewMode.value
+    ? [...previewAssignments.values()].filter((assignment) => assignment.templateId === template.id)
+        .length
+    : (template._count?.assignments ?? 0);
+  templateDeleteTarget.value = { ...template, assignmentCount };
+  error.value = "";
+  templateDeleteVisible.value = true;
+}
+function deleteTemplate(): void {
+  const target = templateDeleteTarget.value;
+  if (!target) return;
+  void run(async () => {
+    if (previewMode.value) {
+      previewTemplates.value = previewTemplates.value.filter((item) => item.id !== target.id);
+      for (const [membershipId, assignment] of previewAssignments) {
+        if (assignment.templateId === target.id) previewAssignments.delete(membershipId);
+      }
+    } else await schedule.deleteTemplate(target.id);
+    templateDeleteVisible.value = false;
+    templateDeleteTarget.value = null;
+  });
+}
+function resetTemplateForm(): void {
   templateForm.name = "";
   templateForm.workDays = 2;
   templateForm.offDays = 2;
-  templateForm.durationHours = standardHours.value;
+  templateForm.durationHours = 12;
   templateForm.shiftType = "NORMAL";
+}
+function openTemplates(): void {
+  templateEditorVisible.value = false;
+  templateDeleteVisible.value = false;
+  templateDeleteTarget.value = null;
+  error.value = "";
   templateVisible.value = true;
 }
-function saveSettings(): void {
+function prepareExtension(): void {
+  if (!selectedMembershipIds.value.length) return;
+  preparedExtension.value = {
+    period: generationPeriod.value,
+    membershipIds: [...selectedMembershipIds.value],
+  };
+}
+function extendSelectedSchedule(): void {
+  if (!isExtensionPrepared.value || !preparedExtension.value) return;
+  const { period, membershipIds } = preparedExtension.value;
+  const [targetYear, targetMonth] = period.split("-").map(Number);
+  if (!membershipIds.length) return;
   void run(async () => {
-    await schedule.updateSettings({ standardShiftDurationHours: standardHours.value });
-    settingsVisible.value = false;
+    if (previewMode.value) {
+      const key = monthKey(targetYear, targetMonth);
+      let target = previewMonths.get(key);
+      if (!target) {
+        target = createPreviewMonth(targetYear, targetMonth);
+        for (const row of target.rows) {
+          for (const cell of row.cells) cell.value = null;
+          refreshPreviewTotals(row);
+        }
+        previewMonths.set(key, target);
+      }
+      const assignments = membershipIds.flatMap((membershipId) => {
+        const assignment = previewAssignments.get(membershipId);
+        return assignment
+          ? [
+              {
+                membershipId,
+                templateId: assignment.templateId,
+                versionId: assignment.version.id,
+                anchor: assignment.anchor,
+                applyFrom: assignment.applyFrom,
+                version: assignment.version,
+              },
+            ]
+          : [];
+      });
+      if (assignments.length !== membershipIds.length) {
+        throw new Error(
+          "Невозможно продлить график: у одного или нескольких выбранных сотрудников нет назначенного цикла.",
+        );
+      }
+      previewApplySchedule(target, assignments, false);
+    } else {
+      await schedule.extend(targetYear, targetMonth, membershipIds);
+    }
+    year.value = targetYear;
+    month.value = targetMonth;
+    await navigateTo({
+      query: { ...route.query, year: targetYear, month: targetMonth },
+    });
+    closeGenerate();
   });
 }
-function extendSchedule(): void {
-  const next = new Date(year.value, month.value, 1);
-  if (
-    confirm(
-      `Продолжить сохранённые циклы на ${new Intl.DateTimeFormat("ru-RU", { month: "long", year: "numeric" }).format(next)}?`,
-    )
-  )
-    void run(() => schedule.extend(year.value, month.value));
-}
 function download(): void {
+  if (previewMode.value) {
+    if (exportFormat.value === "pdf") {
+      window.print();
+      return;
+    }
+    const header = ["ФИО", "Должность", ...days.value.map(String), "Часы", "Смены"];
+    const lines = [
+      header,
+      ...rows.value.map((row) => [
+        row.fullName,
+        row.roleLabel,
+        ...row.cells.map((cell) => cellLabel(cell.value)),
+        String(row.totalHours),
+        String(row.totalShifts),
+      ]),
+    ];
+    const csv =
+      "\uFEFF" +
+      lines
+        .map((line) => line.map((cell) => `"${cell.replaceAll('"', '""')}"`).join(";"))
+        .join("\r\n");
+    const file = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = file;
+    link.download = `schedule-demo-${monthKey(year.value, month.value)}.csv`;
+    link.click();
+    URL.revokeObjectURL(file);
+    return;
+  }
   void run(() => schedule.exportSchedule(exportFormat.value));
 }
 function formatDate(value: string): string {
@@ -1095,8 +1950,48 @@ function formatDate(value: string): string {
 </script>
 
 <style scoped>
+.schedule-table-viewport {
+  overflow: clip;
+  border-radius: var(--p-border-radius-md);
+}
+
+.schedule-table :deep(.p-datatable-frozen-column) {
+  z-index: 20 !important;
+  background: var(--p-content-background);
+  background-clip: padding-box;
+}
+
+.schedule-table :deep(th.p-datatable-frozen-column:nth-child(1)),
+.schedule-table :deep(td.p-datatable-frozen-column:nth-child(1)) {
+  z-index: 22 !important;
+}
+
+.schedule-table :deep(th.p-datatable-frozen-column:nth-child(2)),
+.schedule-table :deep(td.p-datatable-frozen-column:nth-child(2)) {
+  z-index: 21 !important;
+}
+
 .schedule-table :deep(.p-datatable-column-title) {
   font-weight: 400;
+}
+
+.schedule-table :deep(th.p-datatable-frozen-column::after),
+.schedule-table :deep(td.p-datatable-frozen-column::after) {
+  position: absolute;
+  top: 0;
+  right: -1px;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 2px;
+  height: 100%;
+  background-color: var(--p-content-background);
+  border-inline-end: 1px solid var(--p-datatable-border-color);
+  content: "";
+  pointer-events: none;
+}
+
+.schedule-table :deep(.p-datatable-tbody > tr:hover > .p-datatable-frozen-column::after) {
+  background-color: var(--p-datatable-row-hover-background);
 }
 
 .schedule-table :deep(.p-datatable-thead > tr:first-child > th:first-child) {
@@ -1113,5 +2008,29 @@ function formatDate(value: string): string {
 
 .schedule-table :deep(.p-datatable-tbody > tr:last-child > td:last-child) {
   border-bottom-right-radius: var(--p-border-radius-md);
+}
+
+.generation-table :deep(.p-datatable-thead > tr:first-child > th:first-child) {
+  border-top-left-radius: var(--p-border-radius-md);
+}
+
+.generation-table :deep(.p-datatable-thead > tr:first-child > th:last-child) {
+  border-top-right-radius: var(--p-border-radius-md);
+}
+
+.generation-table :deep(.p-datatable-tbody > tr:last-child > td:first-child) {
+  border-bottom-left-radius: var(--p-border-radius-md);
+}
+
+.generation-table :deep(.p-datatable-tbody > tr:last-child > td:last-child) {
+  border-bottom-right-radius: var(--p-border-radius-md);
+}
+
+.generation-table :deep(.p-datatable-tbody > tr:last-child > td) {
+  border-bottom: 0;
+}
+
+.generation-table :deep(.p-datatable-tbody > tr) {
+  cursor: pointer;
 }
 </style>

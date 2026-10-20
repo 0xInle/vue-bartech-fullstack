@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h2 class="text-lg font-semibold">Сотрудники</h2>
+    <h2 class="text-base font-semibold">Сотрудники</h2>
     <DataTable
       v-model:selection="selectedMember"
       :value="members"
