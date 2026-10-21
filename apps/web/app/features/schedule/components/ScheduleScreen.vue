@@ -438,8 +438,8 @@
             <Select
               v-model="generationTemplateId"
               input-id="generation-template"
-              :options="templates"
-              option-label="name"
+              :options="generationTemplateOptions"
+              option-label="label"
               option-value="id"
               size="small"
               class="w-full"
@@ -540,8 +540,8 @@
                   "
                   :value="
                     generationMode === 'extend'
-                      ? data.assignedTemplateName
-                      : data.previousTemplateName
+                      ? formatCycleName(data.assignedTemplateName)
+                      : formatCycleName(data.previousTemplateName)
                   "
                   severity="secondary"
                   :pt="compactTagPt"
@@ -565,7 +565,7 @@
                   class="flex flex-nowrap justify-end gap-1.5"
                 >
                   <Tag
-                    :value="generationAssignments[data.membershipId].templateName"
+                    :value="formatCycleName(generationAssignments[data.membershipId].templateName)"
                     severity="secondary"
                     :pt="compactTagPt"
                   />
@@ -645,8 +645,9 @@
     <Drawer
       v-model:visible="templateVisible"
       position="right"
-      class="h-screen max-h-screen h-dvh max-h-dvh w-full sm:!w-[30rem]"
+      class="h-screen max-h-screen h-dvh max-h-dvh"
       :pt="{
+        root: { style: { width: 'calc(226.5px + 2.5rem)', maxWidth: 'calc(100vw - 1rem)' } },
         header: { class: '!items-center' },
         title: { style: { fontSize: '1rem', fontWeight: '600' } },
         pcCloseButton: { root: { class: '!rounded-md' } },
@@ -657,154 +658,169 @@
         <span :class="[titleClass, 'leading-none']">Шаблоны смен</span>
       </template>
       <Message v-if="error" severity="error" size="small" :closable="false">{{ error }}</Message>
-      <div v-if="templateEditorVisible" class="flex min-h-0 flex-1 flex-col gap-4 pt-2">
-        <div class="flex items-center gap-2">
-          <Button
-            label="К шаблонам"
-            severity="secondary"
-            variant="text"
+      <div
+        class="flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col gap-4 overflow-y-auto pt-1"
+      >
+        <form class="min-w-0 space-y-3 rounded-lg bg-surface-0" @submit.prevent="saveTemplate">
+          <Message
+            v-if="duplicateWarningVisible && duplicateTemplate"
+            severity="warn"
             size="small"
-            :disabled="busy"
-            @click="templateEditorVisible = false"
-          />
-          <span class="text-sm text-color-secondary">
-            {{ selectedTemplateId ? "Новая версия шаблона" : "Новый шаблон" }}
-          </span>
-        </div>
-        <form class="space-y-4" @submit.prevent="saveTemplate">
-          <FloatLabel variant="on"
-            ><InputText
-              v-model="templateForm.name"
-              input-id="template-name"
-              size="small"
-              maxlength="80"
-              class="w-full"
-            /><label for="template-name">Название</label></FloatLabel
+            :closable="false"
+            class="mx-px w-[calc(100%_-_2px)] min-w-0 max-w-full"
+            :pt="{
+              contentWrapper: { class: 'min-w-0 max-w-full' },
+              content: { class: 'min-w-0 max-w-full' },
+              text: { class: 'min-w-0 break-words' },
+            }"
           >
-          <div class="grid grid-cols-2 gap-3">
-            <FloatLabel variant="on"
-              ><InputNumber
+            Цикл {{ formatCycleName(templateName) }} уже задан
+          </Message>
+          <div class="flex flex-col gap-3">
+            <FloatLabel variant="on" class="min-w-0">
+              <InputNumber
                 v-model="templateForm.workDays"
                 input-id="template-work"
                 size="small"
+                button-layout="horizontal"
+                increment-button-icon="pi pi-plus"
+                decrement-button-icon="pi pi-minus"
+                show-buttons
+                :step="1"
                 :min="1"
-                :max="31"
-                class="w-full"
-              /><label for="template-work">Рабочих дней</label></FloatLabel
-            ><FloatLabel variant="on"
-              ><InputNumber
+                :max="31 - templateForm.offDays"
+                :max-fraction-digits="0"
+                class="w-full min-w-0"
+                input-class="w-full min-w-0 border-0 text-center shadow-none"
+              />
+              <label for="template-work">Рабочих дней</label>
+            </FloatLabel>
+            <FloatLabel variant="on" class="min-w-0">
+              <InputNumber
                 v-model="templateForm.offDays"
                 input-id="template-off"
                 size="small"
-                :min="1"
-                :max="31"
-                class="w-full"
-              /><label for="template-off">Выходных</label></FloatLabel
-            >
-          </div>
-          <div class="flex gap-2">
-            <FloatLabel variant="on" class="w-full"
-              ><InputNumber
-                v-model="templateForm.durationHours"
-                input-id="template-hours"
-                size="small"
-                :min="1"
-                :max="24"
-                class="w-full"
-              /><label for="template-hours">Часов в смене</label></FloatLabel
-            ><Select
-              v-model="templateForm.shiftType"
-              :options="shiftTypes"
-              option-label="label"
-              option-value="value"
+                button-layout="horizontal"
+                increment-button-icon="pi pi-plus"
+                decrement-button-icon="pi pi-minus"
+                show-buttons
+                :step="1"
+                :min="0"
+                :max="31 - templateForm.workDays"
+                :max-fraction-digits="0"
+                class="w-full min-w-0"
+                input-class="w-full min-w-0 border-0 text-center shadow-none"
+              />
+              <label for="template-off">Выходных дней</label>
+            </FloatLabel>
+            <Button
+              type="submit"
+              :label="selectedTemplateId ? 'Сохранить шаблон' : 'Создать шаблон'"
               size="small"
+              :loading="busy"
+              :disabled="!templateFormValid || templateLoading || templateLoadFailed"
               class="w-full"
             />
           </div>
-          <div class="flex justify-end gap-2">
+          <div v-if="selectedTemplateId" class="flex items-center justify-between gap-2">
+            <span class="text-xs text-color-secondary">Изменение создаст новую версию</span>
             <Button
               label="Отмена"
               severity="secondary"
               variant="text"
               size="small"
               :disabled="busy"
-              @click="templateEditorVisible = false"
-            /><Button
-              type="submit"
-              :label="selectedTemplateId ? 'Сохранить' : 'Создать шаблон'"
-              size="small"
-              :loading="busy"
-              :disabled="!templateForm.name.trim()"
+              @click="cancelTemplateEdit"
             />
           </div>
         </form>
-      </div>
-      <div v-else class="flex min-h-0 flex-1 flex-col gap-3 pt-2">
-        <div class="flex justify-end">
-          <Button label="Создать шаблон" size="small" @click="openTemplateEditor" />
-        </div>
-        <Message
-          v-if="!previewMode && schedule.templatesQuery.isError.value"
-          severity="error"
-          size="small"
-          :closable="false"
-        >
-          Не удалось загрузить шаблоны. Обновите страницу и попробуйте ещё раз.
-        </Message>
-        <div
-          v-if="!previewMode && schedule.templatesQuery.isLoading.value"
-          class="flex flex-1 items-center justify-center"
-        >
+        <div v-if="templateLoading" class="flex min-h-20 items-center justify-center">
           <LoadingIndicator class="w-auto" />
         </div>
-        <DataTable
-          v-else
-          :value="customTemplates"
-          size="small"
-          scrollable
-          scroll-height="flex"
-          row-hover
-          class="min-h-0 flex-1 text-sm"
-          :pt="{ tableContainer: { class: 'overflow-y-auto' } }"
-        >
-          <Column field="name" header="Шаблон" />
-          <Column header="Цикл">
-            <template #body="{ data }">
-              <span class="whitespace-nowrap text-xs text-color-secondary">
-                {{ data.currentVersion.workDays }}/{{ data.currentVersion.offDays }} ·
-                {{ data.currentVersion.durationHours }} ч ·
-                {{ data.currentVersion.shiftType === "NIGHT" ? "ночная" : "обычная" }}
-              </span>
-            </template>
-          </Column>
-          <Column header="" header-style="width: 1%" body-style="width: 1%; white-space: nowrap">
-            <template #body="{ data }">
-              <div class="flex justify-end gap-1">
-                <Button
-                  icon="pi pi-pencil"
-                  severity="secondary"
-                  variant="text"
-                  size="small"
-                  aria-label="Редактировать шаблон"
-                  :disabled="busy"
-                  @click="editTemplate(data)"
-                />
-                <Button
-                  icon="pi pi-trash"
-                  severity="danger"
-                  variant="text"
-                  size="small"
-                  aria-label="Удалить шаблон"
-                  :disabled="busy"
-                  @click="confirmDeleteTemplate(data)"
-                />
+        <Message v-else-if="templateLoadFailed" severity="error" size="small" :closable="false">
+          Не удалось загрузить шаблоны. Обновите страницу и попробуйте ещё раз.
+        </Message>
+        <template v-else>
+          <section v-if="systemTemplates.length" class="space-y-3">
+            <h2 class="text-sm font-semibold">Системные шаблоны</h2>
+            <div class="max-w-full overflow-x-auto">
+              <div class="flex w-max flex-nowrap gap-0.5">
+                <div
+                  v-for="template in systemTemplates"
+                  :key="template.id"
+                  class="flex min-h-8 shrink-0 items-center px-0.5 py-1"
+                >
+                  <Tag
+                    :value="formatCycleName(template.name)"
+                    severity="secondary"
+                    :pt="{
+                      root: { style: { fontSize: '0.75rem', padding: '0.0625rem 0.25rem' } },
+                      label: { style: { fontWeight: '400' } },
+                    }"
+                  />
+                </div>
               </div>
-            </template>
-          </Column>
-          <template #empty>
-            <span class="text-color-secondary">Пользовательских шаблонов пока нет</span>
-          </template>
-        </DataTable>
+            </div>
+          </section>
+          <Divider class="!my-0" />
+          <section
+            class="space-y-3"
+            style="
+              --p-datatable-row-hover-background: color-mix(
+                in srgb,
+                var(--p-primary-100) 70%,
+                var(--p-content-background)
+              );
+            "
+          >
+            <h2 class="text-sm font-semibold">Мои шаблоны</h2>
+            <div
+              v-if="customTemplates.length"
+              class="divide-y divide-[var(--p-content-border-color)]"
+            >
+              <div
+                v-for="template in customTemplates"
+                :key="template.id"
+                class="flex min-h-8 min-w-0 items-center gap-2 px-1 py-1 hover:bg-[var(--p-datatable-row-hover-background)]"
+              >
+                <Tag
+                  :value="formatCycleName(template.name)"
+                  severity="secondary"
+                  :pt="compactTagPt"
+                  class="shrink-0"
+                />
+                <div class="ml-auto flex shrink-0 items-center gap-1">
+                  <Button
+                    icon="pi pi-pencil"
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    class="!h-5 !min-h-5 !w-5 !p-0"
+                    aria-label="Редактировать шаблон"
+                    :disabled="busy"
+                    @click="editTemplate(template)"
+                  />
+                  <Button
+                    icon="pi pi-trash"
+                    severity="danger"
+                    variant="text"
+                    size="small"
+                    class="!h-5 !min-h-5 !w-5 !p-0"
+                    aria-label="Удалить шаблон"
+                    :disabled="busy"
+                    @click="confirmDeleteTemplate(template)"
+                  />
+                </div>
+              </div>
+            </div>
+            <div
+              v-else
+              class="rounded-lg border border-dashed border-[var(--p-divider-border-color)] p-4 text-center"
+            >
+              <p class="text-xs text-color-secondary">Пока нет своих шаблонов</p>
+            </div>
+          </section>
+        </template>
       </div>
     </Drawer>
 
@@ -813,15 +829,17 @@
       modal
       header="Удалить шаблон?"
       class="w-full max-w-md"
+      :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
     >
       <p class="mb-4 text-sm text-color-secondary">
         <template v-if="templateDeleteTarget?.assignmentCount">
-          Шаблон «{{ templateDeleteTarget.name }}» назначен сотрудникам. Их назначения и возможность
-          продолжать цикл будут удалены. Уже заполненные дни графика и история изменений сохранятся.
+          Шаблон «{{ formatCycleName(templateDeleteTarget.name) }}» назначен сотрудникам. Их
+          назначения и возможность продолжать цикл будут удалены. Уже заполненные дни графика и
+          история изменений сохранятся.
         </template>
         <template v-else>
-          Шаблон «{{ templateDeleteTarget?.name }}» будет удалён. Уже заполненные дни графика и
-          история изменений сохранятся.
+          Шаблон «{{ formatCycleName(templateDeleteTarget?.name) }}» будет удалён. Уже заполненные
+          дни графика и история изменений сохранятся.
         </template>
       </p>
       <div class="flex justify-end gap-2">
@@ -896,7 +914,7 @@ const generationPreviewLoading = ref(false);
 const error = ref("");
 const cellVisible = ref(false);
 const templateVisible = ref(false);
-const templateEditorVisible = ref(false);
+const duplicateWarningVisible = ref(false);
 const templateDeleteVisible = ref(false);
 const templateDeleteTarget = ref<(ScheduleTemplate & { assignmentCount: number }) | null>(null);
 const activeRow = ref<ScheduleRow | null>(null);
@@ -914,11 +932,8 @@ const bulkStatus = ref<"VACATION" | "SICK_LEAVE" | "NO_SHOW" | null>(null);
 const exportFormat = ref<"xlsx" | "pdf">("xlsx");
 const selectedTemplateId = ref<string | null>(null);
 const templateForm = reactive({
-  name: "",
-  workDays: 2,
-  offDays: 2,
-  durationHours: 12,
-  shiftType: "NORMAL" as "NORMAL" | "NIGHT",
+  workDays: 1,
+  offDays: 1,
 });
 const selectedMembershipIds = ref<string[]>([]);
 const preparedExtension = ref<{ period: string; membershipIds: string[] } | null>(null);
@@ -982,6 +997,43 @@ previewMonths.set(monthKey(year.value, month.value), previewMonth.value);
 const templates = computed(() =>
   previewMode.value ? previewTemplates.value : (schedule.templatesQuery.data.value ?? []),
 );
+const systemTemplates = computed(() => templates.value.filter((template) => template.isSystem));
+const customTemplates = computed(() => templates.value.filter((template) => !template.isSystem));
+const generationTemplateOptions = computed(() =>
+  templates.value.map((template) => ({ ...template, label: formatCycleName(template.name) })),
+);
+const templateName = computed(() => `${templateForm.workDays}/${templateForm.offDays}`);
+const duplicateTemplate = computed(
+  () =>
+    templates.value.find(
+      (template) =>
+        template.id !== selectedTemplateId.value &&
+        template.currentVersion.workDays === templateForm.workDays &&
+        template.currentVersion.offDays === templateForm.offDays,
+    ) ?? null,
+);
+const templateFormValid = computed(
+  () =>
+    Number.isInteger(templateForm.workDays) &&
+    templateForm.workDays >= 1 &&
+    templateForm.workDays <= 31 &&
+    Number.isInteger(templateForm.offDays) &&
+    templateForm.offDays >= 0 &&
+    templateForm.offDays <= 30 &&
+    templateForm.workDays + templateForm.offDays <= 31,
+);
+watch([() => templateForm.workDays, () => templateForm.offDays], () => {
+  duplicateWarningVisible.value = false;
+});
+watch(templateVisible, (visible) => {
+  if (!visible) duplicateWarningVisible.value = false;
+});
+const templateLoading = computed(
+  () => !previewMode.value && schedule.templatesQuery.isLoading.value,
+);
+const templateLoadFailed = computed(
+  () => !previewMode.value && schedule.templatesQuery.isError.value,
+);
 const generationMonthOptions = computed(() =>
   Array.from({ length: 3 }, (_, offset) => {
     const date = new Date(now.getFullYear(), now.getMonth() + offset, 1);
@@ -1029,7 +1081,6 @@ const allGenerationRowsSelected = computed(
       selectedMembershipIds.value.includes(row.membershipId),
     ),
 );
-const customTemplates = computed(() => templates.value.filter((template) => !template.isSystem));
 const monthResponse = computed(() => {
   if (previewMode.value) return previewMonth.value;
   return schedule.monthQuery.data.value as unknown as
@@ -1290,6 +1341,7 @@ function createPreviewTemplates(): ScheduleTemplate[] {
     ["2/2", 2, 2],
     ["3/3", 3, 3],
     ["4/2", 4, 2],
+    ["5/2", 5, 2],
     ["5/1", 5, 1],
     ["6/1", 6, 1],
   ].map(([name, workDays, offDays], index) => {
@@ -1376,6 +1428,11 @@ function cellLabel(value: ScheduleValue | null | unknown): string {
   if (item.kind === "SHIFT") return String(item.durationHours);
   if (item.kind === "EMPTY") return "";
   return { VACATION: "О", SICK_LEAVE: "Б", NO_SHOW: "Н" }[item.status];
+}
+function formatCycleName(name: string | null | undefined): string {
+  if (!name) return "";
+  const match = /^(\d+)\/(\d+)$/.exec(name);
+  return match ? `${match[1]} | ${match[2]}` : name;
 }
 function cellStyle(
   value: ScheduleValue | null,
@@ -1751,28 +1808,44 @@ function generateSchedule(): void {
   });
 }
 function saveTemplate(): void {
+  if (!templateFormValid.value) {
+    error.value = "Укажите от 1 до 31 рабочего, от 0 до 30 выходных дней и не более 31 дня в цикле";
+    return;
+  }
+  if (duplicateTemplate.value) {
+    error.value = "";
+    duplicateWarningVisible.value = true;
+    return;
+  }
+  const input = {
+    name: templateName.value,
+    workDays: templateForm.workDays,
+    offDays: templateForm.offDays,
+    durationHours: 12,
+    shiftType: "NORMAL" as const,
+  };
   void run(async () => {
     const editingId = selectedTemplateId.value;
     if (previewMode.value) {
       const existing = previewTemplates.value.find((item) => item.id === selectedTemplateId.value);
       const versionChanged =
         !existing ||
-        existing.currentVersion.workDays !== templateForm.workDays ||
-        existing.currentVersion.offDays !== templateForm.offDays ||
-        existing.currentVersion.durationHours !== templateForm.durationHours ||
-        existing.currentVersion.shiftType !== templateForm.shiftType;
+        existing.currentVersion.workDays !== input.workDays ||
+        existing.currentVersion.offDays !== input.offDays ||
+        existing.currentVersion.durationHours !== input.durationHours ||
+        existing.currentVersion.shiftType !== input.shiftType;
       const version = versionChanged
         ? {
             id: `demo-template-version-${Date.now()}`,
             version: (existing?.currentVersion.version ?? 0) + 1,
-            workDays: templateForm.workDays,
-            offDays: templateForm.offDays,
-            durationHours: templateForm.durationHours,
-            shiftType: templateForm.shiftType,
+            workDays: input.workDays,
+            offDays: input.offDays,
+            durationHours: input.durationHours,
+            shiftType: input.shiftType,
           }
         : null;
       if (existing && !existing.isSystem) {
-        existing.name = templateForm.name.trim();
+        existing.name = input.name;
         if (version) {
           existing.currentVersion = version;
           existing.currentVersionId = version.id;
@@ -1781,40 +1854,39 @@ function saveTemplate(): void {
         const firstVersion = {
           id: `demo-template-version-${Date.now()}`,
           version: 1,
-          workDays: templateForm.workDays,
-          offDays: templateForm.offDays,
-          durationHours: templateForm.durationHours,
-          shiftType: templateForm.shiftType,
+          workDays: input.workDays,
+          offDays: input.offDays,
+          durationHours: input.durationHours,
+          shiftType: input.shiftType,
         };
         previewTemplates.value.push({
           id: `demo-template-${Date.now()}`,
-          name: templateForm.name.trim(),
+          name: input.name,
           isSystem: false,
           currentVersionId: firstVersion.id,
           currentVersion: firstVersion,
           _count: { assignments: 0 },
         });
       }
-    } else await schedule.saveTemplate({ ...templateForm }, editingId ?? undefined);
-    templateEditorVisible.value = false;
+    } else await schedule.saveTemplate(input, editingId ?? undefined);
+    duplicateWarningVisible.value = false;
+    selectedTemplateId.value = null;
+    resetTemplateForm();
   });
-}
-function openTemplateEditor(): void {
-  selectedTemplateId.value = null;
-  resetTemplateForm();
-  error.value = "";
-  templateEditorVisible.value = true;
 }
 function editTemplate(template: ScheduleTemplate): void {
   if (template.isSystem) return;
+  duplicateWarningVisible.value = false;
   selectedTemplateId.value = template.id;
-  templateForm.name = template.name;
   templateForm.workDays = template.currentVersion.workDays;
   templateForm.offDays = template.currentVersion.offDays;
-  templateForm.durationHours = template.currentVersion.durationHours;
-  templateForm.shiftType = template.currentVersion.shiftType;
   error.value = "";
-  templateEditorVisible.value = true;
+}
+function cancelTemplateEdit(): void {
+  duplicateWarningVisible.value = false;
+  selectedTemplateId.value = null;
+  resetTemplateForm();
+  error.value = "";
 }
 function confirmDeleteTemplate(template: ScheduleTemplate): void {
   if (template.isSystem) return;
@@ -1841,16 +1913,13 @@ function deleteTemplate(): void {
   });
 }
 function resetTemplateForm(): void {
-  templateForm.name = "";
-  templateForm.workDays = 2;
-  templateForm.offDays = 2;
-  templateForm.durationHours = 12;
-  templateForm.shiftType = "NORMAL";
+  templateForm.workDays = 1;
+  templateForm.offDays = 1;
 }
 function openTemplates(): void {
-  templateEditorVisible.value = false;
   templateDeleteVisible.value = false;
   templateDeleteTarget.value = null;
+  cancelTemplateEdit();
   error.value = "";
   templateVisible.value = true;
 }

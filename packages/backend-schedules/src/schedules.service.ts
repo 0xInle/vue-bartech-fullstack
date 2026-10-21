@@ -187,10 +187,23 @@ export class SchedulesService {
     templateId?: string,
   ) {
     validateTemplate(input);
-    const name = input.name.trim();
-    if (!name || name.length > 80)
-      throw new ConflictException("Укажите название шаблона до 80 символов");
+    const name = `${input.workDays}/${input.offDays}`;
     return this.database.$transaction(async (tx) => {
+      const existingTemplates = await tx.scheduleTemplate.findMany({
+        where: {
+          OR: [{ isSystem: true }, { venueId, isSystem: false }],
+          ...(templateId ? { id: { not: templateId } } : {}),
+        },
+        include: { currentVersion: true },
+      });
+      const duplicate = existingTemplates.find(
+        (template) =>
+          template.currentVersion?.workDays === input.workDays &&
+          template.currentVersion?.offDays === input.offDays,
+      );
+      if (duplicate) {
+        throw new ConflictException(`Шаблон ${input.workDays} | ${input.offDays} уже задан`);
+      }
       if (!templateId) {
         const template = await tx.scheduleTemplate.create({
           data: { venueId, name, createdByUserId: userId },
@@ -615,8 +628,9 @@ function validateTemplate(input: ScheduleTemplateInput): void {
     input.workDays < 1 ||
     input.workDays > 31 ||
     !Number.isInteger(input.offDays) ||
-    input.offDays < 1 ||
-    input.offDays > 31 ||
+    input.offDays < 0 ||
+    input.offDays > 30 ||
+    input.workDays + input.offDays > 31 ||
     !Number.isInteger(input.durationHours) ||
     input.durationHours < 1 ||
     input.durationHours > 24 ||
