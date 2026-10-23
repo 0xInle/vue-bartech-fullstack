@@ -104,17 +104,20 @@ export class VenueTeamMemberDto {
   @ApiProperty({ enum: VENUE_INVITE_ROLES })
   role!: (typeof VENUE_INVITE_ROLES)[number];
 
+  @ApiProperty({ format: "date", nullable: true, description: "Первый нерабочий день" })
+  terminationDate!: string | null;
+
   @ApiProperty({ type: [String] })
-  delegatedPermissions!: string[];
+  permissions!: string[];
+
+  @ApiProperty({ type: [String] })
+  availablePermissions!: string[];
 
   @ApiProperty({ enum: VENUE_INVITE_ROLES, isArray: true })
   availableRoles!: (typeof VENUE_INVITE_ROLES)[number][];
 
-  @ApiProperty({ type: String, isArray: true })
-  availableDelegatedPermissions!: string[];
-
   @ApiProperty()
-  canManageDelegatedPermissions!: boolean;
+  canManagePermissionOverrides!: boolean;
 
   @ApiProperty()
   isCurrentUser!: boolean;

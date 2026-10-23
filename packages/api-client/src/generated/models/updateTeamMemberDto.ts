@@ -5,10 +5,10 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
-import type { UpdateTeamMemberDtoDelegatedPermissionsItem } from './updateTeamMemberDtoDelegatedPermissionsItem';
+import type { UpdateTeamMemberDtoPermissionsItem } from './updateTeamMemberDtoPermissionsItem';
 import type { UpdateTeamMemberDtoRole } from './updateTeamMemberDtoRole';
 
 export interface UpdateTeamMemberDto {
   role: UpdateTeamMemberDtoRole;
-  delegatedPermissions: UpdateTeamMemberDtoDelegatedPermissionsItem[];
+  permissions: UpdateTeamMemberDtoPermissionsItem[];
 }

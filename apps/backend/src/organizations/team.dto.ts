@@ -1,18 +1,20 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { ArrayMaxSize, ArrayUnique, IsArray, IsDateString, IsIn } from "class-validator";
-import { delegatedPermissionCodes, venueRoles } from "@bartech/backend-organizations";
+import { permissionCatalog, venueRoles, type PermissionCode } from "@bartech/backend-organizations";
+
+const permissionCodes = Object.keys(permissionCatalog);
 
 export class UpdateTeamMemberDto {
   @ApiProperty({ enum: venueRoles })
   @IsIn([...venueRoles])
   role!: (typeof venueRoles)[number];
 
-  @ApiProperty({ enum: delegatedPermissionCodes, isArray: true })
+  @ApiProperty({ enum: permissionCodes, isArray: true })
   @IsArray()
-  @ArrayMaxSize(delegatedPermissionCodes.length)
+  @ArrayMaxSize(permissionCodes.length)
   @ArrayUnique()
-  @IsIn([...delegatedPermissionCodes], { each: true })
-  delegatedPermissions!: (typeof delegatedPermissionCodes)[number][];
+  @IsIn(permissionCodes, { each: true })
+  permissions!: PermissionCode[];
 }
 
 export class TeamMemberUpdateResponseDto {
@@ -21,7 +23,7 @@ export class TeamMemberUpdateResponseDto {
 }
 
 export class EndTeamMemberDto {
-  @ApiProperty({ format: "date", example: "2026-10-18" })
+  @ApiProperty({ format: "date", example: "2026-10-19", description: "Первый нерабочий день" })
   @IsDateString({ strict: true })
-  lastWorkingDay!: string;
+  terminationDate!: string;
 }

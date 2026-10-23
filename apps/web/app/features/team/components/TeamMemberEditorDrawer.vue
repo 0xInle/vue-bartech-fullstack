@@ -1,85 +1,97 @@
 <template>
-  <Drawer v-model:visible="visible" position="right" class="w-full sm:!w-96">
+  <Drawer
+    v-model:visible="visible"
+    position="right"
+    class="w-full sm:!w-96"
+    :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
+  >
+    <template #header="{ class: titleClass }">
+      <span :class="[titleClass, 'leading-none']">Управление сотрудником</span>
+    </template>
     <template v-if="member">
-      <div class="space-y-6">
+      <div class="space-y-3">
+        <Message
+          v-if="roleChanged"
+          severity="warn"
+          size="small"
+          :closable="false"
+          :pt="compactMessagePt"
+        >
+          При смене должности персональные права заменятся правами новой роли.
+        </Message>
         <header>
-          <h2 class="text-base font-semibold">{{ member.fullName }}</h2>
-          <p class="mt-1 text-sm text-color-secondary">{{ member.email }}</p>
+          <h2 class="text-sm font-medium text-color-secondary">{{ member.fullName }}</h2>
         </header>
 
         <form class="space-y-6" @submit.prevent="save">
           <section v-if="member.availableRoles.length" class="space-y-3">
-            <label for="team-member-role" class="text-sm font-medium">Должность</label>
-            <Select
-              id="team-member-role"
-              v-model="role"
-              :options="availableRoles"
-              option-label="label"
-              option-value="value"
-              size="small"
-              class="w-full"
-              :disabled="busy"
-            />
-            <Message v-if="roleChanged" severity="warn" :closable="false">
-              При изменении должности дополнительные права сотрудника в этом заведении будут
-              сброшены.
-            </Message>
-          </section>
-
-          <section
-            v-if="member.availableRoles.length"
-            class="space-y-3 border-t border-surface pt-4"
-          >
-            <h3 class="text-sm font-medium">Завершение членства</h3>
-            <DatePicker
-              v-model="lastWorkingDay"
-              date-format="dd.mm.yy"
-              size="small"
-              class="w-full"
-              placeholder="Последний рабочий день"
-            />
-            <Button
-              label="Завершить членство"
-              severity="danger"
-              variant="outlined"
-              size="small"
-              :disabled="busy || !lastWorkingDay"
-              @click="endMembership"
-            />
+            <div class="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
+              <FloatLabel variant="on">
+                <Select
+                  v-model="role"
+                  input-id="team-member-role"
+                  :options="availableRoles"
+                  option-label="label"
+                  option-value="value"
+                  size="small"
+                  class="w-full"
+                  :disabled="busy"
+                />
+                <label for="team-member-role" class="text-xs">Должность</label>
+              </FloatLabel>
+              <Button
+                label="Подтвердить"
+                size="small"
+                :loading="busy"
+                :disabled="busy || !roleChanged"
+                @click="emit('confirm-role', role)"
+              />
+            </div>
           </section>
 
           <section class="space-y-3">
-            <h3 class="text-sm font-medium">Дополнительные права</h3>
+            <h3 class="text-sm font-medium">Разрешения сотрудника</h3>
             <p
-              v-if="!member.canManageDelegatedPermissions && !roleChanged"
+              v-if="
+                !member.canManagePermissionOverrides &&
+                member.role !== 'BAR_MANAGER' &&
+                !roleChanged
+              "
               class="text-sm text-color-secondary"
             >
-              {{ permissionNames(member.delegatedPermissions) || "Дополнительных прав нет" }}
+              {{ permissionNames(member.permissions) || "Разрешений нет" }}
             </p>
-            <template v-else-if="canEditPermissions">
+            <template v-else-if="shouldShowPermissionToggles">
               <p v-if="readOnlyPermissionNames" class="text-sm text-color-secondary">
                 Нельзя изменить: {{ readOnlyPermissionNames }}
               </p>
-              <label
-                v-for="permission in availablePermissionOptions"
-                :key="permission.value"
-                class="flex items-center gap-2 text-sm"
-              >
-                <Checkbox
-                  v-model="delegatedPermissions"
-                  :input-id="`team-permission-${permission.value}`"
-                  :value="permission.value"
-                  :disabled="busy || role === 'BAR_MANAGER'"
-                />
-                <span>{{ permission.label }}</span>
-              </label>
+              <div class="flex flex-col gap-0.5">
+                <div
+                  v-for="permission in availablePermissionOptions"
+                  :key="permission.value"
+                  class="flex items-center gap-2 text-sm"
+                >
+                  <ToggleSwitch
+                    :model-value="permissions.includes(permission.value)"
+                    :input-id="`team-permission-${permission.value}`"
+                    :disabled="busy || roleChanged || !canEditPermissions"
+                    class="scale-75 origin-left"
+                    @update:model-value="setPermission(permission.value, $event)"
+                  />
+                  <label :for="`team-permission-${permission.value}`" class="text-xs">
+                    {{ permission.label }}
+                  </label>
+                </div>
+              </div>
             </template>
             <p v-else class="text-sm text-color-secondary">
-              {{ permissionNames(member.delegatedPermissions) || "Дополнительных прав нет" }}
+              {{ permissionNames(member.permissions) || "Разрешений нет" }}
             </p>
           </section>
 
-          <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
+          <Message v-if="error" severity="error" :closable="false" :pt="compactMessagePt">{{
+            error
+          }}</Message>
 
           <div class="flex justify-end gap-2">
             <Button
@@ -88,15 +100,14 @@
               variant="text"
               size="small"
               :disabled="busy"
-              @click="emit('close')"
+              @click="requestClose"
             />
             <Button
-              v-if="hasChanges"
               type="submit"
               label="Сохранить"
               size="small"
               :loading="busy"
-              :disabled="busy"
+              :disabled="busy || roleChanged || !permissionsChanged"
             />
           </div>
         </form>
@@ -107,11 +118,12 @@
 
 <script setup lang="ts">
 import type {
-  DelegatedPermission,
+  PermissionCode,
   TeamMember,
   UpdateTeamMemberInput,
   VenueRole,
 } from "../composables/useVenueTeam";
+import { compactMessagePt } from "~/utils/primevue-message";
 
 const props = defineProps<{
   member: TeamMember | null;
@@ -120,18 +132,17 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   close: [];
+  "confirm-role": [role: VenueRole];
   save: [input: UpdateTeamMemberInput];
-  end: [lastWorkingDay: string];
 }>();
 const visible = computed({
   get: () => props.member !== null,
   set: (value: boolean) => {
-    if (!value) emit("close");
+    if (!value) requestClose();
   },
 });
 const role = ref<VenueRole>("BARTENDER");
-const delegatedPermissions = ref<DelegatedPermission[]>([]);
-const lastWorkingDay = ref<Date | null>(null);
+const permissions = ref<PermissionCode[]>([]);
 const availableRoles: Array<{ label: string; value: VenueRole }> = [
   { label: "Бармен", value: "BARTENDER" },
   { label: "Барбек", value: "BARBACK" },
@@ -140,45 +151,59 @@ const availableRoles: Array<{ label: string; value: VenueRole }> = [
   { label: "Бар-менеджер", value: "BAR_MANAGER" },
 ];
 const permissionOptions = [
+  { label: "Просмотр продукции", value: "view_products" },
+  { label: "Просмотр архива", value: "view_archive" },
+  { label: "Просмотр команды", value: "view_team" },
   { label: "Управление продукцией", value: "manage_products" },
   { label: "Управление архивом", value: "manage_product_archive" },
   { label: "Безвозвратное удаление продукции", value: "delete_products_permanently" },
   { label: "Выгрузка данных", value: "export_data" },
   { label: "Приглашение сотрудников", value: "invite_employees" },
+  { label: "Приглашение бар-менеджера", value: "invite_bar_manager" },
+  { label: "Приглашение шеф-бармена", value: "invite_chef_bartender" },
+  { label: "Управление командой", value: "manage_team" },
+  { label: "Управление разрешениями", value: "manage_delegated_permissions" },
+  { label: "Создание заведений", value: "create_venues" },
+  { label: "Управление своим заведением", value: "manage_venue" },
+  { label: "Управление заведениями компании", value: "manage_venues" },
+  { label: "Управление компанией", value: "manage_company" },
+  { label: "Просмотр истории действий", value: "view_history" },
+  { label: "Просмотр графика сотрудников", value: "view_schedule" },
   { label: "Управление графиком сотрудников", value: "manage_schedule" },
-] satisfies Array<{ label: string; value: DelegatedPermission }>;
+] satisfies Array<{ label: string; value: PermissionCode }>;
 const roleChanged = computed(() => Boolean(props.member && role.value !== props.member.role));
-const canEditPermissions = computed(
-  () => Boolean(props.member?.canManageDelegatedPermissions) && !roleChanged.value,
+const canEditPermissions = computed(() => Boolean(props.member?.canManagePermissionOverrides));
+const shouldShowPermissionToggles = computed(
+  () => canEditPermissions.value || props.member?.role === "BAR_MANAGER",
 );
 const availablePermissionOptions = computed(() =>
-  permissionOptions.filter((permission) =>
-    props.member?.availableDelegatedPermissions.includes(permission.value),
-  ),
+  permissionOptions.filter((permission) => {
+    const member = props.member;
+    return Boolean(
+      member &&
+      (member.role === "BAR_MANAGER"
+        ? member.permissions.includes(permission.value)
+        : member.availablePermissions.includes(permission.value)),
+    );
+  }),
 );
 const readOnlyPermissionNames = computed(() => {
   const member = props.member;
-  if (!member) return "";
+  if (!member || member.role === "BAR_MANAGER") return "";
   return permissionNames(
-    member.delegatedPermissions.filter(
-      (permission) => !member.availableDelegatedPermissions.includes(permission),
-    ),
+    member.permissions.filter((permission) => !member.availablePermissions.includes(permission)),
   );
 });
-const hasChanges = computed(() => {
+const permissionsChanged = computed(() => {
   const member = props.member;
   if (!member) return false;
-  return (
-    roleChanged.value || !samePermissions(member.delegatedPermissions, delegatedPermissions.value)
-  );
+  return !samePermissions(member.permissions, permissions.value);
 });
-
 watch(
   () => props.member,
   (member) => {
     role.value = member?.role ?? "BARTENDER";
-    delegatedPermissions.value = getEditablePermissions(member?.delegatedPermissions ?? []);
-    lastWorkingDay.value = null;
+    permissions.value = getEditablePermissions(member?.permissions ?? []);
   },
   { immediate: true },
 );
@@ -186,31 +211,30 @@ watch(
 watch(role, (nextRole) => {
   const member = props.member;
   if (!member) return;
-  delegatedPermissions.value =
-    nextRole === member.role ? getEditablePermissions(member.delegatedPermissions) : [];
+  permissions.value = nextRole === member.role ? getEditablePermissions(member.permissions) : [];
 });
 
 function save(): void {
-  if (!props.member || !hasChanges.value) return;
+  if (!props.member || !permissionsChanged.value || roleChanged.value) return;
   emit("save", {
     role: role.value,
-    delegatedPermissions: roleChanged.value ? [] : delegatedPermissions.value,
+    permissions: permissions.value,
   });
 }
 
-function endMembership(): void {
-  if (!lastWorkingDay.value) return;
-  const date = lastWorkingDay.value;
-  emit(
-    "end",
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
+function getEditablePermissions(codes: readonly string[]): PermissionCode[] {
+  return codes.filter((code): code is PermissionCode =>
+    permissionOptions.some((permission) => permission.value === code),
   );
 }
 
-function getEditablePermissions(codes: readonly string[]): DelegatedPermission[] {
-  return codes.filter((code): code is DelegatedPermission =>
-    permissionOptions.some((permission) => permission.value === code),
-  );
+function setPermission(permission: PermissionCode, enabled: boolean | undefined): void {
+  if (enabled && !permissions.value.includes(permission)) permissions.value.push(permission);
+  if (!enabled) permissions.value = permissions.value.filter((code) => code !== permission);
+}
+
+function requestClose(): void {
+  emit("close");
 }
 
 function permissionNames(codes: string[]): string {

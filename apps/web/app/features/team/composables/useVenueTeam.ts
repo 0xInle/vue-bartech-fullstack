@@ -11,21 +11,21 @@ import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow
 import { requestApi } from "~/utils/api-response";
 
 export type VenueRole = "BARTENDER" | "SENIOR_BARTENDER" | "BARBACK" | "TRAINEE" | "BAR_MANAGER";
-export type DelegatedPermission =
-  TeamControllerUpdateMemberMutationBody["delegatedPermissions"][number];
+export type PermissionCode = TeamControllerUpdateMemberMutationBody["permissions"][number];
 export type UpdateTeamMemberInput = Pick<
   TeamControllerUpdateMemberMutationBody,
-  "role" | "delegatedPermissions"
+  "role" | "permissions"
 >;
 export type TeamMember = {
   id: string;
   fullName: string;
   email: string;
   role: VenueRole;
-  delegatedPermissions: string[];
+  terminationDate: string | null;
+  permissions: PermissionCode[];
   availableRoles: VenueRole[];
-  availableDelegatedPermissions: string[];
-  canManageDelegatedPermissions: boolean;
+  availablePermissions: PermissionCode[];
+  canManagePermissionOverrides: boolean;
   isCurrentUser: boolean;
 };
 export type VenueInvitation = {
@@ -72,6 +72,8 @@ export function useVenueTeam(companyId: string, venueId: string) {
     );
     await requestApi(Promise.resolve(response));
     await queryClient.invalidateQueries({ queryKey });
+    await queryClient.invalidateQueries({ queryKey: ["workspace"] });
+    await queryClient.invalidateQueries({ queryKey: ["schedule", companyId, venueId] });
   }
 
   async function revokeInvitation(invitationId: string): Promise<void> {
@@ -107,13 +109,13 @@ export function useVenueTeam(companyId: string, venueId: string) {
     await queryClient.invalidateQueries({ queryKey });
   }
 
-  async function endMembership(membershipId: string, lastWorkingDay: string): Promise<void> {
+  async function endMembership(membershipId: string, terminationDate: string): Promise<void> {
     await identity.refreshCsrf();
     const response = await teamControllerEndMembership(
       companyId,
       venueId,
       membershipId,
-      { lastWorkingDay },
+      { terminationDate },
       {
         credentials: "include",
         headers: { "x-csrf-token": identity.csrfToken.value },
@@ -123,6 +125,7 @@ export function useVenueTeam(companyId: string, venueId: string) {
     await requestApi(Promise.resolve(response));
     await queryClient.invalidateQueries({ queryKey });
     await queryClient.invalidateQueries({ queryKey: ["workspace"] });
+    await queryClient.invalidateQueries({ queryKey: ["schedule", companyId, venueId] });
   }
 
   return { teamQuery, createInvitation, revokeInvitation, updateMember, endMembership };

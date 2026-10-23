@@ -27,7 +27,11 @@
       header="Поиск"
       position="right"
       class="!w-full md:!w-[42rem]"
-      :pt="{ root: { class: 'h-full' }, content: { class: 'h-full' } }"
+      :pt="{
+        root: { class: 'h-full' },
+        content: { class: 'h-full' },
+        pcCloseButton: { root: { class: '!rounded-md' } },
+      }"
     >
       <SearchFields v-model:search-text="searchText" v-model:scope="scope" :is-chef="isChef" />
       <SearchResults
@@ -48,7 +52,11 @@
     :header="selectedResult?.venueName ?? 'Карточка продукции'"
     position="right"
     class="!w-full md:!w-[42rem]"
-    :pt="{ root: { class: 'h-full' }, content: { class: 'h-full' } }"
+    :pt="{
+      root: { class: 'h-full' },
+      content: { class: 'h-full' },
+      pcCloseButton: { root: { class: '!rounded-md' } },
+    }"
   >
     <ProductSearchResultDrawer
       v-if="selectedResult"

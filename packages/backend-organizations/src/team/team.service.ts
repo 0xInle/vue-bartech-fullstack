@@ -5,10 +5,17 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { DATABASE_CLIENT, PrismaClient } from "@bartech/database";
+import {
+  DATABASE_CLIENT,
+  PermissionCode as DatabasePermissionCode,
+  Prisma,
+  PrismaClient,
+} from "@bartech/database";
 import {
   DELEGATABLE_PERMISSION_CODES,
   PermissionService,
+  permissionCatalog,
+  type PermissionCode,
 } from "../permissions/permission.service.js";
 
 export const venueRoles = [
@@ -23,18 +30,9 @@ export type ManagedVenueRole = (typeof venueRoles)[number];
 export const delegatedPermissionCodes = DELEGATABLE_PERMISSION_CODES;
 export type DelegatedPermissionCode = (typeof delegatedPermissionCodes)[number];
 
-const delegatedPermissionToDatabaseCode = {
-  manage_products: "MANAGE_PRODUCTS",
-  manage_product_archive: "MANAGE_PRODUCT_ARCHIVE",
-  delete_products_permanently: "DELETE_PRODUCTS_PERMANENTLY",
-  export_data: "EXPORT_DATA",
-  invite_employees: "INVITE_EMPLOYEES",
-  manage_schedule: "MANAGE_SCHEDULE",
-} as const;
-
 export type UpdateTeamMemberInput = {
   role: ManagedVenueRole;
-  delegatedPermissions: DelegatedPermissionCode[];
+  permissions: PermissionCode[];
 };
 
 @Injectable()
@@ -51,16 +49,6 @@ export class TeamService {
     membershipId: string,
     input: UpdateTeamMemberInput,
   ): Promise<{ accepted: true }> {
-    if (input.delegatedPermissions.some((code) => !delegatedPermissionCodes.includes(code))) {
-      throw new ConflictException("Выбрано недопустимое дополнительное право");
-    }
-    if (
-      input.delegatedPermissions.includes("manage_schedule") &&
-      input.role !== "SENIOR_BARTENDER"
-    ) {
-      throw new ConflictException("Управление графиком можно делегировать только старшему бармену");
-    }
-
     await this.database.$transaction(async (transaction) => {
       const companies = await transaction.$queryRaw<Array<{ status: string }>>`
         SELECT "status" FROM "companies" WHERE "id" = ${companyId}::uuid FOR UPDATE
@@ -84,8 +72,8 @@ export class TeamService {
           where: { id: venueId, companyId, status: "ACTIVE" },
           include: {
             memberships: {
-              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
-              include: { delegatedPermissions: true, temporaryResponsibility: true },
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              include: { permissionOverrides: true, temporaryResponsibility: true },
             },
             company: {
               select: {
@@ -102,9 +90,9 @@ export class TeamService {
             id: membershipId,
             companyId,
             venueId,
-            OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
+            OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
           },
-          include: { delegatedPermissions: true },
+          include: { permissionOverrides: true, temporaryResponsibility: true },
         }),
       ]);
       if (!venue || !target) throw new NotFoundException("Сотрудник не найден в этом заведении");
@@ -134,9 +122,10 @@ export class TeamService {
       const actorRole = actorIsChef ? "chef_bartender" : toWorkspaceRole(actorMembership!.role);
       const actorPermissions = this.permissions.evaluate({
         role: actorRole,
-        delegatedPermissions: actorMembership?.delegatedPermissions.map(({ code }) =>
-          code.toLowerCase(),
-        ),
+        permissionOverrides: actorMembership?.permissionOverrides.map(({ code, enabled }) => ({
+          code: code.toLowerCase(),
+          enabled,
+        })),
         temporaryResponsibility: actorIsTemporaryResponsible,
         hasBarManager,
         hasChefBartender,
@@ -147,6 +136,7 @@ export class TeamService {
 
       const actorIsBarManager = actorMembership?.role === "BAR_MANAGER";
       const targetIsBarManager = target.role === "BAR_MANAGER";
+      const hadPermissionOverrides = target.permissionOverrides.length > 0;
       if (
         !actorIsBarManager &&
         !actorIsChef &&
@@ -158,30 +148,33 @@ export class TeamService {
       }
 
       const roleChanged = target.role !== input.role;
-      const existingPermissions = target.delegatedPermissions.map(
-        ({ code }) => code.toLowerCase() as DelegatedPermissionCode,
+      if (new Set(input.permissions).size !== input.permissions.length) {
+        throw new ConflictException("Разрешения не должны повторяться");
+      }
+      if (input.permissions.some((code) => !Object.hasOwn(permissionCatalog, code))) {
+        throw new ConflictException("Выбрано недопустимое разрешение");
+      }
+      if (roleChanged && input.permissions.length > 0) {
+        throw new ConflictException("При изменении должности разрешения сбрасываются");
+      }
+      const currentTargetPermissions = new Set(
+        this.permissions.evaluate({
+          role: toWorkspaceRole(target.role),
+          permissionOverrides: target.permissionOverrides.map(({ code, enabled }) => ({
+            code: code.toLowerCase(),
+            enabled,
+          })),
+          temporaryResponsibility: Boolean(target.temporaryResponsibility),
+          hasBarManager,
+          hasChefBartender,
+        }),
       );
-      if (
-        actorIsTemporaryResponsible &&
-        existingPermissions.includes("delete_products_permanently") !==
-          input.delegatedPermissions.includes("delete_products_permanently")
-      ) {
-        throw new ForbiddenException(
-          "Временный ответственный не может менять право безвозвратного удаления",
-        );
-      }
-      if (!roleChanged && targetIsBarManager && input.delegatedPermissions.length > 0) {
-        throw new ConflictException("Бар-менеджеру нельзя назначить дополнительные права");
-      }
       if (
         !roleChanged &&
         !actorPermissions.includes("manage_delegated_permissions") &&
-        !samePermissions(existingPermissions, input.delegatedPermissions)
+        !samePermissions([...currentTargetPermissions], input.permissions)
       ) {
-        throw new ForbiddenException("У вас нет доступа к изменению дополнительных прав");
-      }
-      if (roleChanged && input.delegatedPermissions.length > 0) {
-        throw new ConflictException("При изменении должности дополнительные права сбрасываются");
+        throw new ForbiddenException("У вас нет доступа к изменению разрешений сотрудников");
       }
 
       const finalManagerCount =
@@ -194,15 +187,54 @@ export class TeamService {
         );
       }
 
-      const permissionsToRevoke = roleChanged
-        ? existingPermissions
-        : existingPermissions.filter((code) => !input.delegatedPermissions.includes(code));
-      const permissionsToGrant = roleChanged
-        ? []
-        : input.delegatedPermissions.filter((code) => !existingPermissions.includes(code));
-
+      const targetRoleDefaults = new Set(
+        this.permissions.evaluate({
+          role: toWorkspaceRole(input.role),
+          hasBarManager: input.role === "BAR_MANAGER" || hasBarManager,
+          hasChefBartender,
+        }),
+      );
+      const editablePermissions = new Set<PermissionCode>([
+        ...targetRoleDefaults,
+        ...(input.role === "BAR_MANAGER"
+          ? []
+          : DELEGATABLE_PERMISSION_CODES.filter(
+              (code) => code !== "manage_schedule" || input.role === "SENIOR_BARTENDER",
+            )),
+      ]);
+      if (
+        !roleChanged &&
+        input.permissions.some(
+          (code) => !editablePermissions.has(code) && !currentTargetPermissions.has(code),
+        )
+      ) {
+        throw new ConflictException("Разрешение нельзя назначить этой должности");
+      }
+      const permissionsToGrant = input.permissions.filter(
+        (code) => !targetRoleDefaults.has(code) && !currentTargetPermissions.has(code),
+      );
       if (permissionsToGrant.some((code) => !actorPermissions.includes(code))) {
         throw new ForbiddenException("Нельзя выдать право, которого нет у вас");
+      }
+      if (!roleChanged && actorIsTemporaryResponsible) {
+        const currentPermissions = this.permissions.evaluate({
+          role: toWorkspaceRole(target.role),
+          permissionOverrides: target.permissionOverrides.map(({ code, enabled }) => ({
+            code: code.toLowerCase(),
+            enabled,
+          })),
+          temporaryResponsibility: actorIsTemporaryResponsible,
+          hasBarManager,
+          hasChefBartender,
+        });
+        if (
+          currentPermissions.includes("delete_products_permanently") !==
+          input.permissions.includes("delete_products_permanently")
+        ) {
+          throw new ForbiddenException(
+            "Временный ответственный не может менять право безвозвратного удаления",
+          );
+        }
       }
 
       if (roleChanged) {
@@ -213,7 +245,7 @@ export class TeamService {
         });
         if (!activeRolePeriod)
           throw new ConflictException("Не найдена история должности сотрудника");
-        if (activeRolePeriod.startedOn >= today) {
+        if (activeRolePeriod.startedOn > today) {
           await transaction.venueRolePeriod.update({
             where: { id: activeRolePeriod.id },
             data: { role: input.role, changedByUserId: actorId },
@@ -221,7 +253,7 @@ export class TeamService {
         } else {
           await transaction.venueRolePeriod.update({
             where: { id: activeRolePeriod.id },
-            data: { endedOn: previousDate(today) },
+            data: { endedOn: today },
           });
           await transaction.venueRolePeriod.create({
             data: {
@@ -238,23 +270,21 @@ export class TeamService {
         });
       }
 
-      if (permissionsToRevoke.length) {
-        await transaction.delegatedPermission.deleteMany({
-          where: {
+      await transaction.venuePermissionOverride.deleteMany({
+        where: { venueMembershipId: target.id },
+      });
+      const permissionOverrides = roleChanged
+        ? []
+        : [...editablePermissions]
+            .map((code) => ({ code, enabled: input.permissions.includes(code) }))
+            .filter(({ code, enabled }) => enabled !== targetRoleDefaults.has(code));
+      if (permissionOverrides.length) {
+        await transaction.venuePermissionOverride.createMany({
+          data: permissionOverrides.map(({ code, enabled }) => ({
             venueMembershipId: target.id,
-            code: {
-              in: permissionsToRevoke.map((code) => delegatedPermissionToDatabaseCode[code]),
-            },
-          },
-        });
-      }
-
-      if (permissionsToGrant.length) {
-        await transaction.delegatedPermission.createMany({
-          data: permissionsToGrant.map((code) => ({
-            venueMembershipId: target.id,
-            code: delegatedPermissionToDatabaseCode[code],
-            grantedByUserId: actorId,
+            code: code.toUpperCase() as DatabasePermissionCode,
+            enabled,
+            changedByUserId: actorId,
           })),
         });
       }
@@ -301,10 +331,10 @@ export class TeamService {
         });
       }
 
-      if (permissionsToGrant.length || permissionsToRevoke.length) {
+      if (roleChanged || hadPermissionOverrides || permissionOverrides.length) {
         await transaction.auditEvent.create({
           data: {
-            eventType: "membership.delegated_permissions_changed",
+            eventType: "membership.permission_overrides_changed",
             actorType: "USER",
             actorId,
             companyId,
@@ -312,8 +342,7 @@ export class TeamService {
             entityType: "venue_membership",
             entityId: target.id,
             metadata: {
-              granted: permissionsToGrant,
-              revoked: permissionsToRevoke,
+              permissions: input.permissions,
               subjectUserId: target.userId,
             },
           },
@@ -354,9 +383,9 @@ export class TeamService {
     companyId: string,
     venueId: string,
     membershipId: string,
-    lastWorkingDayInput: string,
+    terminationDateInput: string,
   ): Promise<{ accepted: true }> {
-    const lastWorkingDay = parseDate(lastWorkingDayInput);
+    const terminationDate = parseDate(terminationDateInput);
     await this.database.$transaction(async (transaction) => {
       const lockedVenues = await transaction.$queryRaw<Array<{ id: string }>>`
         SELECT "id" FROM "venues"
@@ -368,8 +397,12 @@ export class TeamService {
         where: { id: venueId, companyId, status: "ACTIVE", company: { status: "ACTIVE" } },
         include: {
           memberships: {
-            where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
-            include: { delegatedPermissions: true, temporaryResponsibility: true },
+            where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+            include: {
+              permissionOverrides: true,
+              temporaryResponsibility: true,
+              rolePeriods: true,
+            },
           },
           company: { select: { memberships: { select: { userId: true, companyRole: true } } } },
         },
@@ -379,18 +412,22 @@ export class TeamService {
           id: membershipId,
           companyId,
           venueId,
-          OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
+          OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
         },
         include: { rolePeriods: { orderBy: { startedOn: "asc" } } },
       });
       if (!venue || !target) throw new NotFoundException("Сотрудник не найден в этом заведении");
+      await transaction.$queryRaw`SELECT "id" FROM "venue_memberships" WHERE "id" = ${target.id}::uuid FOR UPDATE`;
       if (target.userId === actorId) {
         throw new ForbiddenException(
           "Нельзя завершить собственный период через управление командой",
         );
       }
-      if (lastWorkingDay < target.startedOn) {
-        throw new ConflictException("Последний рабочий день не может быть раньше начала членства");
+      if (terminationDate < target.startedOn) {
+        throw new ConflictException("Дата увольнения не может быть раньше начала членства");
+      }
+      if (terminationDate < currentDate()) {
+        throw new ConflictException("Дата увольнения не может быть в прошлом");
       }
       const actorMembership = venue.memberships.find(({ userId }) => userId === actorId);
       const actorCompanyMembership = venue.company.memberships.find(
@@ -405,9 +442,10 @@ export class TeamService {
       const actorPermissions = actorRole
         ? this.permissions.evaluate({
             role: actorRole,
-            delegatedPermissions: actorMembership?.delegatedPermissions.map(({ code }) =>
-              code.toLowerCase(),
-            ),
+            permissionOverrides: actorMembership?.permissionOverrides.map(({ code, enabled }) => ({
+              code: code.toLowerCase(),
+              enabled,
+            })),
             temporaryResponsibility: Boolean(actorMembership?.temporaryResponsibility),
             hasBarManager,
             hasChefBartender: venue.company.memberships.some(
@@ -420,39 +458,65 @@ export class TeamService {
       }
       const rolePeriod = target.rolePeriods.find(
         (period) =>
-          period.startedOn <= lastWorkingDay &&
-          (!period.endedOn || period.endedOn >= lastWorkingDay),
+          period.startedOn <= terminationDate &&
+          (!period.endedOn || period.endedOn >= terminationDate),
       );
       if (!rolePeriod) {
-        throw new ConflictException("Последний рабочий день должен попадать в период должности");
+        throw new ConflictException("Дата увольнения должна попадать в период должности");
       }
-      if (target.rolePeriods.some((period) => period.startedOn > lastWorkingDay)) {
+      if (target.rolePeriods.some((period) => period.startedOn > terminationDate)) {
         throw new ConflictException(
           "Нельзя завершить членство до начала сохранённого периода должности: история должностей должна остаться неизменной",
         );
       }
-      if (
-        rolePeriod.role === "BAR_MANAGER" &&
-        lastWorkingDay >= currentDate() &&
-        !venue.memberships.some(({ id, role }) => id !== target.id && role === "BAR_MANAGER") &&
-        !venue.company.memberships.some(({ companyRole }) => companyRole === "CHEF_BARTENDER")
-      ) {
-        throw new ConflictException(
-          "Сначала назначьте другого бар-менеджера или обеспечьте управление заведением",
-        );
-      }
+      this.assertManagementContinuity(venue, target.id, terminationDate);
       await transaction.venueMembership.update({
         where: { id: target.id },
-        data: { endedOn: lastWorkingDay },
+        data: { endedOn: terminationDate },
       });
-      await transaction.venueRolePeriod.update({
-        where: { id: rolePeriod.id },
-        data: { endedOn: lastWorkingDay, changedByUserId: actorId },
+      await transaction.venueRolePeriod.updateMany({
+        where: {
+          venueMembershipId: target.id,
+          startedOn: { lte: terminationDate },
+          OR: [{ endedOn: null }, { endedOn: { gte: terminationDate } }],
+        },
+        data: { endedOn: terminationDate, changedByUserId: actorId },
       });
-      await transaction.delegatedPermission.deleteMany({ where: { venueMembershipId: target.id } });
-      await transaction.temporaryResponsibility.deleteMany({
-        where: { venueMembershipId: target.id },
+      const futureScheduleDays = await transaction.scheduleDay.findMany({
+        where: {
+          venueMembershipId: target.id,
+          date: { gte: terminationDate },
+          OR: [{ shiftDurationHours: { not: null } }, { status: { not: null } }],
+        },
       });
+      for (const day of futureScheduleDays) {
+        const oldValue = day.shiftDurationHours
+          ? {
+              kind: "SHIFT",
+              durationHours: day.shiftDurationHours,
+              shiftType: day.shiftType,
+            }
+          : day.status
+            ? { kind: "STATUS", status: day.status }
+            : null;
+        await transaction.scheduleDay.update({
+          where: { id: day.id },
+          data: {
+            shiftDurationHours: null,
+            shiftType: null,
+            status: null,
+            updatedByUserId: actorId,
+          },
+        });
+        await transaction.scheduleDayChange.create({
+          data: {
+            scheduleDayId: day.id,
+            oldValue: oldValue as Prisma.InputJsonValue,
+            newValue: Prisma.JsonNull,
+            changedByUserId: actorId,
+          },
+        });
+      }
       await transaction.auditEvent.create({
         data: {
           eventType: "membership.ended",
@@ -462,16 +526,69 @@ export class TeamService {
           venueId,
           entityType: "venue_membership",
           entityId: target.id,
-          metadata: { subjectUserId: target.userId, lastWorkingDay: lastWorkingDayInput },
+          metadata: { subjectUserId: target.userId, terminationDate: terminationDateInput },
         },
       });
     });
     return { accepted: true };
   }
+
+  private assertManagementContinuity(
+    venue: {
+      memberships: Array<{
+        id: string;
+        role: ManagedVenueRole;
+        startedOn: Date;
+        endedOn: Date | null;
+        rolePeriods: Array<{ role: ManagedVenueRole; startedOn: Date; endedOn: Date | null }>;
+        temporaryResponsibility: unknown;
+      }>;
+      company: { memberships: Array<{ companyRole: string | null }> };
+    },
+    targetId: string,
+    terminationDate: Date,
+  ): void {
+    const departures = new Map<string, Date>();
+    for (const member of venue.memberships) {
+      if (member.endedOn) departures.set(member.id, member.endedOn);
+    }
+    departures.set(targetId, terminationDate);
+    const uniqueDates = new Map<string, Date>();
+    for (const date of departures.values()) uniqueDates.set(dateKey(date), date);
+    const dates = [...uniqueDates.values()]
+      .filter((date) => date >= currentDate())
+      .sort((first, second) => first.getTime() - second.getTime());
+    const hasChef = venue.company.memberships.some(
+      ({ companyRole }) => companyRole === "CHEF_BARTENDER",
+    );
+
+    for (const date of dates) {
+      const remaining = venue.memberships.filter((member) => {
+        const departure = departures.get(member.id);
+        return member.startedOn <= date && (!departure || departure > date);
+      });
+      const hasManager = remaining.some((member) =>
+        member.rolePeriods.some(
+          ({ role, startedOn, endedOn }) =>
+            role === "BAR_MANAGER" && startedOn <= date && (!endedOn || endedOn > date),
+        ),
+      );
+      const hasTemporaryResponsible = remaining.some((member) => member.temporaryResponsibility);
+      if (!remaining.length || (!hasManager && !hasChef && !hasTemporaryResponsible)) {
+        throw new ConflictException(
+          "Сначала назначьте другого бар-менеджера, шеф-бармена или временно ответственного сотрудника на весь период",
+        );
+      }
+    }
+  }
 }
 
 function samePermissions(first: readonly string[], second: readonly string[]): boolean {
   return first.length === second.length && first.every((code) => second.includes(code));
+}
+
+function dateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 function toWorkspaceRole(role: ManagedVenueRole): "bartender" | "senior_bartender" | "bar_manager" {
@@ -492,10 +609,6 @@ function currentDate(): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
-function previousDate(date: Date): Date {
-  return new Date(date.getTime() - 86_400_000);
-}
-
 function parseDate(value: string): Date {
   const date = new Date(`${value}T00:00:00.000Z`);
   if (
@@ -503,7 +616,7 @@ function parseDate(value: string): Date {
     Number.isNaN(date.getTime()) ||
     date.toISOString().slice(0, 10) !== value
   ) {
-    throw new ConflictException("Укажите корректный последний рабочий день");
+    throw new ConflictException("Укажите корректный первый нерабочий день");
   }
   return date;
 }

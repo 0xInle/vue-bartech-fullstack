@@ -634,7 +634,7 @@ export class InvitationAcceptanceService {
             where: {
               userId: user.id,
               companyId: activeSession.invitation.companyId,
-              OR: [{ endedOn: null }, { endedOn: { gte: dateOnly(now) } }],
+              OR: [{ endedOn: null }, { endedOn: { gt: dateOnly(now) } }],
             },
             select: { id: true },
           });
@@ -665,7 +665,7 @@ export class InvitationAcceptanceService {
             where: {
               userId: user.id,
               venueId: activeSession.invitation.venueId!,
-              OR: [{ endedOn: null }, { endedOn: { gte: dateOnly(now) } }],
+              OR: [{ endedOn: null }, { endedOn: { gt: dateOnly(now) } }],
             },
           }))
         ) {

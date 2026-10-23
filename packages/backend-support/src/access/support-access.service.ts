@@ -38,7 +38,7 @@ export class SupportAccessService {
                 { endedOn: null },
                 {
                   endedOn: {
-                    gte: new Date(
+                    gt: new Date(
                       Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
                     ),
                   },
@@ -73,7 +73,7 @@ export class SupportAccessService {
                 { endedOn: null },
                 {
                   endedOn: {
-                    gte: new Date(
+                    gt: new Date(
                       Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
                     ),
                   },

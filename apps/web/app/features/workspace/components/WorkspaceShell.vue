@@ -128,7 +128,13 @@
       />
     </nav>
 
-    <Drawer v-model:visible="moreVisible" header="Разделы" position="right" class="w-full sm:!w-96">
+    <Drawer
+      v-model:visible="moreVisible"
+      header="Разделы"
+      position="right"
+      class="w-full sm:!w-96"
+      :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
+    >
       <WorkspaceIdentity
         :workspace="workspace"
         :workplaces="workplaces"
@@ -182,7 +188,7 @@ const emit = defineEmits<{ switch: [workspace: Workspace] }>();
 const route = useRoute();
 const { colorScheme, toggleColorScheme } = useColorScheme();
 const moreVisible = ref(false);
-const expandedKeys = ref<Record<string, boolean>>({ catalog: true, management: true });
+const expandedKeys = ref<Record<string, boolean>>({ catalog: true, team: true, management: true });
 
 const homePath = computed(
   () => `/app/companies/${props.workspace.company.id}/venues/${props.workspace.venue.id}`,
@@ -198,7 +204,8 @@ const paths = computed(() => ({
   history: `${homePath.value}/history`,
   management: `${homePath.value}/management`,
   preparations: `${homePath.value}/preparations`,
-  team: `${homePath.value}/team`,
+  schedule: `${homePath.value}/schedule`,
+  teamManagement: `${homePath.value}/team/management`,
   exports: `${homePath.value}/exports`,
 }));
 const isHome = computed(() => route.path === homePath.value);
@@ -221,8 +228,23 @@ function linkItem(label: string, to: string, active: boolean): MenuItem {
 
 const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = [linkItem("Главная", homePath.value, isHome.value)];
+  const teamItems: MenuItem[] = [];
+  if (props.workspace.role === "bar_manager") {
+    teamItems.push(
+      linkItem(
+        "Управление командой",
+        paths.value.teamManagement,
+        isPathActive(paths.value.teamManagement),
+      ),
+    );
+  }
   if (props.workspace.permissions.includes("view_team")) {
-    items.push(linkItem("Команда", paths.value.team, isPathActive(paths.value.team)));
+    teamItems.push(
+      linkItem("График работы", paths.value.schedule, route.path === paths.value.schedule),
+    );
+  }
+  if (teamItems.length) {
+    items.push({ key: "team", label: "Команда", items: teamItems });
   }
   if (props.workspace.permissions.includes("view_products")) {
     items.push({

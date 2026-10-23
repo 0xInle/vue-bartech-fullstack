@@ -79,7 +79,7 @@ const CHEF_BARTENDER_PERMISSIONS: PermissionCode[] = [
 
 export type PermissionEvaluationInput = {
   role: WorkspaceRole;
-  delegatedPermissions?: string[];
+  permissionOverrides?: Array<{ code: string; enabled: boolean }>;
   temporaryResponsibility?: boolean;
   hasBarManager?: boolean;
   hasChefBartender?: boolean;
@@ -93,7 +93,7 @@ export class PermissionService {
     if (input.role === "bar_manager") {
       BAR_MANAGER_PERMISSIONS.forEach((permission) => permissions.add(permission));
       if (!input.hasChefBartender) permissions.add("manage_company");
-      return [...permissions];
+      return applyOverrides(permissions, input.permissionOverrides);
     }
 
     if (input.role === "chef_bartender") {
@@ -101,12 +101,12 @@ export class PermissionService {
       if (!input.hasBarManager) {
         TEMPORARY_OPERATIONAL_PERMISSIONS.forEach((permission) => permissions.add(permission));
       }
-      return [...permissions];
+      return applyOverrides(permissions, input.permissionOverrides);
     }
 
-    for (const permission of input.delegatedPermissions ?? []) {
-      if (isPermissionCode(permission) && isDelegatablePermission(permission)) {
-        permissions.add(permission);
+    for (const permission of input.permissionOverrides ?? []) {
+      if (isPermissionCode(permission.code) && isDelegatablePermission(permission.code)) {
+        permissions.add(permission.code);
       }
     }
 
@@ -114,8 +114,20 @@ export class PermissionService {
       TEMPORARY_OPERATIONAL_PERMISSIONS.forEach((permission) => permissions.add(permission));
     }
 
-    return [...permissions];
+    return applyOverrides(permissions, input.permissionOverrides);
   }
+}
+
+function applyOverrides(
+  defaults: Set<PermissionCode>,
+  overrides: PermissionEvaluationInput["permissionOverrides"],
+): PermissionCode[] {
+  for (const override of overrides ?? []) {
+    if (!isPermissionCode(override.code)) continue;
+    if (override.enabled) defaults.add(override.code);
+    else defaults.delete(override.code);
+  }
+  return [...defaults];
 }
 
 function isPermissionCode(value: string): value is PermissionCode {

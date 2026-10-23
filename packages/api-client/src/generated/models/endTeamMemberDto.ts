@@ -7,5 +7,6 @@
  */
 
 export interface EndTeamMemberDto {
-  lastWorkingDay: string;
+  /** Первый нерабочий день */
+  terminationDate: string;
 }

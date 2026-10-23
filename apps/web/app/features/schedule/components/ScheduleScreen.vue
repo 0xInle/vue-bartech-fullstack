@@ -21,23 +21,16 @@
           :disabled="!canMove(1)"
           @click="moveMonth(1)"
         />
+      </div>
+      <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
         <Button v-if="canManage" label="Сформировать" size="small" @click="openGenerate" />
         <Button
           v-if="canManage"
-          label="Шаблон смены"
+          label="Шаблоны"
           severity="secondary"
           variant="outlined"
           size="small"
           @click="openTemplates"
-        />
-        <SelectButton
-          v-if="canManage"
-          v-model="exportFormat"
-          :options="exportOptions"
-          option-label="label"
-          option-value="value"
-          size="small"
-          aria-label="Формат выгрузки"
         />
         <Button
           v-if="canManage"
@@ -45,17 +38,19 @@
           severity="secondary"
           variant="outlined"
           size="small"
-          :loading="busy"
-          @click="download"
+          @click="openExport"
         />
       </div>
     </header>
 
-    <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
+    <Message v-if="error" severity="error" :closable="false" :pt="compactMessagePt">{{
+      error
+    }}</Message>
     <Message
       v-if="!previewMode && schedule.monthQuery.isError.value"
       severity="error"
       :closable="false"
+      :pt="compactMessagePt"
       >Не удалось загрузить график. Обновите страницу и попробуйте ещё раз.</Message
     >
     <div v-if="canManage && selectedCells.length" class="flex flex-wrap items-center gap-2">
@@ -415,7 +410,14 @@
         </div>
       </template>
       <div class="flex h-full min-h-0 flex-col gap-4">
-        <Message v-if="error" severity="error" size="small" :closable="false">{{ error }}</Message>
+        <Message
+          v-if="error"
+          severity="error"
+          size="small"
+          :closable="false"
+          :pt="compactMessagePt"
+          >{{ error }}</Message
+        >
         <div
           class="grid grid-cols-1 gap-3 pt-2 sm:items-end"
           :class="
@@ -505,6 +507,7 @@
           severity="error"
           size="small"
           :closable="false"
+          :pt="compactMessagePt"
         >
           Не удалось загрузить список сотрудников для выбранного месяца.
         </Message>
@@ -657,7 +660,14 @@
       <template #header="{ class: titleClass }">
         <span :class="[titleClass, 'leading-none']">Шаблоны смен</span>
       </template>
-      <Message v-if="error" severity="error" size="small" :closable="false">{{ error }}</Message>
+      <Message
+        v-if="error"
+        severity="error"
+        size="small"
+        :closable="false"
+        :pt="compactMessagePt"
+        >{{ error }}</Message
+      >
       <div
         class="flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col gap-4 overflow-y-auto pt-1"
       >
@@ -671,7 +681,10 @@
             :pt="{
               contentWrapper: { class: 'min-w-0 max-w-full' },
               content: { class: 'min-w-0 max-w-full' },
-              text: { class: 'min-w-0 break-words' },
+              text: {
+                class: 'min-w-0 break-words',
+                style: { fontSize: '0.75rem', fontWeight: '500', lineHeight: '1rem' },
+              },
             }"
           >
             Цикл {{ formatCycleName(templateName) }} уже задан
@@ -737,7 +750,13 @@
         <div v-if="templateLoading" class="flex min-h-20 items-center justify-center">
           <LoadingIndicator class="w-auto" />
         </div>
-        <Message v-else-if="templateLoadFailed" severity="error" size="small" :closable="false">
+        <Message
+          v-else-if="templateLoadFailed"
+          severity="error"
+          size="small"
+          :closable="false"
+          :pt="compactMessagePt"
+        >
           Не удалось загрузить шаблоны. Обновите страницу и попробуйте ещё раз.
         </Message>
         <template v-else>
@@ -860,10 +879,66 @@
         />
       </div>
     </Dialog>
+
+    <Dialog
+      v-model:visible="exportVisible"
+      modal
+      dismissable-mask
+      header="Выгрузка графика"
+      class="w-full max-w-md"
+      :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
+    >
+      <div class="space-y-4">
+        <Message v-if="exportError" severity="error" :closable="false" :pt="compactMessagePt">{{
+          exportError
+        }}</Message>
+        <div class="space-y-2">
+          <label for="schedule-export-period" class="text-sm">Месяц</label>
+          <Select
+            v-model="exportPeriod"
+            input-id="schedule-export-period"
+            :options="exportMonthOptions"
+            option-label="label"
+            option-value="value"
+            size="small"
+            class="w-full"
+            :disabled="exportBusy"
+          />
+        </div>
+        <div class="flex items-center gap-5">
+          <label
+            v-for="option in exportOptions"
+            :key="option.value"
+            class="flex items-center gap-2"
+          >
+            <RadioButton
+              v-model="exportFormat"
+              :input-id="`schedule-export-${option.value}`"
+              name="schedule-export-format"
+              :value="option.value"
+              size="small"
+              :disabled="exportBusy"
+            />
+            <span class="text-sm">{{ option.label }}</span>
+          </label>
+        </div>
+        <div class="flex justify-end">
+          <Button
+            label="Выгрузить"
+            size="small"
+            :loading="exportBusy"
+            :disabled="!exportPeriod"
+            @click="download"
+          />
+        </div>
+      </div>
+    </Dialog>
   </section>
 </template>
 
 <script setup lang="ts">
+import { PREVIEW_TEAM_ROSTER } from "~/utils/preview-team-roster";
+import { compactMessagePt } from "~/utils/primevue-message";
 import type { Workspace } from "~/types/user-workspaces";
 import {
   useSchedule,
@@ -930,6 +1005,10 @@ const bulkHours = ref(12);
 const bulkShiftType = ref<"NORMAL" | "NIGHT">("NORMAL");
 const bulkStatus = ref<"VACATION" | "SICK_LEAVE" | "NO_SHOW" | null>(null);
 const exportFormat = ref<"xlsx" | "pdf">("xlsx");
+const exportVisible = ref(false);
+const exportPeriod = ref("");
+const exportBusy = ref(false);
+const exportError = ref("");
 const selectedTemplateId = ref<string | null>(null);
 const templateForm = reactive({
   workDays: 1,
@@ -1116,9 +1195,18 @@ const statusOptions = [
   { label: "Неявка — Н", value: "NO_SHOW" },
 ];
 const exportOptions = [
-  { label: previewMode.value ? "Excel (CSV)" : "Excel", value: "xlsx" },
+  { label: previewMode.value ? "CSV" : "Excel (.xlsx)", value: "xlsx" },
   { label: "PDF", value: "pdf" },
 ];
+const exportMonthOptions = computed(() =>
+  Array.from({ length: 15 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - 12 + index, 1);
+    return {
+      value: monthKey(date.getFullYear(), date.getMonth() + 1),
+      label: new Intl.DateTimeFormat("ru-RU", { month: "long", year: "numeric" }).format(date),
+    };
+  }),
+);
 const tablePt = {
   root: {
     style: {
@@ -1182,118 +1270,7 @@ function isWeekend(day: number): boolean {
 
 function createPreviewMonth(selectedYear: number, selectedMonth: number): ScheduleMonth {
   const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-  const employees = [
-    {
-      name: "Демо-бар-менеджер",
-      role: "BAR_MANAGER",
-      label: "Бар-менеджер",
-      work: 2,
-      off: 2,
-      start: 0,
-      hours: 12,
-      night: false,
-    },
-    {
-      name: "Демо-старший бармен",
-      role: "SENIOR_BARTENDER",
-      label: "Старший бармен",
-      work: 3,
-      off: 3,
-      start: 2,
-      hours: 10,
-      night: true,
-    },
-    {
-      name: "Демо-бармен 1",
-      role: "BARTENDER",
-      label: "Бармен",
-      work: 2,
-      off: 2,
-      start: 1,
-      hours: 12,
-      night: false,
-    },
-    {
-      name: "Демо-бармен 2",
-      role: "BARTENDER",
-      label: "Бармен",
-      work: 3,
-      off: 3,
-      start: 4,
-      hours: 9,
-      night: false,
-    },
-    {
-      name: "Демо-бармен 3",
-      role: "BARTENDER",
-      label: "Бармен",
-      work: 4,
-      off: 2,
-      start: 3,
-      hours: 12,
-      night: true,
-    },
-    {
-      name: "Демо-бармен 4",
-      role: "BARTENDER",
-      label: "Бармен",
-      work: 5,
-      off: 1,
-      start: 5,
-      hours: 10,
-      night: false,
-    },
-    {
-      name: "Демо-бармен 5",
-      role: "BARTENDER",
-      label: "Бармен",
-      work: 6,
-      off: 1,
-      start: 1,
-      hours: 8,
-      night: false,
-    },
-    {
-      name: "Демо-бармен 6",
-      role: "BARTENDER",
-      label: "Бармен",
-      work: 2,
-      off: 2,
-      start: 3,
-      hours: 10,
-      night: true,
-    },
-    {
-      name: "Демо-барбек 1",
-      role: "BARBACK",
-      label: "Барбек",
-      work: 4,
-      off: 2,
-      start: 0,
-      hours: 8,
-      night: false,
-    },
-    {
-      name: "Демо-барбек 2",
-      role: "BARBACK",
-      label: "Барбек",
-      work: 3,
-      off: 3,
-      start: 1,
-      hours: 10,
-      night: false,
-    },
-    {
-      name: "Демо-стажёр",
-      role: "TRAINEE",
-      label: "Стажёр",
-      work: 5,
-      off: 1,
-      start: 2,
-      hours: 8,
-      night: false,
-    },
-  ] as const;
+  const employees = PREVIEW_TEAM_ROSTER;
   return {
     year: selectedYear,
     month: selectedMonth,
@@ -1979,37 +1956,75 @@ function extendSelectedSchedule(): void {
     closeGenerate();
   });
 }
-function download(): void {
-  if (previewMode.value) {
-    if (exportFormat.value === "pdf") {
-      window.print();
-      return;
+function openExport(): void {
+  exportPeriod.value = monthKey(year.value, month.value);
+  exportError.value = "";
+  exportVisible.value = true;
+}
+async function download(): Promise<void> {
+  const [exportYear, exportMonth] = exportPeriod.value.split("-").map(Number);
+  if (!exportYear || !exportMonth) return;
+  exportBusy.value = true;
+  exportError.value = "";
+  try {
+    if (previewMode.value) {
+      await waitForPreviewResponse();
+      const period = monthKey(exportYear, exportMonth);
+      const selectedMonth =
+        previewMonths.get(period) ?? createPreviewMonth(exportYear, exportMonth);
+      previewMonths.set(period, selectedMonth);
+      if (exportFormat.value === "pdf") {
+        const previous = { year: year.value, month: month.value, previewMonth: previewMonth.value };
+        try {
+          year.value = exportYear;
+          month.value = exportMonth;
+          previewMonth.value = selectedMonth;
+          await nextTick();
+          window.print();
+        } finally {
+          year.value = previous.year;
+          month.value = previous.month;
+          previewMonth.value = previous.previewMonth;
+        }
+      } else {
+        const header = [
+          "ФИО",
+          "Должность",
+          ...Array.from({ length: selectedMonth.daysInMonth }, (_, index) => String(index + 1)),
+          "Часы",
+          "Смены",
+        ];
+        const lines = [
+          header,
+          ...selectedMonth.rows.map((row) => [
+            row.fullName,
+            row.roleLabel,
+            ...row.cells.map((cell) => cellLabel(cell.value)),
+            String(row.totalHours),
+            String(row.totalShifts),
+          ]),
+        ];
+        const csv =
+          "\uFEFF" +
+          lines
+            .map((line) => line.map((cell) => `"${cell.replaceAll('"', '""')}"`).join(";"))
+            .join("\r\n");
+        const file = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+        const link = document.createElement("a");
+        link.href = file;
+        link.download = `schedule-demo-${period}.csv`;
+        link.click();
+        URL.revokeObjectURL(file);
+      }
+    } else {
+      await schedule.exportSchedule(exportFormat.value, exportYear, exportMonth);
     }
-    const header = ["ФИО", "Должность", ...days.value.map(String), "Часы", "Смены"];
-    const lines = [
-      header,
-      ...rows.value.map((row) => [
-        row.fullName,
-        row.roleLabel,
-        ...row.cells.map((cell) => cellLabel(cell.value)),
-        String(row.totalHours),
-        String(row.totalShifts),
-      ]),
-    ];
-    const csv =
-      "\uFEFF" +
-      lines
-        .map((line) => line.map((cell) => `"${cell.replaceAll('"', '""')}"`).join(";"))
-        .join("\r\n");
-    const file = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = file;
-    link.download = `schedule-demo-${monthKey(year.value, month.value)}.csv`;
-    link.click();
-    URL.revokeObjectURL(file);
-    return;
+    exportVisible.value = false;
+  } catch (cause) {
+    exportError.value = cause instanceof Error ? cause.message : "Не удалось выгрузить график";
+  } finally {
+    exportBusy.value = false;
   }
-  void run(() => schedule.exportSchedule(exportFormat.value));
 }
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("ru-RU", { dateStyle: "short", timeStyle: "short" }).format(

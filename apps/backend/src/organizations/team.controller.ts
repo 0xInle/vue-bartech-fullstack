@@ -21,13 +21,13 @@ export class TeamController {
 
   @Patch("organizations/companies/:companyId/venues/:venueId/team/:membershipId")
   @RequirePermissions("manage_team")
-  @ApiOperation({ summary: "Изменить должность и дополнительные права сотрудника" })
+  @ApiOperation({ summary: "Изменить должность и разрешения сотрудника" })
   @ApiParam({ name: "companyId", format: "uuid" })
   @ApiParam({ name: "venueId", format: "uuid" })
   @ApiParam({ name: "membershipId", format: "uuid" })
   @ApiOkResponse({
     type: TeamMemberUpdateResponseDto,
-    description: "Должность и дополнительные права сохранены",
+    description: "Должность и разрешения сохранены",
   })
   @ApiForbiddenResponse({ description: "Нет полномочий для выбранного изменения" })
   @ApiNotFoundResponse({ description: "Сотрудник или заведение не найдены" })
@@ -41,7 +41,7 @@ export class TeamController {
   ): Promise<TeamMemberUpdateResponseDto> {
     return this.team.updateMember(user.id, companyId, venueId, membershipId, {
       role: body.role,
-      delegatedPermissions: body.delegatedPermissions,
+      permissions: body.permissions,
     });
   }
 
@@ -59,6 +59,6 @@ export class TeamController {
     @Param("membershipId") membershipId: string,
     @Body() body: EndTeamMemberDto,
   ): Promise<TeamMemberUpdateResponseDto> {
-    return this.team.endMembership(user.id, companyId, venueId, membershipId, body.lastWorkingDay);
+    return this.team.endMembership(user.id, companyId, venueId, membershipId, body.terminationDate);
   }
 }

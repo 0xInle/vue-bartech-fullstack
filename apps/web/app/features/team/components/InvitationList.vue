@@ -1,7 +1,7 @@
 <template>
   <section class="space-y-2">
     <h3 class="text-sm font-semibold">Ожидают ответа</h3>
-    <p v-if="!invitations.length" class="mt-3 text-sm text-zinc-500">
+    <p v-if="!invitations.length" class="mt-3 text-sm text-color-secondary">
       Нет приглашенных сотрудников
     </p>
     <ul v-else class="divide-y divide-surface overflow-hidden rounded-lg border border-surface">

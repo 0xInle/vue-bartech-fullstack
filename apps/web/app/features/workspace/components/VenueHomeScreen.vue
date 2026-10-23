@@ -3,7 +3,7 @@
     <LoadingIndicator screen />
   </div>
   <div v-else-if="errorMessage" class="mx-auto max-w-5xl pt-8">
-    <Message severity="error" :closable="false">{{ errorMessage }}</Message>
+    <Message severity="error" :closable="false" :pt="compactMessagePt">{{ errorMessage }}</Message>
   </div>
   <WorkspaceShell
     v-else-if="workspace && currentUser"
@@ -18,6 +18,7 @@
 
 <script setup lang="ts">
 import { useVenueWorkspace } from "~/features/workspace/composables/useVenueWorkspace";
+import { compactMessagePt } from "~/utils/primevue-message";
 import WorkspaceShell from "~/features/workspace/components/WorkspaceShell.vue";
 import WorkspaceProductSearch from "~/features/products/components/WorkspaceProductSearch.vue";
 

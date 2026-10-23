@@ -1,4 +1,10 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { DATABASE_CLIENT, Prisma, PrismaClient } from "@bartech/database";
 
 export type ScheduleValue =
@@ -52,11 +58,11 @@ export class SchedulesService {
         companyId,
         venueId,
         startedOn: { lte: end },
-        OR: [{ endedOn: null }, { endedOn: { gte: start } }],
+        OR: [{ endedOn: null }, { endedOn: { gt: start } }],
         rolePeriods: {
           some: {
             startedOn: { lte: end },
-            OR: [{ endedOn: null }, { endedOn: { gte: start } }],
+            OR: [{ endedOn: null }, { endedOn: { gt: start } }],
           },
         },
       },
@@ -66,7 +72,7 @@ export class SchedulesService {
         rolePeriods: {
           where: {
             startedOn: { lte: end },
-            OR: [{ endedOn: null }, { endedOn: { gte: start } }],
+            OR: [{ endedOn: null }, { endedOn: { gt: start } }],
           },
           orderBy: { startedOn: "asc" },
         },
@@ -105,10 +111,14 @@ export class SchedulesService {
     const rows = memberships.flatMap((membership) =>
       membership.rolePeriods.map((rolePeriod) => {
         const roleStart = maxDate(start, membership.startedOn, rolePeriod.startedOn);
-        const roleEnd = minDate(end, membership.endedOn, rolePeriod.endedOn);
+        const roleEnd = minDate(
+          new Date(end.getTime() + DAY_MS),
+          membership.endedOn,
+          rolePeriod.endedOn,
+        );
         const cells = Array.from({ length: daysInMonth }, (_, index) => {
           const date = new Date(start.getTime() + index * DAY_MS);
-          const applicable = date >= roleStart && (!roleEnd || date <= roleEnd);
+          const applicable = date >= roleStart && (!roleEnd || date < roleEnd);
           const day = daysByMembership.get(membership.id + ":" + dateKey(date));
           const value = day && !isEmpty(day) ? toValue(day) : null;
           return {
@@ -355,7 +365,7 @@ export class SchedulesService {
           if (date < applyFrom || !membershipCovers(membership, date)) continue;
           if (
             !membership.rolePeriods.some(
-              (role) => date >= role.startedOn && (!role.endedOn || date <= role.endedOn),
+              (role) => date >= role.startedOn && (!role.endedOn || date < role.endedOn),
             )
           )
             continue;
@@ -470,45 +480,79 @@ export class SchedulesService {
     const cleanText = text.trim();
     if (cleanText.length > 1000)
       throw new ConflictException("Комментарий не должен превышать 1000 символов");
-    const [membership, actorMembership, actorChefMembership] = await Promise.all([
-      this.database.venueMembership.findFirst({
-        where: { id: membershipId, venueId },
-        include: { rolePeriods: true, user: { include: { profile: true } } },
-      }),
-      this.database.venueMembership.findFirst({
-        where: { userId, venueId, OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
-        select: { id: true },
-      }),
-      this.database.companyMembership.findFirst({
+    return this.database.$transaction(async (tx) => {
+      const venues = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "venues" WHERE "id" = ${venueId}::uuid FOR UPDATE
+      `;
+      if (!venues.length) throw new NotFoundException("Заведение не найдено");
+      const today = currentDate();
+
+      const actorMembershipIds = await tx.venueMembership.findMany({
         where: {
-          userId,
-          company: { venues: { some: { id: venueId } } },
-          companyRole: "CHEF_BARTENDER",
+          venueId,
+          OR: [
+            { id: membershipId },
+            {
+              userId,
+              startedOn: { lte: today },
+              OR: [{ endedOn: null }, { endedOn: { gt: today } }],
+            },
+          ],
         },
         select: { id: true },
-      }),
-    ]);
-    if (!membership || !membershipCovers(membership, date)) {
-      throw new NotFoundException("Сотрудник не найден в этом заведении");
-    }
-    if (
-      !membership.rolePeriods.some(
-        (period) => date >= period.startedOn && (!period.endedOn || date <= period.endedOn),
-      )
-    ) {
-      throw new ConflictException("День находится вне периода должности сотрудника");
-    }
-    if (!actorMembership && !actorChefMembership) {
-      throw new NotFoundException("Пользователь не состоит в этой команде");
-    }
-    const schedule = await this.database.schedule.upsert({
-      where: {
-        venueId_year_month: { venueId, year: date.getUTCFullYear(), month: date.getUTCMonth() + 1 },
-      },
-      create: { venueId, year: date.getUTCFullYear(), month: date.getUTCMonth() + 1 },
-      update: {},
-    });
-    return this.database.$transaction(async (tx) => {
+      });
+      const membershipIds = actorMembershipIds.map(({ id }) => id).sort();
+      for (const id of membershipIds) {
+        await tx.$queryRaw`SELECT "id" FROM "venue_memberships" WHERE "id" = ${id}::uuid FOR UPDATE`;
+      }
+
+      const [membership, actorMembership, actorChefMembership] = await Promise.all([
+        tx.venueMembership.findFirst({
+          where: { id: membershipId, venueId },
+          include: { rolePeriods: true, user: { include: { profile: true } } },
+        }),
+        tx.venueMembership.findFirst({
+          where: {
+            userId,
+            venueId,
+            startedOn: { lte: today },
+            OR: [{ endedOn: null }, { endedOn: { gt: today } }],
+          },
+          select: { id: true },
+        }),
+        tx.companyMembership.findFirst({
+          where: {
+            userId,
+            companyRole: "CHEF_BARTENDER",
+            company: { venues: { some: { id: venueId } } },
+          },
+          select: { id: true },
+        }),
+      ]);
+      if (!membership || !membershipCovers(membership, date)) {
+        throw new NotFoundException("Сотрудник не найден в этом заведении");
+      }
+      if (
+        !membership.rolePeriods.some(
+          (period) => date >= period.startedOn && (!period.endedOn || date < period.endedOn),
+        )
+      ) {
+        throw new ConflictException("День находится вне периода должности сотрудника");
+      }
+      if (!actorMembership && !actorChefMembership) {
+        throw new ForbiddenException("У вас нет доступа к комментированию графика");
+      }
+      const schedule = await tx.schedule.upsert({
+        where: {
+          venueId_year_month: {
+            venueId,
+            year: date.getUTCFullYear(),
+            month: date.getUTCMonth() + 1,
+          },
+        },
+        create: { venueId, year: date.getUTCFullYear(), month: date.getUTCMonth() + 1 },
+        update: {},
+      });
       await tx.scheduleMemberSnapshot.createMany({
         data: [
           {
@@ -519,7 +563,6 @@ export class SchedulesService {
         ],
         skipDuplicates: true,
       });
-      await tx.$queryRaw`SELECT "id" FROM "venue_memberships" WHERE "id" = ${membershipId}::uuid FOR UPDATE`;
       const day = await tx.scheduleDay.upsert({
         where: { venueMembershipId_date: { venueMembershipId: membershipId, date } },
         create: {
@@ -562,7 +605,7 @@ export class SchedulesService {
     }
     if (
       !membership.rolePeriods.some(
-        (role) => date >= role.startedOn && (!role.endedOn || date <= role.endedOn),
+        (role) => date >= role.startedOn && (!role.endedOn || date < role.endedOn),
       )
     ) {
       throw new ConflictException("День находится вне интервала должности сотрудника");
@@ -743,7 +786,7 @@ function membershipCovers(
   membership: { startedOn: Date; endedOn: Date | null },
   date: Date,
 ): boolean {
-  return date >= membership.startedOn && (!membership.endedOn || date <= membership.endedOn);
+  return date >= membership.startedOn && (!membership.endedOn || date < membership.endedOn);
 }
 
 function maxDate(...dates: Date[]): Date {

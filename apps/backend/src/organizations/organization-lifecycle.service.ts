@@ -440,11 +440,11 @@ export class OrganizationLifecycleService {
           where: {
             companyId,
             venueId,
-            OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
+            OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
           },
           include: {
             temporaryResponsibility: { select: { id: true } },
-            delegatedPermissions: { select: { code: true } },
+            permissionOverrides: { select: { code: true, enabled: true } },
           },
         }),
         transaction.venue.count({ where: { companyId, status: "ACTIVE" } }),
@@ -498,7 +498,9 @@ export class OrganizationLifecycleService {
       const actorCanExport = Boolean(
         isChef ||
         isManager ||
-        actorVenueMembership?.delegatedPermissions.some(({ code }) => code === "EXPORT_DATA"),
+        actorVenueMembership?.permissionOverrides.some(
+          ({ code, enabled }) => code === "EXPORT_DATA" && enabled,
+        ),
       );
       if (
         exportRequestId &&
@@ -595,7 +597,7 @@ export class OrganizationLifecycleService {
           where: {
             companyId,
             userId,
-            OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
+            OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
           },
           select: { id: true },
         });

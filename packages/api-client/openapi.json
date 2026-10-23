@@ -1683,7 +1683,7 @@
         },
         "responses": {
           "200": {
-            "description": "Должность и дополнительные права сохранены",
+            "description": "Должность и разрешения сохранены",
             "content": {
               "application/json": {
                 "schema": {
@@ -1702,7 +1702,7 @@
             "description": "Изменение нарушает правила команды или управления"
           }
         },
-        "summary": "Изменить должность и дополнительные права сотрудника",
+        "summary": "Изменить должность и разрешения сотрудника",
         "tags": ["team"]
       }
     },
@@ -7565,7 +7565,19 @@
             "type": "string",
             "enum": ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
           },
-          "delegatedPermissions": {
+          "terminationDate": {
+            "type": "object",
+            "format": "date",
+            "nullable": true,
+            "description": "Первый нерабочий день"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "availablePermissions": {
             "type": "array",
             "items": {
               "type": "string"
@@ -7578,13 +7590,7 @@
               "enum": ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
             }
           },
-          "availableDelegatedPermissions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "canManageDelegatedPermissions": {
+          "canManagePermissionOverrides": {
             "type": "boolean"
           },
           "isCurrentUser": {
@@ -7596,10 +7602,11 @@
           "fullName",
           "email",
           "role",
-          "delegatedPermissions",
+          "terminationDate",
+          "permissions",
+          "availablePermissions",
           "availableRoles",
-          "availableDelegatedPermissions",
-          "canManageDelegatedPermissions",
+          "canManagePermissionOverrides",
           "isCurrentUser"
         ]
       },
@@ -7785,22 +7792,35 @@
             "type": "string",
             "enum": ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
           },
-          "delegatedPermissions": {
+          "permissions": {
             "type": "array",
             "items": {
               "type": "string",
               "enum": [
+                "view_products",
+                "view_archive",
+                "view_team",
                 "manage_products",
                 "manage_product_archive",
                 "delete_products_permanently",
                 "export_data",
                 "invite_employees",
+                "invite_bar_manager",
+                "invite_chef_bartender",
+                "manage_team",
+                "manage_delegated_permissions",
+                "create_venues",
+                "manage_venue",
+                "manage_venues",
+                "manage_company",
+                "view_history",
+                "view_schedule",
                 "manage_schedule"
               ]
             }
           }
         },
-        "required": ["role", "delegatedPermissions"]
+        "required": ["role", "permissions"]
       },
       "TeamMemberUpdateResponseDto": {
         "type": "object",
@@ -7815,13 +7835,14 @@
       "EndTeamMemberDto": {
         "type": "object",
         "properties": {
-          "lastWorkingDay": {
+          "terminationDate": {
             "type": "string",
             "format": "date",
-            "example": "2026-10-18"
+            "example": "2026-10-19",
+            "description": "Первый нерабочий день"
           }
         },
-        "required": ["lastWorkingDay"]
+        "required": ["terminationDate"]
       },
       "ArchiveListItemDto": {
         "type": "object",

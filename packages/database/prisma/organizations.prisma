@@ -17,12 +17,25 @@ enum InitialRegistrationRole {
   BARTENDER
 }
 
-enum DelegatedPermissionCode {
+enum PermissionCode {
+  VIEW_PRODUCTS
+  VIEW_ARCHIVE
+  VIEW_TEAM
   MANAGE_PRODUCTS
   MANAGE_PRODUCT_ARCHIVE
   DELETE_PRODUCTS_PERMANENTLY
   EXPORT_DATA
   INVITE_EMPLOYEES
+  INVITE_BAR_MANAGER
+  INVITE_CHEF_BARTENDER
+  MANAGE_TEAM
+  MANAGE_DELEGATED_PERMISSIONS
+  CREATE_VENUES
+  MANAGE_VENUE
+  MANAGE_VENUES
+  MANAGE_COMPANY
+  VIEW_HISTORY
+  VIEW_SCHEDULE
   MANAGE_SCHEDULE
 }
 
@@ -161,7 +174,7 @@ model VenueMembership {
   user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   venue                   Venue                    @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
   companyMembership       CompanyMembership        @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
-  delegatedPermissions    DelegatedPermission[]
+  permissionOverrides     VenuePermissionOverride[]
   temporaryResponsibility TemporaryResponsibility?
   rolePeriods             VenueRolePeriod[]
   scheduleDays            ScheduleDay[]
@@ -189,18 +202,19 @@ model VenueRolePeriod {
   @@map("venue_role_periods")
 }
 
-model DelegatedPermission {
-  id                String                  @id @default(uuid()) @db.Uuid
-  venueMembershipId String                  @db.Uuid
-  code              DelegatedPermissionCode
-  grantedByUserId   String                  @db.Uuid
-  grantedAt         DateTime                @default(now()) @db.Timestamptz(6)
-  venueMembership   VenueMembership         @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
-  grantedBy         User                    @relation(fields: [grantedByUserId], references: [id], onDelete: Restrict)
+model VenuePermissionOverride {
+  id                String          @id @default(uuid()) @db.Uuid
+  venueMembershipId String          @db.Uuid
+  code              PermissionCode
+  enabled           Boolean         @default(true)
+  changedByUserId   String          @db.Uuid
+  changedAt         DateTime        @default(now()) @db.Timestamptz(6)
+  venueMembership   VenueMembership @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
+  changedBy         User            @relation(fields: [changedByUserId], references: [id], onDelete: Restrict)
 
-  @@unique([venueMembershipId, code], map: "delegated_permissions_membership_code_key")
-  @@index([grantedByUserId], map: "delegated_permissions_granted_by_idx")
-  @@map("delegated_permissions")
+  @@unique([venueMembershipId, code], map: "venue_permission_overrides_membership_code_key")
+  @@index([changedByUserId], map: "venue_permission_overrides_changed_by_idx")
+  @@map("venue_permission_overrides")
 }
 
 model TemporaryResponsibility {

@@ -61,7 +61,7 @@ export class OrganizationsService {
                 where: { status: "ACTIVE" },
                 include: {
                   memberships: {
-                    where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+                    where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
                     select: { role: true },
                   },
                 },
@@ -73,7 +73,7 @@ export class OrganizationsService {
       this.database.venueMembership.findMany({
         where: {
           userId,
-          OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
+          OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
           venue: { status: "ACTIVE", company: companyOperationalOrInClosure },
         },
         include: {
@@ -94,12 +94,12 @@ export class OrganizationsService {
           venue: {
             include: {
               memberships: {
-                where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+                where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
                 select: { role: true },
               },
             },
           },
-          delegatedPermissions: { select: { code: true } },
+          permissionOverrides: { select: { code: true, enabled: true } },
           temporaryResponsibility: { select: { id: true } },
         },
         orderBy: { createdAt: "asc" },
@@ -120,13 +120,14 @@ export class OrganizationsService {
       const hasChefBartender = membership.companyMembership.company.memberships.some(
         (item) => item.companyRole === "CHEF_BARTENDER",
       );
-      const delegatedPermissions = membership.delegatedPermissions.map(({ code }) =>
-        code.toLowerCase(),
-      );
+      const permissionOverrides = membership.permissionOverrides.map(({ code, enabled }) => ({
+        code: code.toLowerCase(),
+        enabled,
+      }));
       const permissions = restrictCompanyPermissions(
         this.permissions.evaluate({
           role,
-          delegatedPermissions,
+          permissionOverrides,
           temporaryResponsibility:
             !hasBarManager &&
             !hasChefBartender &&
@@ -349,10 +350,11 @@ export class OrganizationsService {
       fullName: string;
       email: string;
       role: VenueInviteRole;
-      delegatedPermissions: string[];
+      terminationDate: string | null;
+      permissions: string[];
+      availablePermissions: string[];
       availableRoles: VenueInviteRole[];
-      availableDelegatedPermissions: string[];
-      canManageDelegatedPermissions: boolean;
+      canManagePermissionOverrides: boolean;
     }>;
     invitations: Array<{
       id: string;
@@ -370,10 +372,14 @@ export class OrganizationsService {
     }
 
     const now = new Date();
-    const [members, invitations] = await Promise.all([
+    const [members, invitations, hasChefBartender] = await Promise.all([
       this.database.venueMembership.findMany({
-        where: { companyId, venueId, OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
-        include: { user: { include: { profile: true } }, delegatedPermissions: true },
+        where: { companyId, venueId, OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+        include: {
+          user: { include: { profile: true } },
+          permissionOverrides: true,
+          temporaryResponsibility: { select: { id: true } },
+        },
         orderBy: [{ role: "asc" }, { createdAt: "asc" }],
       }),
       this.database.invitation.findMany({
@@ -393,6 +399,11 @@ export class OrganizationsService {
         include: { acceptanceSession: true },
         orderBy: { createdAt: "desc" },
       }),
+      this.database.companyMembership
+        .count({
+          where: { companyId, companyRole: "CHEF_BARTENDER" },
+        })
+        .then((count) => count > 0),
     ]);
 
     return {
@@ -409,40 +420,69 @@ export class OrganizationsService {
           canManageTeam &&
           !(
             canManageAsTemporaryResponsible &&
-            member.delegatedPermissions.some(({ code }) => code === "DELETE_PRODUCTS_PERMANENTLY")
+            member.permissionOverrides.some(
+              ({ code, enabled }) => code === "DELETE_PRODUCTS_PERMANENTLY" && enabled,
+            )
           ) &&
           (canManageAllLocalRoles ||
             (canManageAsTemporaryResponsible && member.role !== "BAR_MANAGER"));
 
-        const canManageDelegatedPermissions =
-          canManageTeam &&
-          member.role !== "BAR_MANAGER" &&
+        const canManagePermissionOverrides =
+          (canManageTeam ||
+            (member.userId === userId &&
+              workspace.role === "bar_manager" &&
+              workspace.permissions.includes("manage_team"))) &&
           workspace.permissions.includes("manage_delegated_permissions");
         const actorIsTemporaryResponsible =
           (workspace.role === "bartender" || workspace.role === "senior_bartender") &&
           workspace.permissions.includes("manage_team");
-        const delegatedPermissions = member.delegatedPermissions.map(({ code }) =>
-          code.toLowerCase(),
-        );
+        const permissionOverrides = member.permissionOverrides.map(({ code, enabled }) => ({
+          code: code.toLowerCase(),
+          enabled,
+        }));
+        const role = toWorkspaceRole(member.role);
+        const permissions = this.permissions.evaluate({
+          role,
+          permissionOverrides,
+          temporaryResponsibility:
+            Boolean(member.temporaryResponsibility) &&
+            (member.role === "BARTENDER" || member.role === "SENIOR_BARTENDER"),
+          hasBarManager:
+            member.role === "BAR_MANAGER" || members.some(({ role }) => role === "BAR_MANAGER"),
+          hasChefBartender,
+        });
+        const defaults = this.permissions.evaluate({
+          role,
+          hasBarManager:
+            member.role === "BAR_MANAGER" || members.some(({ role }) => role === "BAR_MANAGER"),
+          hasChefBartender,
+        });
+        const availablePermissions = canManagePermissionOverrides
+          ? [
+              ...new Set([
+                ...defaults,
+                ...(member.role === "BAR_MANAGER" ? [] : DELEGATABLE_PERMISSION_CODES).filter(
+                  (code) =>
+                    (workspace.permissions.includes(code) || permissions.includes(code)) &&
+                    !(actorIsTemporaryResponsible && code === "delete_products_permanently") &&
+                    !(code === "manage_schedule" && member.role !== "SENIOR_BARTENDER"),
+                ),
+              ]),
+            ]
+          : permissions;
 
         return {
           id: member.id,
           fullName: member.user.profile?.fullName ?? "",
           email: member.user.email,
           role: member.role,
-          delegatedPermissions,
+          terminationDate: member.endedOn ? dateKey(member.endedOn) : null,
+          permissions,
+          availablePermissions,
           availableRoles: canChangeRole
             ? ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
             : [],
-          availableDelegatedPermissions: canManageDelegatedPermissions
-            ? DELEGATABLE_PERMISSION_CODES.filter(
-                (code) =>
-                  (workspace.permissions.includes(code) || delegatedPermissions.includes(code)) &&
-                  !(actorIsTemporaryResponsible && code === "delete_products_permanently") &&
-                  !(code === "manage_schedule" && member.role !== "SENIOR_BARTENDER"),
-              )
-            : [],
-          canManageDelegatedPermissions,
+          canManagePermissionOverrides,
           isCurrentUser: member.userId === userId,
         };
       }),
@@ -492,6 +532,10 @@ function restrictCompanyPermissions(
 function currentDate(): Date {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+function dateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 function toWorkspaceRole(role: VenueInviteRole): WorkspaceRole {

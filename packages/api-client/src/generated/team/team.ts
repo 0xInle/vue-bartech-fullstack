@@ -65,7 +65,7 @@ export const getTeamControllerUpdateMemberUrl = (companyId: string,
 }
 
 /**
- * @summary Изменить должность и дополнительные права сотрудника
+ * @summary Изменить должность и разрешения сотрудника
  */
 export const teamControllerUpdateMember = async (companyId: string,
     venueId: string,
@@ -141,7 +141,7 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
     export type TeamControllerUpdateMemberMutationVariables = {companyId: string;venueId: string;membershipId: string;data: UpdateTeamMemberDto}
 
     /**
- * @summary Изменить должность и дополнительные права сотрудника
+ * @summary Изменить должность и разрешения сотрудника
  */
 export const useTeamControllerUpdateMember = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamControllerUpdateMember>>, TError,TeamControllerUpdateMemberMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}

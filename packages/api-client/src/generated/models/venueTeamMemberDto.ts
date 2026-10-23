@@ -7,15 +7,21 @@
  */
 import type { VenueTeamMemberDtoAvailableRolesItem } from './venueTeamMemberDtoAvailableRolesItem';
 import type { VenueTeamMemberDtoRole } from './venueTeamMemberDtoRole';
+import type { VenueTeamMemberDtoTerminationDate } from './venueTeamMemberDtoTerminationDate';
 
 export interface VenueTeamMemberDto {
   id: string;
   fullName: string;
   email: string;
   role: VenueTeamMemberDtoRole;
-  delegatedPermissions: string[];
+  /**
+     * Первый нерабочий день
+     * @nullable
+     */
+  terminationDate: VenueTeamMemberDtoTerminationDate;
+  permissions: string[];
+  availablePermissions: string[];
   availableRoles: VenueTeamMemberDtoAvailableRolesItem[];
-  availableDelegatedPermissions: string[];
-  canManageDelegatedPermissions: boolean;
+  canManagePermissionOverrides: boolean;
   isCurrentUser: boolean;
 }

@@ -83,7 +83,8 @@ export class OrganizationInvitationsService {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
-              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              include: { permissionOverrides: true, temporaryResponsibility: true },
             },
           },
         },
@@ -160,7 +161,8 @@ export class OrganizationInvitationsService {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
-              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              include: { permissionOverrides: true, temporaryResponsibility: true },
             },
           },
         },
@@ -290,7 +292,8 @@ export class OrganizationInvitationsService {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
-              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              include: { permissionOverrides: true, temporaryResponsibility: true },
             },
           },
         },
@@ -376,7 +379,14 @@ export class OrganizationInvitationsService {
     company: {
       status: string;
       memberships: Array<{ userId: string; companyRole: string | null }>;
-      venues: Array<{ memberships: Array<{ userId: string; role: string }> }>;
+      venues: Array<{
+        memberships: Array<{
+          userId: string;
+          role: string;
+          permissionOverrides: Array<{ code: string; enabled: boolean }>;
+          temporaryResponsibility: unknown;
+        }>;
+      }>;
     },
     userId: string,
     allowPendingClosure = false,
@@ -387,11 +397,28 @@ export class OrganizationInvitationsService {
     const isChef = company.memberships.some(
       (membership) => membership.userId === userId && membership.companyRole === "CHEF_BARTENDER",
     );
-    const isBarManager = company.venues.some((venue) =>
-      venue.memberships.some(
-        (membership) => membership.userId === userId && membership.role === "BAR_MANAGER",
-      ),
+    const hasChefBartender = company.memberships.some(
+      ({ companyRole }) => companyRole === "CHEF_BARTENDER",
     );
+    const isBarManager = company.venues.some((venue) => {
+      const membership = venue.memberships.find(
+        ({ userId: memberId, role }) => memberId === userId && role === "BAR_MANAGER",
+      );
+      return Boolean(
+        membership &&
+        this.permissions
+          .evaluate({
+            role: "bar_manager",
+            hasChefBartender,
+            hasBarManager: venue.memberships.some(({ role }) => role === "BAR_MANAGER"),
+            permissionOverrides: membership.permissionOverrides.map(({ code, enabled }) => ({
+              code: code.toLowerCase(),
+              enabled,
+            })),
+          })
+          .includes("invite_bar_manager"),
+      );
+    });
     if (!isChef && !isBarManager) {
       throw new NotFoundException("Управление приглашениями компании недоступно");
     }
@@ -492,8 +519,8 @@ export class OrganizationInvitationsService {
       where: { id: input.venueId, companyId: input.companyId, status: "ACTIVE" },
       include: {
         memberships: {
-          where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
-          include: { delegatedPermissions: true, temporaryResponsibility: true },
+          where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+          include: { permissionOverrides: true, temporaryResponsibility: true },
         },
         company: { include: { memberships: true } },
       },
@@ -520,9 +547,10 @@ export class OrganizationInvitationsService {
 
     const permissions = this.permissions.evaluate({
       role,
-      delegatedPermissions: localMembership?.delegatedPermissions.map(({ code }) =>
-        code.toLowerCase(),
-      ),
+      permissionOverrides: localMembership?.permissionOverrides.map(({ code, enabled }) => ({
+        code: code.toLowerCase(),
+        enabled,
+      })),
       temporaryResponsibility: Boolean(
         localMembership?.temporaryResponsibility &&
         (localMembership.role === "BARTENDER" || localMembership.role === "SENIOR_BARTENDER"),
@@ -558,7 +586,7 @@ export class OrganizationInvitationsService {
         where: {
           userId: existingUser.id,
           venueId: input.venueId,
-          OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }],
+          OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
         },
       }))
     ) {
@@ -771,8 +799,8 @@ export class OrganizationInvitationsService {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
-              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
-              include: { delegatedPermissions: true, temporaryResponsibility: true },
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              include: { permissionOverrides: true, temporaryResponsibility: true },
             },
           },
         },
@@ -796,7 +824,11 @@ export class OrganizationInvitationsService {
     const allowed =
       (companyMembership?.companyRole === "CHEF_BARTENDER" &&
         this.permissions
-          .evaluate({ role: "chef_bartender", hasChefBartender, hasBarManager })
+          .evaluate({
+            role: "chef_bartender",
+            hasChefBartender,
+            hasBarManager,
+          })
           .includes("invite_chef_bartender")) ||
       venueMemberships.some(
         ({ venue, membership }) =>
@@ -806,6 +838,10 @@ export class OrganizationInvitationsService {
               role: "bar_manager",
               hasChefBartender,
               hasBarManager: venue.memberships.some(({ role }) => role === "BAR_MANAGER"),
+              permissionOverrides: membership.permissionOverrides.map(({ code, enabled }) => ({
+                code: code.toLowerCase(),
+                enabled,
+              })),
             })
             .includes("invite_chef_bartender"),
       );
@@ -883,8 +919,8 @@ export class OrganizationInvitationsService {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
-              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
-              include: { delegatedPermissions: true, temporaryResponsibility: true },
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              include: { permissionOverrides: true, temporaryResponsibility: true },
             },
           },
         },
@@ -924,6 +960,10 @@ export class OrganizationInvitationsService {
               role: "bar_manager",
               hasChefBartender,
               hasBarManager: venue.memberships.some(({ role }) => role === "BAR_MANAGER"),
+              permissionOverrides: membership.permissionOverrides.map(({ code, enabled }) => ({
+                code: code.toLowerCase(),
+                enabled,
+              })),
             })
             .includes("invite_chef_bartender"),
       );
@@ -1058,7 +1098,7 @@ export class OrganizationInvitationsService {
         venues: {
           include: {
             memberships: {
-              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
             },
           },
         },
@@ -1184,8 +1224,8 @@ export class OrganizationInvitationsService {
         venue: {
           include: {
             memberships: {
-              where: { OR: [{ endedOn: null }, { endedOn: { gte: currentDate() } }] },
-              include: { delegatedPermissions: true, temporaryResponsibility: true },
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              include: { permissionOverrides: true, temporaryResponsibility: true },
             },
             company: { include: { memberships: true } },
           },
@@ -1211,9 +1251,10 @@ export class OrganizationInvitationsService {
     const permissions = role
       ? this.permissions.evaluate({
           role,
-          delegatedPermissions: localMembership?.delegatedPermissions.map(({ code }) =>
-            code.toLowerCase(),
-          ),
+          permissionOverrides: localMembership?.permissionOverrides.map(({ code, enabled }) => ({
+            code: code.toLowerCase(),
+            enabled,
+          })),
           temporaryResponsibility: Boolean(
             localMembership?.temporaryResponsibility &&
             (localMembership.role === "BARTENDER" || localMembership.role === "SENIOR_BARTENDER"),

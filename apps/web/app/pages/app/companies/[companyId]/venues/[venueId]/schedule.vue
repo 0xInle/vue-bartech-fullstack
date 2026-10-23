@@ -1,8 +1,10 @@
-<script setup lang="ts">
-defineOptions({ name: "SchedulePageRedirect" });
+<template>
+  <TeamPageScreen />
+</template>
 
-const route = useRoute();
-await navigateTo(`/app/companies/${route.params.companyId}/venues/${route.params.venueId}/team`, {
-  redirectCode: 302,
-});
+<script setup lang="ts">
+import TeamPageScreen from "~/features/team/components/TeamPageScreen.vue";
+
+defineOptions({ name: "VenueSchedulePage" });
+useHead({ title: "График работы" });
 </script>

@@ -60,7 +60,7 @@ function onRowSelect(event: { data: TeamMember }): void {
 }
 
 function canManage(member: TeamMember): boolean {
-  return member.availableRoles.length > 0 || member.canManageDelegatedPermissions;
+  return member.availableRoles.length > 0 || member.canManagePermissionOverrides;
 }
 
 function roleLabel(role: VenueRole): string {

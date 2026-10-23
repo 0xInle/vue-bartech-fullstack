@@ -172,16 +172,20 @@ export function useSchedule(
     mutate(() =>
       schedulesControllerDeleteTemplate(companyId, venueId, id, options(), identity.apiFetch),
     );
-  async function exportSchedule(format: "xlsx" | "pdf"): Promise<void> {
+  async function exportSchedule(
+    format: "xlsx" | "pdf",
+    exportYear = year.value,
+    exportMonth = month.value,
+  ): Promise<void> {
     const response = await identity.apiFetch(
-      `/api/v1/organizations/companies/${companyId}/venues/${venueId}/schedule/export?year=${year.value}&month=${month.value}&format=${format}`,
+      `/api/v1/organizations/companies/${companyId}/venues/${venueId}/schedule/export?year=${exportYear}&month=${exportMonth}&format=${format}`,
       { credentials: "include" },
     );
     if (!response.ok) throw new Error("Не удалось выгрузить график");
     const file = URL.createObjectURL(await response.blob());
     const link = document.createElement("a");
     link.href = file;
-    link.download = `schedule-${year.value}-${String(month.value).padStart(2, "0")}.${format}`;
+    link.download = `schedule-${exportYear}-${String(exportMonth).padStart(2, "0")}.${format}`;
     link.click();
     URL.revokeObjectURL(file);
   }
