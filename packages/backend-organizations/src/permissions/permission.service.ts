@@ -25,6 +25,24 @@ export const permissionCatalog = {
 export type PermissionCode = keyof typeof permissionCatalog;
 export type WorkspaceRole = "bartender" | "senior_bartender" | "bar_manager" | "chef_bartender";
 
+export const VENUE_PERMISSION_CODES = [
+  "view_products",
+  "view_archive",
+  "view_team",
+  "manage_products",
+  "manage_product_archive",
+  "delete_products_permanently",
+  "export_data",
+  "invite_employees",
+  "invite_bar_manager",
+  "manage_team",
+  "manage_delegated_permissions",
+  "manage_venue",
+  "view_history",
+  "view_schedule",
+  "manage_schedule",
+] as const satisfies readonly PermissionCode[];
+
 export const DELEGATABLE_PERMISSION_CODES = [
   "manage_products",
   "manage_product_archive",
@@ -104,12 +122,6 @@ export class PermissionService {
       return applyOverrides(permissions, input.permissionOverrides);
     }
 
-    for (const permission of input.permissionOverrides ?? []) {
-      if (isPermissionCode(permission.code) && isDelegatablePermission(permission.code)) {
-        permissions.add(permission.code);
-      }
-    }
-
     if (input.temporaryResponsibility && !input.hasBarManager && !input.hasChefBartender) {
       TEMPORARY_OPERATIONAL_PERMISSIONS.forEach((permission) => permissions.add(permission));
     }
@@ -124,6 +136,7 @@ function applyOverrides(
 ): PermissionCode[] {
   for (const override of overrides ?? []) {
     if (!isPermissionCode(override.code)) continue;
+    if (!isVenuePermission(override.code)) continue;
     if (override.enabled) defaults.add(override.code);
     else defaults.delete(override.code);
   }
@@ -134,8 +147,6 @@ function isPermissionCode(value: string): value is PermissionCode {
   return Object.hasOwn(permissionCatalog, value);
 }
 
-function isDelegatablePermission(permission: PermissionCode): boolean {
-  return DELEGATABLE_PERMISSION_CODES.includes(
-    permission as (typeof DELEGATABLE_PERMISSION_CODES)[number],
-  );
+export function isVenuePermission(permission: PermissionCode): boolean {
+  return VENUE_PERMISSION_CODES.includes(permission as (typeof VENUE_PERMISSION_CODES)[number]);
 }

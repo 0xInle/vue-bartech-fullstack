@@ -8,7 +8,9 @@ import {
 import { DATABASE_CLIENT, Prisma, PrismaClient } from "@bartech/database";
 import {
   DELEGATABLE_PERMISSION_CODES,
+  VENUE_PERMISSION_CODES,
   PermissionService,
+  isVenuePermission,
   type PermissionCode,
   type WorkspaceRole,
 } from "./permissions/permission.service.js";
@@ -458,17 +460,18 @@ export class OrganizationsService {
           hasChefBartender,
         });
         const availablePermissions = canManagePermissionOverrides
-          ? [
-              ...new Set([
-                ...defaults,
-                ...(member.role === "BAR_MANAGER" ? [] : DELEGATABLE_PERMISSION_CODES).filter(
-                  (code) =>
-                    (workspace.permissions.includes(code) || permissions.includes(code)) &&
-                    !(actorIsTemporaryResponsible && code === "delete_products_permanently") &&
-                    !(code === "manage_schedule" && member.role !== "SENIOR_BARTENDER"),
-                ),
-              ]),
-            ]
+          ? workspace.role === "bar_manager"
+            ? [...VENUE_PERMISSION_CODES]
+            : [
+                ...new Set([
+                  ...defaults.filter(isVenuePermission),
+                  ...DELEGATABLE_PERMISSION_CODES.filter(
+                    (code) =>
+                      (workspace.permissions.includes(code) || permissions.includes(code)) &&
+                      !(actorIsTemporaryResponsible && code === "delete_products_permanently"),
+                  ),
+                ]),
+              ]
           : permissions;
 
         return {

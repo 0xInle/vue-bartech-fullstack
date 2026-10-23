@@ -62,9 +62,6 @@
               {{ permissionNames(member.permissions) || "Разрешений нет" }}
             </p>
             <template v-else-if="shouldShowPermissionToggles">
-              <p v-if="readOnlyPermissionNames" class="text-sm text-color-secondary">
-                Нельзя изменить: {{ readOnlyPermissionNames }}
-              </p>
               <div class="flex flex-col gap-0.5">
                 <div
                   v-for="permission in availablePermissionOptions"
@@ -160,13 +157,9 @@ const permissionOptions = [
   { label: "Выгрузка данных", value: "export_data" },
   { label: "Приглашение сотрудников", value: "invite_employees" },
   { label: "Приглашение бар-менеджера", value: "invite_bar_manager" },
-  { label: "Приглашение шеф-бармена", value: "invite_chef_bartender" },
   { label: "Управление командой", value: "manage_team" },
   { label: "Управление разрешениями", value: "manage_delegated_permissions" },
-  { label: "Создание заведений", value: "create_venues" },
   { label: "Управление своим заведением", value: "manage_venue" },
-  { label: "Управление заведениями компании", value: "manage_venues" },
-  { label: "Управление компанией", value: "manage_company" },
   { label: "Просмотр истории действий", value: "view_history" },
   { label: "Просмотр графика сотрудников", value: "view_schedule" },
   { label: "Управление графиком сотрудников", value: "manage_schedule" },
@@ -176,28 +169,11 @@ const canEditPermissions = computed(() => Boolean(props.member?.canManagePermiss
 const shouldShowPermissionToggles = computed(
   () => canEditPermissions.value || props.member?.role === "BAR_MANAGER",
 );
-const availablePermissionOptions = computed(() =>
-  permissionOptions.filter((permission) => {
-    const member = props.member;
-    return Boolean(
-      member &&
-      (member.role === "BAR_MANAGER"
-        ? member.permissions.includes(permission.value)
-        : member.availablePermissions.includes(permission.value)),
-    );
-  }),
-);
-const readOnlyPermissionNames = computed(() => {
-  const member = props.member;
-  if (!member || member.role === "BAR_MANAGER") return "";
-  return permissionNames(
-    member.permissions.filter((permission) => !member.availablePermissions.includes(permission)),
-  );
-});
+const availablePermissionOptions = computed(() => permissionOptions);
 const permissionsChanged = computed(() => {
   const member = props.member;
   if (!member) return false;
-  return !samePermissions(member.permissions, permissions.value);
+  return !samePermissions(getEditablePermissions(member.permissions), permissions.value);
 });
 watch(
   () => props.member,
@@ -223,9 +199,9 @@ function save(): void {
 }
 
 function getEditablePermissions(codes: readonly string[]): PermissionCode[] {
-  return codes.filter((code): code is PermissionCode =>
-    permissionOptions.some((permission) => permission.value === code),
-  );
+  return permissionOptions
+    .filter((permission) => codes.includes(permission.value))
+    .map(({ value }) => value);
 }
 
 function setPermission(permission: PermissionCode, enabled: boolean | undefined): void {

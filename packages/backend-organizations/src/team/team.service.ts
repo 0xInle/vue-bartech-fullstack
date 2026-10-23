@@ -13,7 +13,9 @@ import {
 } from "@bartech/database";
 import {
   DELEGATABLE_PERMISSION_CODES,
+  VENUE_PERMISSION_CODES,
   PermissionService,
+  isVenuePermission,
   permissionCatalog,
   type PermissionCode,
 } from "../permissions/permission.service.js";
@@ -118,6 +120,10 @@ export class TeamService {
       if (actorMembership && actorIsChef) {
         throw new ConflictException("У сотрудника обнаружены несовместимые полномочия");
       }
+      const actorIsBarManager = actorMembership?.role === "BAR_MANAGER";
+      if (!actorIsBarManager && !actorIsChef && !actorIsTemporaryResponsible) {
+        throw new ForbiddenException("У вас нет доступа к управлению этой командой");
+      }
 
       const actorRole = actorIsChef ? "chef_bartender" : toWorkspaceRole(actorMembership!.role);
       const actorPermissions = this.permissions.evaluate({
@@ -134,7 +140,6 @@ export class TeamService {
         throw new ForbiddenException("У вас нет доступа к управлению этой командой");
       }
 
-      const actorIsBarManager = actorMembership?.role === "BAR_MANAGER";
       const targetIsBarManager = target.role === "BAR_MANAGER";
       const hadPermissionOverrides = target.permissionOverrides.length > 0;
       if (
@@ -148,11 +153,27 @@ export class TeamService {
       }
 
       const roleChanged = target.role !== input.role;
+      if (roleChanged && actorIsTemporaryResponsible) {
+        const canChangeRole =
+          (target.role === "BARTENDER" || target.role === "SENIOR_BARTENDER") &&
+          (input.role === "BARTENDER" || input.role === "SENIOR_BARTENDER");
+        const canPromoteToManager = input.role === "BAR_MANAGER" && !targetIsBarManager;
+        if (!canChangeRole && !canPromoteToManager) {
+          throw new ForbiddenException(
+            "Временный ответственный может изменить только указанную роль",
+          );
+        }
+      }
       if (new Set(input.permissions).size !== input.permissions.length) {
         throw new ConflictException("Разрешения не должны повторяться");
       }
       if (input.permissions.some((code) => !Object.hasOwn(permissionCatalog, code))) {
         throw new ConflictException("Выбрано недопустимое разрешение");
+      }
+      if (input.permissions.some((code) => !isVenuePermission(code))) {
+        throw new ConflictException(
+          "Через локальные настройки можно назначить только права заведения",
+        );
       }
       if (roleChanged && input.permissions.length > 0) {
         throw new ConflictException("При изменении должности разрешения сбрасываются");
@@ -169,10 +190,33 @@ export class TeamService {
           hasChefBartender,
         }),
       );
+      const changedPermissionCodes = roleChanged
+        ? []
+        : VENUE_PERMISSION_CODES.filter(
+            (code) => currentTargetPermissions.has(code) !== input.permissions.includes(code),
+          );
+      const permissionsChanged = changedPermissionCodes.length > 0;
+      const temporaryDelegatablePermissions = DELEGATABLE_PERMISSION_CODES.filter(
+        (code) => code !== "delete_products_permanently",
+      );
+      const temporaryDelegatablePermissionSet = new Set<PermissionCode>(
+        temporaryDelegatablePermissions,
+      );
+      if (permissionsChanged && !actorIsBarManager) {
+        if (!actorIsTemporaryResponsible) {
+          throw new ForbiddenException("Персональные разрешения может менять только бар-менеджер");
+        }
+        if (changedPermissionCodes.some((code) => !temporaryDelegatablePermissionSet.has(code))) {
+          throw new ForbiddenException("Временный ответственный не может изменить это разрешение");
+        }
+        if (changedPermissionCodes.some((code) => !actorPermissions.includes(code))) {
+          throw new ForbiddenException("Нельзя изменить право, которого нет у вас");
+        }
+      }
       if (
         !roleChanged &&
         !actorPermissions.includes("manage_delegated_permissions") &&
-        !samePermissions([...currentTargetPermissions], input.permissions)
+        permissionsChanged
       ) {
         throw new ForbiddenException("У вас нет доступа к изменению разрешений сотрудников");
       }
@@ -195,13 +239,20 @@ export class TeamService {
         }),
       );
       const editablePermissions = new Set<PermissionCode>([
-        ...targetRoleDefaults,
-        ...(input.role === "BAR_MANAGER"
-          ? []
-          : DELEGATABLE_PERMISSION_CODES.filter(
-              (code) => code !== "manage_schedule" || input.role === "SENIOR_BARTENDER",
-            )),
+        ...(actorIsBarManager
+          ? VENUE_PERMISSION_CODES
+          : [
+              ...[...targetRoleDefaults].filter(isVenuePermission),
+              ...(actorIsTemporaryResponsible
+                ? temporaryDelegatablePermissions
+                : DELEGATABLE_PERMISSION_CODES),
+            ]),
       ]);
+      const permissionsManagedByActor = actorIsBarManager
+        ? VENUE_PERMISSION_CODES
+        : actorIsTemporaryResponsible
+          ? temporaryDelegatablePermissions
+          : [];
       if (
         !roleChanged &&
         input.permissions.some(
@@ -270,23 +321,38 @@ export class TeamService {
         });
       }
 
-      await transaction.venuePermissionOverride.deleteMany({
-        where: { venueMembershipId: target.id },
-      });
       const permissionOverrides = roleChanged
         ? []
-        : [...editablePermissions]
-            .map((code) => ({ code, enabled: input.permissions.includes(code) }))
-            .filter(({ code, enabled }) => enabled !== targetRoleDefaults.has(code));
-      if (permissionOverrides.length) {
-        await transaction.venuePermissionOverride.createMany({
-          data: permissionOverrides.map(({ code, enabled }) => ({
+        : permissionsManagedByActor.length
+          ? [...permissionsManagedByActor]
+              .map((code) => ({ code, enabled: input.permissions.includes(code) }))
+              .filter(({ code, enabled }) => enabled !== targetRoleDefaults.has(code))
+          : [];
+      if (roleChanged || actorIsBarManager || (actorIsTemporaryResponsible && permissionsChanged)) {
+        await transaction.venuePermissionOverride.deleteMany({
+          where: {
             venueMembershipId: target.id,
-            code: code.toUpperCase() as DatabasePermissionCode,
-            enabled,
-            changedByUserId: actorId,
-          })),
+            ...(actorIsTemporaryResponsible && !roleChanged && !actorIsBarManager
+              ? {
+                  code: {
+                    in: temporaryDelegatablePermissions.map(
+                      (code) => code.toUpperCase() as DatabasePermissionCode,
+                    ),
+                  },
+                }
+              : {}),
+          },
         });
+        if (permissionOverrides.length) {
+          await transaction.venuePermissionOverride.createMany({
+            data: permissionOverrides.map(({ code, enabled }) => ({
+              venueMembershipId: target.id,
+              code: code.toUpperCase() as DatabasePermissionCode,
+              enabled,
+              changedByUserId: actorId,
+            })),
+          });
+        }
       }
 
       if (roleChanged) {
@@ -331,7 +397,11 @@ export class TeamService {
         });
       }
 
-      if (roleChanged || hadPermissionOverrides || permissionOverrides.length) {
+      if (
+        roleChanged ||
+        (actorIsBarManager && (hadPermissionOverrides || permissionOverrides.length)) ||
+        (actorIsTemporaryResponsible && permissionsChanged)
+      ) {
         await transaction.auditEvent.create({
           data: {
             eventType: "membership.permission_overrides_changed",
@@ -404,7 +474,14 @@ export class TeamService {
               rolePeriods: true,
             },
           },
-          company: { select: { memberships: { select: { userId: true, companyRole: true } } } },
+          company: {
+            select: {
+              memberships: {
+                where: { companyRole: "CHEF_BARTENDER" },
+                select: { userId: true, companyRole: true },
+              },
+            },
+          },
         },
       });
       const target = await transaction.venueMembership.findFirst({
@@ -434,27 +511,44 @@ export class TeamService {
         ({ userId }) => userId === actorId,
       );
       const hasBarManager = venue.memberships.some(({ role }) => role === "BAR_MANAGER");
-      const actorRole = actorCompanyMembership?.companyRole
-        ? "chef_bartender"
-        : actorMembership
-          ? toWorkspaceRole(actorMembership.role)
-          : null;
-      const actorPermissions = actorRole
-        ? this.permissions.evaluate({
-            role: actorRole,
-            permissionOverrides: actorMembership?.permissionOverrides.map(({ code, enabled }) => ({
-              code: code.toLowerCase(),
-              enabled,
-            })),
-            temporaryResponsibility: Boolean(actorMembership?.temporaryResponsibility),
-            hasBarManager,
-            hasChefBartender: venue.company.memberships.some(
-              ({ companyRole }) => companyRole === "CHEF_BARTENDER",
-            ),
-          })
-        : [];
+      const hasChefBartender = venue.company.memberships.length > 0;
+      const actorIsChef = Boolean(actorCompanyMembership);
+      const actorIsTemporaryResponsible = Boolean(
+        actorMembership &&
+        (actorMembership.role === "BARTENDER" || actorMembership.role === "SENIOR_BARTENDER") &&
+        actorMembership.temporaryResponsibility &&
+        !hasBarManager &&
+        !hasChefBartender,
+      );
+      if (!actorMembership && !actorIsChef) throw new NotFoundException("Команда не найдена");
+      if (actorMembership && actorIsChef) {
+        throw new ConflictException("У сотрудника обнаружены несовместимые полномочия");
+      }
+      const actorIsBarManager = actorMembership?.role === "BAR_MANAGER";
+      if (!actorIsBarManager && !actorIsChef && !actorIsTemporaryResponsible) {
+        throw new ForbiddenException("У вас нет доступа к управлению этой командой");
+      }
+      const actorPermissions = this.permissions.evaluate({
+        role: actorIsChef ? "chef_bartender" : toWorkspaceRole(actorMembership!.role),
+        permissionOverrides: actorMembership?.permissionOverrides.map(({ code, enabled }) => ({
+          code: code.toLowerCase(),
+          enabled,
+        })),
+        temporaryResponsibility: actorIsTemporaryResponsible,
+        hasBarManager,
+        hasChefBartender,
+      });
       if (!actorPermissions.includes("manage_team")) {
         throw new ForbiddenException("У вас нет доступа к управлению этой командой");
+      }
+      if (
+        actorIsTemporaryResponsible &&
+        target.role !== "BARTENDER" &&
+        target.role !== "SENIOR_BARTENDER"
+      ) {
+        throw new ForbiddenException(
+          "Временный ответственный может удалить только бармена или старшего бармена",
+        );
       }
       const rolePeriod = target.rolePeriods.find(
         (period) =>
@@ -581,10 +675,6 @@ export class TeamService {
       }
     }
   }
-}
-
-function samePermissions(first: readonly string[], second: readonly string[]): boolean {
-  return first.length === second.length && first.every((code) => second.includes(code));
 }
 
 function dateKey(date: Date): string {
