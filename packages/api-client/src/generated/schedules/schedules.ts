@@ -34,8 +34,11 @@ import type {
   ScheduleCellDto,
   ScheduleCellsDto,
   ScheduleCommentDto,
+  ScheduleDateMarkerDto,
   ScheduleExtendDto,
   ScheduleGenerateDto,
+  ScheduleShiftSettingDto,
+  ScheduleShiftSettingsDto,
   ScheduleTemplateDto,
   SchedulesControllerExportParams,
   SchedulesControllerGetMonthParams
@@ -159,7 +162,199 @@ export function useSchedulesControllerGetMonth<TData = Awaited<ReturnType<typeof
 
 
 
-export type schedulesControllerListTemplatesResponse200 = {
+export type schedulesControllerSetInventoryMarkerResponse200 = {
+  data: ScheduleDateMarkerDto
+  status: 200
+}
+
+export type schedulesControllerSetInventoryMarkerResponseSuccess = (schedulesControllerSetInventoryMarkerResponse200) & {
+  headers: Headers;
+};
+;
+
+export type schedulesControllerSetInventoryMarkerResponse = (schedulesControllerSetInventoryMarkerResponseSuccess)
+
+export const getSchedulesControllerSetInventoryMarkerUrl = (companyId: unknown,
+    venueId: unknown,
+    date: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/schedule/date-markers/${date}`
+}
+
+/**
+ * @summary Отметить дату графика как день инвентаризации
+ */
+export const schedulesControllerSetInventoryMarker = async (companyId: unknown,
+    venueId: unknown,
+    date: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<schedulesControllerSetInventoryMarkerResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getSchedulesControllerSetInventoryMarkerUrl(companyId,venueId,date),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: schedulesControllerSetInventoryMarkerResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as schedulesControllerSetInventoryMarkerResponse
+}
+
+
+
+
+
+export const getSchedulesControllerSetInventoryMarkerMutationKey = () => ['schedulesControllerSetInventoryMarker'] as const;
+
+export const getSchedulesControllerSetInventoryMarkerMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerSetInventoryMarker>>, TError,SchedulesControllerSetInventoryMarkerMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerSetInventoryMarker>>, TError,SchedulesControllerSetInventoryMarkerMutationVariables, TContext> => {
+
+const mutationKey = getSchedulesControllerSetInventoryMarkerMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof schedulesControllerSetInventoryMarker>>, SchedulesControllerSetInventoryMarkerMutationVariables> = (props) => {
+          const {companyId,venueId,date} = props ?? {};
+
+          return  schedulesControllerSetInventoryMarker(companyId,venueId,date,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SchedulesControllerSetInventoryMarkerMutationResult = NonNullable<Awaited<ReturnType<typeof schedulesControllerSetInventoryMarker>>>
+
+    export type SchedulesControllerSetInventoryMarkerMutationError = unknown
+    export type SchedulesControllerSetInventoryMarkerMutationVariables = {companyId: unknown;venueId: unknown;date: string}
+
+    /**
+ * @summary Отметить дату графика как день инвентаризации
+ */
+export const useSchedulesControllerSetInventoryMarker = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerSetInventoryMarker>>, TError,SchedulesControllerSetInventoryMarkerMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof schedulesControllerSetInventoryMarker>>,
+        TError,
+        SchedulesControllerSetInventoryMarkerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSchedulesControllerSetInventoryMarkerMutationOptions(options), queryClient);
+    }
+    export type schedulesControllerDeleteInventoryMarkerResponse200 = {
+  data: void
+  status: 200
+}
+
+export type schedulesControllerDeleteInventoryMarkerResponseSuccess = (schedulesControllerDeleteInventoryMarkerResponse200) & {
+  headers: Headers;
+};
+;
+
+export type schedulesControllerDeleteInventoryMarkerResponse = (schedulesControllerDeleteInventoryMarkerResponseSuccess)
+
+export const getSchedulesControllerDeleteInventoryMarkerUrl = (companyId: unknown,
+    venueId: unknown,
+    date: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/schedule/date-markers/${date}`
+}
+
+/**
+ * @summary Снять отметку дня инвентаризации
+ */
+export const schedulesControllerDeleteInventoryMarker = async (companyId: unknown,
+    venueId: unknown,
+    date: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<schedulesControllerDeleteInventoryMarkerResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getSchedulesControllerDeleteInventoryMarkerUrl(companyId,venueId,date),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: schedulesControllerDeleteInventoryMarkerResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as schedulesControllerDeleteInventoryMarkerResponse
+}
+
+
+
+
+
+export const getSchedulesControllerDeleteInventoryMarkerMutationKey = () => ['schedulesControllerDeleteInventoryMarker'] as const;
+
+export const getSchedulesControllerDeleteInventoryMarkerMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerDeleteInventoryMarker>>, TError,SchedulesControllerDeleteInventoryMarkerMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerDeleteInventoryMarker>>, TError,SchedulesControllerDeleteInventoryMarkerMutationVariables, TContext> => {
+
+const mutationKey = getSchedulesControllerDeleteInventoryMarkerMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof schedulesControllerDeleteInventoryMarker>>, SchedulesControllerDeleteInventoryMarkerMutationVariables> = (props) => {
+          const {companyId,venueId,date} = props ?? {};
+
+          return  schedulesControllerDeleteInventoryMarker(companyId,venueId,date,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SchedulesControllerDeleteInventoryMarkerMutationResult = NonNullable<Awaited<ReturnType<typeof schedulesControllerDeleteInventoryMarker>>>
+
+    export type SchedulesControllerDeleteInventoryMarkerMutationError = unknown
+    export type SchedulesControllerDeleteInventoryMarkerMutationVariables = {companyId: unknown;venueId: unknown;date: string}
+
+    /**
+ * @summary Снять отметку дня инвентаризации
+ */
+export const useSchedulesControllerDeleteInventoryMarker = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerDeleteInventoryMarker>>, TError,SchedulesControllerDeleteInventoryMarkerMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof schedulesControllerDeleteInventoryMarker>>,
+        TError,
+        SchedulesControllerDeleteInventoryMarkerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSchedulesControllerDeleteInventoryMarkerMutationOptions(options), queryClient);
+    }
+    export type schedulesControllerListTemplatesResponse200 = {
   data: void
   status: 200
 }
@@ -369,6 +564,217 @@ export const useSchedulesControllerCreateTemplate = <TError = unknown,
         TContext
       > => {
       return useMutation(getSchedulesControllerCreateTemplateMutationOptions(options), queryClient);
+    }
+    export type schedulesControllerGetShiftSettingsResponse200 = {
+  data: ScheduleShiftSettingDto[]
+  status: 200
+}
+
+export type schedulesControllerGetShiftSettingsResponseSuccess = (schedulesControllerGetShiftSettingsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type schedulesControllerGetShiftSettingsResponse = (schedulesControllerGetShiftSettingsResponseSuccess)
+
+export const getSchedulesControllerGetShiftSettingsUrl = (companyId: unknown,
+    venueId: unknown,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/schedule/shift-settings`
+}
+
+/**
+ * @summary Получить настройки типов смен заведения
+ */
+export const schedulesControllerGetShiftSettings = async (companyId: unknown,
+    venueId: unknown, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<schedulesControllerGetShiftSettingsResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getSchedulesControllerGetShiftSettingsUrl(companyId,venueId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: schedulesControllerGetShiftSettingsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as schedulesControllerGetShiftSettingsResponse
+}
+
+
+
+
+
+export const getSchedulesControllerGetShiftSettingsQueryKey = (companyId: MaybeRefOrGetter<unknown>,
+    venueId: MaybeRefOrGetter<unknown>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'venues',venueId,'schedule','shift-settings'
+    ] as const;
+    }
+
+
+export const getSchedulesControllerGetShiftSettingsQueryOptions = <TData = Awaited<ReturnType<typeof schedulesControllerGetShiftSettings>>, TError = unknown>(companyId: MaybeRefOrGetter<unknown>,
+    venueId: MaybeRefOrGetter<unknown>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulesControllerGetShiftSettings>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getSchedulesControllerGetShiftSettingsQueryKey(companyId,venueId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof schedulesControllerGetShiftSettings>>> = ({ signal }) => schedulesControllerGetShiftSettings(toValue(companyId),toValue(venueId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined && toValue(venueId) !== null && toValue(venueId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof schedulesControllerGetShiftSettings>>, TError, TData>
+}
+
+export type SchedulesControllerGetShiftSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof schedulesControllerGetShiftSettings>>>
+export type SchedulesControllerGetShiftSettingsQueryError = unknown
+
+
+/**
+ * @summary Получить настройки типов смен заведения
+ */
+
+export function useSchedulesControllerGetShiftSettings<TData = Awaited<ReturnType<typeof schedulesControllerGetShiftSettings>>, TError = unknown>(
+ companyId: MaybeRefOrGetter<unknown>,
+    venueId: MaybeRefOrGetter<unknown>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulesControllerGetShiftSettings>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSchedulesControllerGetShiftSettingsQueryOptions(companyId,venueId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type schedulesControllerSaveShiftSettingsResponse200 = {
+  data: ScheduleShiftSettingDto[]
+  status: 200
+}
+
+export type schedulesControllerSaveShiftSettingsResponseSuccess = (schedulesControllerSaveShiftSettingsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type schedulesControllerSaveShiftSettingsResponse = (schedulesControllerSaveShiftSettingsResponseSuccess)
+
+export const getSchedulesControllerSaveShiftSettingsUrl = (companyId: unknown,
+    venueId: unknown,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/schedule/shift-settings`
+}
+
+/**
+ * @summary Заменить настройки типов смен заведения
+ */
+export const schedulesControllerSaveShiftSettings = async (companyId: unknown,
+    venueId: unknown,
+    scheduleShiftSettingsDto: ScheduleShiftSettingsDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<schedulesControllerSaveShiftSettingsResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getSchedulesControllerSaveShiftSettingsUrl(companyId,venueId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(scheduleShiftSettingsDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: schedulesControllerSaveShiftSettingsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as schedulesControllerSaveShiftSettingsResponse
+}
+
+
+
+
+
+export const getSchedulesControllerSaveShiftSettingsMutationKey = () => ['schedulesControllerSaveShiftSettings'] as const;
+
+export const getSchedulesControllerSaveShiftSettingsMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerSaveShiftSettings>>, TError,SchedulesControllerSaveShiftSettingsMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerSaveShiftSettings>>, TError,SchedulesControllerSaveShiftSettingsMutationVariables, TContext> => {
+
+const mutationKey = getSchedulesControllerSaveShiftSettingsMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof schedulesControllerSaveShiftSettings>>, SchedulesControllerSaveShiftSettingsMutationVariables> = (props) => {
+          const {companyId,venueId,data} = props ?? {};
+
+          return  schedulesControllerSaveShiftSettings(companyId,venueId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SchedulesControllerSaveShiftSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof schedulesControllerSaveShiftSettings>>>
+    export type SchedulesControllerSaveShiftSettingsMutationBody = ScheduleShiftSettingsDto
+    export type SchedulesControllerSaveShiftSettingsMutationError = unknown
+    export type SchedulesControllerSaveShiftSettingsMutationVariables = {companyId: unknown;venueId: unknown;data: ScheduleShiftSettingsDto}
+
+    /**
+ * @summary Заменить настройки типов смен заведения
+ */
+export const useSchedulesControllerSaveShiftSettings = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulesControllerSaveShiftSettings>>, TError,SchedulesControllerSaveShiftSettingsMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof schedulesControllerSaveShiftSettings>>,
+        TError,
+        SchedulesControllerSaveShiftSettingsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSchedulesControllerSaveShiftSettingsMutationOptions(options), queryClient);
     }
     export type schedulesControllerUpdateTemplateResponse200 = {
   data: void

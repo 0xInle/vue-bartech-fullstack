@@ -121,10 +121,19 @@ function sanitizeProduct(
           }
         : null,
     })),
-    garnishes: product.cocktailGarnishes.map((entry) => ({
-      id: entry.garnishId,
-      position: entry.position,
-      name: entry.garnish?.name ?? null,
-    })),
+    garnishes: [
+      ...product.cocktailGarnishes.map((entry) => ({
+        id: entry.garnishId,
+        position: entry.position,
+        kind: "PRODUCT",
+        name: entry.garnish?.name ?? null,
+      })),
+      ...product.cocktailQuickGarnishes.map((entry) => ({
+        id: entry.referenceValueId,
+        position: entry.position,
+        kind: "QUICK",
+        name: entry.referenceValue.label,
+      })),
+    ].sort((a, b) => a.position - b.position),
   };
 }

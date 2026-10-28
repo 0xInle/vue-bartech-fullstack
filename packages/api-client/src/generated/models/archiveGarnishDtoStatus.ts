@@ -6,7 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type ArchiveGarnishDtoStatus = typeof ArchiveGarnishDtoStatus[keyof typeof ArchiveGarnishDtoStatus];
+/**
+ * @nullable
+ */
+export type ArchiveGarnishDtoStatus = typeof ArchiveGarnishDtoStatus[keyof typeof ArchiveGarnishDtoStatus] | null;
 
 
 export const ArchiveGarnishDtoStatus = {

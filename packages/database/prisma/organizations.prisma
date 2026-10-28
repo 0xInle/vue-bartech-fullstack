@@ -116,6 +116,7 @@ model Venue {
   supportAccessGrants     SupportAccessGrant[]
   scheduleTemplates       ScheduleTemplate[]
   schedules               Schedule[]
+  scheduleShiftSettings   VenueScheduleShiftSetting[]
 
   @@unique([id, companyId], map: "venues_id_company_id_key")
   @@unique([companyId, nameNormalized], map: "venues_company_normalized_name_key")
@@ -163,17 +164,17 @@ model CompanyMembership {
 }
 
 model VenueMembership {
-  id                      String                   @id @default(uuid()) @db.Uuid
-  userId                  String                   @db.Uuid
-  companyId               String                   @db.Uuid
-  venueId                 String                   @db.Uuid
-  role                    VenueRole                @default(BAR_MANAGER)
-  startedOn               DateTime                 @default(dbgenerated("CURRENT_DATE")) @db.Date
-  endedOn                 DateTime?                @db.Date
-  createdAt               DateTime                 @default(now()) @db.Timestamptz(6)
-  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  venue                   Venue                    @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
-  companyMembership       CompanyMembership        @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
+  id                      String                    @id @default(uuid()) @db.Uuid
+  userId                  String                    @db.Uuid
+  companyId               String                    @db.Uuid
+  venueId                 String                    @db.Uuid
+  role                    VenueRole                 @default(BAR_MANAGER)
+  startedOn               DateTime                  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  endedOn                 DateTime?                 @db.Date
+  createdAt               DateTime                  @default(now()) @db.Timestamptz(6)
+  user                    User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue                   Venue                     @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
+  companyMembership       CompanyMembership         @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
   permissionOverrides     VenuePermissionOverride[]
   temporaryResponsibility TemporaryResponsibility?
   rolePeriods             VenueRolePeriod[]

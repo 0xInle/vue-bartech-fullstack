@@ -6,7 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ScheduleValueDtoKind } from './scheduleValueDtoKind';
-import type { ScheduleValueDtoShiftType } from './scheduleValueDtoShiftType';
+import type { ScheduleValueDtoShiftCode } from './scheduleValueDtoShiftCode';
+import type { ScheduleValueDtoShiftSettingId } from './scheduleValueDtoShiftSettingId';
 import type { ScheduleValueDtoStatus } from './scheduleValueDtoStatus';
 
 export interface ScheduleValueDto {
@@ -16,6 +17,13 @@ export interface ScheduleValueDto {
      * @maximum 24
      */
   durationHours?: number;
-  shiftType?: ScheduleValueDtoShiftType;
+  shiftCode?: ScheduleValueDtoShiftCode;
+  /**
+     * @minimum 0
+     * @maximum 1439
+     */
+  startMinute?: number;
+  /** @nullable */
+  shiftSettingId?: ScheduleValueDtoShiftSettingId;
   status?: ScheduleValueDtoStatus;
 }

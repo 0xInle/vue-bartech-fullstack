@@ -1,12 +1,14 @@
 <template>
   <Button
     v-if="canManage"
-    label="В архив"
+    v-tooltip.top="iconOnly ? { value: 'Архивировать', class: 'app-tooltip' } : undefined"
+    :label="iconOnly ? undefined : 'В архив'"
     icon="pi pi-inbox"
     size="small"
     severity="secondary"
     variant="text"
-    @click="visible = true"
+    :aria-label="iconOnly ? 'Архивировать продукт' : undefined"
+    @click.stop="visible = true"
   />
   <Dialog
     v-model:visible="visible"
@@ -63,6 +65,8 @@ const props = defineProps<{
   productType: import("../composables/useProductArchive").ProductAnalyticsType;
   productName: string;
   canManage: boolean;
+  iconOnly?: boolean;
+  stayOnPage?: boolean;
 }>();
 const emit = defineEmits<{ archived: [] }>();
 const { archive } = useProductArchive(
@@ -90,7 +94,7 @@ async function submit() {
     await archive(props.productId, props.productType);
     visible.value = false;
     emit("archived");
-    await navigateTo(`${basePath.value}/archive/${props.productId}`);
+    if (!props.stayOnPage) await navigateTo(`${basePath.value}/archive/${props.productId}`);
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : "Не удалось архивировать продукт";
     if (error instanceof ArchiveRequestError)

@@ -1,8 +1,9 @@
-import { computed, ref, toValue, type MaybeRefOrGetter } from "vue";
+import { computed, ref, toValue, watch, type MaybeRefOrGetter } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import {
   productsControllerCreateCocktail,
   productsControllerCreateIngredient,
+  productsControllerCreateReferenceValue,
   productsControllerGetCocktail,
   productsControllerGetReferences,
   productsControllerListCocktailGarnishes,
@@ -13,7 +14,9 @@ import type {
   ProductsControllerCreateCocktailMutationBody as CreateCocktailDto,
   ProductsControllerUpdateCocktailMutationBody as UpdateCocktailDto,
   ProductsControllerCreateIngredientMutationBody as CreateLocalIngredientDto,
+  ProductsControllerCreateReferenceValueMutationBody as CreateLocalReferenceValueDto,
   productsControllerCreateCocktailResponse201,
+  ReferenceValueResponseDto,
   productsControllerGetCocktailResponse200,
   productsControllerGetReferencesResponse200,
   productsControllerListCocktailGarnishesResponse200,
@@ -36,12 +39,21 @@ type ProductReferencesResponseDto = productsControllerGetReferencesResponse200["
 export function useCocktails(
   companyId: MaybeRefOrGetter<string>,
   venueId: MaybeRefOrGetter<string>,
-  options: { serviceSessionId?: string; enabled?: MaybeRefOrGetter<boolean> } = {},
+  options: {
+    serviceSessionId?: string;
+    enabled?: MaybeRefOrGetter<boolean>;
+    categoryFilter?: boolean;
+  } = {},
 ) {
   const identity = useIdentityFlow();
+  const route = useRoute();
+  const router = useRouter();
   const analytics = useProductAnalytics();
   const queryClient = useQueryClient();
-  const searchText = ref("");
+  const searchText = ref(options.categoryFilter ? readQuery(route.query.query) : "");
+  const categoryId = ref<string | null>(
+    options.categoryFilter ? readQuery(route.query.category) || null : null,
+  );
   const company = computed(() => toValue(companyId));
   const venue = computed(() => toValue(venueId));
   const productApiFetch = options.serviceSessionId
@@ -60,6 +72,7 @@ export function useCocktails(
     venue.value,
     options.serviceSessionId ?? "client",
     normalizedSearch.value,
+    categoryId.value,
   ]);
   const referencesKey = computed(() => [
     "product-references",
@@ -74,6 +87,31 @@ export function useCocktails(
     options.serviceSessionId ?? "client",
   ]);
 
+  if (options.categoryFilter) {
+    watch(
+      () => [route.query.query, route.query.category],
+      ([query, category]) => {
+        searchText.value = readQuery(query);
+        categoryId.value = readQuery(category) || null;
+      },
+    );
+    watch(
+      [normalizedSearch, categoryId],
+      () => {
+        const query = { ...route.query } as Record<string, string | undefined>;
+        assignQuery(query, "query", normalizedSearch.value);
+        assignQuery(query, "category", categoryId.value);
+        if (
+          Object.keys(query).length !== Object.keys(route.query).length ||
+          Object.keys(query).some((key) => query[key] !== route.query[key])
+        ) {
+          void router.replace({ query });
+        }
+      },
+      { immediate: true },
+    );
+  }
+
   const listQuery = useQuery({
     queryKey: listKey,
     enabled: hasWorkspace,
@@ -82,7 +120,12 @@ export function useCocktails(
       const response = await productsControllerListCocktails(
         company.value,
         venue.value,
-        normalizedSearch.value ? { query: normalizedSearch.value } : undefined,
+        normalizedSearch.value || categoryId.value
+          ? {
+              query: normalizedSearch.value || undefined,
+              categoryId: categoryId.value || undefined,
+            }
+          : undefined,
         { credentials: "include", signal },
         productApiFetch,
       );
@@ -202,6 +245,30 @@ export function useCocktails(
     return created;
   }
 
+  async function createLocalReferenceValue(
+    input: CreateLocalReferenceValueDto,
+  ): Promise<ReferenceValueResponseDto> {
+    await identity.refreshCsrf();
+    const response = await productsControllerCreateReferenceValue(
+      company.value,
+      venue.value,
+      input,
+      {
+        credentials: "include",
+        headers: { "x-csrf-token": identity.csrfToken.value },
+      },
+      productApiFetch,
+    );
+    const created = await requestApi<ReferenceValueResponseDto>(Promise.resolve(response));
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: referencesKey.value }),
+      ...(input.type === "GARNISH"
+        ? [queryClient.invalidateQueries({ queryKey: garnishesKey.value })]
+        : []),
+    ]);
+    return created;
+  }
+
   async function updateCocktail(
     cocktailId: string,
     input: UpdateCocktailDto,
@@ -239,11 +306,26 @@ export function useCocktails(
   return {
     cocktailQuery,
     createCocktail,
+    categoryId,
     createLocalIngredient,
+    createLocalReferenceValue,
     garnishesQuery,
     listQuery,
     referencesQuery,
     searchText,
     updateCocktail,
   };
+}
+
+function readQuery(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function assignQuery(
+  query: Record<string, string | undefined>,
+  key: string,
+  value: string | null,
+): void {
+  if (value) query[key] = value;
+  else delete query[key];
 }

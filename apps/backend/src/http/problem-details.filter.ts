@@ -10,7 +10,12 @@ export class ProblemDetailsFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
-    const request = http.getRequest<Request & { id?: string }>();
+    const request = http.getRequest<
+      Request & {
+        id?: string;
+        log?: { error: (context: Record<string, unknown>, message: string) => void };
+      }
+    >();
     const response = http.getResponse<Response>();
     const status =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
@@ -36,14 +41,20 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       status === HttpStatus.CONFLICT ? readCatalogCandidateProblem(exceptionBody) : null;
 
     if (status >= 500) {
-      this.logger.error(
-        {
-          requestId: request.id,
-          path: redactInvitationTokenFromPath(request.path),
-          errorType: exception instanceof Error ? exception.constructor.name : "UnknownError",
-        },
-        "Необработанная ошибка HTTP API",
-      );
+      const stackTrace =
+        exception instanceof Error ? exception.stack?.split("\n").slice(1).join("\n") : undefined;
+      const errorContext = {
+        requestId: request.id,
+        path: redactInvitationTokenFromPath(request.path),
+        errorType: exception instanceof Error ? exception.constructor.name : "UnknownError",
+        ...(stackTrace ? { stackTrace } : {}),
+      };
+
+      if (request.log) {
+        request.log.error(errorContext, "Необработанная ошибка HTTP API");
+      } else {
+        this.logger.error(errorContext, "Необработанная ошибка HTTP API");
+      }
     }
 
     const titles: Record<number, string> = {

@@ -27,24 +27,30 @@
           placeholder="Найти ингредиент или заготовку"
           @update:model-value="selectProduct(index, $event)"
         />
-        <InputText
-          :id="`preparation-component-${row.key}-amount`"
-          :model-value="row.amount"
-          inputmode="decimal"
-          size="small"
-          placeholder="Количество"
-          @update:model-value="updateAmount(index, $event ?? '')"
-        />
-        <Select
-          :id="`preparation-component-${row.key}-unit`"
-          :model-value="row.unitId"
-          :options="units"
-          option-label="label"
-          option-value="id"
-          placeholder="Единица"
-          size="small"
-          @update:model-value="updateUnit(index, $event)"
-        />
+        <FloatLabel variant="on">
+          <InputText
+            :id="`preparation-component-${row.key}-amount`"
+            :model-value="row.amount"
+            inputmode="decimal"
+            size="small"
+            fluid
+            @update:model-value="updateAmount(index, $event ?? '')"
+          />
+          <label :for="`preparation-component-${row.key}-amount`" class="text-xs">Количество</label>
+        </FloatLabel>
+        <FloatLabel variant="on">
+          <Select
+            :input-id="`preparation-component-${row.key}-unit`"
+            :model-value="row.unitId"
+            :options="units"
+            option-label="label"
+            option-value="id"
+            size="small"
+            class="w-full"
+            @update:model-value="updateUnit(index, $event)"
+          />
+          <label :for="`preparation-component-${row.key}-unit`" class="text-xs">Единица</label>
+        </FloatLabel>
       </div>
       <p v-if="errors?.[index]" class="mt-2 text-xs text-red-500">{{ errors[index] }}</p>
       <Button

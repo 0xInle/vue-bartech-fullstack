@@ -2,7 +2,7 @@
   <Drawer
     v-model:visible="visible"
     position="right"
-    class="w-full sm:!w-96"
+    class="drawer-size-sm"
     :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
   >
     <template #header="{ class: titleClass }">

@@ -12,13 +12,13 @@ export class CocktailReadService {
     private readonly search: ProductSearchService,
   ) {}
 
-  async list(context: CreateProductContext, query?: string) {
+  async list(context: CreateProductContext, query?: string, categoryId?: string) {
     await this.assertViewAccess(context);
     const normalizedQuery = normalizeQuery(query);
     const matchingIds = normalizedQuery
       ? await this.search.findWorkspaceMatches(context, "COCKTAIL", normalizedQuery)
       : undefined;
-    return this.repository.list(context.venueId, matchingIds);
+    return this.repository.list(context.venueId, matchingIds, categoryId);
   }
 
   async getById(context: CreateProductContext, cocktailId: string) {
@@ -34,7 +34,7 @@ export class CocktailReadService {
     const matchingIds = normalizedQuery
       ? await this.search.findWorkspaceMatches(context, "GARNISH", normalizedQuery)
       : undefined;
-    return this.repository.listGarnishes(context.venueId, matchingIds);
+    return this.repository.listGarnishes(context.venueId, normalizedQuery, matchingIds);
   }
 
   private async assertViewAccess(context: CreateProductContext): Promise<void> {

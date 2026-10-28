@@ -175,7 +175,8 @@ export class ProductsService {
     };
     return this.createComposite(context, "COCKTAIL", input, {
       cocktailDetails,
-      garnishIds: input.garnishIds ?? [],
+      garnishSelections: normalizeGarnishSelections(input),
+      categoryIds: await this.validateCocktailCategories(context.venueId, input.categoryIds ?? []),
     });
   }
 
@@ -222,9 +223,26 @@ export class ProductsService {
         if (!glass || !ice || !preparationMethod) {
           throw new NotFoundException("Значение справочника недоступно этому заведению");
         }
+        const categoryIds = await this.validateCocktailCategories(
+          context.venueId,
+          input.categoryIds ?? [],
+          transaction,
+        );
 
         const componentIds = [...new Set(input.components.map(({ productId }) => productId))];
-        const garnishIds = input.garnishIds ?? [];
+        const garnishSelections = normalizeGarnishSelections(input);
+        const garnishIds = garnishSelections
+          .filter(({ kind }) => kind === "PRODUCT")
+          .map(({ id }) => id);
+        const quickGarnishIds = garnishSelections
+          .filter(({ kind }) => kind === "QUICK")
+          .map(({ id }) => id);
+        if (
+          garnishSelections.length > 20 ||
+          new Set(garnishSelections.map(({ kind, id }) => `${kind}:${id}`)).size !==
+            garnishSelections.length
+        )
+          throw new BadRequestException("Гарниры не должны повторяться");
         const [products, units] = await Promise.all([
           this.repository.findAllowedProducts(transaction, context.venueId, [
             ...componentIds,
@@ -235,6 +253,11 @@ export class ProductsService {
             ...(input.output ? [input.output.unitId] : []),
           ]),
         ]);
+        const quickGarnishes = await this.repository.findLocalQuickGarnishes(
+          transaction,
+          context.venueId,
+          quickGarnishIds,
+        );
         const productsById = new Map(products.map((product) => [product.id, product]));
         for (const componentId of componentIds) {
           const component = productsById.get(componentId);
@@ -250,6 +273,9 @@ export class ProductsService {
         }
         if (garnishIds.some((id) => productsById.get(id)?.type !== "GARNISH")) {
           throw new NotFoundException("Гарнир не найден в этом заведении");
+        }
+        if (quickGarnishes.length !== quickGarnishIds.length) {
+          throw new NotFoundException("Быстрый гарнир не найден в этом заведении");
         }
 
         const product = await this.repository.replaceCocktail(transaction, {
@@ -275,7 +301,8 @@ export class ProductsService {
             amount: component.amount,
             position,
           })),
-          garnishIds,
+          garnishSelections,
+          categoryIds,
         });
         await this.recordProductEvent(transaction, context, "product.updated", product);
         return product;
@@ -338,6 +365,27 @@ export class ProductsService {
     }
   }
 
+  private async validateCocktailCategories(
+    venueId: string,
+    ids: string[],
+    transaction?: Prisma.TransactionClient,
+  ): Promise<Array<{ id: string }>> {
+    if (ids.length > 20 || new Set(ids).size !== ids.length) {
+      throw new BadRequestException("Категории коктейля не должны повторяться");
+    }
+    if (!ids.length) return [];
+    const database = transaction ?? this.database();
+    const values = await Promise.all(
+      ids.map((id) =>
+        this.repository.findAvailableReferenceValueById(database, venueId, "COCKTAIL_CATEGORY", id),
+      ),
+    );
+    if (values.some((value) => !value)) {
+      throw new NotFoundException("Категория коктейля недоступна этому заведению");
+    }
+    return values.map((value) => ({ id: value!.id }));
+  }
+
   private async createComposite(
     context: CreateProductContext,
     type: "PREPARATION" | "GARNISH" | "COCKTAIL",
@@ -349,7 +397,8 @@ export class ProductsService {
         iceId?: string;
         preparationMethodId?: string;
       };
-      garnishIds?: string[];
+      garnishSelections?: Array<{ id: string; kind: "PRODUCT" | "QUICK" }>;
+      categoryIds?: Array<{ id: string }>;
     } = {},
   ) {
     const name = input.name.trim().replace(/\s+/gu, " ");
@@ -368,13 +417,34 @@ export class ProductsService {
         const [products, units] = await Promise.all([
           this.repository.findAllowedProducts(transaction, context.venueId, [
             ...componentIds,
-            ...(options.garnishIds ?? []),
+            ...(options.garnishSelections ?? [])
+              .filter(({ kind }) => kind === "PRODUCT")
+              .map(({ id }) => id),
           ]),
           this.repository.findAllowedUnits(transaction, context.venueId, [
             ...input.components.map(({ unitId }) => unitId),
             ...(input.output ? [input.output.unitId] : []),
           ]),
         ]);
+        const garnishSelections = options.garnishSelections ?? [];
+        if (
+          garnishSelections.length > 20 ||
+          new Set(garnishSelections.map(({ kind, id }) => `${kind}:${id}`)).size !==
+            garnishSelections.length
+        ) {
+          throw new BadRequestException("Гарниры не должны повторяться");
+        }
+        const quickGarnishIds = garnishSelections
+          .filter(({ kind }) => kind === "QUICK")
+          .map(({ id }) => id);
+        const quickGarnishes =
+          type === "COCKTAIL"
+            ? await this.repository.findLocalQuickGarnishes(
+                transaction,
+                context.venueId,
+                quickGarnishIds,
+              )
+            : [];
         const productsById = new Map(products.map((product) => [product.id, product]));
         for (const componentId of componentIds) {
           const component = productsById.get(componentId);
@@ -389,9 +459,14 @@ export class ProductsService {
           throw new NotFoundException("Единица измерения не найдена в этом заведении");
         }
 
-        const garnishIds = options.garnishIds ?? [];
+        const garnishIds = garnishSelections
+          .filter(({ kind }) => kind === "PRODUCT")
+          .map(({ id }) => id);
         if (garnishIds.some((id) => productsById.get(id)?.type !== "GARNISH")) {
           throw new NotFoundException("Гарнир не найден в этом заведении");
+        }
+        if (quickGarnishes.length !== quickGarnishIds.length) {
+          throw new NotFoundException("Быстрый гарнир не найден в этом заведении");
         }
         if (type === "PREPARATION") {
           const graph = await this.repository.findPreparationEdges(transaction, context.venueId);
@@ -419,7 +494,8 @@ export class ProductsService {
             amount: component.amount,
             position,
           })),
-          garnishIds,
+          garnishSelections,
+          categoryIds: options.categoryIds,
         });
         await this.recordProductEvent(transaction, context, "product.created", product);
         return product;
@@ -509,6 +585,14 @@ export class ProductsService {
       },
     });
   }
+}
+
+function normalizeGarnishSelections(input: CocktailInput) {
+  if (input.garnishSelections) return input.garnishSelections;
+  return [
+    ...(input.garnishIds ?? []).map((id) => ({ id, kind: "PRODUCT" as const })),
+    ...(input.quickGarnishIds ?? []).map((id) => ({ id, kind: "QUICK" as const })),
+  ];
 }
 
 function normalizeOptional(value?: string): string | undefined {

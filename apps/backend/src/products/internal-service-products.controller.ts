@@ -34,6 +34,7 @@ import {
   CreateCocktailDto,
   CreateGarnishDto,
   CreateLocalIngredientDto,
+  CreateLocalReferenceValueDto,
   CreatePreparationDto,
   LocalIngredientCardResponseDto,
   ProductCreatedDto,
@@ -105,7 +106,7 @@ export class InternalServiceProductsController {
     @Param() params: ProductScopeParams,
     @Query() query: CocktailListQueryDto,
   ) {
-    return this.cocktails.list(await this.context(identity, params), query.query);
+    return this.cocktails.list(await this.context(identity, params), query.query, query.categoryId);
   }
 
   @Get("cocktails/garnishes")
@@ -181,6 +182,16 @@ export class InternalServiceProductsController {
     @Body() input: CreateLocalIngredientDto,
   ) {
     return this.products.createLocalIngredient(await this.context(identity, params), input);
+  }
+
+  @Post("reference-values")
+  @ApiCreatedResponse()
+  async createReferenceValue(
+    @CurrentInternalIdentity() identity: InternalIdentity,
+    @Param() params: ProductScopeParams,
+    @Body() input: CreateLocalReferenceValueDto,
+  ) {
+    return this.products.createLocalReferenceValue(await this.context(identity, params), input);
   }
 
   @Get("ingredients/:productId")

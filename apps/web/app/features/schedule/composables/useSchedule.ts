@@ -1,26 +1,31 @@
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import {
-  schedulesControllerCreateTemplate,
   schedulesControllerDeleteTemplate,
   schedulesControllerExtend,
   schedulesControllerGenerate,
   schedulesControllerGetMonth,
+  schedulesControllerGetShiftSettings,
   schedulesControllerListTemplates,
+  schedulesControllerSaveShiftSettings,
   schedulesControllerSaveComment,
+  schedulesControllerSetInventoryMarker,
+  schedulesControllerDeleteInventoryMarker,
   schedulesControllerUpdateCell,
   schedulesControllerUpdateCells,
-  schedulesControllerUpdateTemplate,
-} from "@bartech/api-client";
-import type {
-  ScheduleCellDto,
-  ScheduleGenerateDto,
-  ScheduleTemplateDto,
 } from "@bartech/api-client";
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
 import { requestApi } from "~/utils/api-response";
 
+type ApiResponse = { data: unknown; status: number };
+
 export type ScheduleValue =
-  | { kind: "SHIFT"; durationHours: number; shiftType: "NORMAL" | "NIGHT" }
+  | {
+      kind: "SHIFT";
+      durationHours: number;
+      shiftCode: "MORNING" | "DAY" | "EVENING" | "NIGHT";
+      startMinute: number;
+      shiftSettingId?: string | null;
+    }
   | { kind: "STATUS"; status: "VACATION" | "SICK_LEAVE" | "NO_SHOW" }
   | { kind: "EMPTY" };
 export type ScheduleCell = {
@@ -52,8 +57,10 @@ export type ScheduleMonth = {
   year: number;
   month: number;
   daysInMonth: number;
+  dateMarkers: ScheduleDateMarker[];
   rows: ScheduleRow[];
 };
+export type ScheduleDateMarker = { date: string; type: "INVENTORY" };
 export type ScheduleTemplate = {
   id: string;
   name: string;
@@ -62,13 +69,34 @@ export type ScheduleTemplate = {
   currentVersion: {
     id: string;
     version: number;
-    workDays: number;
-    offDays: number;
-    durationHours: number;
-    shiftType: "NORMAL" | "NIGHT";
+    days: Array<{ position: number; shiftSettingId: string | null }>;
   };
   _count?: { assignments: number };
 };
+export type ScheduleShiftSetting = {
+  id: string;
+  shiftCode: "MORNING" | "DAY" | "EVENING" | "NIGHT";
+  startMinute: number;
+  defaultDurationHours: number;
+};
+
+function parseShiftSettings(value: unknown): ScheduleShiftSetting[] {
+  const isShiftSetting = (item: unknown): item is ScheduleShiftSetting => {
+    if (!item || typeof item !== "object") return false;
+    const setting = item as Partial<ScheduleShiftSetting>;
+    return (
+      typeof setting.id === "string" &&
+      ["MORNING", "DAY", "EVENING", "NIGHT"].includes(setting.shiftCode ?? "") &&
+      Number.isInteger(setting.startMinute) &&
+      Number.isInteger(setting.defaultDurationHours)
+    );
+  };
+
+  if (!Array.isArray(value) || !value.every(isShiftSetting)) {
+    throw new Error("Сервер вернул некорректный список настроек смен. Обновите страницу.");
+  }
+  return value;
+}
 
 export function useSchedule(
   companyId: string,
@@ -110,24 +138,56 @@ export function useSchedule(
       return requestApi<ScheduleTemplate[]>(Promise.resolve(response));
     },
   });
+  const shiftSettingsQuery = useQuery({
+    queryKey: ["schedule-shift-settings", companyId, venueId],
+    enabled,
+    retry: false,
+    queryFn: async () => {
+      const response = await schedulesControllerGetShiftSettings(
+        companyId,
+        venueId,
+        { credentials: "include" },
+        identity.apiFetch,
+      );
+      return parseShiftSettings(await requestApi<unknown>(Promise.resolve(response)));
+    },
+  });
 
-  async function mutate<T>(operation: () => Promise<T>): Promise<void> {
+  async function mutate<T>(operation: () => Promise<ApiResponse>): Promise<T> {
     await identity.refreshCsrf();
-    await requestApi(Promise.resolve(await operation()));
+    const result = await requestApi<T>(Promise.resolve(await operation()));
     await queryClient.invalidateQueries({ queryKey: ["schedule", companyId, venueId] });
     await queryClient.invalidateQueries({ queryKey: ["schedule-templates", companyId, venueId] });
+    await queryClient.invalidateQueries({
+      queryKey: ["schedule-shift-settings", companyId, venueId],
+    });
+    return result;
   }
   const options = () => ({
     credentials: "include" as const,
     headers: { "x-csrf-token": identity.csrfToken.value },
   });
-  const updateCell = (cell: ScheduleCellDto) =>
+  const updateCell = (cell: { membershipId: string; date: string; value: ScheduleValue }) =>
     mutate(() =>
-      schedulesControllerUpdateCell(companyId, venueId, cell, options(), identity.apiFetch),
+      schedulesControllerUpdateCell(
+        companyId,
+        venueId,
+        cell as never,
+        options(),
+        identity.apiFetch,
+      ),
     );
-  const updateCells = (cells: ScheduleCellDto[]) =>
+  const updateCells = (
+    cells: Array<{ membershipId: string; date: string; value: ScheduleValue }>,
+  ) =>
     mutate(() =>
-      schedulesControllerUpdateCells(companyId, venueId, { cells }, options(), identity.apiFetch),
+      schedulesControllerUpdateCells(
+        companyId,
+        venueId,
+        { cells } as never,
+        options(),
+        identity.apiFetch,
+      ),
     );
   const saveComment = (membershipId: string, date: string, text: string) =>
     mutate(() =>
@@ -141,9 +201,23 @@ export function useSchedule(
         identity.apiFetch,
       ),
     );
-  const generate = (body: ScheduleGenerateDto) =>
+  const setInventoryMarker = (date: string) =>
     mutate(() =>
-      schedulesControllerGenerate(companyId, venueId, body, options(), identity.apiFetch),
+      schedulesControllerSetInventoryMarker(companyId, venueId, date, options(), identity.apiFetch),
+    );
+  const deleteInventoryMarker = (date: string) =>
+    mutate(() =>
+      schedulesControllerDeleteInventoryMarker(
+        companyId,
+        venueId,
+        date,
+        options(),
+        identity.apiFetch,
+      ),
+    );
+  const generate = (body: Record<string, unknown>) =>
+    mutate(() =>
+      schedulesControllerGenerate(companyId, venueId, body as never, options(), identity.apiFetch),
     );
   const extend = (targetYear: number, targetMonth: number, membershipIds: string[]) =>
     mutate(() =>
@@ -155,19 +229,29 @@ export function useSchedule(
         identity.apiFetch,
       ),
     );
-  const saveTemplate = (body: ScheduleTemplateDto, id?: string) =>
-    mutate(() =>
-      id
-        ? schedulesControllerUpdateTemplate(
-            companyId,
-            venueId,
-            id,
-            body,
-            options(),
-            identity.apiFetch,
-          )
-        : schedulesControllerCreateTemplate(companyId, venueId, body, options(), identity.apiFetch),
-    );
+  const saveTemplate = (body: { name: string; days: Array<string | null> }, id?: string) =>
+    mutate(async () => {
+      const response = await identity.apiFetch(
+        `/api/v1/organizations/companies/${companyId}/venues/${venueId}/schedule/templates${id ? `/${id}` : ""}`,
+        {
+          method: id ? "PUT" : "POST",
+          credentials: "include",
+          headers: { ...options().headers, "content-type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+      return response;
+    });
+  const saveShiftSettings = (settings: Array<Omit<ScheduleShiftSetting, "id"> & { id?: string }>) =>
+    mutate<unknown>(() =>
+      schedulesControllerSaveShiftSettings(
+        companyId,
+        venueId,
+        { settings },
+        options(),
+        identity.apiFetch,
+      ),
+    ).then(parseShiftSettings);
   const deleteTemplate = (id: string) =>
     mutate(() =>
       schedulesControllerDeleteTemplate(companyId, venueId, id, options(), identity.apiFetch),
@@ -192,12 +276,16 @@ export function useSchedule(
   return {
     monthQuery,
     templatesQuery,
+    shiftSettingsQuery,
     updateCell,
     updateCells,
     saveComment,
+    setInventoryMarker,
+    deleteInventoryMarker,
     generate,
     extend,
     saveTemplate,
+    saveShiftSettings,
     deleteTemplate,
     exportSchedule,
   };

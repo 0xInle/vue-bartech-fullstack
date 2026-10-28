@@ -27,7 +27,9 @@ export class IngredientMatchingRepository {
         select: { venueId: true },
       });
       if (!scope?.venueId) return;
-      await transaction.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${scope.venueId}, 0))`;
+      await transaction.$queryRaw<Array<{ locked: boolean }>>`
+        SELECT pg_advisory_xact_lock(hashtextextended(${scope.venueId}, 0)) IS NULL AS locked
+      `;
       await transaction.$queryRaw`SELECT id FROM products WHERE id = ${localProductId}::uuid FOR UPDATE`;
       const local = await transaction.product.findFirst({
         where: { id: localProductId, type: "INGREDIENT", status: "ACTIVE", venueId: { not: null } },

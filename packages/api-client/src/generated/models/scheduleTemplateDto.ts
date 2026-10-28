@@ -5,25 +5,13 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
-import type { ScheduleTemplateDtoShiftType } from './scheduleTemplateDtoShiftType';
 
 export interface ScheduleTemplateDto {
   /** @maxLength 80 */
   name: string;
   /**
-     * @minimum 1
-     * @maximum 31
+     * @minItems 1
+     * @maxItems 31
      */
-  workDays: number;
-  /**
-     * @minimum 1
-     * @maximum 31
-     */
-  offDays: number;
-  /**
-     * @minimum 1
-     * @maximum 24
-     */
-  durationHours: number;
-  shiftType: ScheduleTemplateDtoShiftType;
+  days: (string | null)[];
 }

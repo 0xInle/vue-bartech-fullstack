@@ -26,7 +26,7 @@
       v-model:visible="drawerVisible"
       header="Поиск"
       position="right"
-      class="!w-full md:!w-[42rem]"
+      class="drawer-size-lg"
       :pt="{
         root: { class: 'h-full' },
         content: { class: 'h-full' },
@@ -51,7 +51,7 @@
     v-model:visible="resultDrawerVisible"
     :header="selectedResult?.venueName ?? 'Карточка продукции'"
     position="right"
-    class="!w-full md:!w-[42rem]"
+    class="drawer-size-lg"
     :pt="{
       root: { class: 'h-full' },
       content: { class: 'h-full' },

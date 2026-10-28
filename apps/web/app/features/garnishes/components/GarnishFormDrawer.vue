@@ -2,21 +2,34 @@
   <Drawer
     :visible="visible"
     position="right"
-    :style="{ width: 'min(100vw, 42rem)' }"
-    class="garnish-drawer"
-    :header="mode === 'edit' ? 'Редактировать гарнир' : 'Создать гарнир'"
+    class="garnish-drawer drawer-size-lg"
+    :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
     @update:visible="requestVisibilityChange"
   >
+    <template #header="{ class: titleClass }">
+      <span :class="[titleClass, 'leading-none']">
+        {{ mode === "edit" ? "Редактировать гарнир" : "Создать гарнир" }}
+      </span>
+    </template>
     <LoadingIndicator v-if="referencesQuery.isLoading.value" class="py-8" />
     <div v-else class="flex flex-col gap-5">
-      <Message v-if="saveError" severity="error" :closable="false">{{ saveError }}</Message>
-      <Message v-if="referencesQuery.isError.value" severity="error" :closable="false">
+      <Message v-if="saveError" severity="error" :closable="false" :pt="compactMessagePt">
+        {{ saveError }}
+      </Message>
+      <Message
+        v-if="referencesQuery.isError.value"
+        severity="error"
+        :closable="false"
+        :pt="compactMessagePt"
+      >
         Не удалось загрузить справочники. Обновите страницу и попробуйте ещё раз.
       </Message>
       <form id="garnish-form" class="flex flex-col gap-2" @submit.prevent="submit">
-        <label for="garnish-name" class="text-sm font-medium">Название</label>
-        <InputText id="garnish-name" v-model="name" size="small" fluid @input="markDirty" />
-        <small v-if="errors.name" class="text-red-500">{{ errors.name }}</small>
+        <FloatLabel variant="on">
+          <InputText id="garnish-name" v-model="name" size="small" fluid @input="markDirty" />
+          <label for="garnish-name" class="text-xs">Название</label>
+        </FloatLabel>
+        <small v-if="errors.name" class="text-xs text-red-500">{{ errors.name }}</small>
       </form>
       <div class="flex flex-col gap-2">
         <div>
@@ -36,68 +49,80 @@
           @dirty="markDirty"
           @update:model-value="markDirty"
         />
-        <small v-if="componentsError" class="text-red-500">{{ componentsError }}</small>
+        <small v-if="componentsError" class="text-xs text-red-500">{{ componentsError }}</small>
       </div>
       <div class="flex flex-col gap-2">
-        <label for="garnish-technology" class="text-sm font-medium">Технология приготовления</label>
-        <Textarea
-          id="garnish-technology"
-          v-model="technology"
-          rows="5"
-          size="small"
-          fluid
-          @input="markDirty"
-        />
-        <small v-if="errors.technology" class="text-red-500">{{ errors.technology }}</small>
+        <FloatLabel variant="on">
+          <Textarea
+            id="garnish-technology"
+            v-model="technology"
+            rows="5"
+            size="small"
+            fluid
+            @input="markDirty"
+          />
+          <label for="garnish-technology" class="text-xs">Технология приготовления</label>
+        </FloatLabel>
+        <small v-if="errors.technology" class="text-xs text-red-500">{{ errors.technology }}</small>
       </div>
       <div class="grid gap-4 sm:grid-cols-[1fr_10rem]">
         <div class="flex flex-col gap-2">
-          <label for="garnish-output" class="text-sm font-medium">Фактический выход</label>
-          <InputText
-            id="garnish-output"
-            v-model="outputAmount"
-            inputmode="decimal"
+          <FloatLabel variant="on">
+            <InputText
+              id="garnish-output"
+              v-model="outputAmount"
+              inputmode="decimal"
+              size="small"
+              placeholder="Необязательно"
+              fluid
+              @input="markDirty"
+            />
+            <label for="garnish-output" class="text-xs">Фактический выход</label>
+          </FloatLabel>
+          <small v-if="errors.outputAmount" class="text-xs text-red-500">{{
+            errors.outputAmount
+          }}</small>
+        </div>
+        <div class="flex flex-col gap-2">
+          <FloatLabel variant="on">
+            <Select
+              v-model="outputUnitId"
+              input-id="garnish-output-unit"
+              :options="references.units"
+              option-label="label"
+              option-value="id"
+              size="small"
+              fluid
+              @update:model-value="markDirty"
+            />
+            <label for="garnish-output-unit" class="text-xs">Единица</label>
+          </FloatLabel>
+          <small v-if="errors.outputUnitId" class="text-xs text-red-500">{{
+            errors.outputUnitId
+          }}</small>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <FloatLabel variant="on">
+          <Textarea
+            id="garnish-comment"
+            v-model="comment"
+            rows="3"
             size="small"
             placeholder="Необязательно"
             fluid
             @input="markDirty"
           />
-          <small v-if="errors.outputAmount" class="text-red-500">{{ errors.outputAmount }}</small>
-        </div>
-        <div class="flex flex-col gap-2">
-          <label for="garnish-output-unit" class="text-sm font-medium">Единица</label>
-          <Select
-            id="garnish-output-unit"
-            v-model="outputUnitId"
-            :options="references.units"
-            option-label="label"
-            option-value="id"
-            placeholder="Выберите"
-            size="small"
-            fluid
-            @update:model-value="markDirty"
-          />
-          <small v-if="errors.outputUnitId" class="text-red-500">{{ errors.outputUnitId }}</small>
-        </div>
+          <label for="garnish-comment" class="text-xs">Комментарий</label>
+        </FloatLabel>
+        <small v-if="errors.comment" class="text-xs text-red-500">{{ errors.comment }}</small>
       </div>
-      <div class="flex flex-col gap-2">
-        <label for="garnish-comment" class="text-sm font-medium">Комментарий</label>
-        <Textarea
-          id="garnish-comment"
-          v-model="comment"
-          rows="3"
-          size="small"
-          placeholder="Необязательно"
-          fluid
-          @input="markDirty"
-        />
-        <small v-if="errors.comment" class="text-red-500">{{ errors.comment }}</small>
-      </div>
-      <div class="flex justify-end gap-2 border-t border-surface pt-4">
+      <div class="flex justify-end gap-2">
         <Button
           label="Отмена"
           severity="secondary"
           variant="text"
+          size="small"
           :disabled="saving"
           @click="requestVisibilityChange(false)"
         />
@@ -105,6 +130,7 @@
           v-if="canManage"
           :label="mode === 'edit' ? 'Сохранить изменения' : 'Создать гарнир'"
           type="submit"
+          size="small"
           form="garnish-form"
           :loading="saving"
           :disabled="
@@ -141,6 +167,7 @@ import GarnishComponentRows, {
 } from "./GarnishComponentRows.vue";
 import { useGarnishes } from "../composables/useGarnishes";
 import GarnishImpactDialog from "./GarnishImpactDialog.vue";
+import { compactMessagePt } from "~/utils/primevue-message";
 import type { GarnishCardResponseDto, GarnishImpact } from "../composables/useGarnishes";
 
 type Values = {

@@ -3,7 +3,9 @@
     <LoadingIndicator screen />
   </div>
   <div v-else-if="errorMessage" class="mx-auto max-w-5xl pt-8">
-    <Message severity="error" :closable="false">{{ errorMessage }}</Message>
+    <Message severity="error" :closable="false" :pt="compactMessagePt">
+      {{ errorMessage }}
+    </Message>
   </div>
   <WorkspaceShell
     v-else-if="workspace && currentUser"
@@ -18,11 +20,12 @@
         v-if="preparationQuery.isError.value"
         severity="error"
         :closable="false"
+        :pt="compactMessagePt"
         class="mt-5"
         >Заготовка не найдена или недоступна в этом заведении.</Message
       ><LoadingIndicator v-else-if="preparationQuery.isLoading.value" screen />
       <article v-else-if="preparation" class="mt-5">
-        <header class="border-b border-surface pb-5">
+        <header class="pb-5">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
@@ -65,7 +68,8 @@
           </div>
           <p class="mt-3 text-sm text-color-secondary">{{ preparation.categoryName }}</p>
         </header>
-        <section class="border-b border-surface py-5">
+        <Divider class="!my-0" />
+        <section class="py-5">
           <h2 class="text-base font-semibold">Состав</h2>
           <ul class="mt-3 divide-y divide-surface">
             <li
@@ -85,10 +89,12 @@
             </li>
           </ul>
         </section>
-        <section class="border-b border-surface py-5">
+        <Divider class="!my-0" />
+        <section class="py-5">
           <h2 class="text-base font-semibold">Технология приготовления</h2>
           <p class="mt-3 whitespace-pre-line text-sm leading-6">{{ preparation.technology }}</p>
         </section>
+        <Divider v-if="preparation.output || preparation.comment" class="!my-0" />
         <section v-if="preparation.output || preparation.comment" class="py-5">
           <p v-if="preparation.output" class="text-sm">
             <span class="font-medium">Фактический выход:</span> {{ preparation.output.amount }}
@@ -123,6 +129,7 @@ import ExportActionButton from "~/features/exports/components/ExportActionButton
 import { useVenueWorkspace } from "~/features/workspace/composables/useVenueWorkspace";
 import { usePreparations } from "../composables/usePreparations";
 import PreparationFormDrawer from "./PreparationFormDrawer.vue";
+import { compactMessagePt } from "~/utils/primevue-message";
 const props = defineProps<{ preparationId: string }>();
 const { currentUser, errorMessage, loading, switchWorkspace, workspace, workplaces } =
   useVenueWorkspace();

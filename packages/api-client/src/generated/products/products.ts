@@ -67,6 +67,7 @@ import type {
   ProductsControllerListPreparationsParams,
   ProductsControllerSearchParams,
   ProductsControllerSearchWorkspaceParams,
+  ReferenceValueResponseDto,
   UpdateCocktailDto,
   UpdateGarnishDto,
   UpdatePreparationDto
@@ -2981,7 +2982,12 @@ export const useProductsControllerCreateUnit = <TError = void,
       > => {
       return useMutation(getProductsControllerCreateUnitMutationOptions(options), queryClient);
     }
-    export type productsControllerCreateReferenceValueResponse403 = {
+    export type productsControllerCreateReferenceValueResponse201 = {
+  data: ReferenceValueResponseDto
+  status: 201
+}
+
+export type productsControllerCreateReferenceValueResponse403 = {
   data: void
   status: 403
 }
@@ -2991,12 +2997,14 @@ export type productsControllerCreateReferenceValueResponse404 = {
   status: 404
 }
 
-;
+export type productsControllerCreateReferenceValueResponseSuccess = (productsControllerCreateReferenceValueResponse201) & {
+  headers: Headers;
+};
 export type productsControllerCreateReferenceValueResponseError = (productsControllerCreateReferenceValueResponse403 | productsControllerCreateReferenceValueResponse404) & {
   headers: Headers;
 };
 
-export type productsControllerCreateReferenceValueResponse = (productsControllerCreateReferenceValueResponseError)
+export type productsControllerCreateReferenceValueResponse = (productsControllerCreateReferenceValueResponseSuccess | productsControllerCreateReferenceValueResponseError)
 
 export const getProductsControllerCreateReferenceValueUrl = (companyId: string,
     venueId: string,) => {

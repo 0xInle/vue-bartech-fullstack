@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h2 class="text-base mt-2 font-medium text-color-secondary">Рабочие пространства:</h2>
+    <h2 class="text-xs mt-2 font-medium text-color-secondary">Рабочие пространства:</h2>
     <ul v-if="workplaces.length" class="mt-2 space-y-3">
       <li v-for="workplace in workplaces" :key="workplace.venue.id">
         <NuxtLink

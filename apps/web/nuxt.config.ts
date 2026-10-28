@@ -111,6 +111,7 @@ export default defineNuxtConfig({
         "FloatLabel",
         "InputText",
         "Message",
+        "OverlayBadge",
         "Password",
         "PanelMenu",
         "ProgressSpinner",

@@ -1,23 +1,92 @@
 @import "tailwindcss";
 @import "primeicons/primeicons.css";
 
+:root {
+  --schedule-palette-yellow-300: #fde047;
+  --schedule-palette-green-300: #86efac;
+  --schedule-palette-orange-300: #fdba74;
+  --schedule-palette-blue-300: #93c5fd;
+  --schedule-palette-red-300: #fca5a5;
+  --drawer-width-xs: 20rem;
+  --drawer-width-sm: 24rem;
+  --drawer-width-md: 28rem;
+  --drawer-width-lg: 42rem;
+  --dialog-width-sm: 24rem;
+  --dialog-width-md: 32rem;
+  --dialog-width-lg: 48rem;
+}
+
+.p-drawer.drawer-size-xs,
+.p-drawer.drawer-size-sm,
+.p-drawer.drawer-size-md,
+.p-drawer.drawer-size-lg {
+  width: 100vw !important;
+}
+
+.p-dialog.dialog-size-sm,
+.p-dialog.dialog-size-md,
+.p-dialog.dialog-size-lg {
+  width: calc(100vw - 2rem) !important;
+  max-width: calc(100vw - 2rem);
+}
+
+.schedule-row-selected > td {
+  background-color: var(--p-highlight-background) !important;
+}
+
+.app-tooltip .p-tooltip-text {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--p-content-border-radius);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+@media (min-width: 40rem) {
+  .p-dialog.dialog-size-sm {
+    width: var(--dialog-width-sm) !important;
+  }
+
+  .p-dialog.dialog-size-md {
+    width: var(--dialog-width-md) !important;
+  }
+
+  .p-dialog.dialog-size-lg {
+    width: var(--dialog-width-lg) !important;
+  }
+
+  .p-drawer.drawer-size-xs {
+    width: var(--drawer-width-xs) !important;
+  }
+
+  .p-drawer.drawer-size-sm {
+    width: var(--drawer-width-sm) !important;
+  }
+
+  .p-drawer.drawer-size-md {
+    width: var(--drawer-width-md) !important;
+  }
+
+  .p-drawer.drawer-size-lg {
+    width: var(--drawer-width-lg) !important;
+  }
+}
+
 .p-drawer-title,
 .p-dialog-title {
   font-size: 16px !important;
   font-weight: 600;
 }
 
-button,
+button:not(.p-inputnumber-button),
 .p-button,
 .p-togglebutton,
-.p-datepicker-dropdown,
-.p-inputnumber-button {
+.p-datepicker-dropdown {
   box-sizing: border-box;
   height: 32px !important;
   min-height: 32px !important;
 }
 
-button,
+button:not(.p-inputnumber-button),
 .p-button,
 .p-togglebutton {
   font-size: var(--p-form-field-sm-font-size, 0.875rem) !important;
@@ -66,4 +135,14 @@ button,
 .p-textarea {
   box-sizing: border-box;
   min-height: 32px !important;
+}
+
+.p-datepicker-time-picker {
+  font-size: var(--p-form-field-sm-font-size, 0.875rem) !important;
+}
+
+.p-datepicker-time-picker .p-button {
+  height: auto !important;
+  min-height: 0 !important;
+  font-size: var(--p-button-sm-font-size, 0.75rem) !important;
 }

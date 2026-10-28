@@ -13,4 +13,6 @@ export const ReferenceValueResponseDtoType = {
   GLASS: 'GLASS',
   ICE: 'ICE',
   PREPARATION_METHOD: 'PREPARATION_METHOD',
+  GARNISH: 'GARNISH',
+  COCKTAIL_CATEGORY: 'COCKTAIL_CATEGORY',
 } as const;

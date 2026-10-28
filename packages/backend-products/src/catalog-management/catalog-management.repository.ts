@@ -66,8 +66,8 @@ export class CatalogManagementRepository {
   }
 
   lockCategoryTree(transaction: Prisma.TransactionClient) {
-    return transaction.$queryRaw<Array<{ pg_advisory_xact_lock: null }>>`
-      SELECT pg_advisory_xact_lock(hashtextextended('ingredient-category-tree', 0))
+    return transaction.$queryRaw<Array<{ locked: boolean }>>`
+      SELECT pg_advisory_xact_lock(hashtextextended('ingredient-category-tree', 0)) IS NULL AS locked
     `;
   }
 

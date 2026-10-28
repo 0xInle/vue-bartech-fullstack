@@ -40,4 +40,7 @@ export const primeVueRussianLocale = {
   nextMonth: "Следующий месяц",
   prevYear: "Предыдущий год",
   nextYear: "Следующий год",
+  emptyMessage: "Нет доступных вариантов",
+  emptyFilterMessage: "Ничего не найдено",
+  emptySearchMessage: "Ничего не найдено",
 };

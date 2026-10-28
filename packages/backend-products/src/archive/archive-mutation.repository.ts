@@ -9,9 +9,9 @@ export class ArchiveMutationRepository {
   constructor(@Inject(DATABASE_CLIENT) readonly database: PrismaClient) {}
 
   lockVenue(transaction: Prisma.TransactionClient, venueId: string) {
-    return transaction.$queryRaw<
-      Array<{ pg_advisory_xact_lock: null }>
-    >`SELECT pg_advisory_xact_lock(hashtextextended(${venueId}, 0))`;
+    return transaction.$queryRaw<Array<{ locked: boolean }>>`
+      SELECT pg_advisory_xact_lock(hashtextextended(${venueId}, 0)) IS NULL AS locked
+    `;
   }
 
   setStatus(

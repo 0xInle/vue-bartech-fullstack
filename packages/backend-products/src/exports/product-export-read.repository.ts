@@ -14,6 +14,7 @@ const productExportInclude = {
     },
   },
   cocktailGarnishes: { orderBy: { position: "asc" }, include: { garnish: true } },
+  cocktailQuickGarnishes: { orderBy: { position: "asc" }, include: { referenceValue: true } },
 } satisfies Prisma.ProductInclude;
 
 @Injectable()

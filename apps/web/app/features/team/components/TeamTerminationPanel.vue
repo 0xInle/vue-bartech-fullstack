@@ -34,7 +34,6 @@
       <Button
         label="Уволить"
         severity="danger"
-        variant="outlined"
         size="small"
         :disabled="busy || !selectedMember || !terminationDate"
         @click="requestTermination"

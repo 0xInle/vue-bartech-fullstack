@@ -5,6 +5,7 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { ArchiveGarnishDtoKind } from './archiveGarnishDtoKind';
 import type { ArchiveGarnishDtoStatus } from './archiveGarnishDtoStatus';
 import type { ArchiveGarnishDtoType } from './archiveGarnishDtoType';
 
@@ -12,5 +13,7 @@ export interface ArchiveGarnishDto {
   id: string;
   type: ArchiveGarnishDtoType;
   name: string;
+  /** @nullable */
   status: ArchiveGarnishDtoStatus;
+  kind: ArchiveGarnishDtoKind;
 }

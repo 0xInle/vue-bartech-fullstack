@@ -22,10 +22,11 @@
         label="Отмена"
         severity="secondary"
         variant="text"
+        size="small"
         :disabled="saving"
         @click="emit('cancel')"
       />
-      <Button label="Подтвердить" :loading="saving" @click="emit('confirm')" />
+      <Button label="Подтвердить" size="small" :loading="saving" @click="emit('confirm')" />
     </template>
   </Dialog>
 </template>

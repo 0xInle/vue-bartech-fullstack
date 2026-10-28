@@ -68,7 +68,7 @@
       v-model:visible="drawerVisible"
       :header="drawerTitle"
       position="left"
-      class="w-full sm:max-w-md"
+      class="drawer-size-md"
     >
       <DocumentationTopicNavigation
         v-if="drawerView === 'topics'"

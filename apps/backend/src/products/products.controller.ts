@@ -46,6 +46,7 @@ import {
   ProductSearchPageResponseDto,
   ProductCreatedDto,
   ProductReferencesResponseDto,
+  ReferenceValueResponseDto,
   CocktailCardResponseDto,
   CocktailGarnishOptionResponseDto,
   CocktailListItemResponseDto,
@@ -277,7 +278,7 @@ export class ProductsController {
     @Param("venueId") venueId: string,
     @Query() query: CocktailListQueryDto,
   ) {
-    return this.cocktails.list(context(user, companyId, venueId), query.query);
+    return this.cocktails.list(context(user, companyId, venueId), query.query, query.categoryId);
   }
 
   @Get("cocktails/garnishes")
@@ -444,6 +445,7 @@ export class ProductsController {
   @Post("reference-values")
   @RequirePermissions("manage_products")
   @ApiOperation({ summary: "Добавить локальное значение справочника" })
+  @ApiCreatedResponse({ type: ReferenceValueResponseDto })
   @ApiForbiddenResponse({ description: "Нет разрешения управлять продукцией" })
   createReferenceValue(
     @CurrentUser() user: AuthenticatedUser,

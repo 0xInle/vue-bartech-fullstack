@@ -1,7 +1,12 @@
 <template>
-  <div v-if="canExport" class="flex flex-col items-start gap-2">
+  <div
+    v-if="canExport"
+    class="flex flex-col gap-2"
+    :class="fullWidth ? 'min-w-0 items-stretch' : 'items-start'"
+  >
     <Button
-      label="Скачать PDF"
+      :class="{ 'w-full': fullWidth }"
+      :label="label"
       icon="pi pi-file-pdf"
       size="small"
       severity="secondary"
@@ -20,12 +25,20 @@
 import { ref } from "vue";
 import { useProductExports } from "../composables/useProductExports";
 
-const props = defineProps<{
-  companyId: string;
-  venueId: string;
-  productId: string;
-  canExport: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    companyId: string;
+    venueId: string;
+    productId: string;
+    canExport: boolean;
+    label?: string;
+    fullWidth?: boolean;
+  }>(),
+  {
+    label: "Скачать PDF",
+    fullWidth: false,
+  },
+);
 const exports = useProductExports(
   () => props.companyId,
   () => props.venueId,

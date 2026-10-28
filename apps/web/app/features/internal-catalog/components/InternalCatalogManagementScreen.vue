@@ -238,7 +238,6 @@
                   label="Удалить"
                   size="small"
                   severity="danger"
-                  text
                   :disabled="!editable || busy"
                   @click="deleteAliasId = alias.id"
                 />

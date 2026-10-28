@@ -11,19 +11,28 @@ import type { CocktailCard, CocktailGarnishOption, CocktailListItem } from "./co
 export class CocktailReadRepository {
   constructor(@Inject(DATABASE_CLIENT) private readonly database: PrismaClient) {}
 
-  async list(venueId: string, matchingIds?: string[]): Promise<CocktailListItem[]> {
+  async list(
+    venueId: string,
+    matchingIds?: string[],
+    categoryId?: string,
+  ): Promise<CocktailListItem[]> {
     const cocktails = await this.database.product.findMany({
       where: {
         venueId,
         type: "COCKTAIL",
         status: "ACTIVE",
         ...(matchingIds ? { id: { in: matchingIds } } : {}),
+        ...(categoryId ? { cocktailCategories: { some: { referenceValueId: categoryId } } } : {}),
       },
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       select: {
         id: true,
         name: true,
         updatedAt: true,
+        cocktailCategories: {
+          orderBy: { referenceValue: { label: "asc" } },
+          select: { referenceValue: { select: { label: true } } },
+        },
         parentComponents: {
           orderBy: { position: "asc" },
           take: 3,
@@ -42,6 +51,9 @@ export class CocktailReadRepository {
     return cocktails.map((cocktail) => ({
       id: cocktail.id,
       name: cocktail.name,
+      categories: cocktail.cocktailCategories.flatMap(({ referenceValue }) =>
+        referenceValue ? [referenceValue.label] : [],
+      ),
       componentSummary: componentSummary(
         products,
         cocktail.parentComponents.map((component) => component.componentProductId),
@@ -70,6 +82,10 @@ export class CocktailReadRepository {
             preparationMethod: { select: { label: true } },
           },
         },
+        cocktailCategories: {
+          orderBy: { referenceValue: { label: "asc" } },
+          select: { referenceValue: { select: { id: true, label: true } } },
+        },
         parentComponents: {
           orderBy: { position: "asc" },
           select: {
@@ -82,7 +98,11 @@ export class CocktailReadRepository {
         },
         cocktailGarnishes: {
           orderBy: { position: "asc" },
-          select: { garnish: { select: { id: true, name: true } } },
+          select: { position: true, garnish: { select: { id: true, name: true } } },
+        },
+        cocktailQuickGarnishes: {
+          orderBy: { position: "asc" },
+          select: { position: true, referenceValue: { select: { id: true, label: true } } },
         },
       },
     });
@@ -110,8 +130,30 @@ export class CocktailReadRepository {
           unit: component.unit.label,
         };
       }),
-      garnishes: cocktail.cocktailGarnishes.flatMap((item) =>
-        item.garnish ? [{ id: item.garnish.id, name: item.garnish.name }] : [],
+      garnishes: [
+        ...cocktail.cocktailGarnishes.flatMap((item) =>
+          item.garnish
+            ? [
+                {
+                  id: item.garnish.id,
+                  name: item.garnish.name,
+                  kind: "PRODUCT" as const,
+                  position: item.position,
+                },
+              ]
+            : [],
+        ),
+        ...cocktail.cocktailQuickGarnishes.map((item) => ({
+          id: item.referenceValue.id,
+          name: item.referenceValue.label,
+          kind: "QUICK" as const,
+          position: item.position,
+        })),
+      ]
+        .sort((a, b) => a.position - b.position)
+        .map(({ id, name, kind }) => ({ id, name, kind })),
+      categories: cocktail.cocktailCategories.flatMap(({ referenceValue }) =>
+        referenceValue ? [referenceValue] : [],
       ),
       technology: cocktail.technology,
       output:
@@ -132,16 +174,36 @@ export class CocktailReadRepository {
     };
   }
 
-  async listGarnishes(venueId: string, matchingIds?: string[]): Promise<CocktailGarnishOption[]> {
-    return this.database.product.findMany({
-      where: {
-        venueId,
-        type: "GARNISH",
-        status: "ACTIVE",
-        ...(matchingIds ? { id: { in: matchingIds } } : {}),
-      },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    });
+  async listGarnishes(
+    venueId: string,
+    query?: string,
+    matchingIds?: string[],
+  ): Promise<CocktailGarnishOption[]> {
+    const [products, quickGarnishes] = await Promise.all([
+      this.database.product.findMany({
+        where: {
+          venueId,
+          type: "GARNISH",
+          status: "ACTIVE",
+          ...(matchingIds ? { id: { in: matchingIds } } : {}),
+        },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      this.database.referenceValue.findMany({
+        where: {
+          venueId,
+          type: "GARNISH",
+          isActive: true,
+          ...(query ? { label: { contains: query, mode: "insensitive" } } : {}),
+        },
+        orderBy: { label: "asc" },
+        select: { id: true, label: true },
+      }),
+    ]);
+    return [
+      ...products.map((item) => ({ ...item, kind: "PRODUCT" as const })),
+      ...quickGarnishes.map((item) => ({ id: item.id, name: item.label, kind: "QUICK" as const })),
+    ].sort((a, b) => a.name.localeCompare(b.name, "ru"));
   }
 }

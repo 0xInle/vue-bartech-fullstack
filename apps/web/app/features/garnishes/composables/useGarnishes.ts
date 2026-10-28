@@ -52,7 +52,6 @@ export function useGarnishes(
       )
     : identity.apiFetch;
   const searchText = ref(readQuery(route.query.query));
-  const sort = ref(readSort(route.query.sort));
   const hasWorkspace = computed(() =>
     Boolean(company.value && venue.value && toValue(options.enabled ?? true)),
   );
@@ -63,7 +62,6 @@ export function useGarnishes(
     venue.value,
     options.serviceSessionId ?? "client",
     normalizedSearch.value,
-    sort.value,
   ]);
   const referencesKey = computed(() => [
     "product-references",
@@ -77,18 +75,16 @@ export function useGarnishes(
       () => route.query,
       (query) => {
         searchText.value = readQuery(query.query);
-        sort.value = readSort(query.sort);
       },
     );
     watch(
-      [searchText, sort],
+      searchText,
       () => {
         const next = { ...route.query };
         if (normalizedSearch.value) next.query = normalizedSearch.value;
         else delete next.query;
-        if (sort.value === "updated") next.sort = sort.value;
-        else delete next.sort;
-        if (route.query.query !== next.query || route.query.sort !== next.sort)
+        delete next.sort;
+        if (route.query.query !== next.query || "sort" in route.query)
           void router.replace({ query: next });
       },
       { immediate: true },
@@ -105,7 +101,7 @@ export function useGarnishes(
           await productsControllerListGarnishes(
             company.value,
             venue.value,
-            { query: normalizedSearch.value || undefined, sort: sort.value },
+            { query: normalizedSearch.value || undefined },
             { credentials: "include", signal },
             productApiFetch,
           ),
@@ -268,7 +264,6 @@ export function useGarnishes(
     rememberScroll,
     restoreScroll,
     searchText,
-    sort,
     updateGarnish,
   };
 }
@@ -291,9 +286,6 @@ function isGarnishImpact(value: unknown): value is GarnishImpact {
 }
 function readQuery(value: unknown): string {
   return typeof value === "string" ? value : "";
-}
-function readSort(value: unknown): "name" | "updated" {
-  return value === "updated" ? "updated" : "name";
 }
 function scrollKey(companyId: string, venueId: string): string {
   return `garnish-list-scroll:${companyId}:${venueId}`;

@@ -28,41 +28,41 @@
             placeholder="Найти ингредиент или заготовку"
             @update:model-value="selectProduct(row.key, $event)"
           />
-          <small v-if="errors?.[index]?.productId" class="text-red-500">{{
+          <small v-if="errors?.[index]?.productId" class="text-xs text-red-500">{{
             errors[index]?.productId
           }}</small>
         </div>
         <div class="flex flex-col gap-1">
-          <label :for="`garnish-component-${row.key}-amount`" class="sr-only"
-            >Количество компонента {{ index + 1 }}</label
-          >
-          <InputText
-            :id="`garnish-component-${row.key}-amount`"
-            :model-value="row.amount"
-            inputmode="decimal"
-            size="small"
-            placeholder="Количество"
-            @update:model-value="updateRow(row.key, { amount: String($event ?? '') })"
-          />
-          <small v-if="errors?.[index]?.amount" class="text-red-500">{{
+          <FloatLabel variant="on">
+            <InputText
+              :id="`garnish-component-${row.key}-amount`"
+              :model-value="row.amount"
+              inputmode="decimal"
+              size="small"
+              fluid
+              @update:model-value="updateRow(row.key, { amount: String($event ?? '') })"
+            />
+            <label :for="`garnish-component-${row.key}-amount`" class="text-xs">Количество</label>
+          </FloatLabel>
+          <small v-if="errors?.[index]?.amount" class="text-xs text-red-500">{{
             errors[index]?.amount
           }}</small>
         </div>
         <div class="flex flex-col gap-1">
-          <label :for="`garnish-component-${row.key}-unit`" class="sr-only"
-            >Единица компонента {{ index + 1 }}</label
-          >
-          <Select
-            :id="`garnish-component-${row.key}-unit`"
-            :model-value="row.unitId"
-            :options="units"
-            option-label="label"
-            option-value="id"
-            placeholder="Единица"
-            size="small"
-            @update:model-value="updateRow(row.key, { unitId: $event })"
-          />
-          <small v-if="errors?.[index]?.unitId" class="text-red-500">{{
+          <FloatLabel variant="on">
+            <Select
+              :input-id="`garnish-component-${row.key}-unit`"
+              :model-value="row.unitId"
+              :options="units"
+              option-label="label"
+              option-value="id"
+              size="small"
+              class="w-full"
+              @update:model-value="updateRow(row.key, { unitId: $event })"
+            />
+            <label :for="`garnish-component-${row.key}-unit`" class="text-xs">Единица</label>
+          </FloatLabel>
+          <small v-if="errors?.[index]?.unitId" class="text-xs text-red-500">{{
             errors[index]?.unitId
           }}</small>
         </div>

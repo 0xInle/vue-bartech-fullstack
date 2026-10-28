@@ -10,11 +10,16 @@
     />
     <div class="mt-4">
       <LoadingIndicator v-if="detailQuery.isLoading.value" />
-      <Message v-else-if="detailQuery.isError.value" severity="error" :closable="false">
+      <Message
+        v-else-if="detailQuery.isError.value"
+        severity="error"
+        :closable="false"
+        :pt="compactMessagePt"
+      >
         Не удалось загрузить карточку продукции.
       </Message>
-      <article v-else-if="product" class="space-y-5">
-        <header class="border-b border-surface pb-4">
+      <article v-else-if="product" class="flex flex-col gap-5">
+        <header>
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
             {{ typeLabel(product.type) }} · Только чтение
           </p>
@@ -24,11 +29,12 @@
             {{ product.categoryName }}
           </p>
           <p v-if="product.type === 'COCKTAIL'" class="mt-2 text-sm text-color-secondary">
-            <span v-if="product.glass">Бокал: {{ product.glass }}</span>
+            <span v-if="product.glass">Посуда: {{ product.glass }}</span>
             <span v-if="product.ice"> · Лёд: {{ product.ice }}</span>
             <span v-if="product.preparationMethod"> · Метод: {{ product.preparationMethod }}</span>
           </p>
         </header>
+        <Divider class="!my-0" />
 
         <section>
           <h3 class="text-sm font-semibold">Состав</h3>
@@ -79,6 +85,7 @@ import type { companyProductsControllerGetCompanyProductResponse200 } from "@bar
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
 import { requestApi } from "~/utils/api-response";
 import type { WorkspaceSearchItem } from "../composables/useWorkspaceProductSearch";
+import { compactMessagePt } from "~/utils/primevue-message";
 
 const props = defineProps<{ companyId: string; item: WorkspaceSearchItem }>();
 const emit = defineEmits<{ back: [] }>();

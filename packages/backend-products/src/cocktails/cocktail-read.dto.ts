@@ -1,6 +1,7 @@
 export type CocktailListItem = {
   id: string;
   name: string;
+  categories: string[];
   componentSummary: string;
   updatedAt: Date;
 };
@@ -8,6 +9,7 @@ export type CocktailListItem = {
 export type CocktailGarnishOption = {
   id: string;
   name: string;
+  kind: "PRODUCT" | "QUICK";
 };
 
 export type CocktailCard = {
@@ -25,6 +27,7 @@ export type CocktailCard = {
     unit: string;
   }>;
   garnishes: CocktailGarnishOption[];
+  categories: Array<{ id: string; label: string }>;
   technology: string;
   output: { amount: number; unitId: string; unit: string } | null;
   comment: string | null;

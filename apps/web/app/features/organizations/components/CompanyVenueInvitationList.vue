@@ -17,8 +17,7 @@
         </div>
         <Button
           label="Отозвать"
-          severity="secondary"
-          variant="text"
+          severity="danger"
           size="small"
           :disabled="busyId === invitation.id"
           :loading="busyId === invitation.id"

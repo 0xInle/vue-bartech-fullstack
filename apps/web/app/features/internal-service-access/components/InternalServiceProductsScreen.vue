@@ -223,7 +223,7 @@
   <Drawer
     :visible="Boolean(selectedIngredient)"
     position="right"
-    :style="{ width: 'min(100vw, 36rem)' }"
+    class="drawer-size-lg"
     header="Редактировать локальный ингредиент"
     @update:visible="!$event && (selectedIngredient = null)"
   >

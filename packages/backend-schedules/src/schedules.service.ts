@@ -8,17 +8,27 @@ import {
 import { DATABASE_CLIENT, Prisma, PrismaClient } from "@bartech/database";
 
 export type ScheduleValue =
-  | { kind: "SHIFT"; durationHours: number; shiftType: "NORMAL" | "NIGHT" }
+  | {
+      kind: "SHIFT";
+      durationHours: number;
+      shiftCode: "MORNING" | "DAY" | "EVENING" | "NIGHT";
+      startMinute: number;
+      shiftSettingId?: string | null;
+    }
   | { kind: "STATUS"; status: "VACATION" | "SICK_LEAVE" | "NO_SHOW" }
   | { kind: "EMPTY" };
 
 export type ScheduleCellInput = { membershipId: string; date: string; value: ScheduleValue };
 export type ScheduleTemplateInput = {
   name: string;
-  workDays: number;
-  offDays: number;
-  durationHours: number;
-  shiftType: "NORMAL" | "NIGHT";
+  days: Array<string | null>;
+};
+
+export type ScheduleShiftSettingInput = {
+  id?: string;
+  shiftCode: "MORNING" | "DAY" | "EVENING" | "NIGHT";
+  startMinute: number;
+  defaultDurationHours: number;
 };
 
 const DAY_MS = 86_400_000;
@@ -34,6 +44,7 @@ export class SchedulesService {
     const schedule = await this.database.schedule.findUnique({
       where: { venueId_year_month: { venueId, year, month } },
       include: {
+        dateMarkers: { orderBy: { date: "asc" } },
         days: {
           include: {
             comment: {
@@ -178,15 +189,117 @@ export class SchedulesService {
       year,
       month,
       daysInMonth,
+      dateMarkers: (schedule?.dateMarkers ?? []).map((marker) => ({
+        date: dateKey(marker.date),
+        type: marker.type,
+      })),
       rows,
     };
+  }
+
+  async setInventoryMarker(venueId: string, dateValue: string) {
+    const date = parseDate(dateValue);
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth() + 1;
+    assertAvailableMonth(year, month);
+    const schedule = await this.database.schedule.upsert({
+      where: { venueId_year_month: { venueId, year, month } },
+      create: { venueId, year, month },
+      update: {},
+      select: { id: true },
+    });
+    await this.database.scheduleDateMarker.upsert({
+      where: { scheduleId_date: { scheduleId: schedule.id, date } },
+      create: { scheduleId: schedule.id, date, type: "INVENTORY" },
+      update: {},
+    });
+    return { date: dateKey(date), type: "INVENTORY" as const };
+  }
+
+  async deleteInventoryMarker(venueId: string, dateValue: string) {
+    const date = parseDate(dateValue);
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth() + 1;
+    assertAvailableMonth(year, month);
+    const schedule = await this.database.schedule.findUnique({
+      where: { venueId_year_month: { venueId, year, month } },
+      select: { id: true },
+    });
+    if (schedule) {
+      await this.database.scheduleDateMarker.deleteMany({
+        where: { scheduleId: schedule.id, date },
+      });
+    }
+    return { date: dateKey(date), removed: true };
   }
 
   async listTemplates(venueId: string) {
     return this.database.scheduleTemplate.findMany({
       where: { OR: [{ isSystem: true }, { venueId, isSystem: false }] },
-      include: { currentVersion: true, _count: { select: { assignments: true } } },
+      include: {
+        currentVersion: { include: { days: { orderBy: { position: "asc" } } } },
+        _count: { select: { assignments: true } },
+      },
       orderBy: [{ isSystem: "desc" }, { name: "asc" }],
+    });
+  }
+
+  getShiftSettings(venueId: string) {
+    return this.database.venueScheduleShiftSetting.findMany({
+      where: { venueId },
+      orderBy: [{ shiftCode: "asc" }, { startMinute: "asc" }, { defaultDurationHours: "asc" }],
+    });
+  }
+
+  async saveShiftSettings(venueId: string, settings: ScheduleShiftSettingInput[]) {
+    validateShiftSettings(settings);
+    return this.database.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "venues" WHERE "id" = ${venueId}::uuid FOR UPDATE`;
+      const existing = await tx.venueScheduleShiftSetting.findMany({ where: { venueId } });
+      const existingById = new Map(existing.map((setting) => [setting.id, setting]));
+      const incomingIds = new Set(settings.flatMap(({ id }) => (id ? [id] : [])));
+      const removed = existing.filter(({ id }) => !incomingIds.has(id)).map(({ id }) => id);
+      if (removed.length) {
+        const references = await tx.scheduleTemplateDay.findFirst({
+          where: {
+            shiftSettingId: { in: removed },
+            templateVersion: {
+              OR: [
+                { currentFor: { is: { venueId } } },
+                { assignments: { some: { membership: { venueId } } } },
+              ],
+            },
+          },
+          select: { shiftSettingId: true },
+        });
+        if (references)
+          throw new ConflictException(
+            "Сначала измените шаблоны и назначения, использующие этот вариант смены",
+          );
+      }
+      if (removed.length)
+        await tx.venueScheduleShiftSetting.deleteMany({ where: { venueId, id: { in: removed } } });
+      for (const setting of settings) {
+        if (setting.id) {
+          if (!existingById.has(setting.id)) {
+            throw new ConflictException("Настройка смены не найдена в этом заведении");
+          }
+          await tx.venueScheduleShiftSetting.update({
+            where: { id: setting.id },
+            data: {
+              shiftCode: setting.shiftCode,
+              startMinute: setting.startMinute,
+              defaultDurationHours: setting.defaultDurationHours,
+            },
+          });
+        } else {
+          await tx.venueScheduleShiftSetting.create({ data: { venueId, ...setting } });
+        }
+      }
+      return tx.venueScheduleShiftSetting.findMany({
+        where: { venueId },
+        orderBy: [{ shiftCode: "asc" }, { startMinute: "asc" }, { defaultDurationHours: "asc" }],
+      });
     });
   }
 
@@ -197,22 +310,15 @@ export class SchedulesService {
     templateId?: string,
   ) {
     validateTemplate(input);
-    const name = `${input.workDays}/${input.offDays}`;
+    const name = input.name.trim();
     return this.database.$transaction(async (tx) => {
-      const existingTemplates = await tx.scheduleTemplate.findMany({
-        where: {
-          OR: [{ isSystem: true }, { venueId, isSystem: false }],
-          ...(templateId ? { id: { not: templateId } } : {}),
-        },
-        include: { currentVersion: true },
+      const enabled = await tx.venueScheduleShiftSetting.findMany({
+        where: { venueId },
+        select: { id: true },
       });
-      const duplicate = existingTemplates.find(
-        (template) =>
-          template.currentVersion?.workDays === input.workDays &&
-          template.currentVersion?.offDays === input.offDays,
-      );
-      if (duplicate) {
-        throw new ConflictException(`Шаблон ${input.workDays} | ${input.offDays} уже задан`);
+      const enabledIds = enabled.map(({ id }) => id);
+      if (input.days.some((id) => id !== null && !enabledIds.includes(id))) {
+        throw new ConflictException("Шаблон содержит не настроенный вариант смены");
       }
       if (!templateId) {
         const template = await tx.scheduleTemplate.create({
@@ -222,47 +328,55 @@ export class SchedulesService {
           data: {
             templateId: template.id,
             version: 1,
-            ...versionInput(input),
+            days: {
+              create: input.days.map((shiftSettingId, position) => ({ position, shiftSettingId })),
+            },
             createdByUserId: userId,
           },
         });
         return tx.scheduleTemplate.update({
           where: { id: template.id },
           data: { currentVersionId: version.id },
-          include: { currentVersion: true },
+          include: { currentVersion: { include: { days: { orderBy: { position: "asc" } } } } },
         });
       }
       const template = await tx.scheduleTemplate.findFirst({
         where: { id: templateId, venueId, isSystem: false },
-        include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+        include: {
+          versions: {
+            orderBy: { version: "desc" },
+            take: 1,
+            include: { days: { orderBy: { position: "asc" } } },
+          },
+        },
       });
       if (!template) throw new NotFoundException("Шаблон заведения не найден");
       const latestVersion = template.versions[0];
       if (
         latestVersion &&
-        latestVersion.workDays === input.workDays &&
-        latestVersion.offDays === input.offDays &&
-        latestVersion.durationHours === input.durationHours &&
-        latestVersion.shiftType === input.shiftType
+        JSON.stringify(latestVersion.days.map(({ shiftSettingId }) => shiftSettingId)) ===
+          JSON.stringify(input.days)
       ) {
         return tx.scheduleTemplate.update({
           where: { id: templateId },
           data: { name },
-          include: { currentVersion: true },
+          include: { currentVersion: { include: { days: { orderBy: { position: "asc" } } } } },
         });
       }
       const version = await tx.scheduleTemplateVersion.create({
         data: {
           templateId,
           version: (latestVersion?.version ?? 0) + 1,
-          ...versionInput(input),
+          days: {
+            create: input.days.map((shiftSettingId, position) => ({ position, shiftSettingId })),
+          },
           createdByUserId: userId,
         },
       });
       return tx.scheduleTemplate.update({
         where: { id: templateId },
         data: { name, currentVersionId: version.id },
-        include: { currentVersion: true },
+        include: { currentVersion: { include: { days: { orderBy: { position: "asc" } } } } },
       });
     });
   }
@@ -336,10 +450,12 @@ export class SchedulesService {
             templateId: assignmentInput.templateId,
             template: { OR: [{ isSystem: true }, { venueId, isSystem: false }] },
           },
+          include: { days: { orderBy: { position: "asc" } } },
         });
         if (!version) throw new NotFoundException("Версия шаблона недоступна в этом заведении");
         const anchor = parseDate(assignmentInput.cycleAnchorDate);
         const applyFrom = parseDate(assignmentInput.applyFromDate);
+        const shiftSettings = await tx.venueScheduleShiftSetting.findMany({ where: { venueId } });
         if (persistAssignments) {
           await tx.scheduleAssignment.upsert({
             where: { venueMembershipId: membership.id },
@@ -370,16 +486,19 @@ export class SchedulesService {
           )
             continue;
           const offset = Math.floor((date.getTime() - anchor.getTime()) / DAY_MS);
-          const cycle = version.workDays + version.offDays;
-          const cycleDay = ((offset % cycle) + cycle) % cycle;
-          const value: ScheduleValue | null =
-            cycleDay < version.workDays
-              ? {
-                  kind: "SHIFT",
-                  durationHours: version.durationHours,
-                  shiftType: version.shiftType,
-                }
-              : null;
+          const cycleDay =
+            ((offset % version.days.length) + version.days.length) % version.days.length;
+          const shiftSettingId = version.days[cycleDay]?.shiftSettingId;
+          const setting = shiftSettings.find(({ id }) => id === shiftSettingId);
+          const value: ScheduleValue | null = setting
+            ? {
+                kind: "SHIFT",
+                shiftCode: setting.shiftCode,
+                startMinute: setting.startMinute,
+                durationHours: setting.defaultDurationHours,
+                shiftSettingId: setting.id,
+              }
+            : null;
           const existing = await tx.scheduleDay.findUnique({
             where: { venueMembershipId_date: { venueMembershipId: membership.id, date } },
           });
@@ -573,13 +692,22 @@ export class SchedulesService {
         },
         update: { updatedByUserId: userId },
       });
+      const commentKey = { scheduleDayId: day.id };
+      const previousComment = await tx.scheduleDayComment.findUnique({ where: commentKey });
+      if (previousComment && previousComment.text !== cleanText) {
+        await tx.scheduleDayCommentVersion.create({
+          data: {
+            scheduleDayId: day.id,
+            text: previousComment.text,
+            changedByUserId: previousComment.updatedByUserId,
+            createdAt: previousComment.updatedAt,
+          },
+        });
+      }
       const comment = await tx.scheduleDayComment.upsert({
-        where: { scheduleDayId: day.id },
+        where: commentKey,
         create: { scheduleDayId: day.id, text: cleanText, updatedByUserId: userId },
         update: { text: cleanText, updatedByUserId: userId },
-      });
-      await tx.scheduleDayCommentVersion.create({
-        data: { scheduleDayId: day.id, text: cleanText, changedByUserId: userId },
       });
       return comment;
     });
@@ -595,6 +723,16 @@ export class SchedulesService {
     const date = parseDate(input.date);
     assertAvailableMonth(date.getUTCFullYear(), date.getUTCMonth() + 1);
     validateValue(input.value);
+    if (input.value.kind === "SHIFT" && input.value.shiftSettingId) {
+      const enabled = await tx.venueScheduleShiftSetting.findFirst({
+        where: {
+          id: input.value.shiftSettingId,
+          venueId,
+          shiftCode: input.value.shiftCode,
+        },
+      });
+      if (!enabled) throw new ConflictException("Выбранная настройка смены недоступна в заведении");
+    }
     await tx.$queryRaw`SELECT "id" FROM "venue_memberships" WHERE "id" = ${input.membershipId}::uuid FOR UPDATE`;
     const membership = await tx.venueMembership.findFirst({
       where: { id: input.membershipId, venueId },
@@ -656,30 +794,45 @@ export class SchedulesService {
   }
 }
 
-function versionInput(input: ScheduleTemplateInput) {
-  return {
-    workDays: input.workDays,
-    offDays: input.offDays,
-    durationHours: input.durationHours,
-    shiftType: input.shiftType,
-  };
-}
-
 function validateTemplate(input: ScheduleTemplateInput): void {
   if (
-    !Number.isInteger(input.workDays) ||
-    input.workDays < 1 ||
-    input.workDays > 31 ||
-    !Number.isInteger(input.offDays) ||
-    input.offDays < 0 ||
-    input.offDays > 30 ||
-    input.workDays + input.offDays > 31 ||
-    !Number.isInteger(input.durationHours) ||
-    input.durationHours < 1 ||
-    input.durationHours > 24 ||
-    !["NORMAL", "NIGHT"].includes(input.shiftType)
+    !input.name.trim() ||
+    input.name.length > 80 ||
+    input.days.length < 1 ||
+    input.days.length > 31 ||
+    !input.days.some((shiftSettingId) => shiftSettingId !== null) ||
+    input.days.some(
+      (shiftSettingId) =>
+        shiftSettingId !== null &&
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(shiftSettingId),
+    )
   ) {
-    throw new ConflictException("Проверьте параметры шаблона смен");
+    throw new ConflictException("Проверьте название и последовательность шаблона смен");
+  }
+}
+
+function validateShiftSettings(settings: ScheduleShiftSettingInput[]): void {
+  const ids = settings.flatMap(({ id }) => (id ? [id] : []));
+  const signatures = settings.map(
+    ({ shiftCode, startMinute, defaultDurationHours }) =>
+      `${shiftCode}:${startMinute}:${defaultDurationHours}`,
+  );
+  if (
+    new Set(ids).size !== ids.length ||
+    new Set(signatures).size !== signatures.length ||
+    settings.some(
+      ({ startMinute, defaultDurationHours }) =>
+        !Number.isInteger(startMinute) ||
+        startMinute < 0 ||
+        startMinute > 1439 ||
+        !Number.isInteger(defaultDurationHours) ||
+        defaultDurationHours < 1 ||
+        defaultDurationHours > 24,
+    )
+  ) {
+    throw new ConflictException(
+      "Проверьте варианты смен, время начала и длительность от 1 до 24 часов",
+    );
   }
 }
 
@@ -689,7 +842,10 @@ function validateValue(value: ScheduleValue): void {
     (!Number.isInteger(value.durationHours) ||
       value.durationHours < 1 ||
       value.durationHours > 24 ||
-      !["NORMAL", "NIGHT"].includes(value.shiftType))
+      !Number.isInteger(value.startMinute) ||
+      value.startMinute < 0 ||
+      value.startMinute > 1439 ||
+      !["MORNING", "DAY", "EVENING", "NIGHT"].includes(value.shiftCode))
   ) {
     throw new ConflictException("Проверьте длительность и тип смены");
   }
@@ -700,21 +856,47 @@ function validateValue(value: ScheduleValue): void {
 
 function valueColumns(value: ScheduleValue) {
   if (value.kind === "SHIFT") {
-    return { shiftDurationHours: value.durationHours, shiftType: value.shiftType, status: null };
+    return {
+      shiftDurationHours: value.durationHours,
+      shiftCode: value.shiftCode,
+      shiftStartMinute: value.startMinute,
+      shiftSettingId: value.shiftSettingId ?? null,
+      status: null,
+    };
   }
   if (value.kind === "STATUS") {
-    return { shiftDurationHours: null, shiftType: null, status: value.status };
+    return {
+      shiftDurationHours: null,
+      shiftCode: null,
+      shiftStartMinute: null,
+      shiftSettingId: null,
+      status: value.status,
+    };
   }
-  return { shiftDurationHours: null, shiftType: null, status: null };
+  return {
+    shiftDurationHours: null,
+    shiftCode: null,
+    shiftStartMinute: null,
+    shiftSettingId: null,
+    status: null,
+  };
 }
 
 function toValue(day: {
   shiftDurationHours: number | null;
-  shiftType: "NORMAL" | "NIGHT" | null;
+  shiftCode: "MORNING" | "DAY" | "EVENING" | "NIGHT" | null;
+  shiftStartMinute: number | null;
+  shiftSettingId: string | null;
   status: string | null;
 }): ScheduleValue {
-  if (day.shiftDurationHours !== null && day.shiftType) {
-    return { kind: "SHIFT", durationHours: day.shiftDurationHours, shiftType: day.shiftType };
+  if (day.shiftDurationHours !== null && day.shiftCode && day.shiftStartMinute !== null) {
+    return {
+      kind: "SHIFT",
+      durationHours: day.shiftDurationHours,
+      shiftCode: day.shiftCode,
+      startMinute: day.shiftStartMinute,
+      shiftSettingId: day.shiftSettingId,
+    };
   }
   if (day.status) {
     if (day.status === "DAY_OFF") return { kind: "EMPTY" };

@@ -9,6 +9,7 @@
 export interface CocktailListItemResponseDto {
   id: string;
   name: string;
+  categories: string[];
   /** Краткий состав через запятую */
   componentSummary: string;
   updatedAt: string;

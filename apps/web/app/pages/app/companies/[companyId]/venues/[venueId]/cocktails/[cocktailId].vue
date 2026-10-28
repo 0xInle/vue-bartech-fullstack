@@ -1,9 +1,9 @@
 <template>
-  <CocktailCardScreen :cocktail-id="cocktailId" />
+  <CocktailListScreen :cocktail-id="cocktailId" />
 </template>
 
 <script setup lang="ts">
-import CocktailCardScreen from "~/features/cocktails/components/CocktailCardScreen.vue";
+import CocktailListScreen from "~/features/cocktails/components/CocktailListScreen.vue";
 
 defineOptions({ name: "CocktailCardPage" });
 

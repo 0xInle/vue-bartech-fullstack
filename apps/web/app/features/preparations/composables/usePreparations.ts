@@ -54,7 +54,6 @@ export function usePreparations(
     : identity.apiFetch;
   const searchText = ref(readQuery(route.query.query));
   const categoryCode = ref(readQuery(route.query.category));
-  const sort = ref(readSort(route.query.sort));
   const hasWorkspace = computed(() =>
     Boolean(company.value && venue.value && toValue(options.enabled ?? true)),
   );
@@ -66,7 +65,6 @@ export function usePreparations(
     options.serviceSessionId ?? "client",
     normalizedSearch.value,
     categoryCode.value,
-    sort.value,
   ]);
   const referencesKey = computed(() => [
     "product-references",
@@ -80,16 +78,19 @@ export function usePreparations(
     (query) => {
       searchText.value = readQuery(query.query);
       categoryCode.value = readQuery(query.category);
-      sort.value = readSort(query.sort);
     },
   );
-  watch([searchText, categoryCode, sort], () => {
-    const next = { ...route.query } as Record<string, string | undefined>;
-    assignQuery(next, "query", normalizedSearch.value);
-    assignQuery(next, "category", categoryCode.value);
-    assignQuery(next, "sort", sort.value === "name" ? "" : sort.value);
-    if (!sameQuery(route.query, next)) void router.replace({ query: next });
-  });
+  watch(
+    [searchText, categoryCode],
+    () => {
+      const next = { ...route.query } as Record<string, string | undefined>;
+      assignQuery(next, "query", normalizedSearch.value);
+      assignQuery(next, "category", categoryCode.value);
+      delete next.sort;
+      if (!sameQuery(route.query, next)) void router.replace({ query: next });
+    },
+    { immediate: true },
+  );
 
   const listQuery = useQuery({
     queryKey: listKey,
@@ -104,7 +105,6 @@ export function usePreparations(
             {
               query: normalizedSearch.value || undefined,
               categoryCode: categoryCode.value || undefined,
-              sort: sort.value,
             },
             { credentials: "include", signal },
             productApiFetch,
@@ -261,7 +261,6 @@ export function usePreparations(
     rememberScroll,
     restoreScroll,
     searchText,
-    sort,
     updatePreparation,
   };
 }
@@ -284,9 +283,6 @@ function isPreparationImpact(value: unknown): value is PreparationImpact {
 }
 function readQuery(value: unknown): string {
   return typeof value === "string" ? value : "";
-}
-function readSort(value: unknown): "name" | "updated" {
-  return typeof value === "string" && (value === "name" || value === "updated") ? value : "name";
 }
 function assignQuery(query: Record<string, string | undefined>, key: string, value: string): void {
   if (value) query[key] = value;

@@ -20,7 +20,13 @@ import { Type } from "class-transformer";
 import type { QuantityKind, ReferenceValueType } from "@bartech/database";
 
 export const quantityKinds: QuantityKind[] = ["VOLUME", "MASS", "COUNT", "BAR_MEASURE"];
-export const referenceValueTypes: ReferenceValueType[] = ["GLASS", "ICE", "PREPARATION_METHOD"];
+export const referenceValueTypes: ReferenceValueType[] = [
+  "GLASS",
+  "ICE",
+  "PREPARATION_METHOD",
+  "GARNISH",
+  "COCKTAIL_CATEGORY",
+];
 
 export class CreateLocalIngredientDto {
   @ApiProperty({ maxLength: 160 })
@@ -180,7 +186,21 @@ export class GarnishImpactResponseDto {
   confirmationFingerprint!: string;
 }
 
+export class CocktailGarnishSelectionDto {
+  @ApiProperty({ format: "uuid" })
+  @IsUUID()
+  id!: string;
+
+  @ApiProperty({ enum: ["PRODUCT", "QUICK"] })
+  @IsIn(["PRODUCT", "QUICK"])
+  kind!: "PRODUCT" | "QUICK";
+}
+
 export class CreateCocktailDto extends CreateCompositeProductDto {
+  @ApiProperty({ type: [ProductComponentDto], minItems: 1, maxItems: 20 })
+  @ArrayMaxSize(20)
+  override components: ProductComponentDto[] = undefined!;
+
   @ApiProperty({ format: "uuid" })
   @IsUUID()
   glassId!: string;
@@ -200,6 +220,30 @@ export class CreateCocktailDto extends CreateCompositeProductDto {
   @ArrayUnique()
   @IsUUID("all", { each: true })
   garnishIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], format: "uuid", maxItems: 20 })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ArrayUnique()
+  @IsUUID("all", { each: true })
+  quickGarnishIds?: string[];
+
+  @ApiPropertyOptional({ type: [CocktailGarnishSelectionDto], maxItems: 20 })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => CocktailGarnishSelectionDto)
+  garnishSelections?: CocktailGarnishSelectionDto[];
+
+  @ApiPropertyOptional({ type: [String], format: "uuid", maxItems: 20 })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ArrayUnique()
+  @IsUUID("all", { each: true })
+  categoryIds?: string[];
 }
 
 export class UpdateCocktailDto extends CreateCocktailDto {}
@@ -579,6 +623,11 @@ export class CocktailListQueryDto {
   @IsString()
   @MaxLength(160)
   query?: string;
+
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
 }
 
 export class PreparationListQueryDto {
@@ -620,6 +669,9 @@ export class CocktailListItemResponseDto {
   @ApiProperty()
   name!: string;
 
+  @ApiProperty({ type: [String] })
+  categories!: string[];
+
   @ApiProperty({ description: "Краткий состав через запятую" })
   componentSummary!: string;
 
@@ -633,6 +685,9 @@ export class CocktailGarnishOptionResponseDto {
 
   @ApiProperty()
   name!: string;
+
+  @ApiProperty({ enum: ["PRODUCT", "QUICK"] })
+  kind!: "PRODUCT" | "QUICK";
 }
 
 export class CocktailCardComponentResponseDto {
@@ -669,12 +724,23 @@ export class CocktailCardOutputResponseDto {
   unit!: string;
 }
 
+export class CocktailCategoryResponseDto {
+  @ApiProperty({ format: "uuid" })
+  id!: string;
+
+  @ApiProperty()
+  label!: string;
+}
+
 export class CocktailCardResponseDto {
   @ApiProperty({ format: "uuid" })
   id!: string;
 
   @ApiProperty()
   name!: string;
+
+  @ApiProperty({ type: [CocktailCategoryResponseDto] })
+  categories!: Array<{ id: string; label: string }>;
 
   @ApiProperty({ enum: ["COCKTAIL"] })
   type!: "COCKTAIL";

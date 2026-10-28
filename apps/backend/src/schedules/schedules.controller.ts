@@ -36,11 +36,14 @@ import {
   ScheduleCellDto,
   ScheduleCellsDto,
   ScheduleCommentDto,
+  ScheduleDateMarkerDto,
   ScheduleExportQueryDto,
   ScheduleExtendDto,
   ScheduleGenerateDto,
   ScheduleMonthQueryDto,
   ScheduleTemplateDto,
+  ScheduleShiftSettingsDto,
+  ScheduleShiftSettingDto,
 } from "./schedules.dto.js";
 
 @ApiTags("schedules")
@@ -67,11 +70,56 @@ export class SchedulesController {
     );
   }
 
+  @Put("date-markers/:date")
+  @RequirePermissions("manage_schedule")
+  @ApiOperation({ summary: "Отметить дату графика как день инвентаризации" })
+  @ApiParam({ name: "date", format: "date" })
+  @ApiOkResponse({ type: ScheduleDateMarkerDto })
+  setInventoryMarker(
+    @CurrentWorkspace() workspace: WorkspaceSummary,
+    @Param("date") date: string,
+  ): Promise<ScheduleDateMarkerDto> {
+    return this.schedules.setInventoryMarker(workspace.venue.id, date);
+  }
+
+  @Delete("date-markers/:date")
+  @RequirePermissions("manage_schedule")
+  @ApiOperation({ summary: "Снять отметку дня инвентаризации" })
+  @ApiParam({ name: "date", format: "date" })
+  @ApiOkResponse({ description: "Отметка снята, если она существовала" })
+  deleteInventoryMarker(
+    @CurrentWorkspace() workspace: WorkspaceSummary,
+    @Param("date") date: string,
+  ) {
+    return this.schedules.deleteInventoryMarker(workspace.venue.id, date);
+  }
+
   @Get("templates")
   @RequirePermissions("manage_schedule")
   @ApiOperation({ summary: "Получить доступные шаблоны циклов" })
   listTemplates(@CurrentWorkspace() workspace: WorkspaceSummary) {
     return this.schedules.listTemplates(workspace.venue.id);
+  }
+
+  @Get("shift-settings")
+  @RequirePermissions("manage_schedule")
+  @ApiOperation({ summary: "Получить настройки типов смен заведения" })
+  @ApiOkResponse({ type: [ScheduleShiftSettingDto] })
+  getShiftSettings(
+    @CurrentWorkspace() workspace: WorkspaceSummary,
+  ): Promise<ScheduleShiftSettingDto[]> {
+    return this.schedules.getShiftSettings(workspace.venue.id);
+  }
+
+  @Put("shift-settings")
+  @RequirePermissions("manage_schedule")
+  @ApiOperation({ summary: "Заменить настройки типов смен заведения" })
+  @ApiOkResponse({ type: [ScheduleShiftSettingDto] })
+  saveShiftSettings(
+    @CurrentWorkspace() workspace: WorkspaceSummary,
+    @Body() body: ScheduleShiftSettingsDto,
+  ): Promise<ScheduleShiftSettingDto[]> {
+    return this.schedules.saveShiftSettings(workspace.venue.id, body.settings);
   }
 
   @Post("templates")

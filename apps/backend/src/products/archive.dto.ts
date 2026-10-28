@@ -53,8 +53,17 @@ export class ArchiveComponentDto {
   @ApiProperty() unit!: string;
 }
 
-export class ArchiveGarnishDto extends ArchiveProductSummaryDto {
-  @ApiProperty({ enum: ["ACTIVE", "ARCHIVED"] }) status!: string;
+export class ArchiveGarnishDto {
+  @ApiProperty({ format: "uuid" }) id!: string;
+
+  @ApiProperty({ enum: [...productTypes, "QUICK"] })
+  type!: ProductType | "QUICK";
+
+  @ApiProperty() name!: string;
+
+  @ApiProperty({ enum: ["ACTIVE", "ARCHIVED", null], nullable: true }) status!: string | null;
+
+  @ApiProperty({ enum: ["PRODUCT", "QUICK"] }) kind!: "PRODUCT" | "QUICK";
 }
 
 export class ArchiveOutputDto {

@@ -588,7 +588,8 @@ export class TeamService {
           ? {
               kind: "SHIFT",
               durationHours: day.shiftDurationHours,
-              shiftType: day.shiftType,
+              shiftCode: day.shiftCode,
+              startMinute: day.shiftStartMinute,
             }
           : day.status
             ? { kind: "STATUS", status: day.status }
@@ -597,7 +598,8 @@ export class TeamService {
           where: { id: day.id },
           data: {
             shiftDurationHours: null,
-            shiftType: null,
+            shiftCode: null,
+            shiftStartMinute: null,
             status: null,
             updatedByUserId: actorId,
           },

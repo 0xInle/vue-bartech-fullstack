@@ -18,7 +18,9 @@
           }
         },
         "summary": "Проверить, что процесс HTTP API запущен",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     },
     "/api/v1/health/ready": {
@@ -38,7 +40,9 @@
           }
         },
         "summary": "Проверить готовность критичных зависимостей",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     },
     "/api/v1/meta": {
@@ -58,7 +62,9 @@
           }
         },
         "summary": "Получить безопасную информацию о версии API",
-        "tags": ["meta"]
+        "tags": [
+          "meta"
+        ]
       }
     },
     "/api/v1/identity/csrf": {
@@ -78,7 +84,9 @@
           }
         },
         "summary": "Получить CSRF-токен для изменяющих запросов",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/registration": {
@@ -108,7 +116,9 @@
           }
         },
         "summary": "Начать регистрацию и отправить код подтверждения",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/registration/resend": {
@@ -128,7 +138,9 @@
           }
         },
         "summary": "Повторно отправить код подтверждения регистрации",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/registration/verify": {
@@ -158,7 +170,9 @@
           }
         },
         "summary": "Подтвердить email и атомарно создать аккаунт с первой компанией",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/login": {
@@ -188,7 +202,9 @@
           }
         },
         "summary": "Войти по электронной почте и паролю",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/logout": {
@@ -208,7 +224,9 @@
           }
         },
         "summary": "Завершить текущую сессию",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/logout-all": {
@@ -228,7 +246,9 @@
           }
         },
         "summary": "Завершить все сессии аккаунта",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/session": {
@@ -248,7 +268,9 @@
           }
         },
         "summary": "Получить текущего пользователя и доступные рабочие пространства",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/password-recovery": {
@@ -278,7 +300,9 @@
           }
         },
         "summary": "Запросить код восстановления пароля",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/password-recovery/complete": {
@@ -308,7 +332,9 @@
           }
         },
         "summary": "Подтвердить код и установить новый пароль",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/identity/password": {
@@ -338,7 +364,9 @@
           }
         },
         "summary": "Изменить пароль текущего аккаунта",
-        "tags": ["identity"]
+        "tags": [
+          "identity"
+        ]
       }
     },
     "/api/v1/internal-auth/login": {
@@ -368,7 +396,9 @@
           }
         },
         "summary": "Проверить пароль внутреннего аккаунта и создать challenge TOTP",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/internal-auth/login/totp": {
@@ -398,7 +428,9 @@
           }
         },
         "summary": "Подтвердить TOTP и открыть внутреннюю сессию",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/internal-auth/setup": {
@@ -428,7 +460,9 @@
           }
         },
         "summary": "Начать настройку по одноразовому токену оператора",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/internal-auth/setup/complete": {
@@ -458,7 +492,9 @@
           }
         },
         "summary": "Завершить настройку TOTP и выдать recovery-коды для однократного показа",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/internal-auth/recovery": {
@@ -488,7 +524,9 @@
           }
         },
         "summary": "Проверить пароль и recovery-код для повторной настройки TOTP",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/internal-auth/recovery/setup": {
@@ -518,7 +556,9 @@
           }
         },
         "summary": "Начать привязку нового TOTP после восстановления",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/internal-auth/recovery/complete": {
@@ -548,7 +588,9 @@
           }
         },
         "summary": "Подтвердить новый TOTP и заменить recovery-коды",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/internal-auth/session": {
@@ -568,7 +610,9 @@
           }
         },
         "summary": "Получить внутреннюю сессию",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/internal-auth/logout": {
@@ -588,7 +632,9 @@
           }
         },
         "summary": "Завершить текущую внутреннюю сессию",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/internal-auth/logout-all": {
@@ -608,7 +654,9 @@
           }
         },
         "summary": "Завершить все внутренние сессии",
-        "tags": ["internal-auth"]
+        "tags": [
+          "internal-auth"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/closure": {
@@ -638,7 +686,9 @@
           }
         },
         "summary": "Получить состояние ожидания закрытия компании",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       },
       "post": {
         "operationId": "OrganizationsController_beginCompanyClosure",
@@ -679,7 +729,9 @@
           }
         },
         "summary": "Запустить закрытие компании на 168 часов",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/closure-operations": {
@@ -709,7 +761,9 @@
           }
         },
         "summary": "Подготовить закрытие компании и связанную выгрузку",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/closure-operations": {
@@ -748,7 +802,9 @@
           }
         },
         "summary": "Подготовить закрытие заведения и связанную выгрузку",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/closure-operations/{operationId}/exports": {
@@ -797,7 +853,9 @@
           }
         },
         "summary": "Запросить выгрузку в контексте операции закрытия",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/closure-operations/{operationId}": {
@@ -827,7 +885,9 @@
           }
         },
         "summary": "Получить состояние собственной операции закрытия",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/closure-operations/{operationId}/download": {
@@ -857,7 +917,9 @@
           }
         },
         "summary": "Получить ссылку только на выгрузку своей операции закрытия",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/closure/cancel": {
@@ -887,7 +949,9 @@
           }
         },
         "summary": "Отменить ожидающее закрытие компании",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/closure": {
@@ -939,7 +1003,9 @@
           }
         },
         "summary": "Немедленно закрыть заведение",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/leave-and-close": {
@@ -978,7 +1044,9 @@
           }
         },
         "summary": "Проверить доступность выхода с закрытием последнего локального сотрудника",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       },
       "post": {
         "operationId": "OrganizationsController_leaveAndCloseVenue",
@@ -1028,7 +1096,9 @@
           }
         },
         "summary": "Покинуть и закрыть заведение последнему локальному сотруднику",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}": {
@@ -1068,7 +1138,9 @@
           }
         },
         "summary": "Получить доступный рабочий контекст заведения",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations": {
@@ -1098,7 +1170,9 @@
           }
         },
         "summary": "Создать компанию и первое заведение для существующего пользователя",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues": {
@@ -1144,7 +1218,9 @@
           }
         },
         "summary": "Создать дополнительное заведение в своей компании",
-        "tags": ["organizations"]
+        "tags": [
+          "organizations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/chef-team": {
@@ -1173,7 +1249,9 @@
           }
         },
         "summary": "Получить шеф-барменов и приглашения компании",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/chef-invitations": {
@@ -1205,7 +1283,9 @@
           }
         },
         "summary": "Пригласить шеф-бармена в компанию",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/chef-invitations/revoke": {
@@ -1237,7 +1317,9 @@
           }
         },
         "summary": "Отозвать приглашение шеф-бармена",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venue-invitations": {
@@ -1266,7 +1348,9 @@
           }
         },
         "summary": "Получить приглашения для новых заведений компании",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       },
       "post": {
         "operationId": "InvitationsController_createVenueManagerInvitation",
@@ -1296,7 +1380,9 @@
           }
         },
         "summary": "Пригласить бар-менеджера для нового заведения",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venue-invitations/revoke": {
@@ -1328,7 +1414,9 @@
           }
         },
         "summary": "Отозвать приглашение для нового заведения",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/team": {
@@ -1365,7 +1453,9 @@
           }
         },
         "summary": "Получить команду и открытые приглашения заведения",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/invitations": {
@@ -1405,7 +1495,9 @@
           }
         },
         "summary": "Пригласить сотрудника в существующее заведение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/invitations/revoke": {
@@ -1445,7 +1537,9 @@
           }
         },
         "summary": "Отозвать приглашение в заведение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/preview": {
@@ -1475,7 +1569,9 @@
           }
         },
         "summary": "Получить минимум данных приглашения по токену в теле запроса",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/current": {
@@ -1495,7 +1591,9 @@
           }
         },
         "summary": "Восстановить принятое приглашение по защищённой cookie",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/accept": {
@@ -1518,7 +1616,9 @@
           }
         },
         "summary": "Принять приглашение и начать 60-минутную сессию",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/decline": {
@@ -1541,7 +1641,9 @@
           }
         },
         "summary": "Отклонить персональное приглашение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/cancel": {
@@ -1554,7 +1656,9 @@
           }
         },
         "summary": "Отменить начатое присоединение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/registration": {
@@ -1577,7 +1681,9 @@
           }
         },
         "summary": "Начать регистрацию по принятому приглашению",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/registration/resend": {
@@ -1590,7 +1696,9 @@
           }
         },
         "summary": "Повторно отправить код подтверждения приглашения",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/registration/verify": {
@@ -1613,7 +1721,9 @@
           }
         },
         "summary": "Подтвердить адрес и завершить присоединение",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/invitations/complete": {
@@ -1636,7 +1746,9 @@
           }
         },
         "summary": "Завершить приглашение для существующего аккаунта",
-        "tags": ["invitations"]
+        "tags": [
+          "invitations"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/team/{membershipId}": {
@@ -1703,7 +1815,9 @@
           }
         },
         "summary": "Изменить должность и разрешения сотрудника",
-        "tags": ["team"]
+        "tags": [
+          "team"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/team/{membershipId}/end": {
@@ -1761,7 +1875,9 @@
           }
         },
         "summary": "Завершить период членства сотрудника",
-        "tags": ["team"]
+        "tags": [
+          "team"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/archive": {
@@ -1801,7 +1917,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+              "enum": [
+                "INGREDIENT",
+                "PREPARATION",
+                "GARNISH",
+                "COCKTAIL"
+              ]
             }
           }
         ],
@@ -1824,7 +1945,9 @@
           }
         },
         "summary": "Получить архив продукции текущего заведения",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/archive/ingredient-options": {
@@ -1864,7 +1987,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+              "enum": [
+                "INGREDIENT",
+                "PREPARATION",
+                "GARNISH",
+                "COCKTAIL"
+              ]
             }
           }
         ],
@@ -1887,7 +2015,9 @@
           }
         },
         "summary": "Найти активные локальные ингредиенты для архивирования",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/archive/{productId}": {
@@ -1938,7 +2068,9 @@
           }
         },
         "summary": "Прочитать архивную карточку без возможности редактирования",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/{productId}/archive": {
@@ -1999,7 +2131,9 @@
           }
         },
         "summary": "Архивировать локальную продукцию без активных зависимостей",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/archive/{productId}/restore-plan": {
@@ -2050,7 +2184,9 @@
           }
         },
         "summary": "Рассчитать план восстановления и допустимые замены",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/archive/{productId}/restore": {
@@ -2121,7 +2257,9 @@
           }
         },
         "summary": "Атомарно восстановить продукцию по подтверждённому плану",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/garnishes": {
@@ -2161,7 +2299,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["name", "updated"]
+              "enum": [
+                "name",
+                "updated"
+              ]
             }
           }
         ],
@@ -2184,7 +2325,9 @@
           }
         },
         "summary": "Получить активные гарниры текущего заведения",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       },
       "post": {
         "operationId": "ProductsController_createGarnish",
@@ -2240,7 +2383,9 @@
           }
         },
         "summary": "Создать гарнир с технологией и составом",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/garnishes/{garnishId}": {
@@ -2291,7 +2436,9 @@
           }
         },
         "summary": "Получить доступную технологическую карту гарнира",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       },
       "patch": {
         "operationId": "ProductsController_updateGarnish",
@@ -2366,7 +2513,9 @@
           }
         },
         "summary": "Изменить гарнир с проверкой влияния на связанные коктейли",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/preparations": {
@@ -2415,7 +2564,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["name", "updated"]
+              "enum": [
+                "name",
+                "updated"
+              ]
             }
           }
         ],
@@ -2438,7 +2590,9 @@
           }
         },
         "summary": "Получить активные заготовки текущего заведения",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       },
       "post": {
         "operationId": "ProductsController_createPreparation",
@@ -2494,7 +2648,9 @@
           }
         },
         "summary": "Создать заготовку с технологией и составом",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/preparations/{preparationId}": {
@@ -2545,7 +2701,9 @@
           }
         },
         "summary": "Получить доступную технологическую карту заготовки",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       },
       "patch": {
         "operationId": "ProductsController_updatePreparation",
@@ -2620,7 +2778,9 @@
           }
         },
         "summary": "Изменить заготовку с проверкой влияния на связанную продукцию",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/cocktails": {
@@ -2653,6 +2813,15 @@
               "maxLength": 160,
               "type": "string"
             }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2674,7 +2843,9 @@
           }
         },
         "summary": "Получить активные коктейли текущего заведения",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       },
       "post": {
         "operationId": "ProductsController_createCocktail",
@@ -2730,7 +2901,9 @@
           }
         },
         "summary": "Создать коктейль с технологией, составом и гарнирами",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/cocktails/garnishes": {
@@ -2763,6 +2936,15 @@
               "maxLength": 160,
               "type": "string"
             }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2784,7 +2966,9 @@
           }
         },
         "summary": "Получить активные гарниры текущего заведения",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/cocktails/{cocktailId}": {
@@ -2835,7 +3019,9 @@
           }
         },
         "summary": "Получить доступную технологическую карту коктейля",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       },
       "patch": {
         "operationId": "ProductsController_updateCocktail",
@@ -2903,7 +3089,9 @@
           }
         },
         "summary": "Изменить коктейль с технологией, составом и гарнирами",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/references": {
@@ -2945,7 +3133,9 @@
           }
         },
         "summary": "Получить системные и локальные справочники продукции",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/search": {
@@ -2985,7 +3175,10 @@
             "required": true,
             "in": "query",
             "schema": {
-              "enum": ["COMPONENT", "WORKSPACE"],
+              "enum": [
+                "COMPONENT",
+                "WORKSPACE"
+              ],
               "type": "string"
             }
           },
@@ -3039,7 +3232,9 @@
           }
         },
         "summary": "Найти доступную продукцию в текущем заведении",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/workspace-search": {
@@ -3108,7 +3303,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["INGREDIENT", "PREPARATION"]
+              "enum": [
+                "INGREDIENT",
+                "PREPARATION"
+              ]
             }
           },
           {
@@ -3140,7 +3338,9 @@
           }
         },
         "summary": "Постранично найти продукцию текущего заведения",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/ingredients": {
@@ -3198,7 +3398,9 @@
           }
         },
         "summary": "Создать временный локальный ингредиент",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/units": {
@@ -3243,7 +3445,9 @@
           }
         },
         "summary": "Добавить локальную единицу измерения",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/reference-values": {
@@ -3280,6 +3484,16 @@
           }
         },
         "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceValueResponseDto"
+                }
+              }
+            }
+          },
           "403": {
             "description": "Нет разрешения управлять продукцией"
           },
@@ -3288,7 +3502,9 @@
           }
         },
         "summary": "Добавить локальное значение справочника",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/products/search": {
@@ -3348,7 +3564,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["INGREDIENT", "PREPARATION"]
+              "enum": [
+                "INGREDIENT",
+                "PREPARATION"
+              ]
             }
           },
           {
@@ -3380,7 +3599,9 @@
           }
         },
         "summary": "Найти активную продукцию во всех заведениях компании шеф-бармена",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/products/{type}/{productId}": {
@@ -3448,7 +3669,9 @@
           }
         },
         "summary": "Прочитать карточку продукции другого заведения компании",
-        "tags": ["products"]
+        "tags": [
+          "products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/references": {
@@ -3486,7 +3709,9 @@
           }
         },
         "summary": "Получить справочники продукции в служебной области",
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/search": {
@@ -3509,7 +3734,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["COMPONENT", "WORKSPACE"]
+              "enum": [
+                "COMPONENT",
+                "WORKSPACE"
+              ]
             }
           },
           {
@@ -3570,7 +3798,9 @@
           }
         },
         "summary": "Найти продукцию в служебной области",
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/cocktails": {
@@ -3583,6 +3813,15 @@
             "in": "query",
             "schema": {
               "maxLength": 160,
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -3616,7 +3855,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       },
       "post": {
         "operationId": "InternalServiceProductsController_createCocktail",
@@ -3661,7 +3902,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/cocktails/garnishes": {
@@ -3674,6 +3917,15 @@
             "in": "query",
             "schema": {
               "maxLength": 160,
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -3707,7 +3959,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/cocktails/{productId}": {
@@ -3752,7 +4006,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       },
       "patch": {
         "operationId": "InternalServiceProductsController_updateCocktail",
@@ -3805,7 +4061,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/preparations": {
@@ -3836,7 +4094,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["name", "updated"]
+              "enum": [
+                "name",
+                "updated"
+              ]
             }
           },
           {
@@ -3869,7 +4130,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       },
       "post": {
         "operationId": "InternalServiceProductsController_createPreparation",
@@ -3914,7 +4177,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/preparations/{productId}": {
@@ -3959,7 +4224,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       },
       "patch": {
         "operationId": "InternalServiceProductsController_updatePreparation",
@@ -4012,7 +4279,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/garnishes": {
@@ -4034,7 +4303,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["name", "updated"]
+              "enum": [
+                "name",
+                "updated"
+              ]
             }
           },
           {
@@ -4067,7 +4339,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       },
       "post": {
         "operationId": "InternalServiceProductsController_createGarnish",
@@ -4112,7 +4386,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/garnishes/{productId}": {
@@ -4157,7 +4433,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       },
       "patch": {
         "operationId": "InternalServiceProductsController_updateGarnish",
@@ -4210,7 +4488,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/ingredients": {
@@ -4257,7 +4537,58 @@
             "description": ""
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
+      }
+    },
+    "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/reference-values": {
+      "post": {
+        "operationId": "InternalServiceProductsController_createReferenceValue",
+        "parameters": [
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceSessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLocalReferenceValueDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/ingredients/{productId}": {
@@ -4309,7 +4640,9 @@
             }
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       },
       "patch": {
         "operationId": "InternalServiceProductsController_updateIngredient",
@@ -4369,7 +4702,9 @@
             }
           }
         },
-        "tags": ["internal-service-products"]
+        "tags": [
+          "internal-service-products"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/categories": {
@@ -4392,7 +4727,9 @@
           }
         },
         "summary": "Получить дерево категорий ингредиентов для управления",
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       },
       "post": {
         "operationId": "InternalCatalogController_createCategory",
@@ -4419,7 +4756,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/categories/{code}": {
@@ -4457,7 +4796,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/categories/{code}/deactivate": {
@@ -4485,7 +4826,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/categories/{code}/activate": {
@@ -4513,7 +4856,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/ingredients": {
@@ -4558,7 +4903,10 @@
             "schema": {
               "default": "ACTIVE",
               "type": "string",
-              "enum": ["ACTIVE", "ALL"]
+              "enum": [
+                "ACTIVE",
+                "ALL"
+              ]
             }
           }
         ],
@@ -4575,7 +4923,9 @@
           }
         },
         "summary": "Найти глобальные карточки для управления",
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/ingredients/{productId}": {
@@ -4604,7 +4954,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       },
       "put": {
         "operationId": "InternalCatalogController_updateManaged",
@@ -4651,7 +5003,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/ingredients/{productId}/aliases": {
@@ -4700,7 +5054,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/ingredients/{productId}/aliases/{aliasId}/confirm": {
@@ -4738,7 +5094,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/ingredients/{productId}/aliases/{aliasId}": {
@@ -4776,7 +5134,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/merge/preview": {
@@ -4805,7 +5165,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/manage/merge": {
@@ -4844,7 +5206,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/candidates": {
@@ -4886,7 +5250,9 @@
           }
         },
         "summary": "Получить очередь локальных кандидатов каталога",
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/candidates/{candidateId}": {
@@ -4915,7 +5281,9 @@
             }
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/ingredients/search": {
@@ -4970,7 +5338,9 @@
           }
         },
         "summary": "Найти активные глобальные ингредиенты",
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/categories": {
@@ -4993,7 +5363,9 @@
           }
         },
         "summary": "Получить системные категории ингредиентов",
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/candidates/{candidateId}/link": {
@@ -5025,7 +5397,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/candidates/{candidateId}/create-global": {
@@ -5057,7 +5431,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/internal/catalog/candidates/{candidateId}/keep-local": {
@@ -5079,7 +5455,9 @@
             "description": ""
           }
         },
-        "tags": ["internal-catalog"]
+        "tags": [
+          "internal-catalog"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/history": {
@@ -5195,7 +5573,9 @@
           }
         },
         "summary": "Получить доступную историю действий рабочего пространства",
-        "tags": ["audit"]
+        "tags": [
+          "audit"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/history/authors": {
@@ -5286,7 +5666,9 @@
           }
         },
         "summary": "Получить авторов доступных событий истории",
-        "tags": ["audit"]
+        "tags": [
+          "audit"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/exports/products/{productId}/pdf": {
@@ -5334,7 +5716,9 @@
           }
         },
         "summary": "Поставить в очередь PDF одной техкарты",
-        "tags": ["exports"]
+        "tags": [
+          "exports"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/exports/batch": {
@@ -5384,7 +5768,9 @@
           }
         },
         "summary": "Поставить в очередь ZIP с PDF выбранных техкарт",
-        "tags": ["exports"]
+        "tags": [
+          "exports"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/exports/backup": {
@@ -5424,7 +5810,9 @@
           }
         },
         "summary": "Поставить в очередь резервную ZIP-выгрузку продукции заведения",
-        "tags": ["exports"]
+        "tags": [
+          "exports"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/exports/{exportId}": {
@@ -5474,7 +5862,9 @@
           }
         },
         "summary": "Получить состояние собственного запроса выгрузки",
-        "tags": ["exports"]
+        "tags": [
+          "exports"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/exports/{exportId}/download": {
@@ -5524,7 +5914,9 @@
           }
         },
         "summary": "Получить краткоживущую ссылку на готовую выгрузку",
-        "tags": ["exports"]
+        "tags": [
+          "exports"
+        ]
       }
     },
     "/api/v1/support/requests": {
@@ -5537,11 +5929,18 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["reason", "message"],
+                "required": [
+                  "reason",
+                  "message"
+                ],
                 "properties": {
                   "reason": {
                     "type": "string",
-                    "enum": ["data_migration", "error", "other"]
+                    "enum": [
+                      "data_migration",
+                      "error",
+                      "other"
+                    ]
                   },
                   "message": {
                     "type": "string",
@@ -5585,7 +5984,9 @@
           }
         },
         "summary": "Создать обращение в поддержку",
-        "tags": ["support"]
+        "tags": [
+          "support"
+        ]
       },
       "get": {
         "operationId": "SupportController_list",
@@ -5606,7 +6007,9 @@
           }
         },
         "summary": "Получить собственные обращения",
-        "tags": ["support"]
+        "tags": [
+          "support"
+        ]
       }
     },
     "/api/v1/support/requests/{requestId}": {
@@ -5636,7 +6039,9 @@
           }
         },
         "summary": "Получить собственное обращение",
-        "tags": ["support"]
+        "tags": [
+          "support"
+        ]
       }
     },
     "/api/v1/support/requests/{requestId}/attachment/download": {
@@ -5674,7 +6079,9 @@
           }
         },
         "summary": "Получить временную ссылку на прошедшее проверку вложение",
-        "tags": ["support"]
+        "tags": [
+          "support"
+        ]
       }
     },
     "/api/v1/internal/support/requests": {
@@ -5687,7 +6094,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["new", "in_progress", "closed"]
+              "enum": [
+                "new",
+                "in_progress",
+                "closed"
+              ]
             }
           },
           {
@@ -5715,7 +6126,9 @@
           }
         },
         "summary": "Получить очередь обращений поддержки",
-        "tags": ["internal-support"]
+        "tags": [
+          "internal-support"
+        ]
       }
     },
     "/api/v1/internal/support/requests/{requestId}": {
@@ -5745,7 +6158,9 @@
           }
         },
         "summary": "Получить обращение из внутренней очереди",
-        "tags": ["internal-support"]
+        "tags": [
+          "internal-support"
+        ]
       },
       "patch": {
         "operationId": "InternalSupportController_update",
@@ -5783,7 +6198,9 @@
           }
         },
         "summary": "Изменить статус или назначить ответственного",
-        "tags": ["internal-support"]
+        "tags": [
+          "internal-support"
+        ]
       }
     },
     "/api/v1/internal/support/users": {
@@ -5806,7 +6223,9 @@
           }
         },
         "summary": "Получить активных внутренних сотрудников для назначения",
-        "tags": ["internal-support"]
+        "tags": [
+          "internal-support"
+        ]
       }
     },
     "/api/v1/internal/support/requests/{requestId}/attachment/download": {
@@ -5844,7 +6263,9 @@
           }
         },
         "summary": "Получить временную ссылку на проверенное вложение",
-        "tags": ["internal-support"]
+        "tags": [
+          "internal-support"
+        ]
       }
     },
     "/api/v1/support/access-grants": {
@@ -5867,7 +6288,9 @@
           }
         },
         "summary": "Выдать временный доступ к продукции",
-        "tags": ["support-access"]
+        "tags": [
+          "support-access"
+        ]
       },
       "get": {
         "operationId": "SupportAccessGrantController_list",
@@ -5878,7 +6301,9 @@
           }
         },
         "summary": "Получить выданные временные доступы",
-        "tags": ["support-access"]
+        "tags": [
+          "support-access"
+        ]
       }
     },
     "/api/v1/support/access-grants/{grantId}/revoke": {
@@ -5901,7 +6326,9 @@
           }
         },
         "summary": "Отозвать временный доступ",
-        "tags": ["support-access"]
+        "tags": [
+          "support-access"
+        ]
       }
     },
     "/api/v1/internal/service-access/grants": {
@@ -5914,7 +6341,9 @@
           }
         },
         "summary": "Получить действующие grants для служебной работы",
-        "tags": ["internal-service-access"]
+        "tags": [
+          "internal-service-access"
+        ]
       }
     },
     "/api/v1/internal/service-access/grants/{grantId}/sessions": {
@@ -5937,7 +6366,9 @@
           }
         },
         "summary": "Начать ограниченную служебную сессию",
-        "tags": ["internal-service-access"]
+        "tags": [
+          "internal-service-access"
+        ]
       }
     },
     "/api/v1/internal/service-access/sessions/{sessionId}/end": {
@@ -5960,7 +6391,9 @@
           }
         },
         "summary": "Завершить служебную сессию",
-        "tags": ["internal-service-access"]
+        "tags": [
+          "internal-service-access"
+        ]
       }
     },
     "/api/v1/internal/audit-events": {
@@ -6007,7 +6440,9 @@
           }
         },
         "summary": "Получить страницу внутреннего журнала действий",
-        "tags": ["internal-audit"]
+        "tags": [
+          "internal-audit"
+        ]
       }
     },
     "/api/v1/analytics/events": {
@@ -6042,7 +6477,9 @@
           }
         },
         "summary": "Поставить разрешённое продуктовое событие в очередь",
-        "tags": ["analytics"]
+        "tags": [
+          "analytics"
+        ]
       }
     },
     "/api/v1/internal/analytics": {
@@ -6094,7 +6531,9 @@
           }
         },
         "summary": "Получить агрегированные показатели продуктовой аналитики",
-        "tags": ["internal-analytics"]
+        "tags": [
+          "internal-analytics"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule": {
@@ -6144,7 +6583,96 @@
           }
         },
         "summary": "Получить график сотрудников за месяц",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/date-markers/{date}": {
+      "put": {
+        "operationId": "SchedulesController_setInventoryMarker",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDateMarkerDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Отметить дату графика как день инвентаризации",
+        "tags": [
+          "schedules"
+        ]
+      },
+      "delete": {
+        "operationId": "SchedulesController_deleteInventoryMarker",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Отметка снята, если она существовала"
+          }
+        },
+        "summary": "Снять отметку дня инвентаризации",
+        "tags": [
+          "schedules"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/templates": {
@@ -6174,7 +6702,9 @@
           }
         },
         "summary": "Получить доступные шаблоны циклов",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
       },
       "post": {
         "operationId": "SchedulesController_createTemplate",
@@ -6212,7 +6742,101 @@
           }
         },
         "summary": "Создать пользовательский шаблон графика",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/shift-settings": {
+      "get": {
+        "operationId": "SchedulesController_getShiftSettings",
+        "parameters": [
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleShiftSettingDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Получить настройки типов смен заведения",
+        "tags": [
+          "schedules"
+        ]
+      },
+      "put": {
+        "operationId": "SchedulesController_saveShiftSettings",
+        "parameters": [
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleShiftSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleShiftSettingDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Заменить настройки типов смен заведения",
+        "tags": [
+          "schedules"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/templates/{templateId}": {
@@ -6260,7 +6884,9 @@
           }
         },
         "summary": "Переименовать пользовательский шаблон или создать его новую версию",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
       },
       "delete": {
         "operationId": "SchedulesController_deleteTemplate",
@@ -6296,7 +6922,9 @@
           }
         },
         "summary": "Удалить пользовательский шаблон и снять назначения, сохранив заполненные графики",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/cells": {
@@ -6336,7 +6964,9 @@
           }
         },
         "summary": "Изменить одну ячейку графика",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/cells/bulk": {
@@ -6376,7 +7006,9 @@
           }
         },
         "summary": "Массово изменить выбранные ячейки",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/generate": {
@@ -6416,7 +7048,9 @@
           }
         },
         "summary": "Сформировать расписание по циклическим шаблонам",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/extend": {
@@ -6456,7 +7090,9 @@
           }
         },
         "summary": "Продолжить сохранённые циклы выбранных сотрудников на целевой месяц",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/comments/{membershipId}/{date}": {
@@ -6512,7 +7148,9 @@
           }
         },
         "summary": "Добавить или заменить комментарий к дню",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
       }
     },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/schedule/export": {
@@ -6545,7 +7183,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["pdf", "xlsx"]
+              "enum": [
+                "pdf",
+                "xlsx"
+              ]
             }
           },
           {
@@ -6571,7 +7212,9 @@
           }
         },
         "summary": "Скачать график в PDF или Excel",
-        "tags": ["schedules"]
+        "tags": [
+          "schedules"
+        ]
       }
     }
   },
@@ -6591,10 +7234,14 @@
           "status": {
             "type": "string",
             "example": "ok",
-            "enum": ["ok"]
+            "enum": [
+              "ok"
+            ]
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "MetaResponseDto": {
         "type": "object",
@@ -6608,7 +7255,10 @@
             "example": "1.0.0"
           }
         },
-        "required": ["name", "version"]
+        "required": [
+          "name",
+          "version"
+        ]
       },
       "CsrfTokenResponseDto": {
         "type": "object",
@@ -6617,7 +7267,9 @@
             "type": "string"
           }
         },
-        "required": ["token"]
+        "required": [
+          "token"
+        ]
       },
       "RegistrationStartDto": {
         "type": "object",
@@ -6648,10 +7300,22 @@
           },
           "initialRole": {
             "type": "string",
-            "enum": ["CHEF_BARTENDER", "BAR_MANAGER", "SENIOR_BARTENDER", "BARTENDER"]
+            "enum": [
+              "CHEF_BARTENDER",
+              "BAR_MANAGER",
+              "SENIOR_BARTENDER",
+              "BARTENDER"
+            ]
           }
         },
-        "required": ["email", "password", "fullName", "companyName", "venueName", "initialRole"]
+        "required": [
+          "email",
+          "password",
+          "fullName",
+          "companyName",
+          "venueName",
+          "initialRole"
+        ]
       },
       "AcceptedDto": {
         "type": "object",
@@ -6661,7 +7325,9 @@
             "example": true
           }
         },
-        "required": ["accepted"]
+        "required": [
+          "accepted"
+        ]
       },
       "VerifyEmailDto": {
         "type": "object",
@@ -6673,7 +7339,9 @@
             "maxLength": 6
           }
         },
-        "required": ["code"]
+        "required": [
+          "code"
+        ]
       },
       "PublicUserDto": {
         "type": "object",
@@ -6688,7 +7356,11 @@
             "type": "string"
           }
         },
-        "required": ["id", "email", "fullName"]
+        "required": [
+          "id",
+          "email",
+          "fullName"
+        ]
       },
       "CompanySummaryDto": {
         "type": "object",
@@ -6700,7 +7372,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "VenueSummaryDto": {
         "type": "object",
@@ -6712,7 +7387,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "RegistrationCompleteResponseDto": {
         "type": "object",
@@ -6730,7 +7408,12 @@
             "type": "string"
           }
         },
-        "required": ["user", "company", "venue", "redirectTo"]
+        "required": [
+          "user",
+          "company",
+          "venue",
+          "redirectTo"
+        ]
       },
       "LoginDto": {
         "type": "object",
@@ -6743,7 +7426,10 @@
             "type": "string"
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "LoginResponseDto": {
         "type": "object",
@@ -6752,7 +7438,9 @@
             "$ref": "#/components/schemas/PublicUserDto"
           }
         },
-        "required": ["user"]
+        "required": [
+          "user"
+        ]
       },
       "WorkspaceCompanyDto": {
         "type": "object",
@@ -6764,7 +7452,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "WorkspaceVenueDto": {
         "type": "object",
@@ -6776,7 +7467,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "WorkspaceSummaryDto": {
         "type": "object",
@@ -6789,24 +7483,43 @@
           },
           "role": {
             "type": "string",
-            "enum": ["bartender", "senior_bartender", "bar_manager", "chef_bartender"]
+            "enum": [
+              "bartender",
+              "senior_bartender",
+              "bar_manager",
+              "chef_bartender"
+            ]
           },
           "roleLabel": {
             "type": "string"
           },
           "scope": {
             "type": "string",
-            "enum": ["company", "venue"]
+            "enum": [
+              "company",
+              "venue"
+            ]
           },
           "permissions": {
-            "example": ["view_products", "view_archive", "manage_products"],
+            "example": [
+              "view_products",
+              "view_archive",
+              "manage_products"
+            ],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": ["company", "venue", "role", "roleLabel", "scope", "permissions"]
+        "required": [
+          "company",
+          "venue",
+          "role",
+          "roleLabel",
+          "scope",
+          "permissions"
+        ]
       },
       "CurrentIdentityResponseDto": {
         "type": "object",
@@ -6833,7 +7546,13 @@
             }
           }
         },
-        "required": ["id", "email", "fullName", "workplaces", "companies"]
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "workplaces",
+          "companies"
+        ]
       },
       "PasswordRecoveryRequestDto": {
         "type": "object",
@@ -6843,7 +7562,9 @@
             "example": "bar.manager@example.ru"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "PasswordRecoveryCompleteDto": {
         "type": "object",
@@ -6864,7 +7585,11 @@
             "maxLength": 256
           }
         },
-        "required": ["email", "code", "password"]
+        "required": [
+          "email",
+          "code",
+          "password"
+        ]
       },
       "ChangePasswordDto": {
         "type": "object",
@@ -6878,7 +7603,10 @@
             "maxLength": 256
           }
         },
-        "required": ["currentPassword", "newPassword"]
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
       },
       "InternalLoginDto": {
         "type": "object",
@@ -6890,7 +7618,10 @@
             "type": "string"
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "InternalChallengeResponseDto": {
         "type": "object",
@@ -6903,7 +7634,9 @@
             "format": "date-time"
           }
         },
-        "required": ["challenge"]
+        "required": [
+          "challenge"
+        ]
       },
       "InternalChallengeCodeDto": {
         "type": "object",
@@ -6916,7 +7649,10 @@
             "example": "123456"
           }
         },
-        "required": ["challenge", "code"]
+        "required": [
+          "challenge",
+          "code"
+        ]
       },
       "InternalAuthenticatedResponseDto": {
         "type": "object",
@@ -6926,7 +7662,9 @@
             "example": true
           }
         },
-        "required": ["authenticated"]
+        "required": [
+          "authenticated"
+        ]
       },
       "InternalSetupStartDto": {
         "type": "object",
@@ -6935,7 +7673,9 @@
             "type": "string"
           }
         },
-        "required": ["setupToken"]
+        "required": [
+          "setupToken"
+        ]
       },
       "InternalEnrollmentResponseDto": {
         "type": "object",
@@ -6958,7 +7698,12 @@
             "description": "QR-код TOTP в формате data URL"
           }
         },
-        "required": ["challenge", "secret", "otpAuthUrl", "qrCodeDataUrl"]
+        "required": [
+          "challenge",
+          "secret",
+          "otpAuthUrl",
+          "qrCodeDataUrl"
+        ]
       },
       "InternalSetupCompleteDto": {
         "type": "object",
@@ -6976,7 +7721,11 @@
             "maxLength": 256
           }
         },
-        "required": ["challenge", "code", "password"]
+        "required": [
+          "challenge",
+          "code",
+          "password"
+        ]
       },
       "InternalRecoveryCodesResponseDto": {
         "type": "object",
@@ -6990,7 +7739,9 @@
             }
           }
         },
-        "required": ["recoveryCodes"]
+        "required": [
+          "recoveryCodes"
+        ]
       },
       "InternalRecoveryStartDto": {
         "type": "object",
@@ -7005,7 +7756,11 @@
             "type": "string"
           }
         },
-        "required": ["email", "password", "recoveryCode"]
+        "required": [
+          "email",
+          "password",
+          "recoveryCode"
+        ]
       },
       "InternalSessionUserDto": {
         "type": "object",
@@ -7025,7 +7780,11 @@
             }
           }
         },
-        "required": ["id", "email", "permissions"]
+        "required": [
+          "id",
+          "email",
+          "permissions"
+        ]
       },
       "InternalSessionResponseDto": {
         "type": "object",
@@ -7038,7 +7797,10 @@
             "format": "date-time"
           }
         },
-        "required": ["user", "expiresAt"]
+        "required": [
+          "user",
+          "expiresAt"
+        ]
       },
       "InternalAcceptedResponseDto": {
         "type": "object",
@@ -7048,14 +7810,19 @@
             "example": true
           }
         },
-        "required": ["accepted"]
+        "required": [
+          "accepted"
+        ]
       },
       "CompanyClosureResponseDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "PENDING_CLOSURE"]
+            "enum": [
+              "ACTIVE",
+              "PENDING_CLOSURE"
+            ]
           },
           "closureDeadline": {
             "type": "string",
@@ -7071,7 +7838,11 @@
             "nullable": true
           }
         },
-        "required": ["status", "closureDeadline", "canCancel"]
+        "required": [
+          "status",
+          "closureDeadline",
+          "canCancel"
+        ]
       },
       "ClosureOperationPreparationResponseDto": {
         "type": "object",
@@ -7082,14 +7853,23 @@
           },
           "type": {
             "type": "string",
-            "enum": ["VENUE", "COMPANY"]
+            "enum": [
+              "VENUE",
+              "COMPANY"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["PREPARING"]
+            "enum": [
+              "PREPARING"
+            ]
           }
         },
-        "required": ["id", "type", "status"]
+        "required": [
+          "id",
+          "type",
+          "status"
+        ]
       },
       "ClosureExportDto": {
         "type": "object",
@@ -7116,7 +7896,9 @@
             "default": false
           }
         },
-        "required": ["type"]
+        "required": [
+          "type"
+        ]
       },
       "ProductExportResponseDto": {
         "type": "object",
@@ -7127,7 +7909,13 @@
           },
           "status": {
             "type": "string",
-            "enum": ["QUEUED", "PROCESSING", "READY", "FAILED", "EXPIRED"]
+            "enum": [
+              "QUEUED",
+              "PROCESSING",
+              "READY",
+              "FAILED",
+              "EXPIRED"
+            ]
           },
           "type": {
             "type": "string",
@@ -7152,7 +7940,12 @@
             "nullable": true
           }
         },
-        "required": ["id", "status", "type", "createdAt"]
+        "required": [
+          "id",
+          "status",
+          "type",
+          "createdAt"
+        ]
       },
       "ClosureOperationExportResponseDto": {
         "type": "object",
@@ -7172,7 +7965,13 @@
           },
           "status": {
             "type": "string",
-            "enum": ["QUEUED", "PROCESSING", "READY", "FAILED", "EXPIRED"]
+            "enum": [
+              "QUEUED",
+              "PROCESSING",
+              "READY",
+              "FAILED",
+              "EXPIRED"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -7188,7 +7987,14 @@
             "nullable": true
           }
         },
-        "required": ["id", "type", "status", "createdAt", "expiresAt", "errorCode"]
+        "required": [
+          "id",
+          "type",
+          "status",
+          "createdAt",
+          "expiresAt",
+          "errorCode"
+        ]
       },
       "ClosureOperationResponseDto": {
         "type": "object",
@@ -7199,11 +8005,19 @@
           },
           "type": {
             "type": "string",
-            "enum": ["VENUE", "COMPANY"]
+            "enum": [
+              "VENUE",
+              "COMPANY"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["PREPARING", "PENDING_CLOSURE", "CLOSED", "CANCELLED"]
+            "enum": [
+              "PREPARING",
+              "PENDING_CLOSURE",
+              "CLOSED",
+              "CANCELLED"
+            ]
           },
           "originalCompanyName": {
             "type": "string"
@@ -7249,7 +8063,10 @@
             "format": "date-time"
           }
         },
-        "required": ["url", "expiresAt"]
+        "required": [
+          "url",
+          "expiresAt"
+        ]
       },
       "CloseCompanyDto": {
         "type": "object",
@@ -7268,14 +8085,19 @@
             "description": "Явное подтверждение закрытия без выгрузки"
           }
         },
-        "required": ["confirmationName", "withoutExport"]
+        "required": [
+          "confirmationName",
+          "withoutExport"
+        ]
       },
       "CompanyClosureStartedResponseDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["PENDING_CLOSURE"]
+            "enum": [
+              "PENDING_CLOSURE"
+            ]
           },
           "closureDeadline": {
             "type": "string",
@@ -7286,7 +8108,11 @@
             "format": "uuid"
           }
         },
-        "required": ["status", "closureDeadline", "operationId"]
+        "required": [
+          "status",
+          "closureDeadline",
+          "operationId"
+        ]
       },
       "AcceptedResponseDto": {
         "type": "object",
@@ -7295,7 +8121,9 @@
             "type": "boolean"
           }
         },
-        "required": ["accepted"]
+        "required": [
+          "accepted"
+        ]
       },
       "CloseVenueDto": {
         "type": "object",
@@ -7318,7 +8146,11 @@
             "description": "Явное подтверждение закрытия без выгрузки"
           }
         },
-        "required": ["confirmationName", "operationId", "withoutExport"]
+        "required": [
+          "confirmationName",
+          "operationId",
+          "withoutExport"
+        ]
       },
       "VenueClosureResponseDto": {
         "type": "object",
@@ -7334,7 +8166,11 @@
             "format": "uuid"
           }
         },
-        "required": ["accepted", "companyDeleted", "operationId"]
+        "required": [
+          "accepted",
+          "companyDeleted",
+          "operationId"
+        ]
       },
       "LeaveAndCloseAvailabilityDto": {
         "type": "object",
@@ -7343,7 +8179,9 @@
             "type": "boolean"
           }
         },
-        "required": ["available"]
+        "required": [
+          "available"
+        ]
       },
       "CreateCompanyDto": {
         "type": "object",
@@ -7359,7 +8197,10 @@
             "maxLength": 120
           }
         },
-        "required": ["companyName", "venueName"]
+        "required": [
+          "companyName",
+          "venueName"
+        ]
       },
       "CreateCompanyResponseDto": {
         "type": "object",
@@ -7374,7 +8215,11 @@
             "type": "string"
           }
         },
-        "required": ["company", "venue", "redirectTo"]
+        "required": [
+          "company",
+          "venue",
+          "redirectTo"
+        ]
       },
       "CreateVenueDto": {
         "type": "object",
@@ -7385,7 +8230,9 @@
             "maxLength": 120
           }
         },
-        "required": ["venueName"]
+        "required": [
+          "venueName"
+        ]
       },
       "CreateVenueResponseDto": {
         "type": "object",
@@ -7400,7 +8247,11 @@
             "type": "string"
           }
         },
-        "required": ["company", "venue", "redirectTo"]
+        "required": [
+          "company",
+          "venue",
+          "redirectTo"
+        ]
       },
       "CompanyChefMemberDto": {
         "type": "object",
@@ -7416,7 +8267,11 @@
             "type": "string"
           }
         },
-        "required": ["id", "fullName", "email"]
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
       },
       "CompanyChefInvitationDto": {
         "type": "object",
@@ -7430,7 +8285,10 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "IN_PROGRESS"]
+            "enum": [
+              "ACTIVE",
+              "IN_PROGRESS"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -7441,7 +8299,13 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "email", "status", "createdAt", "expiresAt"]
+        "required": [
+          "id",
+          "email",
+          "status",
+          "createdAt",
+          "expiresAt"
+        ]
       },
       "CompanyChefTeamResponseDto": {
         "type": "object",
@@ -7459,7 +8323,10 @@
             }
           }
         },
-        "required": ["members", "invitations"]
+        "required": [
+          "members",
+          "invitations"
+        ]
       },
       "CreateChefInvitationDto": {
         "type": "object",
@@ -7469,7 +8336,9 @@
             "example": "chef@example.ru"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "RevokeInvitationDto": {
         "type": "object",
@@ -7479,7 +8348,9 @@
             "format": "uuid"
           }
         },
-        "required": ["invitationId"]
+        "required": [
+          "invitationId"
+        ]
       },
       "CompanyVenueInvitationDto": {
         "type": "object",
@@ -7493,15 +8364,22 @@
           },
           "purpose": {
             "type": "string",
-            "enum": ["CREATE_VENUE_AS_BAR_MANAGER"]
+            "enum": [
+              "CREATE_VENUE_AS_BAR_MANAGER"
+            ]
           },
           "role": {
             "type": "string",
-            "enum": ["BAR_MANAGER"]
+            "enum": [
+              "BAR_MANAGER"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "IN_PROGRESS"]
+            "enum": [
+              "ACTIVE",
+              "IN_PROGRESS"
+            ]
           },
           "createdAt": {
             "format": "date-time",
@@ -7536,7 +8414,9 @@
             }
           }
         },
-        "required": ["invitations"]
+        "required": [
+          "invitations"
+        ]
       },
       "CreateVenueManagerInvitationDto": {
         "type": "object",
@@ -7546,7 +8426,9 @@
             "example": "manager@example.ru"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "VenueTeamMemberDto": {
         "type": "object",
@@ -7563,7 +8445,13 @@
           },
           "role": {
             "type": "string",
-            "enum": ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
+              "BAR_MANAGER"
+            ]
           },
           "terminationDate": {
             "type": "object",
@@ -7587,7 +8475,13 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
+              "enum": [
+                "BARTENDER",
+                "SENIOR_BARTENDER",
+                "BARBACK",
+                "TRAINEE",
+                "BAR_MANAGER"
+              ]
             }
           },
           "canManagePermissionOverrides": {
@@ -7622,11 +8516,20 @@
           },
           "role": {
             "type": "string",
-            "enum": ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
+              "BAR_MANAGER"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "IN_PROGRESS"]
+            "enum": [
+              "ACTIVE",
+              "IN_PROGRESS"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -7640,7 +8543,15 @@
             "type": "boolean"
           }
         },
-        "required": ["id", "email", "role", "status", "createdAt", "expiresAt", "canRevoke"]
+        "required": [
+          "id",
+          "email",
+          "role",
+          "status",
+          "createdAt",
+          "expiresAt",
+          "canRevoke"
+        ]
       },
       "VenueTeamResponseDto": {
         "type": "object",
@@ -7658,7 +8569,10 @@
             }
           }
         },
-        "required": ["members", "invitations"]
+        "required": [
+          "members",
+          "invitations"
+        ]
       },
       "CreateVenueInvitationDto": {
         "type": "object",
@@ -7669,10 +8583,19 @@
           },
           "role": {
             "type": "string",
-            "enum": ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
+              "BAR_MANAGER"
+            ]
           }
         },
-        "required": ["email", "role"]
+        "required": [
+          "email",
+          "role"
+        ]
       },
       "InviteTokenDto": {
         "type": "object",
@@ -7683,14 +8606,20 @@
             "maxLength": 128
           }
         },
-        "required": ["token"]
+        "required": [
+          "token"
+        ]
       },
       "PublicInvitationDto": {
         "type": "object",
         "properties": {
           "purpose": {
             "type": "string",
-            "enum": ["JOIN_EXISTING_VENUE", "JOIN_COMPANY_AS_CHEF", "CREATE_VENUE_AS_BAR_MANAGER"]
+            "enum": [
+              "JOIN_EXISTING_VENUE",
+              "JOIN_COMPANY_AS_CHEF",
+              "CREATE_VENUE_AS_BAR_MANAGER"
+            ]
           },
           "companyName": {
             "type": "string"
@@ -7701,7 +8630,13 @@
           },
           "role": {
             "type": "string",
-            "enum": ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"],
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
+              "BAR_MANAGER"
+            ],
             "nullable": true
           },
           "roleLabel": {
@@ -7740,7 +8675,10 @@
             "type": "boolean"
           }
         },
-        "required": ["invitation", "registrationStarted"]
+        "required": [
+          "invitation",
+          "registrationStarted"
+        ]
       },
       "StartInvitationRegistrationDto": {
         "type": "object",
@@ -7756,7 +8694,10 @@
             "maxLength": 256
           }
         },
-        "required": ["fullName", "password"]
+        "required": [
+          "fullName",
+          "password"
+        ]
       },
       "CompleteInvitationRegistrationDto": {
         "type": "object",
@@ -7773,7 +8714,9 @@
             "maxLength": 120
           }
         },
-        "required": ["code"]
+        "required": [
+          "code"
+        ]
       },
       "CompleteExistingInvitationDto": {
         "type": "object",
@@ -7790,7 +8733,13 @@
         "properties": {
           "role": {
             "type": "string",
-            "enum": ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
+            "enum": [
+              "BARTENDER",
+              "SENIOR_BARTENDER",
+              "BARBACK",
+              "TRAINEE",
+              "BAR_MANAGER"
+            ]
           },
           "permissions": {
             "type": "array",
@@ -7820,17 +8769,24 @@
             }
           }
         },
-        "required": ["role", "permissions"]
+        "required": [
+          "role",
+          "permissions"
+        ]
       },
       "TeamMemberUpdateResponseDto": {
         "type": "object",
         "properties": {
           "accepted": {
             "type": "boolean",
-            "enum": [true]
+            "enum": [
+              true
+            ]
           }
         },
-        "required": ["accepted"]
+        "required": [
+          "accepted"
+        ]
       },
       "EndTeamMemberDto": {
         "type": "object",
@@ -7842,7 +8798,9 @@
             "description": "Первый нерабочий день"
           }
         },
-        "required": ["terminationDate"]
+        "required": [
+          "terminationDate"
+        ]
       },
       "ArchiveListItemDto": {
         "type": "object",
@@ -7853,7 +8811,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
@@ -7863,7 +8826,12 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "type", "name", "updatedAt"]
+        "required": [
+          "id",
+          "type",
+          "name",
+          "updatedAt"
+        ]
       },
       "ArchiveProductSummaryDto": {
         "type": "object",
@@ -7874,13 +8842,22 @@
           },
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
           }
         },
-        "required": ["id", "type", "name"]
+        "required": [
+          "id",
+          "type",
+          "name"
+        ]
       },
       "ArchiveComponentDto": {
         "type": "object",
@@ -7895,14 +8872,22 @@
           },
           "productType": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "ARCHIVED"]
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
           },
           "amount": {
             "type": "number"
@@ -7915,7 +8900,16 @@
             "type": "string"
           }
         },
-        "required": ["id", "productId", "productType", "name", "status", "amount", "unitId", "unit"]
+        "required": [
+          "id",
+          "productId",
+          "productType",
+          "name",
+          "status",
+          "amount",
+          "unitId",
+          "unit"
+        ]
       },
       "ArchiveGarnishDto": {
         "type": "object",
@@ -7926,17 +8920,41 @@
           },
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL",
+              "QUICK"
+            ]
           },
           "name": {
             "type": "string"
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "ARCHIVED"]
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED",
+              null
+            ],
+            "nullable": true
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRODUCT",
+              "QUICK"
+            ]
           }
         },
-        "required": ["id", "type", "name", "status"]
+        "required": [
+          "id",
+          "type",
+          "name",
+          "status",
+          "kind"
+        ]
       },
       "ArchiveOutputDto": {
         "type": "object",
@@ -7952,7 +8970,11 @@
             "type": "string"
           }
         },
-        "required": ["amount", "unitId", "unit"]
+        "required": [
+          "amount",
+          "unitId",
+          "unit"
+        ]
       },
       "ArchiveCardDto": {
         "type": "object",
@@ -7963,7 +8985,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
@@ -7974,7 +9001,9 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ARCHIVED"]
+            "enum": [
+              "ARCHIVED"
+            ]
           },
           "technology": {
             "type": "string",
@@ -8068,7 +9097,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
@@ -8077,7 +9111,12 @@
             "type": "boolean"
           }
         },
-        "required": ["id", "type", "name", "nameConflict"]
+        "required": [
+          "id",
+          "type",
+          "name",
+          "nameConflict"
+        ]
       },
       "ArchiveRestoreNodeDto": {
         "type": "object",
@@ -8088,7 +9127,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
@@ -8109,7 +9153,14 @@
             }
           }
         },
-        "required": ["id", "type", "name", "nameConflict", "parentIds", "replacements"]
+        "required": [
+          "id",
+          "type",
+          "name",
+          "nameConflict",
+          "parentIds",
+          "replacements"
+        ]
       },
       "ArchiveRestorePlanDto": {
         "type": "object",
@@ -8127,7 +9178,11 @@
             "type": "string"
           }
         },
-        "required": ["root", "dependencies", "confirmationFingerprint"]
+        "required": [
+          "root",
+          "dependencies",
+          "confirmationFingerprint"
+        ]
       },
       "ArchiveConflictDto": {
         "type": "object",
@@ -8154,7 +9209,9 @@
             "format": "uuid"
           }
         },
-        "required": ["code"]
+        "required": [
+          "code"
+        ]
       },
       "ArchiveRestoreDecisionDto": {
         "type": "object",
@@ -8165,7 +9222,10 @@
           },
           "action": {
             "type": "string",
-            "enum": ["RESTORE", "REPLACE"]
+            "enum": [
+              "RESTORE",
+              "REPLACE"
+            ]
           },
           "replacementProductId": {
             "type": "string",
@@ -8176,7 +9236,10 @@
             "maxLength": 160
           }
         },
-        "required": ["productId", "action"]
+        "required": [
+          "productId",
+          "action"
+        ]
       },
       "ArchiveRestoreDto": {
         "type": "object",
@@ -8195,7 +9258,10 @@
             "maxLength": 160
           }
         },
-        "required": ["confirmationFingerprint", "decisions"]
+        "required": [
+          "confirmationFingerprint",
+          "decisions"
+        ]
       },
       "ArchiveReplacementDto": {
         "type": "object",
@@ -8213,7 +9279,11 @@
             "format": "uuid"
           }
         },
-        "required": ["parentId", "productId", "replacementProductId"]
+        "required": [
+          "parentId",
+          "productId",
+          "replacementProductId"
+        ]
       },
       "ArchiveRestoreResultDto": {
         "type": "object",
@@ -8231,7 +9301,10 @@
             }
           }
         },
-        "required": ["restoredProducts", "replacements"]
+        "required": [
+          "restoredProducts",
+          "replacements"
+        ]
       },
       "GarnishListItemResponseDto": {
         "type": "object",
@@ -8252,7 +9325,12 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "name", "componentSummary", "updatedAt"]
+        "required": [
+          "id",
+          "name",
+          "componentSummary",
+          "updatedAt"
+        ]
       },
       "GarnishCardComponentResponseDto": {
         "type": "object",
@@ -8276,7 +9354,10 @@
           },
           "productType": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION"
+            ]
           },
           "name": {
             "type": "string"
@@ -8313,7 +9394,11 @@
             "type": "string"
           }
         },
-        "required": ["amount", "unitId", "unit"]
+        "required": [
+          "amount",
+          "unitId",
+          "unit"
+        ]
       },
       "GarnishCardResponseDto": {
         "type": "object",
@@ -8327,11 +9412,15 @@
           },
           "type": {
             "type": "string",
-            "enum": ["GARNISH"]
+            "enum": [
+              "GARNISH"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE"]
+            "enum": [
+              "ACTIVE"
+            ]
           },
           "components": {
             "type": "array",
@@ -8383,7 +9472,11 @@
             "minimum": 0.001
           }
         },
-        "required": ["productId", "unitId", "amount"]
+        "required": [
+          "productId",
+          "unitId",
+          "amount"
+        ]
       },
       "ProductOutputDto": {
         "type": "object",
@@ -8397,7 +9490,10 @@
             "format": "uuid"
           }
         },
-        "required": ["amount", "unitId"]
+        "required": [
+          "amount",
+          "unitId"
+        ]
       },
       "UpdateGarnishDto": {
         "type": "object",
@@ -8430,7 +9526,11 @@
             "description": "Отпечаток актуального списка затронутых коктейлей"
           }
         },
-        "required": ["name", "technology", "components"]
+        "required": [
+          "name",
+          "technology",
+          "components"
+        ]
       },
       "ProductCreatedDto": {
         "type": "object",
@@ -8441,7 +9541,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
@@ -8451,7 +9556,12 @@
             "format": "uuid"
           }
         },
-        "required": ["id", "type", "name", "venueId"]
+        "required": [
+          "id",
+          "type",
+          "name",
+          "venueId"
+        ]
       },
       "GarnishImpactItemResponseDto": {
         "type": "object",
@@ -8462,20 +9572,28 @@
           },
           "type": {
             "type": "string",
-            "enum": ["COCKTAIL"]
+            "enum": [
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
           }
         },
-        "required": ["id", "type", "name"]
+        "required": [
+          "id",
+          "type",
+          "name"
+        ]
       },
       "GarnishImpactResponseDto": {
         "type": "object",
         "properties": {
           "code": {
             "type": "string",
-            "enum": ["GARNISH_DEPENDENCIES_CONFIRMATION_REQUIRED"]
+            "enum": [
+              "GARNISH_DEPENDENCIES_CONFIRMATION_REQUIRED"
+            ]
           },
           "affectedProducts": {
             "type": "array",
@@ -8487,7 +9605,11 @@
             "type": "string"
           }
         },
-        "required": ["code", "affectedProducts", "confirmationFingerprint"]
+        "required": [
+          "code",
+          "affectedProducts",
+          "confirmationFingerprint"
+        ]
       },
       "PreparationListItemResponseDto": {
         "type": "object",
@@ -8511,7 +9633,13 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "name", "categoryName", "componentSummary", "updatedAt"]
+        "required": [
+          "id",
+          "name",
+          "categoryName",
+          "componentSummary",
+          "updatedAt"
+        ]
       },
       "PreparationCardComponentResponseDto": {
         "type": "object",
@@ -8526,7 +9654,10 @@
           },
           "productType": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION"
+            ]
           },
           "name": {
             "type": "string"
@@ -8542,7 +9673,15 @@
             "type": "string"
           }
         },
-        "required": ["id", "productId", "productType", "name", "amount", "unitId", "unit"]
+        "required": [
+          "id",
+          "productId",
+          "productType",
+          "name",
+          "amount",
+          "unitId",
+          "unit"
+        ]
       },
       "PreparationCardOutputResponseDto": {
         "type": "object",
@@ -8558,7 +9697,11 @@
             "type": "string"
           }
         },
-        "required": ["amount", "unitId", "unit"]
+        "required": [
+          "amount",
+          "unitId",
+          "unit"
+        ]
       },
       "PreparationCardResponseDto": {
         "type": "object",
@@ -8572,11 +9715,15 @@
           },
           "type": {
             "type": "string",
-            "enum": ["PREPARATION"]
+            "enum": [
+              "PREPARATION"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE"]
+            "enum": [
+              "ACTIVE"
+            ]
           },
           "categoryName": {
             "type": "string"
@@ -8655,7 +9802,12 @@
             "description": "Отпечаток актуального списка затронутой продукции"
           }
         },
-        "required": ["name", "technology", "components", "categoryCode"]
+        "required": [
+          "name",
+          "technology",
+          "components",
+          "categoryCode"
+        ]
       },
       "PreparationImpactItemResponseDto": {
         "type": "object",
@@ -8666,20 +9818,30 @@
           },
           "type": {
             "type": "string",
-            "enum": ["PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
           }
         },
-        "required": ["id", "type", "name"]
+        "required": [
+          "id",
+          "type",
+          "name"
+        ]
       },
       "PreparationImpactResponseDto": {
         "type": "object",
         "properties": {
           "code": {
             "type": "string",
-            "enum": ["PREPARATION_DEPENDENCIES_CONFIRMATION_REQUIRED"]
+            "enum": [
+              "PREPARATION_DEPENDENCIES_CONFIRMATION_REQUIRED"
+            ]
           },
           "affectedProducts": {
             "type": "array",
@@ -8691,7 +9853,11 @@
             "type": "string"
           }
         },
-        "required": ["code", "affectedProducts", "confirmationFingerprint"]
+        "required": [
+          "code",
+          "affectedProducts",
+          "confirmationFingerprint"
+        ]
       },
       "CocktailListItemResponseDto": {
         "type": "object",
@@ -8703,6 +9869,12 @@
           "name": {
             "type": "string"
           },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "componentSummary": {
             "type": "string",
             "description": "Краткий состав через запятую"
@@ -8712,7 +9884,13 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "name", "componentSummary", "updatedAt"]
+        "required": [
+          "id",
+          "name",
+          "categories",
+          "componentSummary",
+          "updatedAt"
+        ]
       },
       "CocktailGarnishOptionResponseDto": {
         "type": "object",
@@ -8723,9 +9901,36 @@
           },
           "name": {
             "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRODUCT",
+              "QUICK"
+            ]
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ]
+      },
+      "CocktailCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ]
       },
       "CocktailCardComponentResponseDto": {
         "type": "object",
@@ -8740,7 +9945,10 @@
           },
           "productType": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION"
+            ]
           },
           "unitId": {
             "type": "string",
@@ -8756,7 +9964,15 @@
             "type": "string"
           }
         },
-        "required": ["id", "productId", "productType", "unitId", "name", "amount", "unit"]
+        "required": [
+          "id",
+          "productId",
+          "productType",
+          "unitId",
+          "name",
+          "amount",
+          "unit"
+        ]
       },
       "CocktailCardOutputResponseDto": {
         "type": "object",
@@ -8772,7 +9988,11 @@
             "type": "string"
           }
         },
-        "required": ["amount", "unitId", "unit"]
+        "required": [
+          "amount",
+          "unitId",
+          "unit"
+        ]
       },
       "CocktailCardResponseDto": {
         "type": "object",
@@ -8784,13 +10004,23 @@
           "name": {
             "type": "string"
           },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CocktailCategoryResponseDto"
+            }
+          },
           "type": {
             "type": "string",
-            "enum": ["COCKTAIL"]
+            "enum": [
+              "COCKTAIL"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE"]
+            "enum": [
+              "ACTIVE"
+            ]
           },
           "components": {
             "type": "array",
@@ -8851,6 +10081,7 @@
         "required": [
           "id",
           "name",
+          "categories",
           "type",
           "status",
           "components",
@@ -8890,7 +10121,14 @@
             "type": "boolean"
           }
         },
-        "required": ["id", "code", "name", "parentCode", "sortOrder", "isActive"]
+        "required": [
+          "id",
+          "code",
+          "name",
+          "parentCode",
+          "sortOrder",
+          "isActive"
+        ]
       },
       "PreparationCategoryResponseDto": {
         "type": "object",
@@ -8912,7 +10150,13 @@
             "type": "boolean"
           }
         },
-        "required": ["id", "code", "name", "sortOrder", "isActive"]
+        "required": [
+          "id",
+          "code",
+          "name",
+          "sortOrder",
+          "isActive"
+        ]
       },
       "UnitResponseDto": {
         "type": "object",
@@ -8929,7 +10173,12 @@
           },
           "kind": {
             "type": "string",
-            "enum": ["VOLUME", "MASS", "COUNT", "BAR_MEASURE"],
+            "enum": [
+              "VOLUME",
+              "MASS",
+              "COUNT",
+              "BAR_MEASURE"
+            ],
             "nullable": true
           },
           "venueId": {
@@ -8938,7 +10187,13 @@
             "nullable": true
           }
         },
-        "required": ["id", "code", "label", "kind", "venueId"]
+        "required": [
+          "id",
+          "code",
+          "label",
+          "kind",
+          "venueId"
+        ]
       },
       "ReferenceValueResponseDto": {
         "type": "object",
@@ -8949,7 +10204,13 @@
           },
           "type": {
             "type": "string",
-            "enum": ["GLASS", "ICE", "PREPARATION_METHOD"]
+            "enum": [
+              "GLASS",
+              "ICE",
+              "PREPARATION_METHOD",
+              "GARNISH",
+              "COCKTAIL_CATEGORY"
+            ]
           },
           "code": {
             "type": "string"
@@ -8969,7 +10230,15 @@
             "type": "boolean"
           }
         },
-        "required": ["id", "type", "code", "label", "venueId", "sortOrder", "isActive"]
+        "required": [
+          "id",
+          "type",
+          "code",
+          "label",
+          "venueId",
+          "sortOrder",
+          "isActive"
+        ]
       },
       "ProductReferencesResponseDto": {
         "type": "object",
@@ -8999,7 +10268,12 @@
             }
           }
         },
-        "required": ["ingredientCategories", "preparationCategories", "units", "referenceValues"]
+        "required": [
+          "ingredientCategories",
+          "preparationCategories",
+          "units",
+          "referenceValues"
+        ]
       },
       "ProductSearchItemResponseDto": {
         "type": "object",
@@ -9010,7 +10284,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "name": {
             "type": "string"
@@ -9026,11 +10305,20 @@
           },
           "scope": {
             "type": "string",
-            "enum": ["GLOBAL", "VENUE"]
+            "enum": [
+              "GLOBAL",
+              "VENUE"
+            ]
           },
           "matchReason": {
             "type": "string",
-            "enum": ["EXACT_NAME", "CONFIRMED_ALIAS", "PREFIX", "FUZZY_NAME", "ATTRIBUTE_MATCH"]
+            "enum": [
+              "EXACT_NAME",
+              "CONFIRMED_ALIAS",
+              "PREFIX",
+              "FUZZY_NAME",
+              "ATTRIBUTE_MATCH"
+            ]
           },
           "brand": {
             "type": "string",
@@ -9063,7 +10351,10 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION"
+            ]
           },
           "code": {
             "type": "string"
@@ -9072,7 +10363,11 @@
             "type": "string"
           }
         },
-        "required": ["type", "code", "name"]
+        "required": [
+          "type",
+          "code",
+          "name"
+        ]
       },
       "ProductSearchPageResponseDto": {
         "type": "object",
@@ -9093,7 +10388,11 @@
             }
           }
         },
-        "required": ["items", "totalRecords", "categories"]
+        "required": [
+          "items",
+          "totalRecords",
+          "categories"
+        ]
       },
       "CreateLocalIngredientDto": {
         "type": "object",
@@ -9124,7 +10423,10 @@
             "maxLength": 120
           }
         },
-        "required": ["name", "categoryCode"]
+        "required": [
+          "name",
+          "categoryCode"
+        ]
       },
       "CreatePreparationDto": {
         "type": "object",
@@ -9157,7 +10459,12 @@
             "example": "syrup"
           }
         },
-        "required": ["name", "technology", "components", "categoryCode"]
+        "required": [
+          "name",
+          "technology",
+          "components",
+          "categoryCode"
+        ]
       },
       "CreateGarnishDto": {
         "type": "object",
@@ -9186,7 +10493,31 @@
             "$ref": "#/components/schemas/ProductOutputDto"
           }
         },
-        "required": ["name", "technology", "components"]
+        "required": [
+          "name",
+          "technology",
+          "components"
+        ]
+      },
+      "CocktailGarnishSelectionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRODUCT",
+              "QUICK"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ]
       },
       "CreateCocktailDto": {
         "type": "object",
@@ -9205,7 +10536,7 @@
           },
           "components": {
             "minItems": 1,
-            "maxItems": 100,
+            "maxItems": 20,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProductComponentDto"
@@ -9233,9 +10564,39 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "quickGarnishIds": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "garnishSelections": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CocktailGarnishSelectionDto"
+            }
+          },
+          "categoryIds": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         },
-        "required": ["name", "technology", "components", "glassId", "iceId", "preparationMethodId"]
+        "required": [
+          "name",
+          "technology",
+          "components",
+          "glassId",
+          "iceId",
+          "preparationMethodId"
+        ]
       },
       "UpdateCocktailDto": {
         "type": "object",
@@ -9254,7 +10615,7 @@
           },
           "components": {
             "minItems": 1,
-            "maxItems": 100,
+            "maxItems": 20,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProductComponentDto"
@@ -9282,9 +10643,39 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "quickGarnishIds": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "garnishSelections": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CocktailGarnishSelectionDto"
+            }
+          },
+          "categoryIds": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         },
-        "required": ["name", "technology", "components", "glassId", "iceId", "preparationMethodId"]
+        "required": [
+          "name",
+          "technology",
+          "components",
+          "glassId",
+          "iceId",
+          "preparationMethodId"
+        ]
       },
       "CreateLocalUnitDto": {
         "type": "object",
@@ -9295,24 +10686,40 @@
           },
           "kind": {
             "type": "string",
-            "enum": ["VOLUME", "MASS", "COUNT", "BAR_MEASURE"]
+            "enum": [
+              "VOLUME",
+              "MASS",
+              "COUNT",
+              "BAR_MEASURE"
+            ]
           }
         },
-        "required": ["label"]
+        "required": [
+          "label"
+        ]
       },
       "CreateLocalReferenceValueDto": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["GLASS", "ICE", "PREPARATION_METHOD"]
+            "enum": [
+              "GLASS",
+              "ICE",
+              "PREPARATION_METHOD",
+              "GARNISH",
+              "COCKTAIL_CATEGORY"
+            ]
           },
           "label": {
             "type": "string",
             "maxLength": 100
           }
         },
-        "required": ["type", "label"]
+        "required": [
+          "type",
+          "label"
+        ]
       },
       "LocalIngredientDetailsResponseDto": {
         "type": "object",
@@ -9358,7 +10765,9 @@
           },
           "type": {
             "type": "string",
-            "enum": ["INGREDIENT"]
+            "enum": [
+              "INGREDIENT"
+            ]
           },
           "name": {
             "type": "string"
@@ -9371,7 +10780,13 @@
             "$ref": "#/components/schemas/LocalIngredientDetailsResponseDto"
           }
         },
-        "required": ["id", "type", "name", "venueId", "ingredient"]
+        "required": [
+          "id",
+          "type",
+          "name",
+          "venueId",
+          "ingredient"
+        ]
       },
       "IngredientCategoryManagementDto": {
         "type": "object",
@@ -9397,7 +10812,14 @@
             "type": "boolean"
           }
         },
-        "required": ["code", "name", "id", "parentCode", "sortOrder", "isActive"]
+        "required": [
+          "code",
+          "name",
+          "id",
+          "parentCode",
+          "sortOrder",
+          "isActive"
+        ]
       },
       "CreateIngredientCategoryDto": {
         "type": "object",
@@ -9416,7 +10838,9 @@
             "minimum": 0
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "UpdateIngredientCategoryDto": {
         "type": "object",
@@ -9448,7 +10872,10 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "ARCHIVED"]
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
           },
           "categoryCode": {
             "type": "string"
@@ -9462,7 +10889,12 @@
             "nullable": true
           }
         },
-        "required": ["id", "name", "status", "categoryCode"]
+        "required": [
+          "id",
+          "name",
+          "status",
+          "categoryCode"
+        ]
       },
       "CatalogManagementPageDto": {
         "type": "object",
@@ -9477,7 +10909,10 @@
             "type": "boolean"
           }
         },
-        "required": ["items", "hasMore"]
+        "required": [
+          "items",
+          "hasMore"
+        ]
       },
       "GlobalIngredientAliasDto": {
         "type": "object",
@@ -9497,7 +10932,11 @@
             "nullable": true
           }
         },
-        "required": ["id", "value", "isConfirmed"]
+        "required": [
+          "id",
+          "value",
+          "isConfirmed"
+        ]
       },
       "GlobalIngredientCardDto": {
         "type": "object",
@@ -9511,7 +10950,10 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "ARCHIVED"]
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
           },
           "updatedAt": {
             "type": "string",
@@ -9594,7 +11036,10 @@
             "maxLength": 120
           }
         },
-        "required": ["name", "categoryCode"]
+        "required": [
+          "name",
+          "categoryCode"
+        ]
       },
       "CatalogMergeConflictDto": {
         "type": "object",
@@ -9610,7 +11055,11 @@
             "type": "string"
           }
         },
-        "required": ["code", "productId", "name"]
+        "required": [
+          "code",
+          "productId",
+          "name"
+        ]
       },
       "CatalogManagementConflictDto": {
         "type": "object",
@@ -9635,7 +11084,9 @@
             }
           }
         },
-        "required": ["message"]
+        "required": [
+          "message"
+        ]
       },
       "CreateGlobalAliasDto": {
         "type": "object",
@@ -9645,7 +11096,9 @@
             "maxLength": 160
           }
         },
-        "required": ["value"]
+        "required": [
+          "value"
+        ]
       },
       "GlobalAliasDeletedDto": {
         "type": "object",
@@ -9658,7 +11111,10 @@
             "type": "boolean"
           }
         },
-        "required": ["id", "deleted"]
+        "required": [
+          "id",
+          "deleted"
+        ]
       },
       "CatalogMergePreviewDto": {
         "type": "object",
@@ -9672,7 +11128,10 @@
             "format": "uuid"
           }
         },
-        "required": ["canonicalId", "duplicateId"]
+        "required": [
+          "canonicalId",
+          "duplicateId"
+        ]
       },
       "CatalogMergeValuesDto": {
         "type": "object",
@@ -9700,7 +11159,10 @@
             "nullable": true
           }
         },
-        "required": ["name", "categoryCode"]
+        "required": [
+          "name",
+          "categoryCode"
+        ]
       },
       "CatalogMergeAliasDto": {
         "type": "object",
@@ -9712,7 +11174,10 @@
             "type": "boolean"
           }
         },
-        "required": ["value", "isConfirmed"]
+        "required": [
+          "value",
+          "isConfirmed"
+        ]
       },
       "CatalogMergePreviewResponseDto": {
         "type": "object",
@@ -9775,7 +11240,12 @@
             "format": "date-time"
           }
         },
-        "required": ["canonicalId", "duplicateId", "canonicalUpdatedAt", "duplicateUpdatedAt"]
+        "required": [
+          "canonicalId",
+          "duplicateId",
+          "canonicalUpdatedAt",
+          "duplicateUpdatedAt"
+        ]
       },
       "CatalogMergeResultDto": {
         "type": "object",
@@ -9792,7 +11262,11 @@
             "type": "number"
           }
         },
-        "required": ["canonicalProductId", "deletedProductId", "movedReferences"]
+        "required": [
+          "canonicalProductId",
+          "deletedProductId",
+          "movedReferences"
+        ]
       },
       "CatalogCandidateLocalDto": {
         "type": "object",
@@ -9824,7 +11298,11 @@
             "nullable": true
           }
         },
-        "required": ["id", "name", "categoryCode"]
+        "required": [
+          "id",
+          "name",
+          "categoryCode"
+        ]
       },
       "CatalogCandidateResponseDto": {
         "type": "object",
@@ -9835,7 +11313,9 @@
           },
           "status": {
             "type": "string",
-            "enum": ["NEEDS_REVIEW"]
+            "enum": [
+              "NEEDS_REVIEW"
+            ]
           },
           "reason": {
             "type": "string"
@@ -9852,7 +11332,12 @@
             "nullable": true
           }
         },
-        "required": ["id", "status", "reason", "local"]
+        "required": [
+          "id",
+          "status",
+          "reason",
+          "local"
+        ]
       },
       "CatalogCandidatePageDto": {
         "type": "object",
@@ -9867,7 +11352,10 @@
             "type": "boolean"
           }
         },
-        "required": ["items", "hasMore"]
+        "required": [
+          "items",
+          "hasMore"
+        ]
       },
       "GlobalIngredientSearchItemDto": {
         "type": "object",
@@ -9895,7 +11383,11 @@
             "nullable": true
           }
         },
-        "required": ["id", "name", "categoryCode"]
+        "required": [
+          "id",
+          "name",
+          "categoryCode"
+        ]
       },
       "IngredientCategoryDto": {
         "type": "object",
@@ -9907,7 +11399,10 @@
             "type": "string"
           }
         },
-        "required": ["code", "name"]
+        "required": [
+          "code",
+          "name"
+        ]
       },
       "LinkCatalogCandidateDto": {
         "type": "object",
@@ -9917,7 +11412,9 @@
             "format": "uuid"
           }
         },
-        "required": ["globalProductId"]
+        "required": [
+          "globalProductId"
+        ]
       },
       "CreateGlobalIngredientFromCandidateDto": {
         "type": "object",
@@ -9949,7 +11446,10 @@
             "maxLength": 120
           }
         },
-        "required": ["name", "categoryCode"]
+        "required": [
+          "name",
+          "categoryCode"
+        ]
       },
       "AuditEventHttpDto": {
         "type": "object",
@@ -10022,7 +11522,10 @@
             "nullable": true
           }
         },
-        "required": ["items", "nextCursor"]
+        "required": [
+          "items",
+          "nextCursor"
+        ]
       },
       "AuditHistoryAuthorHttpDto": {
         "type": "object",
@@ -10035,7 +11538,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "CreateProductExportDto": {
         "type": "object",
@@ -10053,7 +11559,9 @@
             "default": false
           }
         },
-        "required": ["productIds"]
+        "required": [
+          "productIds"
+        ]
       },
       "SupportAttachmentResponseDto": {
         "type": "object",
@@ -10073,12 +11581,19 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending_scan", "clean", "rejected"]
+            "enum": [
+              "pending_scan",
+              "clean",
+              "rejected"
+            ]
           },
           "errorCode": {
             "type": "string",
             "nullable": true,
-            "enum": ["INFECTED_FILE", "SCAN_FAILED"]
+            "enum": [
+              "INFECTED_FILE",
+              "SCAN_FAILED"
+            ]
           },
           "createdAt": {
             "format": "date-time",
@@ -10090,7 +11605,14 @@
             "nullable": true
           }
         },
-        "required": ["id", "originalName", "contentType", "sizeBytes", "status", "createdAt"]
+        "required": [
+          "id",
+          "originalName",
+          "contentType",
+          "sizeBytes",
+          "status",
+          "createdAt"
+        ]
       },
       "SupportRequestResponseDto": {
         "type": "object",
@@ -10101,14 +11623,22 @@
           },
           "reason": {
             "type": "string",
-            "enum": ["data_migration", "error", "other"]
+            "enum": [
+              "data_migration",
+              "error",
+              "other"
+            ]
           },
           "message": {
             "type": "string"
           },
           "status": {
             "type": "string",
-            "enum": ["new", "in_progress", "closed"]
+            "enum": [
+              "new",
+              "in_progress",
+              "closed"
+            ]
           },
           "technicalContext": {
             "type": "object",
@@ -10142,7 +11672,14 @@
             ]
           }
         },
-        "required": ["id", "reason", "message", "status", "createdAt", "updatedAt"]
+        "required": [
+          "id",
+          "reason",
+          "message",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "SupportRequestAuthorDto": {
         "type": "object",
@@ -10159,7 +11696,11 @@
             "type": "string"
           }
         },
-        "required": ["id", "email", "fullName"]
+        "required": [
+          "id",
+          "email",
+          "fullName"
+        ]
       },
       "SupportRequestAssigneeDto": {
         "type": "object",
@@ -10173,7 +11714,10 @@
             "format": "email"
           }
         },
-        "required": ["id", "email"]
+        "required": [
+          "id",
+          "email"
+        ]
       },
       "SupportRequestQueueItemDto": {
         "type": "object",
@@ -10184,14 +11728,22 @@
           },
           "reason": {
             "type": "string",
-            "enum": ["data_migration", "error", "other"]
+            "enum": [
+              "data_migration",
+              "error",
+              "other"
+            ]
           },
           "message": {
             "type": "string"
           },
           "status": {
             "type": "string",
-            "enum": ["new", "in_progress", "closed"]
+            "enum": [
+              "new",
+              "in_progress",
+              "closed"
+            ]
           },
           "technicalContext": {
             "type": "object",
@@ -10243,7 +11795,14 @@
             ]
           }
         },
-        "required": ["id", "reason", "message", "status", "createdAt", "updatedAt"]
+        "required": [
+          "id",
+          "reason",
+          "message",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "SupportRequestQueuePageDto": {
         "type": "object",
@@ -10264,7 +11823,12 @@
             "type": "number"
           }
         },
-        "required": ["items", "page", "pageSize", "total"]
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
       },
       "SupportInternalUserResponseDto": {
         "type": "object",
@@ -10277,14 +11841,21 @@
             "type": "string"
           }
         },
-        "required": ["id", "email"]
+        "required": [
+          "id",
+          "email"
+        ]
       },
       "UpdateSupportRequestDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["new", "in_progress", "closed"]
+            "enum": [
+              "new",
+              "in_progress",
+              "closed"
+            ]
           },
           "assignedToId": {
             "type": "string",
@@ -10309,7 +11880,9 @@
             "format": "uuid"
           }
         },
-        "required": ["companyId"]
+        "required": [
+          "companyId"
+        ]
       },
       "InternalAuditEventDto": {
         "type": "object",
@@ -10327,7 +11900,11 @@
           },
           "actorType": {
             "type": "string",
-            "enum": ["OPERATOR", "INTERNAL_USER", "SYSTEM"]
+            "enum": [
+              "OPERATOR",
+              "INTERNAL_USER",
+              "SYSTEM"
+            ]
           },
           "actorEmail": {
             "type": "string",
@@ -10376,7 +11953,10 @@
             "maxLength": 256
           }
         },
-        "required": ["items", "nextCursor"]
+        "required": [
+          "items",
+          "nextCursor"
+        ]
       },
       "ProductAnalyticsEventDto": {
         "type": "object",
@@ -10400,22 +11980,144 @@
           },
           "deviceType": {
             "type": "string",
-            "enum": ["DESKTOP", "MOBILE", "TABLET", "UNKNOWN"]
+            "enum": [
+              "DESKTOP",
+              "MOBILE",
+              "TABLET",
+              "UNKNOWN"
+            ]
           },
           "productType": {
             "type": "string",
-            "enum": ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"]
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
           },
           "errorCategory": {
             "type": "string",
-            "enum": ["NETWORK", "API", "VALIDATION", "UNKNOWN"]
+            "enum": [
+              "NETWORK",
+              "API",
+              "VALIDATION",
+              "UNKNOWN"
+            ]
           },
           "result": {
             "type": "string",
-            "enum": ["FAILURE"]
+            "enum": [
+              "FAILURE"
+            ]
           }
         },
-        "required": ["eventId", "eventType", "deviceType"]
+        "required": [
+          "eventId",
+          "eventType",
+          "deviceType"
+        ]
+      },
+      "ScheduleDateMarkerDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INVENTORY"
+            ]
+          }
+        },
+        "required": [
+          "date",
+          "type"
+        ]
+      },
+      "ScheduleShiftSettingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shiftCode": {
+            "type": "string",
+            "enum": [
+              "MORNING",
+              "DAY",
+              "EVENING",
+              "NIGHT"
+            ]
+          },
+          "startMinute": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "defaultDurationHours": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 24
+          }
+        },
+        "required": [
+          "id",
+          "shiftCode",
+          "startMinute",
+          "defaultDurationHours"
+        ]
+      },
+      "ScheduleShiftSettingInputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shiftCode": {
+            "type": "string",
+            "enum": [
+              "MORNING",
+              "DAY",
+              "EVENING",
+              "NIGHT"
+            ]
+          },
+          "startMinute": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "defaultDurationHours": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 24
+          }
+        },
+        "required": [
+          "shiftCode",
+          "startMinute",
+          "defaultDurationHours"
+        ]
+      },
+      "ScheduleShiftSettingsDto": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "minItems": 0,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleShiftSettingInputDto"
+            }
+          }
+        },
+        "required": [
+          "settings"
+        ]
       },
       "ScheduleTemplateDto": {
         "type": "object",
@@ -10424,50 +12126,69 @@
             "type": "string",
             "maxLength": 80
           },
-          "workDays": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 31
-          },
-          "offDays": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 31
-          },
-          "durationHours": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 24
-          },
-          "shiftType": {
-            "type": "string",
-            "enum": ["NORMAL", "NIGHT"]
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "nullable": true
+            },
+            "minItems": 1,
+            "maxItems": 31
           }
         },
-        "required": ["name", "workDays", "offDays", "durationHours", "shiftType"]
+        "required": [
+          "name",
+          "days"
+        ]
       },
       "ScheduleValueDto": {
         "type": "object",
         "properties": {
           "kind": {
             "type": "string",
-            "enum": ["SHIFT", "STATUS", "EMPTY"]
+            "enum": [
+              "SHIFT",
+              "STATUS",
+              "EMPTY"
+            ]
           },
           "durationHours": {
             "type": "number",
             "minimum": 1,
             "maximum": 24
           },
-          "shiftType": {
+          "shiftCode": {
             "type": "string",
-            "enum": ["NORMAL", "NIGHT"]
+            "enum": [
+              "MORNING",
+              "DAY",
+              "EVENING",
+              "NIGHT"
+            ]
+          },
+          "startMinute": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "shiftSettingId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "status": {
             "type": "string",
-            "enum": ["VACATION", "SICK_LEAVE", "NO_SHOW"]
+            "enum": [
+              "VACATION",
+              "SICK_LEAVE",
+              "NO_SHOW"
+            ]
           }
         },
-        "required": ["kind"]
+        "required": [
+          "kind"
+        ]
       },
       "ScheduleCellDto": {
         "type": "object",
@@ -10484,7 +12205,11 @@
             "$ref": "#/components/schemas/ScheduleValueDto"
           }
         },
-        "required": ["membershipId", "date", "value"]
+        "required": [
+          "membershipId",
+          "date",
+          "value"
+        ]
       },
       "ScheduleCellsDto": {
         "type": "object",
@@ -10498,7 +12223,9 @@
             }
           }
         },
-        "required": ["cells"]
+        "required": [
+          "cells"
+        ]
       },
       "ScheduleAssignmentDto": {
         "type": "object",
@@ -10556,7 +12283,11 @@
             "default": false
           }
         },
-        "required": ["year", "month", "assignments"]
+        "required": [
+          "year",
+          "month",
+          "assignments"
+        ]
       },
       "ScheduleExtendDto": {
         "type": "object",
@@ -10581,17 +12312,23 @@
             "maxItems": 200
           }
         },
-        "required": ["year", "month", "membershipIds"]
+        "required": [
+          "year",
+          "month",
+          "membershipIds"
+        ]
       },
       "ScheduleCommentDto": {
         "type": "object",
         "properties": {
           "text": {
             "type": "string",
-            "maxLength": 1000
+            "maxLength": 250
           }
         },
-        "required": ["text"]
+        "required": [
+          "text"
+        ]
       }
     }
   }

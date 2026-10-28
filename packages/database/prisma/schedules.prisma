@@ -1,5 +1,7 @@
-enum ScheduleShiftType {
-  NORMAL
+enum ScheduleShiftCode {
+  MORNING
+  DAY
+  EVENING
   NIGHT
 }
 
@@ -10,20 +12,37 @@ enum ScheduleDayStatus {
   NO_SHOW
 }
 
+enum ScheduleDateMarkerType {
+  INVENTORY
+}
+
 model Schedule {
-  id        String        @id @default(uuid()) @db.Uuid
-  venueId   String        @db.Uuid
-  year      Int
-  month     Int
-  createdAt DateTime      @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime      @updatedAt @db.Timestamptz(6)
-  venue     Venue         @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  days      ScheduleDay[]
-  members   ScheduleMemberSnapshot[]
+  id          String                   @id @default(uuid()) @db.Uuid
+  venueId     String                   @db.Uuid
+  year        Int
+  month       Int
+  createdAt   DateTime                 @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime                 @updatedAt @db.Timestamptz(6)
+  venue       Venue                    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  days        ScheduleDay[]
+  members     ScheduleMemberSnapshot[]
+  dateMarkers ScheduleDateMarker[]
 
   @@unique([venueId, year, month], map: "schedules_venue_month_key")
   @@index([venueId, year, month], map: "schedules_venue_month_idx")
   @@map("schedules")
+}
+
+model ScheduleDateMarker {
+  id         String                 @id @default(uuid()) @db.Uuid
+  scheduleId String                 @db.Uuid
+  date       DateTime               @db.Date
+  type       ScheduleDateMarkerType
+  createdAt  DateTime               @default(now()) @db.Timestamptz(6)
+  schedule   Schedule               @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, date], map: "schedule_date_markers_schedule_date_key")
+  @@map("schedule_date_markers")
 }
 
 model ScheduleMemberSnapshot {
@@ -38,25 +57,42 @@ model ScheduleMemberSnapshot {
 }
 
 model ScheduleDay {
-  id                 String              @id @default(uuid()) @db.Uuid
-  scheduleId         String              @db.Uuid
-  venueMembershipId  String              @db.Uuid
-  date               DateTime            @db.Date
+  id                 String                     @id @default(uuid()) @db.Uuid
+  scheduleId         String                     @db.Uuid
+  venueMembershipId  String                     @db.Uuid
+  date               DateTime                   @db.Date
   shiftDurationHours Int?
-  shiftType          ScheduleShiftType?
+  shiftCode          ScheduleShiftCode?
+  shiftStartMinute   Int?
+  shiftSettingId     String?                    @db.Uuid
   status             ScheduleDayStatus?
-  updatedByUserId    String              @db.Uuid
-  createdAt          DateTime            @default(now()) @db.Timestamptz(6)
-  updatedAt          DateTime            @updatedAt @db.Timestamptz(6)
-  schedule           Schedule            @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  membership         VenueMembership     @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
-  updatedBy          User                @relation(fields: [updatedByUserId], references: [id], onDelete: Restrict)
+  updatedByUserId    String                     @db.Uuid
+  createdAt          DateTime                   @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime                   @updatedAt @db.Timestamptz(6)
+  schedule           Schedule                   @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  membership         VenueMembership            @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
+  shiftSetting       VenueScheduleShiftSetting? @relation(fields: [shiftSettingId], references: [id], onDelete: SetNull)
+  updatedBy          User                       @relation(fields: [updatedByUserId], references: [id], onDelete: Restrict)
   changes            ScheduleDayChange[]
   comment            ScheduleDayComment?
 
   @@unique([venueMembershipId, date], map: "schedule_days_membership_date_key")
   @@index([scheduleId, date], map: "schedule_days_schedule_date_idx")
+  @@index([shiftSettingId], map: "schedule_days_shift_setting_id_idx")
   @@map("schedule_days")
+}
+
+model VenueScheduleShiftSetting {
+  id                   String            @id @default(uuid()) @db.Uuid
+  venueId              String            @db.Uuid
+  shiftCode            ScheduleShiftCode
+  startMinute          Int
+  defaultDurationHours Int
+  venue                Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  scheduleDays         ScheduleDay[]
+
+  @@index([venueId, shiftCode], map: "venue_schedule_shift_settings_venue_code_idx")
+  @@map("venue_schedule_shift_settings")
 }
 
 model ScheduleDayChange {
@@ -118,22 +154,29 @@ model ScheduleTemplate {
 }
 
 model ScheduleTemplateVersion {
-  id              String               @id @default(uuid()) @db.Uuid
-  templateId      String               @db.Uuid
+  id              String                @id @default(uuid()) @db.Uuid
+  templateId      String                @db.Uuid
   version         Int
-  workDays        Int
-  offDays         Int
-  durationHours   Int
-  shiftType       ScheduleShiftType
-  createdByUserId String?              @db.Uuid
-  createdAt       DateTime             @default(now()) @db.Timestamptz(6)
-  template        ScheduleTemplate     @relation("TemplateVersions", fields: [templateId], references: [id], onDelete: Cascade)
-  currentFor      ScheduleTemplate?    @relation("CurrentTemplateVersion")
-  createdBy       User?                @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdByUserId String?               @db.Uuid
+  createdAt       DateTime              @default(now()) @db.Timestamptz(6)
+  template        ScheduleTemplate      @relation("TemplateVersions", fields: [templateId], references: [id], onDelete: Cascade)
+  currentFor      ScheduleTemplate?     @relation("CurrentTemplateVersion")
+  createdBy       User?                 @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
   assignments     ScheduleAssignment[]
+  days            ScheduleTemplateDay[]
 
   @@unique([templateId, version], map: "schedule_template_versions_template_version_key")
   @@map("schedule_template_versions")
+}
+
+model ScheduleTemplateDay {
+  templateVersionId String                  @db.Uuid
+  position          Int
+  shiftSettingId    String?                 @db.Uuid
+  templateVersion   ScheduleTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade)
+
+  @@id([templateVersionId, position])
+  @@map("schedule_template_days")
 }
 
 model ScheduleAssignment {

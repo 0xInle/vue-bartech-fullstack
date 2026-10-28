@@ -28,6 +28,9 @@ export type CocktailInput = ProductBaseInput & {
   iceId: string;
   preparationMethodId: string;
   garnishIds?: string[];
+  quickGarnishIds?: string[];
+  garnishSelections?: Array<{ id: string; kind: "PRODUCT" | "QUICK" }>;
+  categoryIds?: string[];
 };
 
 export type CreateProductContext = {

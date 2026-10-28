@@ -58,7 +58,7 @@
               <dd class="inline">{{ product.externalIdentifier }}</dd>
             </div>
             <div v-if="product.glass">
-              <dt class="inline">Бокал:</dt>
+              <dt class="inline">Посуда:</dt>
               <dd class="inline">{{ product.glass }}</dd>
             </div>
             <div v-if="product.ice">
@@ -102,7 +102,9 @@
           <h2 class="text-base font-semibold">Гарниры</h2>
           <ul class="mt-2 space-y-2 text-sm">
             <li v-for="garnish in product.garnishes" :key="garnish.id">
+              <span v-if="garnish.kind === 'QUICK'">{{ garnish.name }}</span>
               <NuxtLink
+                v-else
                 :to="componentPath(garnish.id, garnish.type, garnish.status)!"
                 class="text-primary hover:underline"
                 >{{ garnish.name }}</NuxtLink

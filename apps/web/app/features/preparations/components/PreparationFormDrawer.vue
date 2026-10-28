@@ -2,40 +2,51 @@
   <Drawer
     :visible="visible"
     position="right"
-    :style="{ width: 'min(100vw, 42rem)' }"
-    class="preparation-drawer"
-    :header="mode === 'edit' ? 'Редактировать заготовку' : 'Создать заготовку'"
+    class="preparation-drawer drawer-size-lg"
+    :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
     @update:visible="requestVisibilityChange"
   >
+    <template #header="{ class: titleClass }">
+      <span :class="[titleClass, 'leading-none']">
+        {{ mode === "edit" ? "Редактировать заготовку" : "Создать заготовку" }}
+      </span>
+    </template>
     <LoadingIndicator v-if="referencesQuery.isLoading.value" class="py-8" />
     <form v-else class="flex flex-col gap-5" :inert="saving" @submit.prevent="submit">
-      <Message v-if="saveError" severity="error" :closable="false">{{ saveError }}</Message>
-      <Message v-if="referencesQuery.isError.value" severity="error" :closable="false"
+      <Message v-if="saveError" severity="error" :closable="false" :pt="compactMessagePt">
+        {{ saveError }}
+      </Message>
+      <Message
+        v-if="referencesQuery.isError.value"
+        severity="error"
+        :closable="false"
+        :pt="compactMessagePt"
         >Не удалось загрузить справочники. Обновите страницу и попробуйте ещё раз.</Message
       >
       <div class="flex flex-col gap-2">
-        <label for="preparation-category" class="text-sm font-medium">Категория</label
-        ><Select
-          id="preparation-category"
-          v-model="categoryCode"
-          :options="references.preparationCategories"
-          option-label="name"
-          option-value="code"
-          placeholder="Выберите"
-          size="small"
-          fluid
-          @update:model-value="markDirty"
-        /><small v-if="errors.categoryCode" class="text-red-500">{{ errors.categoryCode }}</small>
+        <FloatLabel variant="on">
+          <Select
+            v-model="categoryCode"
+            input-id="preparation-category"
+            :options="references.preparationCategories"
+            option-label="name"
+            option-value="code"
+            size="small"
+            fluid
+            @update:model-value="markDirty"
+          />
+          <label for="preparation-category" class="text-xs">Категория</label>
+        </FloatLabel>
+        <small v-if="errors.categoryCode" class="text-xs text-red-500">{{
+          errors.categoryCode
+        }}</small>
       </div>
       <div class="flex flex-col gap-2">
-        <label for="preparation-name" class="text-sm font-medium">Название</label
-        ><InputText
-          id="preparation-name"
-          v-model="name"
-          size="small"
-          fluid
-          @input="markDirty"
-        /><small v-if="errors.name" class="text-red-500">{{ errors.name }}</small>
+        <FloatLabel variant="on">
+          <InputText id="preparation-name" v-model="name" size="small" fluid @input="markDirty" />
+          <label for="preparation-name" class="text-xs">Название</label>
+        </FloatLabel>
+        <small v-if="errors.name" class="text-xs text-red-500">{{ errors.name }}</small>
       </div>
       <div class="flex flex-col gap-2">
         <div>
@@ -53,69 +64,85 @@
           :can-manage="canManage"
           :create-local-ingredient="createLocalIngredient"
           @update:model-value="markDirty"
-        /><small v-if="componentsError" class="text-red-500">{{ componentsError }}</small>
+        /><small v-if="componentsError" class="text-xs text-red-500">{{ componentsError }}</small>
       </div>
       <div class="flex flex-col gap-2">
-        <label for="preparation-technology" class="text-sm font-medium"
-          >Технология приготовления</label
-        ><Textarea
-          id="preparation-technology"
-          v-model="technology"
-          rows="5"
-          size="small"
-          fluid
-          @input="markDirty"
-        /><small v-if="errors.technology" class="text-red-500">{{ errors.technology }}</small>
+        <FloatLabel variant="on">
+          <Textarea
+            id="preparation-technology"
+            v-model="technology"
+            rows="5"
+            size="small"
+            fluid
+            @input="markDirty"
+          />
+          <label for="preparation-technology" class="text-xs">Технология приготовления</label>
+        </FloatLabel>
+        <small v-if="errors.technology" class="text-xs text-red-500">{{ errors.technology }}</small>
       </div>
       <div class="grid gap-4 sm:grid-cols-[1fr_10rem]">
         <div class="flex flex-col gap-2">
-          <label for="preparation-output" class="text-sm font-medium">Фактический выход</label
-          ><InputText
-            id="preparation-output"
-            v-model="outputAmount"
-            inputmode="decimal"
+          <FloatLabel variant="on">
+            <InputText
+              id="preparation-output"
+              v-model="outputAmount"
+              inputmode="decimal"
+              size="small"
+              placeholder="Необязательно"
+              fluid
+              @input="markDirty"
+            />
+            <label for="preparation-output" class="text-xs">Фактический выход</label>
+          </FloatLabel>
+          <small v-if="errors.outputAmount" class="text-xs text-red-500">{{
+            errors.outputAmount
+          }}</small>
+        </div>
+        <div class="flex flex-col gap-2">
+          <FloatLabel variant="on">
+            <Select
+              v-model="outputUnitId"
+              input-id="preparation-output-unit"
+              :options="references.units"
+              option-label="label"
+              option-value="id"
+              size="small"
+              fluid
+              @update:model-value="markDirty"
+            />
+            <label for="preparation-output-unit" class="text-xs">Единица</label>
+          </FloatLabel>
+          <small v-if="errors.outputUnitId" class="text-xs text-red-500">{{
+            errors.outputUnitId
+          }}</small>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <FloatLabel variant="on">
+          <Textarea
+            id="preparation-comment"
+            v-model="comment"
+            rows="3"
             size="small"
             placeholder="Необязательно"
             fluid
             @input="markDirty"
-          /><small v-if="errors.outputAmount" class="text-red-500">{{ errors.outputAmount }}</small>
-        </div>
-        <div class="flex flex-col gap-2">
-          <label for="preparation-output-unit" class="text-sm font-medium">Единица</label
-          ><Select
-            id="preparation-output-unit"
-            v-model="outputUnitId"
-            :options="references.units"
-            option-label="label"
-            option-value="id"
-            placeholder="Выберите"
-            size="small"
-            fluid
-            @update:model-value="markDirty"
-          /><small v-if="errors.outputUnitId" class="text-red-500">{{ errors.outputUnitId }}</small>
-        </div>
+          />
+          <label for="preparation-comment" class="text-xs">Комментарий</label>
+        </FloatLabel>
       </div>
-      <div class="flex flex-col gap-2">
-        <label for="preparation-comment" class="text-sm font-medium">Комментарий</label
-        ><Textarea
-          id="preparation-comment"
-          v-model="comment"
-          rows="3"
-          size="small"
-          placeholder="Необязательно"
-          fluid
-          @input="markDirty"
-        />
-      </div>
-      <div class="flex justify-end gap-2 border-t border-surface pt-4">
+      <div class="flex justify-end gap-2">
         <Button
           label="Отмена"
           severity="secondary"
           variant="text"
+          size="small"
           @click="requestVisibilityChange(false)"
-        /><Button
+        />
+        <Button
           :label="mode === 'edit' ? 'Сохранить изменения' : 'Создать заготовку'"
           type="submit"
+          size="small"
           :loading="saving"
           :disabled="
             referencesQuery.isLoading.value ||
@@ -148,6 +175,7 @@ import PreparationComponentRows, {
   type PreparationComponentRow,
 } from "./PreparationComponentRows.vue";
 import PreparationImpactDialog from "./PreparationImpactDialog.vue";
+import { compactMessagePt } from "~/utils/primevue-message";
 import {
   usePreparations,
   type PreparationCardResponseDto,

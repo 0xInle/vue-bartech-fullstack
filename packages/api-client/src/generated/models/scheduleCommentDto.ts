@@ -7,6 +7,6 @@
  */
 
 export interface ScheduleCommentDto {
-  /** @maxLength 1000 */
+  /** @maxLength 250 */
   text: string;
 }

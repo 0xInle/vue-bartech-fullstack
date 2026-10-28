@@ -22,7 +22,10 @@ export type ArchiveCard = ArchiveProductSummary & {
   country: string | null;
   externalIdentifier: string | null;
   components: ArchiveLink[];
-  garnishes: Array<ArchiveProductSummary & { status: ProductStatus }>;
+  garnishes: Array<
+    | (ArchiveProductSummary & { kind: "PRODUCT"; status: ProductStatus })
+    | { id: string; type: "QUICK"; name: string; kind: "QUICK"; status: null }
+  >;
   output: { amount: number; unitId: string; unit: string } | null;
   glass: string | null;
   ice: string | null;

@@ -3,7 +3,7 @@
     :visible="visible"
     modal
     header="Изменение затронет другие карточки"
-    :style="{ width: 'min(100vw - 2rem, 34rem)' }"
+    class="w-[calc(100vw-2rem)] max-w-xl"
     @update:visible="emit('cancel')"
   >
     <p class="text-sm text-color-secondary">
@@ -17,8 +17,14 @@
       </li>
     </ul>
     <template #footer>
-      <Button label="Отмена" severity="secondary" variant="text" @click="emit('cancel')" />
-      <Button label="Сохранить изменения" :loading="saving" @click="emit('confirm')" />
+      <Button
+        label="Отмена"
+        severity="secondary"
+        variant="text"
+        size="small"
+        @click="emit('cancel')"
+      />
+      <Button label="Сохранить изменения" size="small" :loading="saving" @click="emit('confirm')" />
     </template>
   </Dialog>
 </template>

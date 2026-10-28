@@ -3,7 +3,9 @@
     <LoadingIndicator screen />
   </div>
   <div v-else-if="errorMessage" class="mx-auto max-w-5xl pt-8">
-    <Message severity="error" :closable="false">{{ errorMessage }}</Message>
+    <Message severity="error" :closable="false" :pt="compactMessagePt">
+      {{ errorMessage }}
+    </Message>
   </div>
   <WorkspaceShell
     v-else-if="workspace && currentUser"
@@ -15,36 +17,37 @@
     <section class="mx-auto max-w-5xl">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Продукция</p>
-          <h1 class="text-xl mt-1 font-semibold tracking-tight">Гарниры</h1>
+          <h1 class="text-xl font-semibold tracking-tight">Гарниры</h1>
         </div>
         <Button
           v-if="canManage"
           label="Создать гарнир"
-          icon="pi pi-plus"
           size="small"
           @click="drawerVisible = true"
         />
       </div>
-      <div class="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_14rem]">
-        <InputText
-          v-model="searchText"
-          size="small"
-          placeholder="Поиск по названию"
-          aria-label="Поиск гарниров по названию"
-          fluid
-        />
-        <Select
-          v-model="sort"
-          :options="sortOptions"
-          option-label="label"
-          option-value="value"
-          aria-label="Сортировка гарниров"
-          size="small"
-          fluid
-        />
+      <div class="mt-5 max-w-md">
+        <FloatLabel variant="on">
+          <IconField>
+            <InputIcon class="pi pi-search" />
+            <InputText
+              id="garnish-search"
+              v-model="searchText"
+              size="small"
+              class="w-full"
+              aria-label="Поиск гарниров по названию"
+            />
+          </IconField>
+          <label for="garnish-search" class="text-xs">Поиск по названию</label>
+        </FloatLabel>
       </div>
-      <Message v-if="listQuery.isError.value" severity="error" :closable="false" class="mt-5">
+      <Message
+        v-if="listQuery.isError.value"
+        severity="error"
+        :closable="false"
+        :pt="compactMessagePt"
+        class="mt-5"
+      >
         Не удалось загрузить гарниры. Попробуйте обновить страницу.
       </Message>
       <LoadingIndicator v-else-if="listQuery.isLoading.value" screen />
@@ -53,7 +56,7 @@
           v-for="garnish in garnishes"
           :key="garnish.id"
           :to="garnishLocation(garnish.id)"
-          class="block rounded-lg border border-surface bg-surface-0 p-4 transition-colors hover:border-primary-200 hover:bg-primary-50 sm:rounded-none sm:border-x-0 sm:border-t-0 sm:bg-transparent sm:px-3 sm:py-3 sm:hover:border-surface sm:last:border-b-0"
+          class="block rounded-lg border border-surface bg-surface-0 p-4 transition-colors hover:border-primary-200 hover:bg-primary-50 sm:rounded-none sm:border-x-0 sm:border-t-0 sm:bg-transparent sm:px-3 sm:py-3 sm:hover:border-surface sm:hover:bg-primary-50 sm:last:border-b-0"
           @click="rememberScroll"
         >
           <div
@@ -77,13 +80,6 @@
               : "В заведении ещё нет гарниров."
           }}
         </p>
-        <Button
-          v-if="canManage && !hasFilters"
-          label="Создать первый гарнир"
-          size="small"
-          class="mt-3"
-          @click="drawerVisible = true"
-        />
       </div>
     </section>
     <GarnishFormDrawer
@@ -103,23 +99,19 @@ import WorkspaceShell from "~/features/workspace/components/WorkspaceShell.vue";
 import { useVenueWorkspace } from "~/features/workspace/composables/useVenueWorkspace";
 import GarnishFormDrawer from "./GarnishFormDrawer.vue";
 import { useGarnishes } from "../composables/useGarnishes";
+import { compactMessagePt } from "~/utils/primevue-message";
+import IconField from "primevue/iconfield";
+import InputIcon from "primevue/inputicon";
 
 const { currentUser, errorMessage, loading, switchWorkspace, workspace, workplaces } =
   useVenueWorkspace();
 const companyId = computed(() => workspace.value?.company.id ?? "");
 const venueId = computed(() => workspace.value?.venue.id ?? "");
-const { listQuery, rememberScroll, restoreScroll, searchText, sort } = useGarnishes(
-  companyId,
-  venueId,
-);
+const { listQuery, rememberScroll, restoreScroll, searchText } = useGarnishes(companyId, venueId);
 const drawerVisible = ref(false);
 const garnishes = computed(() => listQuery.data.value ?? []);
 const canManage = computed(() => workspace.value?.permissions.includes("manage_products") ?? false);
 const hasFilters = computed(() => Boolean(searchText.value.trim()));
-const sortOptions = [
-  { label: "По названию", value: "name" },
-  { label: "Сначала изменённые", value: "updated" },
-];
 const restoredContext = ref("");
 watch(
   () =>
@@ -138,7 +130,6 @@ function garnishLocation(id: string) {
     path: `/app/companies/${companyId.value}/venues/${venueId.value}/garnishes/${id}`,
     query: {
       query: searchText.value.trim() || undefined,
-      sort: sort.value === "updated" ? sort.value : undefined,
     },
   };
 }

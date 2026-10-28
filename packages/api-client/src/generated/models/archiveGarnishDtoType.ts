@@ -14,4 +14,5 @@ export const ArchiveGarnishDtoType = {
   PREPARATION: 'PREPARATION',
   GARNISH: 'GARNISH',
   COCKTAIL: 'COCKTAIL',
+  QUICK: 'QUICK',
 } as const;

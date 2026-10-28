@@ -34,6 +34,7 @@ import type {
   CreateCocktailDto,
   CreateGarnishDto,
   CreateLocalIngredientDto,
+  CreateLocalReferenceValueDto,
   CreatePreparationDto,
   InternalServiceProductsControllerCocktailGarnishesParams,
   InternalServiceProductsControllerCocktailsListParams,
@@ -1787,6 +1788,111 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
         TContext
       > => {
       return useMutation(getInternalServiceProductsControllerCreateIngredientMutationOptions(options), queryClient);
+    }
+    export type internalServiceProductsControllerCreateReferenceValueResponse201 = {
+  data: void
+  status: 201
+}
+
+export type internalServiceProductsControllerCreateReferenceValueResponseSuccess = (internalServiceProductsControllerCreateReferenceValueResponse201) & {
+  headers: Headers;
+};
+;
+
+export type internalServiceProductsControllerCreateReferenceValueResponse = (internalServiceProductsControllerCreateReferenceValueResponseSuccess)
+
+export const getInternalServiceProductsControllerCreateReferenceValueUrl = (serviceSessionId: unknown,
+    companyId: unknown,
+    venueId: unknown,) => {
+
+
+
+
+  return `/api/v1/internal/service-sessions/${serviceSessionId}/companies/${companyId}/venues/${venueId}/products/reference-values`
+}
+
+export const internalServiceProductsControllerCreateReferenceValue = async (serviceSessionId: unknown,
+    companyId: unknown,
+    venueId: unknown,
+    createLocalReferenceValueDto: CreateLocalReferenceValueDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<internalServiceProductsControllerCreateReferenceValueResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getInternalServiceProductsControllerCreateReferenceValueUrl(serviceSessionId,companyId,venueId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createLocalReferenceValueDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: internalServiceProductsControllerCreateReferenceValueResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as internalServiceProductsControllerCreateReferenceValueResponse
+}
+
+
+
+
+
+export const getInternalServiceProductsControllerCreateReferenceValueMutationKey = () => ['internalServiceProductsControllerCreateReferenceValue'] as const;
+
+export const getInternalServiceProductsControllerCreateReferenceValueMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalServiceProductsControllerCreateReferenceValue>>, TError,InternalServiceProductsControllerCreateReferenceValueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof internalServiceProductsControllerCreateReferenceValue>>, TError,InternalServiceProductsControllerCreateReferenceValueMutationVariables, TContext> => {
+
+const mutationKey = getInternalServiceProductsControllerCreateReferenceValueMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof internalServiceProductsControllerCreateReferenceValue>>, InternalServiceProductsControllerCreateReferenceValueMutationVariables> = (props) => {
+          const {serviceSessionId,companyId,venueId,data} = props ?? {};
+
+          return  internalServiceProductsControllerCreateReferenceValue(serviceSessionId,companyId,venueId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InternalServiceProductsControllerCreateReferenceValueMutationResult = NonNullable<Awaited<ReturnType<typeof internalServiceProductsControllerCreateReferenceValue>>>
+    export type InternalServiceProductsControllerCreateReferenceValueMutationBody = CreateLocalReferenceValueDto
+    export type InternalServiceProductsControllerCreateReferenceValueMutationError = unknown
+    export type InternalServiceProductsControllerCreateReferenceValueMutationVariables = {serviceSessionId: unknown;companyId: unknown;venueId: unknown;data: CreateLocalReferenceValueDto}
+
+    export const useInternalServiceProductsControllerCreateReferenceValue = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalServiceProductsControllerCreateReferenceValue>>, TError,InternalServiceProductsControllerCreateReferenceValueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof internalServiceProductsControllerCreateReferenceValue>>,
+        TError,
+        InternalServiceProductsControllerCreateReferenceValueMutationVariables,
+        TContext
+      > => {
+      return useMutation(getInternalServiceProductsControllerCreateReferenceValueMutationOptions(options), queryClient);
     }
     export type internalServiceProductsControllerIngredientResponse200 = {
   data: LocalIngredientCardResponseDto

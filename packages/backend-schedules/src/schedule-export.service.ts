@@ -43,7 +43,7 @@ async function renderXlsx(report: ScheduleReport): Promise<Buffer> {
   sheet.columns = [
     { header: "Сотрудник", key: "employee", width: 28 },
     { header: "Должность", key: "role", width: 20 },
-    ...days.map((day) => ({ header: String(day), key: "day" + day, width: 5 })),
+    ...days.map((day) => ({ header: String(day), key: "day" + day, width: 14 })),
     { header: "Итого часов", key: "hours", width: 14 },
     { header: "Итого смен", key: "shifts", width: 14 },
   ];
@@ -57,7 +57,7 @@ async function renderXlsx(report: ScheduleReport): Promise<Buffer> {
       row.roleLabel,
       ...row.cells.map(({ value }) =>
         value?.kind === "SHIFT"
-          ? value.durationHours + (value.shiftType === "NIGHT" ? "*" : "")
+          ? shiftText(value.shiftCode, value.startMinute, value.durationHours)
           : value?.kind === "STATUS"
             ? statusLabel(value.status)
             : "",
@@ -66,7 +66,7 @@ async function renderXlsx(report: ScheduleReport): Promise<Buffer> {
       row.totalShifts,
     ]);
     row.cells.forEach(({ value }, index) => {
-      if (value?.kind === "SHIFT" && value.shiftType === "NIGHT") {
+      if (value?.kind === "SHIFT") {
         const cell = excelRow.getCell(index + 3);
         cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF475569" } };
         cell.font = { color: { argb: "FFFFFFFF" } };
@@ -75,7 +75,7 @@ async function renderXlsx(report: ScheduleReport): Promise<Buffer> {
   }
   sheet.addRow([]);
   sheet.addRow([
-    "Число — обычная смена; число* — ночная смена; пустая ячейка — выходной; О — отпуск; Б — больничный; Н — неявка",
+    "У/Д/В/Н — тип смены, время начала и длительность; пустая ячейка — выходной; О — отпуск; Б — больничный; Н — неявка",
   ]);
   sheet.views = [{ state: "frozen", xSplit: 2, ySplit: 2 }];
   return Buffer.from(await workbook.xlsx.writeBuffer());
@@ -99,7 +99,7 @@ async function renderPdf(report: ScheduleReport): Promise<Buffer> {
   const totalsWidth = 92;
   const dayWidth =
     (pageWidth - fixedWidths[0]! - fixedWidths[1]! - totalsWidth * 2) / report.daysInMonth;
-  const rowHeight = 22;
+  const rowHeight = 30;
   let y = document.y;
   const x = document.page.margins.left;
   const headers = [
@@ -126,14 +126,14 @@ async function renderPdf(report: ScheduleReport): Promise<Buffer> {
     }
     const cells = row.cells.map(({ value }) =>
       value?.kind === "SHIFT"
-        ? String(value.durationHours) + (value.shiftType === "NIGHT" ? "*" : "")
+        ? shiftText(value.shiftCode, value.startMinute, value.durationHours)
         : value?.kind === "STATUS"
           ? statusLabel(value.status)
           : "",
     );
     const nightCells = new Set(
       row.cells.flatMap(({ value }, index) =>
-        value?.kind === "SHIFT" && value.shiftType === "NIGHT" ? [index + 2] : [],
+        value?.kind === "SHIFT" && value.shiftCode === "NIGHT" ? [index + 2] : [],
       ),
     );
     drawRow(
@@ -153,7 +153,7 @@ async function renderPdf(report: ScheduleReport): Promise<Buffer> {
     .fontSize(8)
     .fillColor("#1f2937")
     .text(
-      "Число — обычная смена; число* — ночная смена; пустая ячейка — выходной; О — отпуск; Б — больничный; Н — неявка.",
+      "У/Д/В/Н — тип смены, время начала и длительность. Пустая ячейка — выходной; О — отпуск; Б — больничный; Н — неявка.",
     );
   document.end();
   return complete;
@@ -169,18 +169,17 @@ function drawRow(
   nightCells = new Set<number>(),
 ) {
   let x = startX;
-  document.font(header ? cyrillicBoldFont : cyrillicFont).fontSize(header ? 7 : 6.5);
+  document.font(header ? cyrillicBoldFont : cyrillicFont).fontSize(header ? 7 : 5.5);
   values.forEach((value, index) => {
     const width = widths[index]!;
     const isNight = nightCells.has(index);
-    if (isNight) document.rect(x, y, width, 22).fill("#475569");
-    document.rect(x, y, width, 22).strokeColor("#cbd5e1").stroke();
+    if (isNight) document.rect(x, y, width, 30).fill("#475569");
+    document.rect(x, y, width, 30).strokeColor("#cbd5e1").stroke();
     document.fillColor(isNight ? "#ffffff" : "#1f2937");
-    document.text(value, x + 2, y + 6, {
+    document.text(value, x + 2, y + 3, {
       width: width - 4,
       height: 10,
       ellipsis: true,
-      lineBreak: false,
     });
     x += width;
   });
@@ -188,4 +187,10 @@ function drawRow(
 
 function statusLabel(status: string): string {
   return { VACATION: "О", SICK_LEAVE: "Б", NO_SHOW: "Н" }[status] ?? status;
+}
+
+function shiftText(code: string, startMinute: number, durationHours: number): string {
+  const shortCode = { MORNING: "У", DAY: "Д", EVENING: "В", NIGHT: "Н" }[code] ?? code;
+  const start = `${String(Math.floor(startMinute / 60)).padStart(2, "0")}:${String(startMinute % 60).padStart(2, "0")}`;
+  return `${shortCode}\n${start}\n${durationHours} ч`;
 }

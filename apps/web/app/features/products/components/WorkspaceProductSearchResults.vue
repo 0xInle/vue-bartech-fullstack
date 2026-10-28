@@ -4,9 +4,15 @@
     <Message v-else-if="active && error" severity="error" :closable="false" :pt="compactMessagePt">
       Не удалось выполнить поиск. Попробуйте ещё раз.
     </Message>
-    <p v-else-if="active && ready && items.length === 0" class="mt-2 text-sm text-color-secondary">
+    <Message
+      v-else-if="active && ready && items.length === 0"
+      severity="secondary"
+      :closable="false"
+      :pt="compactMessagePt"
+      class="mt-2"
+    >
       По вашему запросу ничего не найдено
-    </p>
+    </Message>
     <DataTable
       v-else-if="active && ready && items.length > 0"
       v-model:selection="selectedItem"
@@ -17,21 +23,7 @@
       size="small"
       row-hover
       class="product-search-results-table mt-3 text-sm"
-      :pt="{
-        root: {
-          style: {
-            '--p-datatable-border-color': 'var(--p-content-border-color)',
-            '--p-datatable-header-cell-background': 'transparent',
-            '--p-datatable-row-background': 'transparent',
-            '--p-datatable-row-hover-background':
-              'color-mix(in srgb, var(--p-primary-100) 70%, var(--p-content-background))',
-            border: '1px solid var(--p-datatable-border-color)',
-            borderRadius: 'var(--p-content-border-radius)',
-          },
-        },
-        headerCell: { class: 'text-sm' },
-        bodyCell: { class: 'text-sm' },
-      }"
+      :pt="productSearchTablePt"
       @row-select="emit('select', $event.data)"
     >
       <Column field="name" header="Наименование">
@@ -68,6 +60,39 @@ const emit = defineEmits<{
   select: [item: WorkspaceSearchItem];
 }>();
 const selectedItem = ref<WorkspaceSearchItem | null>(null);
+const productSearchTablePt = {
+  root: {
+    style: {
+      "--p-datatable-border-color": "var(--p-content-border-color)",
+      "--p-datatable-header-cell-background": "transparent",
+      "--p-datatable-row-background": "transparent",
+      "--p-datatable-row-hover-background":
+        "color-mix(in srgb, var(--p-primary-100) 70%, var(--p-content-background))",
+      border: "1px solid var(--p-datatable-border-color)",
+      borderRadius: "var(--p-content-border-radius)",
+    },
+  },
+  headerCell: {
+    class: "whitespace-nowrap px-1 py-1 text-sm",
+    style: {
+      borderTop: "0",
+      borderRight: "0",
+      borderLeft: "0",
+      borderBottom: "1px solid var(--p-content-border-color)",
+      fontWeight: "400",
+    },
+  },
+  bodyCell: {
+    class: "px-1 py-1 text-sm",
+    style: {
+      borderTop: "0",
+      borderRight: "0",
+      borderLeft: "0",
+      borderBottom: "1px solid var(--p-content-border-color)",
+    },
+  },
+  bodyRow: { class: "cursor-pointer" },
+};
 
 watch(
   () => props.items,

@@ -231,7 +231,7 @@ export class ExportRendererService {
       const unit = snapshot.dependencies.units.find((entry) => entry.id === details.outputUnitId);
       drawField(document, "Выход", `${details.outputAmount} ${String(unit?.label ?? "")}`);
     }
-    if (details.cocktail?.glass) drawField(document, "Бокал", details.cocktail.glass);
+    if (details.cocktail?.glass) drawField(document, "Посуда", details.cocktail.glass);
     if (details.cocktail?.ice) drawField(document, "Лёд", details.cocktail.ice);
     if (details.cocktail?.preparationMethod)
       drawField(document, "Метод приготовления", details.cocktail.preparationMethod);

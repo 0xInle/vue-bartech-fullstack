@@ -5,6 +5,7 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { CocktailGarnishSelectionDto } from './cocktailGarnishSelectionDto';
 import type { ProductComponentDto } from './productComponentDto';
 import type { ProductOutputDto } from './productOutputDto';
 
@@ -17,7 +18,7 @@ export interface CreateCocktailDto {
   comment?: string;
   /**
      * @minItems 1
-     * @maxItems 100
+     * @maxItems 20
      */
   components: ProductComponentDto[];
   output?: ProductOutputDto;
@@ -26,4 +27,10 @@ export interface CreateCocktailDto {
   preparationMethodId: string;
   /** @maxItems 20 */
   garnishIds?: string[];
+  /** @maxItems 20 */
+  quickGarnishIds?: string[];
+  /** @maxItems 20 */
+  garnishSelections?: CocktailGarnishSelectionDto[];
+  /** @maxItems 20 */
+  categoryIds?: string[];
 }

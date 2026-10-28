@@ -1,6 +1,6 @@
 <template>
-  <section class="space-y-5">
-    <header class="flex flex-wrap items-center gap-3">
+  <section class="flex min-h-0 min-w-0 flex-1 flex-col gap-5">
+    <header class="flex shrink-0 flex-wrap items-center gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <Button
           icon="pi pi-chevron-left"
@@ -22,101 +22,67 @@
           @click="moveMonth(1)"
         />
       </div>
-      <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-        <Button v-if="canManage" label="Сформировать" size="small" @click="openGenerate" />
-        <Button
-          v-if="canManage"
-          label="Шаблоны"
-          severity="secondary"
-          variant="outlined"
-          size="small"
-          @click="openTemplates"
-        />
-        <Button
-          v-if="canManage"
-          label="Выгрузить"
-          severity="secondary"
-          variant="outlined"
-          size="small"
-          @click="openExport"
-        />
+      <div class="relative ml-auto flex flex-wrap items-center justify-end gap-2">
+        <template v-if="canManage && selectedCells.length">
+          <Divider layout="vertical" class="!mx-0 !my-0 self-stretch" />
+          <span class="text-xs text-color-secondary"
+            >Выбрано ячеек: {{ selectedCells.length }}</span
+          >
+          <Button label="Изменить" size="small" :disabled="busy" @click="openBulkEditor" />
+          <Button
+            label="Удалить"
+            severity="danger"
+            size="small"
+            :loading="busy"
+            @click="bulkDeleteVisible = true"
+          />
+          <Button
+            label="Сбросить"
+            severity="secondary"
+            variant="text"
+            size="small"
+            :disabled="busy"
+            @click="resetCellSelection"
+          />
+        </template>
+        <template v-else>
+          <Button v-if="canManage" label="Настройка смен" size="small" @click="openShiftSettings" />
+          <Button v-if="canManage" label="Шаблоны" size="small" @click="openTemplates" />
+          <Button v-if="canManage" label="Заполнить график" size="small" @click="openGenerate" />
+          <Button v-if="canManage" label="Выгрузить" size="small" @click="openExport" />
+        </template>
       </div>
     </header>
 
-    <Message v-if="error" severity="error" :closable="false" :pt="compactMessagePt">{{
-      error
-    }}</Message>
+    <Message
+      v-if="error"
+      severity="error"
+      :closable="false"
+      :pt="compactMessagePt"
+      class="shrink-0"
+      >{{ error }}</Message
+    >
     <Message
       v-if="!previewMode && schedule.monthQuery.isError.value"
       severity="error"
       :closable="false"
       :pt="compactMessagePt"
+      class="shrink-0"
       >Не удалось загрузить график. Обновите страницу и попробуйте ещё раз.</Message
     >
-    <div v-if="canManage && selectedCells.length" class="flex flex-wrap items-center gap-2">
-      <span class="text-sm text-color-secondary">Выбрано ячеек: {{ selectedCells.length }}</span>
-      <Select
-        v-model="bulkKind"
-        :options="valueKinds"
-        option-label="label"
-        option-value="value"
-        size="small"
-        placeholder="Тип значения"
-        class="w-44"
-      />
-      <InputNumber
-        v-if="bulkKind === 'SHIFT'"
-        v-model="bulkHours"
-        :min="1"
-        :max="24"
-        size="small"
-        input-class="w-16"
-      />
-      <Select
-        v-if="bulkKind === 'SHIFT'"
-        v-model="bulkShiftType"
-        :options="shiftTypes"
-        option-label="label"
-        option-value="value"
-        size="small"
-        class="w-32"
-      />
-      <Select
-        v-else-if="bulkKind === 'STATUS'"
-        v-model="bulkStatus"
-        :options="statusOptions"
-        option-label="label"
-        option-value="value"
-        size="small"
-        class="w-40"
-      />
-      <Button
-        label="Применить"
-        size="small"
-        :disabled="!bulkKind || (bulkKind === 'STATUS' && !bulkStatus)"
-        :loading="busy"
-        @click="applyBulk"
-      />
-      <Button
-        label="Очистить выбор"
-        severity="secondary"
-        variant="text"
-        size="small"
-        @click="selectedCells = []"
-      />
-    </div>
-
     <div
-      class="schedule-table-viewport relative"
+      class="schedule-table-viewport relative min-h-0 min-w-0 flex-1"
       :aria-busy="(!previewMode && schedule.monthQuery.isFetching.value) || previewMonthLoading"
     >
       <DataTable
         :value="rows"
+        :row-class="scheduleRowClass"
         size="small"
         scrollable
+        scroll-height="flex"
         show-gridlines
         row-hover
-        class="schedule-table text-sm"
+        class="schedule-table h-full text-sm"
         :pt="tablePt"
       >
         <Column
@@ -136,9 +102,9 @@
           </template>
           <template #body="{ data }">
             <span
-              class="whitespace-nowrap text-sm font-normal"
-              :class="{ 'cursor-pointer': canEdit && selectedCells.length > 0 }"
-              @click.stop="toggleEmployeeSelection(data)"
+              class="block w-full whitespace-nowrap text-sm font-normal"
+              :class="{ 'cursor-pointer': canEdit }"
+              @click.stop="toggleEmployeeSelection($event, data)"
             >
               {{ data.fullName }}
             </span>
@@ -169,12 +135,24 @@
         <Column
           v-for="day in days"
           :key="day"
-          :header-style="isWeekend(day) ? weekendBackgroundStyle : undefined"
+          :header-style="dayHeaderStyle(day)"
           :body-style="dayBodyStyle(day)"
-          style="min-width: 33px; width: 33px; max-width: 33px"
+          style="min-width: 34px; width: 34px; max-width: 34px"
         >
           <template #header>
-            <div class="flex flex-col items-center justify-center leading-tight">
+            <button
+              v-if="canManage"
+              type="button"
+              class="flex w-full cursor-pointer flex-col items-center justify-center rounded-sm leading-tight hover:bg-emphasis focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+              :disabled="busy"
+              :aria-pressed="isInventoryMarked(day)"
+              :aria-label="inventoryDayLabel(day)"
+              @click="toggleInventoryMarker(day)"
+            >
+              <span>{{ day }}</span>
+              <span class="text-sm text-color-secondary">{{ weekday(day) }}</span>
+            </button>
+            <div v-else class="flex flex-col items-center justify-center leading-tight">
               <span>{{ day }}</span>
               <span class="text-sm text-color-secondary">{{ weekday(day) }}</span>
             </div>
@@ -187,12 +165,40 @@
             >
               <span
                 v-if="data.cells[day - 1]?.applicable"
-                class="flex min-h-[33px] w-full shrink-0 cursor-pointer items-center justify-center py-2.5 text-center text-xs font-normal leading-none hover:bg-emphasis"
+                v-tooltip.top="
+                  cellTooltip(data.cells[day - 1].value)
+                    ? {
+                        value: cellTooltip(data.cells[day - 1].value),
+                        showDelay: 1000,
+                        class: 'app-tooltip',
+                      }
+                    : undefined
+                "
+                class="flex h-[33px] min-h-[33px] w-full shrink-0 cursor-pointer items-center justify-center p-0 text-center text-xs font-normal leading-none hover:bg-emphasis"
                 :style="cellStyle(data.cells[day - 1].value, isCellSelected(data, day - 1))"
               >
                 {{ cellLabel(data.cells[day - 1].value) }}
               </span>
-              <span v-else class="py-2.5 text-color-secondary">—</span>
+              <OverlayBadge
+                v-if="data.cells[day - 1]?.applicable && data.cells[day - 1]?.comment?.text?.trim()"
+                v-tooltip.top="{
+                  value: commentPreview(data.cells[day - 1].comment?.text),
+                  showDelay: 0,
+                  class: 'app-tooltip',
+                }"
+                severity="success"
+                size="small"
+                class="!absolute !right-0 !top-0 z-10"
+                :aria-label="commentPreview(data.cells[day - 1].comment?.text)"
+                :pt="{
+                  pcBadge: { root: { class: '!h-1.5 !min-w-1.5 !w-1.5 !p-0' } },
+                }"
+              />
+              <span
+                v-else-if="!data.cells[day - 1]?.applicable"
+                class="flex h-[33px] min-h-[33px] w-full shrink-0 items-center justify-center p-0 text-center text-xs leading-none text-color-secondary"
+                aria-hidden="true"
+              />
             </div>
           </template>
         </Column>
@@ -221,7 +227,11 @@
           </template>
         </Column>
         <template #empty>
-          <span class="text-color-secondary">В этом месяце нет сотрудников</span>
+          <span
+            v-if="previewMode || schedule.monthQuery.isSuccess.value"
+            class="text-color-secondary"
+            >В этом месяце нет сотрудников</span
+          >
         </template>
       </DataTable>
       <div
@@ -233,59 +243,28 @@
     </div>
 
     <div
-      class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-md border border-[var(--p-content-border-color)] p-2 text-xs text-color-secondary"
+      class="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-md border border-[var(--p-content-border-color)] p-2 text-xs text-color-secondary"
       aria-label="Обозначения графика"
     >
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span class="flex items-center gap-1.5">
+        <span v-for="shift in allShiftTypes" :key="shift.value" class="flex items-center gap-1.5">
           <i
             class="inline-block h-4 w-4 shrink-0 rounded border"
-            style="
-              background-color: var(--p-content-background);
-              border-color: var(--p-content-border-color);
-            "
+            :style="shiftColorStyle(shift.value)"
           />
-          Обычная смена
+          {{ shiftLetter(shift.value) }} | {{ shiftLegendName(shift.value) }}
         </span>
         <span class="flex items-center gap-1.5">
-          <i
-            class="inline-block h-4 w-4 shrink-0 rounded border"
-            style="
-              background-color: var(--p-message-info-border-color);
-              border-color: var(--p-content-border-color);
-            "
-          />
-          Ночная смена
+          <i class="inline-block h-4 w-4 shrink-0 rounded border" :style="statusColorStyle" />
+          О | Отпуск
         </span>
         <span class="flex items-center gap-1.5">
-          <i
-            class="inline-block h-4 w-4 shrink-0 rounded border"
-            style="
-              background-color: var(--p-message-warn-border-color);
-              border-color: var(--p-content-border-color);
-            "
-          />
-          О — отпуск
+          <i class="inline-block h-4 w-4 shrink-0 rounded border" :style="statusColorStyle" />
+          Б | Больничный
         </span>
         <span class="flex items-center gap-1.5">
-          <i
-            class="inline-block h-4 w-4 shrink-0 rounded border"
-            style="
-              background-color: var(--p-message-warn-border-color);
-              border-color: var(--p-content-border-color);
-            "
-          />
-          Б — больничный
-        </span>
-        <span class="flex items-center gap-1.5">
-          <i
-            class="inline-block h-4 w-4 shrink-0 rounded border"
-            style="
-              background-color: var(--p-message-error-border-color);
-              border-color: var(--p-content-border-color);
-            "
-          />
-          Н — неявка
+          <i class="inline-block h-4 w-4 shrink-0 rounded border" :style="statusColorStyle" />
+          Н | Неявка
         </span>
       </div>
       <Divider layout="vertical" class="!mx-0 !my-0 self-stretch" />
@@ -294,98 +273,355 @@
       </div>
     </div>
 
-    <Dialog v-model:visible="cellVisible" modal header="Ячейка графика" class="w-full max-w-lg">
-      <div v-if="activeCell" class="space-y-4">
-        <p class="text-sm text-color-secondary">
-          {{ activeRow?.fullName }} · {{ activeCell.date }}
-        </p>
-        <section v-if="canEdit" class="space-y-3">
-          <FloatLabel variant="on"
-            ><Select
-              v-model="editKind"
-              input-id="schedule-value-kind"
-              :options="valueKinds"
-              option-label="label"
-              option-value="value"
-              size="small"
-              class="w-full"
-            /><label for="schedule-value-kind">Значение</label></FloatLabel
-          >
-          <div v-if="editKind === 'SHIFT'" class="flex gap-2">
-            <InputNumber v-model="editHours" :min="1" :max="24" size="small" input-class="w-20" />
+    <Drawer
+      v-model:visible="shiftSettingsVisible"
+      position="right"
+      class="drawer-size-xs h-screen max-h-screen h-dvh max-h-dvh"
+      :pt="{
+        header: { class: '!items-center' },
+        title: { style: { fontSize: '1rem', fontWeight: '600' } },
+        pcCloseButton: { root: { class: '!rounded-md' } },
+        content: { class: '!flex !min-h-0 !flex-col' },
+      }"
+    >
+      <template #header="{ class: titleClass }">
+        <span :class="[titleClass, 'leading-none']">Настройка смен</span>
+      </template>
+      <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pt-2">
+        <Message
+          v-if="error"
+          severity="error"
+          size="small"
+          :closable="false"
+          :pt="compactMessagePt"
+        >
+          {{ error }}
+        </Message>
+        <form class="space-y-4" @submit.prevent="saveShiftSetting">
+          <FloatLabel variant="on">
             <Select
-              v-model="editShiftType"
-              :options="shiftTypes"
+              v-model="draftShiftCode"
+              input-id="schedule-shift-type"
+              :options="allShiftTypes"
               option-label="label"
               option-value="value"
               size="small"
               class="w-full"
+              :disabled="busy"
+              @update:model-value="selectShiftDraft"
             />
+            <label for="schedule-shift-type" class="text-xs">Смена</label>
+          </FloatLabel>
+          <FloatLabel variant="on">
+            <InputNumber
+              v-model="draftDurationHours"
+              input-id="schedule-shift-duration"
+              :min="1"
+              :max="24"
+              :step="1"
+              show-buttons
+              button-layout="stacked"
+              size="small"
+              class="w-full"
+              :disabled="busy"
+            />
+            <label for="schedule-shift-duration" class="text-xs">Длительность смены</label>
+          </FloatLabel>
+          <div class="grid grid-cols-2 gap-3">
+            <FloatLabel variant="on">
+              <DatePicker
+                v-model="draftStartTime"
+                input-id="schedule-shift-start"
+                time-only
+                hour-format="24"
+                :step-minute="5"
+                :manual-input="true"
+                size="small"
+                class="w-full"
+                :timepicker-button-props="timePickerButtonProps"
+                :pt="timePickerInputPt"
+                :disabled="busy"
+                @show="initializeDraftTime"
+              />
+              <label for="schedule-shift-start" class="text-xs">Начало смены</label>
+            </FloatLabel>
+            <FloatLabel variant="on">
+              <InputText
+                id="schedule-shift-end"
+                :model-value="draftEndTime"
+                size="small"
+                class="w-full"
+                readonly
+                tabindex="-1"
+              />
+              <label for="schedule-shift-end" class="text-xs">Конец смены</label>
+            </FloatLabel>
           </div>
-          <Select
-            v-else-if="editKind === 'STATUS'"
-            v-model="editStatus"
-            :options="statusOptions"
-            option-label="label"
-            option-value="value"
-            size="small"
-            class="w-full"
-            placeholder="Статус"
-          />
-          <Button label="Сохранить значение" size="small" :loading="busy" @click="saveCell" />
-        </section>
-        <section class="space-y-2">
-          <h2 class="text-base font-medium">Комментарий</h2>
-          <Textarea
-            v-model="commentText"
-            rows="3"
-            maxlength="1000"
-            class="w-full"
-            :disabled="busy"
-            placeholder="Комментарий к этому дню"
-          />
-          <p v-if="activeCell.comment" class="text-xs text-color-secondary">
-            Обновил {{ activeCell.comment.updatedBy }} ·
-            {{ formatDate(activeCell.comment.updatedAt) }}
-          </p>
           <Button
-            label="Сохранить комментарий"
-            severity="secondary"
-            variant="outlined"
+            type="submit"
+            :label="draftEditingId ? 'Сохранить смену' : 'Добавить смену'"
             size="small"
+            class="w-full"
+            :disabled="!draftShiftCode || !draftStartTime || !draftDurationHours || busy"
             :loading="busy"
-            :disabled="!commentText.trim()"
-            @click="saveCellComment"
           />
-          <ul
-            v-if="activeCell.comment?.history.length"
-            class="space-y-1 border-t border-surface pt-2 text-xs text-color-secondary"
+        </form>
+
+        <Divider class="!my-0" />
+        <section class="space-y-3">
+          <h2 class="text-sm font-semibold">Настроенные смены</h2>
+          <div v-if="shiftSettings.length" class="divide-y divide-[var(--p-content-border-color)]">
+            <div
+              v-for="setting in shiftSettings"
+              :key="setting.id ?? setting.shiftCode"
+              class="flex min-h-8 min-w-0 items-end gap-2 px-1 py-1"
+            >
+              <div class="min-w-0 flex-1">
+                <span class="block text-sm font-medium">{{ shiftLabel(setting.shiftCode) }}</span>
+                <span class="flex flex-wrap gap-1 pt-1 text-xs text-color-secondary">
+                  <Tag
+                    :value="formatShiftTime(setting.startTime, setting.defaultDurationHours)"
+                    severity="secondary"
+                    :pt="compactTagPt"
+                  />
+                  <Tag
+                    :value="`${setting.defaultDurationHours} ч`"
+                    severity="secondary"
+                    :pt="compactTagPt"
+                  />
+                </span>
+              </div>
+              <div class="ml-auto flex shrink-0 items-center gap-1">
+                <Button
+                  icon="pi pi-pencil"
+                  severity="secondary"
+                  variant="text"
+                  size="small"
+                  class="!h-5 !min-h-5 !w-5 !p-0"
+                  :aria-label="`Редактировать смену: ${shiftLabel(setting.shiftCode)}`"
+                  :disabled="busy"
+                  @click="editShiftSetting(setting.id)"
+                />
+                <Button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  variant="text"
+                  size="small"
+                  class="!h-5 !min-h-5 !w-5 !p-0"
+                  :aria-label="`Удалить смену: ${shiftLabel(setting.shiftCode)}`"
+                  :disabled="busy"
+                  @click="removeShiftSetting(setting.id)"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            v-else
+            class="rounded-lg border border-dashed border-[var(--p-divider-border-color)] p-4 text-center"
           >
+            <p class="text-xs text-color-secondary">Нет настроенных смен</p>
+          </div>
+        </section>
+      </div>
+    </Drawer>
+
+    <Dialog
+      v-model:visible="cellVisible"
+      modal
+      dismissable-mask
+      :header="bulkEditMode ? 'Массовое изменение' : activeRow?.fullName"
+      class="dialog-size-sm"
+      :pt="{
+        root: { 'aria-labelledby': 'schedule-cell-dialog-title' },
+        pcCloseButton: { root: { class: '!rounded-md' } },
+      }"
+    >
+      <template #header="{ class: titleClass }">
+        <div
+          id="schedule-cell-dialog-title"
+          :class="[titleClass, 'flex min-w-0 flex-1 items-center gap-2']"
+        >
+          <span v-if="bulkEditMode" class="min-w-0 truncate text-base font-semibold">
+            Изменить выбранные ячейки
+          </span>
+          <span v-else class="min-w-0 truncate text-base font-semibold">{{
+            activeRow?.fullName
+          }}</span>
+          <Tag
+            v-if="activeCell && !bulkEditMode"
+            :value="formatCellDayMonth(activeCell.date)"
+            severity="secondary"
+            :pt="compactTagPt"
+            class="shrink-0"
+          />
+        </div>
+      </template>
+      <div v-if="activeCell || bulkEditMode" class="space-y-4">
+        <Message
+          v-if="error"
+          severity="error"
+          size="small"
+          :closable="false"
+          :pt="compactMessagePt"
+          class="shrink-0"
+        >
+          {{ error }}
+        </Message>
+        <section v-if="canEdit" class="space-y-3 pt-2">
+          <FloatLabel variant="on">
+            <Select
+              v-model="editOptionValue"
+              input-id="schedule-cell-choice"
+              :options="cellValueOptions"
+              option-label="label"
+              option-value="value"
+              size="small"
+              class="w-full"
+              :disabled="busy"
+              @update:model-value="selectEditChoice"
+            />
+            <label for="schedule-cell-choice" class="text-xs">Смена или статус</label>
+          </FloatLabel>
+          <div v-if="isEditingShift" class="space-y-3">
+            <FloatLabel variant="on">
+              <InputNumber
+                v-model="editHours"
+                input-id="schedule-cell-duration"
+                :min="1"
+                :max="24"
+                :step="1"
+                show-buttons
+                button-layout="stacked"
+                size="small"
+                class="w-full"
+                :disabled="busy"
+              />
+              <label for="schedule-cell-duration" class="text-xs">Длительность смены</label>
+            </FloatLabel>
+            <div class="grid grid-cols-2 gap-3">
+              <FloatLabel variant="on">
+                <DatePicker
+                  v-model="editStartTime"
+                  input-id="schedule-cell-start"
+                  time-only
+                  hour-format="24"
+                  :step-minute="5"
+                  :manual-input="true"
+                  size="small"
+                  class="w-full"
+                  :timepicker-button-props="timePickerButtonProps"
+                  :pt="timePickerInputPt"
+                  :disabled="busy"
+                  @show="initializeEditTime"
+                />
+                <label for="schedule-cell-start" class="text-xs">Начало смены</label>
+              </FloatLabel>
+              <FloatLabel variant="on">
+                <InputText
+                  id="schedule-cell-end"
+                  :model-value="editEndTime"
+                  size="small"
+                  class="w-full"
+                  readonly
+                  tabindex="-1"
+                />
+                <label for="schedule-cell-end" class="text-xs">Конец смены</label>
+              </FloatLabel>
+            </div>
+          </div>
+        </section>
+        <section v-if="activeCell && !bulkEditMode" class="space-y-2">
+          <div class="space-y-0.5">
+            <FloatLabel variant="on">
+              <Textarea
+                id="schedule-cell-comment"
+                v-model="commentText"
+                maxlength="250"
+                size="small"
+                fluid
+                class="h-20 resize-none"
+                :disabled="busy"
+              />
+              <label for="schedule-cell-comment" class="text-xs">Комментарий к смене</label>
+            </FloatLabel>
+            <p class="text-right text-xs text-color-secondary">
+              Доступно символов: {{ remainingCommentCharacters }}
+            </p>
+          </div>
+          <Divider v-if="activeCell?.comment && !bulkEditMode" class="!my-2" />
+          <ul
+            v-if="activeCell?.comment && !bulkEditMode"
+            class="max-h-[calc(var(--spacing)*17)] space-y-2 overflow-y-auto text-xs text-color-secondary"
+          >
+            <li class="whitespace-pre-wrap">
+              {{ activeCell.comment.updatedBy }} · {{ formatDate(activeCell.comment.updatedAt) }}:
+              {{ activeCell.comment.text }}
+            </li>
             <li
-              v-for="(entry, index) in activeCell.comment.history"
+              v-for="(entry, index) in visibleCommentHistory"
               :key="`${entry.createdAt}-${index}`"
+              class="whitespace-pre-wrap"
             >
               {{ entry.author }} · {{ formatDate(entry.createdAt) }}: {{ entry.text }}
             </li>
           </ul>
-          <ul
-            v-if="activeCell.history.length"
-            class="max-h-36 space-y-1 overflow-auto border-t border-surface pt-2 text-xs text-color-secondary"
-          >
-            <li v-for="(entry, index) in activeCell.history" :key="`${entry.createdAt}-${index}`">
-              {{ entry.author }} · {{ formatDate(entry.createdAt) }}:
-              {{ cellLabel(entry.oldValue as ScheduleValue | null) }} →
-              {{ cellLabel(entry.newValue as ScheduleValue | null) }}
-            </li>
-          </ul>
         </section>
+        <div class="flex gap-2">
+          <Button
+            label="Сохранить"
+            size="small"
+            class="min-w-0 flex-1"
+            :loading="busy"
+            :disabled="!canSaveCellChanges"
+            @click="bulkEditMode ? saveBulkEdit() : saveCellChanges()"
+          />
+          <Button
+            v-if="canEdit && !bulkEditMode && hasCellValueToDelete"
+            :label="activeCell?.value?.kind === 'STATUS' ? 'Удалить статус' : 'Удалить смену'"
+            severity="danger"
+            size="small"
+            class="min-w-0 flex-1"
+            :disabled="busy"
+            @click="deleteCellValue"
+          />
+        </div>
       </div>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="bulkDeleteVisible"
+      modal
+      header="Очистить выбранные ячейки?"
+      class="dialog-size-sm"
+      :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
+    >
+      <p class="text-sm text-color-secondary">
+        Смены и статусы в {{ selectedCells.length }} ячейках будут удалены. Комментарии и история
+        сохранятся.
+      </p>
+      <template #footer>
+        <Button
+          label="Отмена"
+          severity="secondary"
+          variant="text"
+          size="small"
+          :disabled="busy"
+          @click="bulkDeleteVisible = false"
+        />
+        <Button
+          label="Удалить"
+          severity="danger"
+          size="small"
+          :loading="busy"
+          @click="confirmClearSelectedCells"
+        />
+      </template>
     </Dialog>
 
     <Drawer
       v-model:visible="generateVisible"
       position="right"
-      class="h-screen max-h-screen h-dvh max-h-dvh w-full sm:!w-[42rem]"
+      class="drawer-size-lg h-screen max-h-screen h-dvh max-h-dvh"
       :pt="{
         header: { class: '!items-center' },
         title: { style: { fontSize: '1rem', fontWeight: '600' } },
@@ -395,7 +631,7 @@
     >
       <template #header="{ class: titleClass }">
         <div class="flex min-w-0 flex-1 items-center gap-4 pr-4">
-          <span :class="[titleClass, 'leading-none']">Формирование графика</span>
+          <span :class="[titleClass, 'leading-none']">Заполнение графика</span>
           <SelectButton
             :model-value="generationMode"
             :options="generationModeOptions"
@@ -409,15 +645,12 @@
           />
         </div>
       </template>
-      <div class="flex h-full min-h-0 flex-col gap-4">
-        <Message
-          v-if="error"
-          severity="error"
-          size="small"
-          :closable="false"
-          :pt="compactMessagePt"
-          >{{ error }}</Message
-        >
+      <div class="flex min-h-0 flex-1 flex-col gap-4">
+        <div v-if="error" class="shrink-0 pt-2">
+          <Message severity="error" size="small" :closable="false" :pt="compactMessagePt">
+            {{ error }}
+          </Message>
+        </div>
         <div
           class="grid grid-cols-1 gap-3 pt-2 sm:items-end"
           :class="
@@ -434,7 +667,7 @@
               size="small"
               class="w-full"
             />
-            <label for="generation-period" class="text-xs">Месяц</label>
+            <label for="generation-period" class="text-xs">Целевой месяц</label>
           </FloatLabel>
           <FloatLabel v-if="generationMode === 'assign'" variant="on">
             <Select
@@ -443,6 +676,8 @@
               :options="generationTemplateOptions"
               option-label="label"
               option-value="id"
+              empty-message="Нет доступных шаблонов"
+              :pt="{ emptyMessage: { class: 'text-sm' } }"
               size="small"
               class="w-full"
             />
@@ -543,8 +778,8 @@
                   "
                   :value="
                     generationMode === 'extend'
-                      ? formatCycleName(data.assignedTemplateName)
-                      : formatCycleName(data.previousTemplateName)
+                      ? data.assignedTemplateName
+                      : data.previousTemplateName
                   "
                   severity="secondary"
                   :pt="compactTagPt"
@@ -568,7 +803,7 @@
                   class="flex flex-nowrap justify-end gap-1.5"
                 >
                   <Tag
-                    :value="formatCycleName(generationAssignments[data.membershipId].templateName)"
+                    :value="generationAssignments[data.membershipId].templateName"
                     severity="secondary"
                     :pt="compactTagPt"
                   />
@@ -648,9 +883,8 @@
     <Drawer
       v-model:visible="templateVisible"
       position="right"
-      class="h-screen max-h-screen h-dvh max-h-dvh"
+      class="drawer-size-xs h-screen max-h-screen h-dvh max-h-dvh"
       :pt="{
-        root: { style: { width: 'calc(226.5px + 2.5rem)', maxWidth: 'calc(100vw - 1rem)' } },
         header: { class: '!items-center' },
         title: { style: { fontSize: '1rem', fontWeight: '600' } },
         pcCloseButton: { root: { class: '!rounded-md' } },
@@ -690,61 +924,91 @@
             Цикл {{ formatCycleName(templateName) }} уже задан
           </Message>
           <div class="flex flex-col gap-3">
-            <FloatLabel variant="on" class="min-w-0">
-              <InputNumber
-                v-model="templateForm.workDays"
-                input-id="template-work"
+            <FloatLabel variant="on"
+              ><InputText
+                v-model="templateForm.name"
+                input-id="template-name"
+                maxlength="80"
                 size="small"
-                button-layout="horizontal"
-                increment-button-icon="pi pi-plus"
-                decrement-button-icon="pi pi-minus"
-                show-buttons
-                :step="1"
-                :min="1"
-                :max="31 - templateForm.offDays"
-                :max-fraction-digits="0"
-                class="w-full min-w-0"
-                input-class="w-full min-w-0 border-0 text-center shadow-none"
-              />
-              <label for="template-work">Рабочих дней</label>
-            </FloatLabel>
-            <FloatLabel variant="on" class="min-w-0">
-              <InputNumber
-                v-model="templateForm.offDays"
-                input-id="template-off"
-                size="small"
-                button-layout="horizontal"
-                increment-button-icon="pi pi-plus"
-                decrement-button-icon="pi pi-minus"
-                show-buttons
-                :step="1"
-                :min="0"
-                :max="31 - templateForm.workDays"
-                :max-fraction-digits="0"
-                class="w-full min-w-0"
-                input-class="w-full min-w-0 border-0 text-center shadow-none"
-              />
-              <label for="template-off">Выходных дней</label>
-            </FloatLabel>
-            <Button
-              type="submit"
-              :label="selectedTemplateId ? 'Сохранить шаблон' : 'Создать шаблон'"
+                class="w-full"
+              /><label for="template-name" class="text-xs">Название шаблона</label></FloatLabel
+            >
+            <Message
+              v-if="templateDayOptions.length <= 1"
+              severity="info"
               size="small"
-              :loading="busy"
-              :disabled="!templateFormValid || templateLoading || templateLoadFailed"
-              class="w-full"
-            />
-          </div>
-          <div v-if="selectedTemplateId" class="flex items-center justify-between gap-2">
-            <span class="text-xs text-color-secondary">Изменение создаст новую версию</span>
+              :closable="false"
+              class="mx-px w-[calc(100%_-_2px)] min-w-0 max-w-full"
+              :pt="{
+                contentWrapper: { class: 'min-w-0 max-w-full' },
+                content: { class: 'min-w-0 max-w-full' },
+                text: {
+                  class: 'min-w-0 break-words',
+                  style: { fontSize: '0.75rem', fontWeight: '500', lineHeight: '1rem' },
+                },
+              }"
+            >
+              Сначала добавьте хотя бы одну смену через «Настройка смен».
+            </Message>
+            <div
+              v-for="(day, index) in templateForm.days"
+              :key="index"
+              class="flex min-w-0 items-center gap-1"
+            >
+              <span
+                class="flex h-8 w-6 shrink-0 items-center justify-center text-xs leading-none text-color-secondary"
+                >{{ index + 1 }}</span
+              >
+              <FloatLabel variant="on" class="min-w-0 flex-1">
+                <Select
+                  v-model="templateForm.days[index]"
+                  :input-id="`template-day-${index + 1}`"
+                  :options="templateDayOptions"
+                  option-label="label"
+                  option-value="value"
+                  size="small"
+                  class="w-full"
+                />
+                <label :for="`template-day-${index + 1}`" class="text-xs">День цикла</label>
+              </FloatLabel>
+              <Button
+                v-if="templateForm.days.length > 1"
+                icon="pi pi-times"
+                severity="secondary"
+                variant="text"
+                rounded
+                size="small"
+                :aria-label="`Удалить день ${index + 1}`"
+                @click="removeTemplateDay(index)"
+              />
+            </div>
             <Button
-              label="Отмена"
+              v-if="templateForm.days.length < 31"
+              label="Добавить день цикла"
               severity="secondary"
-              variant="text"
+              variant="outlined"
               size="small"
-              :disabled="busy"
-              @click="cancelTemplateEdit"
+              :disabled="templateDayOptions.length <= 1"
+              @click="appendTemplateDay"
             />
+            <div class="flex w-full gap-2">
+              <Button
+                type="submit"
+                :label="selectedTemplateId ? 'Сохранить шаблон' : 'Создать шаблон'"
+                size="small"
+                :loading="busy"
+                :disabled="!templateFormValid || templateLoading || templateLoadFailed"
+                class="flex-1"
+              />
+              <Button
+                label="Отмена"
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                :disabled="busy"
+                @click="cancelTemplateEdit"
+              />
+            </div>
           </div>
         </form>
         <div v-if="templateLoading" class="flex min-h-20 items-center justify-center">
@@ -760,27 +1024,6 @@
           Не удалось загрузить шаблоны. Обновите страницу и попробуйте ещё раз.
         </Message>
         <template v-else>
-          <section v-if="systemTemplates.length" class="space-y-3">
-            <h2 class="text-sm font-semibold">Системные шаблоны</h2>
-            <div class="max-w-full overflow-x-auto">
-              <div class="flex w-max flex-nowrap gap-0.5">
-                <div
-                  v-for="template in systemTemplates"
-                  :key="template.id"
-                  class="flex min-h-8 shrink-0 items-center px-0.5 py-1"
-                >
-                  <Tag
-                    :value="formatCycleName(template.name)"
-                    severity="secondary"
-                    :pt="{
-                      root: { style: { fontSize: '0.75rem', padding: '0.0625rem 0.25rem' } },
-                      label: { style: { fontWeight: '400' } },
-                    }"
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
           <Divider class="!my-0" />
           <section
             class="space-y-3"
@@ -803,11 +1046,26 @@
                 class="flex min-h-8 min-w-0 items-center gap-2 px-1 py-1 hover:bg-[var(--p-datatable-row-hover-background)]"
               >
                 <Tag
-                  :value="formatCycleName(template.name)"
+                  :value="template.name"
                   severity="secondary"
                   :pt="compactTagPt"
                   class="shrink-0"
                 />
+                <div class="flex min-w-0 flex-wrap items-center gap-1">
+                  <span
+                    v-for="day in template.currentVersion.days"
+                    :key="day.position"
+                    v-tooltip.top="{
+                      value: templateDayTooltip(day.shiftSettingId),
+                      class: 'app-tooltip',
+                    }"
+                    class="inline-flex h-4 w-4 items-center justify-center rounded border text-[8px] font-semibold leading-none"
+                    :class="day.shiftSettingId ? '' : 'bg-[var(--p-content-background)]'"
+                    :style="templateDayStyle(day.shiftSettingId)"
+                  >
+                    {{ templateDayLetter(day.shiftSettingId) }}
+                  </span>
+                </div>
                 <div class="ml-auto flex shrink-0 items-center gap-1">
                   <Button
                     icon="pi pi-pencil"
@@ -834,9 +1092,34 @@
             </div>
             <div
               v-else
-              class="rounded-lg border border-dashed border-[var(--p-divider-border-color)] p-4 text-center"
+              class="flex flex-col items-center gap-2 rounded-lg border border-dashed border-[var(--p-divider-border-color)] p-4 text-center"
             >
               <p class="text-xs text-color-secondary">Пока нет своих шаблонов</p>
+              <p class="text-xs text-color-secondary">Можете их создать</p>
+              <div
+                class="flex flex-wrap items-center justify-center gap-2"
+                aria-label="Пример цикла 4 на 2"
+              >
+                <Tag value="4|2" severity="secondary" :pt="compactTagPt" />
+                <div class="flex items-center gap-1" aria-hidden="true">
+                  <span
+                    v-for="shift in allShiftTypes"
+                    :key="shift.value"
+                    v-tooltip.top="{ value: shift.label, class: 'app-tooltip' }"
+                    class="inline-flex h-4 w-4 items-center justify-center rounded border text-[8px] font-semibold leading-none"
+                    :style="shiftColorStyle(shift.value)"
+                  >
+                    {{ shiftLetter(shift.value) }}
+                  </span>
+                  <span
+                    v-for="dayOff in 2"
+                    :key="`example-day-off-${dayOff}`"
+                    v-tooltip.top="{ value: 'Выходной', class: 'app-tooltip' }"
+                    class="inline-flex h-4 w-4 items-center justify-center rounded border bg-[var(--p-content-background)]"
+                    style="border-color: var(--p-content-border-color)"
+                  />
+                </div>
+              </div>
             </div>
           </section>
         </template>
@@ -946,6 +1229,7 @@ import {
   type ScheduleRow,
   type ScheduleTemplate,
   type ScheduleValue,
+  type ScheduleShiftSetting,
 } from "../composables/useSchedule";
 
 const props = withDefaults(defineProps<{ workspace: Workspace; previewMode?: boolean }>(), {
@@ -959,8 +1243,8 @@ const month = ref(Number(route.query.month) || now.getMonth() + 1);
 const generationPeriod = ref(monthKey(now.getFullYear(), now.getMonth() + 1));
 const generationMode = ref<"assign" | "extend">("assign");
 const generationModeOptions = [
-  { label: "Формирование", value: "assign" },
-  { label: "Продление", value: "extend" },
+  { label: "Заполнить", value: "assign" },
+  { label: "Продлить", value: "extend" },
 ];
 const generationTemplateId = ref<string | null>(null);
 const generationStartDate = ref<Date | null>(null);
@@ -988,32 +1272,115 @@ const previewMonthLoading = ref(false);
 const generationPreviewLoading = ref(false);
 const error = ref("");
 const cellVisible = ref(false);
+const bulkDeleteVisible = ref(false);
 const templateVisible = ref(false);
 const duplicateWarningVisible = ref(false);
 const templateDeleteVisible = ref(false);
 const templateDeleteTarget = ref<(ScheduleTemplate & { assignmentCount: number }) | null>(null);
 const activeRow = ref<ScheduleRow | null>(null);
 const activeCellIndex = ref(-1);
-const editKind = ref<"SHIFT" | "STATUS" | "EMPTY">("SHIFT");
-const editHours = ref(12);
-const editShiftType = ref<"NORMAL" | "NIGHT">("NORMAL");
-const editStatus = ref<"VACATION" | "SICK_LEAVE" | "NO_SHOW" | null>(null);
+const bulkEditMode = ref(false);
+const bulkEditTargets = ref<string[]>([]);
+type CellEditorChoice = ShiftCode | "VACATION" | "SICK_LEAVE" | "NO_SHOW" | "EMPTY";
+type CellValueOption = { label: string; value: string; choice: CellEditorChoice };
+const editChoice = ref<CellEditorChoice | null>(null);
+const editOptionValue = ref<string | null>(null);
+const editShiftSettingId = ref<string | null>(null);
+const editHours = ref<number | null>(null);
+const editStartTime = ref<Date | null>(null);
 const commentText = ref("");
+const savedValueSignature = ref<string | null>(null);
+const remainingCommentCharacters = computed(() => Math.max(0, 250 - commentText.value.length));
 const selectedCells = ref<string[]>([]);
-const bulkKind = ref<"SHIFT" | "STATUS" | "EMPTY" | null>(null);
-const bulkHours = ref(12);
-const bulkShiftType = ref<"NORMAL" | "NIGHT">("NORMAL");
-const bulkStatus = ref<"VACATION" | "SICK_LEAVE" | "NO_SHOW" | null>(null);
 const exportFormat = ref<"xlsx" | "pdf">("xlsx");
 const exportVisible = ref(false);
 const exportPeriod = ref("");
 const exportBusy = ref(false);
 const exportError = ref("");
+const shiftSettingsVisible = ref(false);
 const selectedTemplateId = ref<string | null>(null);
-const templateForm = reactive({
-  workDays: 1,
-  offDays: 1,
-});
+type ShiftCode = ScheduleShiftSetting["shiftCode"];
+const shiftBackgrounds: Record<ShiftCode, string> = {
+  MORNING:
+    "color-mix(in srgb, var(--schedule-palette-yellow-300) 70%, var(--p-content-background))",
+  DAY: "color-mix(in srgb, var(--schedule-palette-green-300) 70%, var(--p-content-background))",
+  EVENING:
+    "color-mix(in srgb, var(--schedule-palette-orange-300) 70%, var(--p-content-background))",
+  NIGHT: "color-mix(in srgb, var(--schedule-palette-blue-300) 70%, var(--p-content-background))",
+};
+const statusBackground =
+  "color-mix(in srgb, var(--schedule-palette-red-300) 70%, var(--p-content-background))";
+const statusColorStyle = {
+  backgroundColor: statusBackground,
+  borderColor: "var(--p-content-border-color)",
+};
+type ShiftSettingView = Omit<ScheduleShiftSetting, "id"> & { id?: string; startTime: Date };
+const draftShiftCode = ref<ShiftCode | null>(null);
+const draftEditingId = ref<string | null>(null);
+const draftStartTime = ref<Date | null>(null);
+const draftDurationHours = ref<number | null>(null);
+const draftEndTime = computed(() =>
+  draftStartTime.value && draftDurationHours.value
+    ? formatTimeOfDay(
+        (timeToMinute(draftStartTime.value) + draftDurationHours.value * 60) % (24 * 60),
+      )
+    : "",
+);
+const templateDayOffValue = "__DAY_OFF__";
+const templateForm = reactive({ name: "", days: [] as Array<string | null | undefined> });
+const allShiftTypes = [
+  { label: "Утро", value: "MORNING" },
+  { label: "День", value: "DAY" },
+  { label: "Вечер", value: "EVENING" },
+  { label: "Ночь", value: "NIGHT" },
+] as const;
+const timePickerButtonProps = {
+  severity: "secondary" as const,
+  text: true,
+  rounded: true,
+  size: "small" as const,
+};
+const timePickerInputPt = { pcInputText: { root: { inputmode: "text" } } };
+const shiftSettings = ref<ShiftSettingView[]>([]);
+if (previewMode.value) {
+  shiftSettings.value = [
+    {
+      id: "demo-morning-09",
+      shiftCode: "MORNING",
+      startMinute: 540,
+      defaultDurationHours: 8,
+      startTime: minuteToTime(540),
+    },
+    {
+      id: "demo-morning-10",
+      shiftCode: "MORNING",
+      startMinute: 600,
+      defaultDurationHours: 6,
+      startTime: minuteToTime(600),
+    },
+    {
+      id: "demo-day-12",
+      shiftCode: "DAY",
+      startMinute: 720,
+      defaultDurationHours: 8,
+      startTime: minuteToTime(720),
+    },
+    {
+      id: "demo-evening-18",
+      shiftCode: "EVENING",
+      startMinute: 1080,
+      defaultDurationHours: 8,
+      startTime: minuteToTime(1080),
+    },
+    {
+      id: "demo-night-22",
+      shiftCode: "NIGHT",
+      startMinute: 1320,
+      defaultDurationHours: 8,
+      startTime: minuteToTime(1320),
+    },
+  ];
+}
 const selectedMembershipIds = ref<string[]>([]);
 const preparedExtension = ref<{ period: string; membershipIds: string[] } | null>(null);
 const isExtensionPrepared = computed(() => {
@@ -1043,27 +1410,8 @@ const previewAssignments = reactive(
     }
   >(),
 );
-const previewCycleSeeds = [
-  [2, 2, 0],
-  [3, 3, 2],
-  [2, 2, 1],
-  [3, 3, 4],
-  [4, 2, 3],
-  [5, 1, 5],
-  [6, 1, 1],
-  [2, 2, 3],
-  [4, 2, 0],
-  [3, 3, 1],
-  [5, 1, 2],
-] as const;
-for (const [index, [workDays, offDays, phaseOffset]] of previewCycleSeeds.slice(0, -1).entries()) {
-  const template = previewTemplates.value.find(
-    (candidate) =>
-      candidate.currentVersion.workDays === workDays &&
-      candidate.currentVersion.offDays === offDays,
-  );
-  if (!template) continue;
-  const anchor = isoDate(new Date(now.getFullYear(), 0, 1 - phaseOffset));
+for (const [index, template] of previewTemplates.value.entries()) {
+  const anchor = isoDate(new Date(now.getFullYear(), 0, 1 - index));
   previewAssignments.set(`demo-membership-${index + 1}`, {
     templateId: template.id,
     version: template.currentVersion,
@@ -1076,32 +1424,54 @@ previewMonths.set(monthKey(year.value, month.value), previewMonth.value);
 const templates = computed(() =>
   previewMode.value ? previewTemplates.value : (schedule.templatesQuery.data.value ?? []),
 );
-const systemTemplates = computed(() => templates.value.filter((template) => template.isSystem));
 const customTemplates = computed(() => templates.value.filter((template) => !template.isSystem));
 const generationTemplateOptions = computed(() =>
-  templates.value.map((template) => ({ ...template, label: formatCycleName(template.name) })),
+  templates.value.map((template) => ({ ...template, label: template.name })),
 );
-const templateName = computed(() => `${templateForm.workDays}/${templateForm.offDays}`);
+const templateDayOptions = computed(() => [
+  { label: "Выходной", value: templateDayOffValue },
+  ...shiftSettings.value.flatMap((setting) =>
+    setting.id
+      ? [
+          {
+            label: `${shiftLabel(setting.shiftCode)} · ${formatShiftTime(setting.startTime, setting.defaultDurationHours)} · ${setting.defaultDurationHours} ч`,
+            value: setting.id,
+          },
+        ]
+      : [],
+  ),
+]);
+const templateName = computed(() => templateForm.name.trim());
 const duplicateTemplate = computed(
   () =>
     templates.value.find(
       (template) =>
         template.id !== selectedTemplateId.value &&
-        template.currentVersion.workDays === templateForm.workDays &&
-        template.currentVersion.offDays === templateForm.offDays,
+        template.name.toLocaleLowerCase() === templateName.value.toLocaleLowerCase(),
     ) ?? null,
 );
 const templateFormValid = computed(
   () =>
-    Number.isInteger(templateForm.workDays) &&
-    templateForm.workDays >= 1 &&
-    templateForm.workDays <= 31 &&
-    Number.isInteger(templateForm.offDays) &&
-    templateForm.offDays >= 0 &&
-    templateForm.offDays <= 30 &&
-    templateForm.workDays + templateForm.offDays <= 31,
+    Boolean(templateName.value) &&
+    templateForm.days.length >= 1 &&
+    templateForm.days.length <= 31 &&
+    templateForm.days.every(
+      (settingId) => settingId === templateDayOffValue || settingId !== undefined,
+    ) &&
+    templateForm.days.every(
+      (settingId) =>
+        settingId === templateDayOffValue ||
+        (settingId !== null && shiftSettings.value.some((setting) => setting.id === settingId)),
+    ) &&
+    templateForm.days.some(
+      (settingId) =>
+        settingId !== templateDayOffValue &&
+        settingId !== null &&
+        settingId !== undefined &&
+        shiftSettings.value.some((setting) => setting.id === settingId),
+    ),
 );
-watch([() => templateForm.workDays, () => templateForm.offDays], () => {
+watch([() => templateForm.name, () => templateForm.days], () => {
   duplicateWarningVisible.value = false;
 });
 watch(templateVisible, (visible) => {
@@ -1166,6 +1536,26 @@ const monthResponse = computed(() => {
     import("../composables/useSchedule").ScheduleMonth | undefined;
 });
 const rows = computed(() => monthResponse.value?.rows ?? []);
+watch(
+  () => schedule.shiftSettingsQuery.data.value,
+  (settings) => {
+    if (previewMode.value) return;
+    if (!settings) return;
+    shiftSettings.value = settings.map((setting) => ({
+      ...setting,
+      startTime: minuteToTime(setting.startMinute),
+    }));
+    if (
+      cellVisible.value &&
+      editShiftSettingId.value &&
+      editOptionValue.value?.startsWith("SHIFT_TYPE:")
+    ) {
+      const setting = shiftSettings.value.find((item) => item.id === editShiftSettingId.value);
+      if (setting) editOptionValue.value = shiftSettingOptionValue(setting);
+    }
+  },
+  { immediate: true },
+);
 const days = computed(() =>
   Array.from(
     { length: monthResponse.value?.daysInMonth ?? new Date(year.value, month.value, 0).getDate() },
@@ -1173,6 +1563,83 @@ const days = computed(() =>
   ),
 );
 const activeCell = computed(() => activeRow.value?.cells[activeCellIndex.value] ?? null);
+const hasCellValueToDelete = computed(
+  () => activeCell.value?.value?.kind === "SHIFT" || activeCell.value?.value?.kind === "STATUS",
+);
+const visibleCommentHistory = computed(() => {
+  const comment = activeCell.value?.comment;
+  if (!comment) return [];
+  return comment.history.filter((entry, index, history) => {
+    const matchesCurrent = entry.text === comment.text && entry.author === comment.updatedBy;
+    const currentTimestamp = Date.parse(comment.updatedAt);
+    const entryTimestamp = Date.parse(entry.createdAt);
+    if (matchesCurrent && Math.abs(entryTimestamp - currentTimestamp) <= 1000) return false;
+
+    const previous = history[index - 1];
+    if (!previous || previous.text !== entry.text || previous.author !== entry.author) return true;
+    return Math.abs(Date.parse(previous.createdAt) - entryTimestamp) > 1000;
+  });
+});
+const bulkEditCells = computed(() =>
+  bulkEditTargets.value.flatMap((key) => {
+    const [membershipId, date] = key.split(":");
+    const row = rows.value.find((item) => item.membershipId === membershipId);
+    const cell = row?.cells.find((item) => item.date === date);
+    return row && cell ? [{ row, cell }] : [];
+  }),
+);
+const bulkCellsHaveSameShift = computed(
+  () =>
+    bulkEditCells.value.length > 0 &&
+    bulkEditCells.value.every(({ cell }) => cell.value?.kind === "SHIFT"),
+);
+const isEditingShift = computed(() =>
+  allShiftTypes.some((shift) => shift.value === editChoice.value),
+);
+const editValueSignature = computed(() => {
+  if (!canSaveScheduleValue.value || !editChoice.value) return null;
+  return JSON.stringify([
+    editChoice.value,
+    isEditingShift.value ? editHours.value : null,
+    isEditingShift.value && editStartTime.value ? timeToMinute(editStartTime.value) : null,
+    isEditingShift.value ? editShiftSettingId.value : null,
+  ]);
+});
+const hasUnsavedScheduleValue = computed(
+  () => editValueSignature.value !== null && editValueSignature.value !== savedValueSignature.value,
+);
+const hasCommentDraft = computed(() => !!commentText.value.trim());
+const canSaveScheduleValue = computed(
+  () =>
+    canEdit.value &&
+    !!editChoice.value &&
+    (!isEditingShift.value || (editHours.value !== null && !!editStartTime.value)),
+);
+const canSaveCellChanges = computed(() => hasUnsavedScheduleValue.value || hasCommentDraft.value);
+const cellValueOptions = computed<CellValueOption[]>(() => [
+  ...shiftSettings.value.map((setting) => ({
+    label: `${shiftLabel(setting.shiftCode)} · ${formatShiftTime(setting.startTime, setting.defaultDurationHours)} · ${setting.defaultDurationHours} ч`,
+    value: shiftSettingOptionValue(setting),
+    choice: setting.shiftCode,
+  })),
+  ...allShiftTypes.map((shift) => ({
+    label: shift.label,
+    value: shiftTypeOptionValue(shift.value),
+    choice: shift.value,
+  })),
+  { label: "Отпуск", value: "VACATION", choice: "VACATION" },
+  { label: "Больничный", value: "SICK_LEAVE", choice: "SICK_LEAVE" },
+  { label: "Неявка", value: "NO_SHOW", choice: "NO_SHOW" },
+  ...(activeCell.value?.value?.kind === "SHIFT" ||
+  (bulkEditMode.value && bulkCellsHaveSameShift.value)
+    ? [{ label: "Выходной", value: "EMPTY", choice: "EMPTY" as const }]
+    : []),
+]);
+const editEndTime = computed(() =>
+  editStartTime.value && editHours.value
+    ? formatTimeOfDay((timeToMinute(editStartTime.value) + editHours.value * 60) % (24 * 60))
+    : "",
+);
 const monthLabel = computed(() =>
   new Intl.DateTimeFormat("ru-RU", { month: "long", year: "numeric" }).format(
     new Date(year.value, month.value - 1, 1),
@@ -1180,22 +1647,8 @@ const monthLabel = computed(() =>
 );
 const monthStart = new Date(now.getFullYear(), now.getMonth() - 12, 1);
 const monthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 1);
-const valueKinds = [
-  { label: "Смена", value: "SHIFT" },
-  { label: "Статус", value: "STATUS" },
-  { label: "Очистить", value: "EMPTY" },
-];
-const shiftTypes = [
-  { label: "Обычная", value: "NORMAL" },
-  { label: "Ночная", value: "NIGHT" },
-];
-const statusOptions = [
-  { label: "Отпуск — О", value: "VACATION" },
-  { label: "Больничный — Б", value: "SICK_LEAVE" },
-  { label: "Неявка — Н", value: "NO_SHOW" },
-];
 const exportOptions = [
-  { label: previewMode.value ? "CSV" : "Excel (.xlsx)", value: "xlsx" },
+  { label: previewMode.value ? "CSV" : "XLSX", value: "xlsx" },
   { label: "PDF", value: "pdf" },
 ];
 const exportMonthOptions = computed(() =>
@@ -1268,6 +1721,55 @@ function isWeekend(day: number): boolean {
   return weekdayIndex === 5 || weekdayIndex === 6;
 }
 
+function isInventoryMarked(day: number): boolean {
+  const date = isoDate(new Date(year.value, month.value - 1, day));
+  return (monthResponse.value?.dateMarkers ?? []).some(
+    (marker) => marker.date === date && marker.type === "INVENTORY",
+  );
+}
+
+function dayHeaderStyle(day: number): Record<string, string> | undefined {
+  if (isInventoryMarked(day)) {
+    return {
+      backgroundColor: "var(--p-primary-color)",
+      color: "var(--p-primary-contrast-color)",
+    };
+  }
+  return isWeekend(day) ? weekendBackgroundStyle : undefined;
+}
+
+function inventoryDayLabel(day: number): string {
+  const date = isoDate(new Date(year.value, month.value - 1, day));
+  return isInventoryMarked(day)
+    ? `Снять отметку «Инвентаризация»: ${formatCellDayMonth(date)}`
+    : `Отметить инвентаризацию: ${formatCellDayMonth(date)}`;
+}
+
+async function toggleInventoryMarker(day: number): Promise<void> {
+  if (busy.value) return;
+  const date = isoDate(new Date(year.value, month.value - 1, day));
+  error.value = "";
+
+  if (previewMode.value) {
+    const markers = monthResponse.value?.dateMarkers ?? [];
+    previewMonth.value.dateMarkers = isInventoryMarked(day)
+      ? markers.filter((marker) => marker.date !== date)
+      : [...markers, { date, type: "INVENTORY" }];
+    return;
+  }
+
+  busy.value = true;
+  try {
+    if (isInventoryMarked(day)) await schedule.deleteInventoryMarker(date);
+    else await schedule.setInventoryMarker(date);
+  } catch (cause) {
+    error.value =
+      cause instanceof Error ? cause.message : "Не удалось изменить отметку инвентаризации";
+  } finally {
+    busy.value = false;
+  }
+}
+
 function createPreviewMonth(selectedYear: number, selectedMonth: number): ScheduleMonth {
   const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
   const employees = PREVIEW_TEAM_ROSTER;
@@ -1275,25 +1777,35 @@ function createPreviewMonth(selectedYear: number, selectedMonth: number): Schedu
     year: selectedYear,
     month: selectedMonth,
     daysInMonth,
+    dateMarkers: [],
     rows: employees.map((employee, index) => {
       const cells = Array.from({ length: daysInMonth }, (_, dayIndex) => {
         const date = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(dayIndex + 1).padStart(2, "0")}`;
-        const cyclePosition = (dayIndex + employee.start) % (employee.work + employee.off);
-        const isScheduled = cyclePosition < employee.work;
+        const sequence: Array<"MORNING" | "DAY" | "EVENING" | "NIGHT" | null> = [
+          "MORNING",
+          "EVENING",
+          "EVENING",
+          "NIGHT",
+          "MORNING",
+          null,
+        ];
+        const code = sequence[(dayIndex + employee.start) % sequence.length];
         const statusRoll = (dayIndex * 7 + index * 11) % 23;
-        const value: ScheduleValue | null = isScheduled
-          ? statusRoll === 0
-            ? { kind: "STATUS", status: "NO_SHOW" }
-            : statusRoll === 1
-              ? { kind: "STATUS", status: "VACATION" }
-              : statusRoll === 2
-                ? { kind: "STATUS", status: "SICK_LEAVE" }
-                : {
-                    kind: "SHIFT",
-                    durationHours: employee.hours,
-                    shiftType: employee.night && (dayIndex + index) % 3 !== 0 ? "NIGHT" : "NORMAL",
-                  }
-          : null;
+        const value: ScheduleValue | null =
+          code !== null
+            ? statusRoll === 0
+              ? { kind: "STATUS", status: "NO_SHOW" }
+              : statusRoll === 1
+                ? { kind: "STATUS", status: "VACATION" }
+                : statusRoll === 2
+                  ? { kind: "STATUS", status: "SICK_LEAVE" }
+                  : {
+                      kind: "SHIFT",
+                      durationHours: employee.hours,
+                      shiftCode: code,
+                      startMinute: { MORNING: 540, DAY: 720, EVENING: 1020, NIGHT: 1320 }[code],
+                    }
+            : null;
         return { date, applicable: true, value, comment: null, history: [] };
       });
       return {
@@ -1315,26 +1827,22 @@ function createPreviewMonth(selectedYear: number, selectedMonth: number): Schedu
 
 function createPreviewTemplates(): ScheduleTemplate[] {
   return [
-    ["2/2", 2, 2],
-    ["3/3", 3, 3],
-    ["4/2", 4, 2],
-    ["5/2", 5, 2],
-    ["5/1", 5, 1],
-    ["6/1", 6, 1],
-  ].map(([name, workDays, offDays], index) => {
+    ["Утро и вечер", ["demo-morning-09", "demo-evening-18", "demo-evening-18", null]],
+    ["Смешанный цикл", ["demo-morning-10", "demo-evening-18", "demo-night-22", null]],
+  ].map(([name, days], index) => {
     const versionId = `demo-system-template-version-${index + 1}`;
     return {
-      id: `demo-system-template-${index + 1}`,
+      id: `demo-template-${index + 1}`,
       name: String(name),
-      isSystem: true,
+      isSystem: false,
       currentVersionId: versionId,
       currentVersion: {
         id: versionId,
         version: 1,
-        workDays: Number(workDays),
-        offDays: Number(offDays),
-        durationHours: 12,
-        shiftType: "NORMAL",
+        days: (days as Array<string | null>).map((shiftSettingId, position) => ({
+          position,
+          shiftSettingId,
+        })),
       },
     };
   });
@@ -1402,33 +1910,258 @@ function moveMonth(offset: number): void {
 function cellLabel(value: ScheduleValue | null | unknown): string {
   if (!value || typeof value !== "object" || !("kind" in value)) return "";
   const item = value as ScheduleValue;
-  if (item.kind === "SHIFT") return String(item.durationHours);
+  if (item.kind === "SHIFT") return shiftLetter(item.shiftCode);
   if (item.kind === "EMPTY") return "";
   return { VACATION: "О", SICK_LEAVE: "Б", NO_SHOW: "Н" }[item.status];
 }
+function commentPreview(comment: string | undefined): string {
+  const text = comment?.trim().replace(/\s+/g, " ");
+  if (!text) return "";
+  return text.length > 80 ? `${text.slice(0, 77)}…` : text;
+}
+function shiftLetter(code: ShiftCode): string {
+  return { MORNING: "У", DAY: "Д", EVENING: "В", NIGHT: "Н" }[code];
+}
+function openShiftSettings(): void {
+  resetShiftDraft();
+  shiftSettingsVisible.value = true;
+}
+function selectShiftDraft(code: ShiftCode | null): void {
+  draftShiftCode.value = code;
+  draftEditingId.value = null;
+  draftStartTime.value = null;
+  draftDurationHours.value = null;
+}
+function shiftSettingOptionValue(setting: ShiftSettingView): string {
+  return (
+    setting.id ??
+    `SETTING:${setting.shiftCode}:${setting.startMinute}:${setting.defaultDurationHours}`
+  );
+}
+function initializeStartTime(target: Ref<Date | null>): void {
+  if (target.value) return;
+  const now = new Date();
+  now.setMinutes(Math.floor(now.getMinutes() / 5) * 5, 0, 0);
+  target.value = now;
+}
+function initializeEditTime(): void {
+  initializeStartTime(editStartTime);
+}
+function initializeDraftTime(): void {
+  initializeStartTime(draftStartTime);
+}
+function shiftTypeOptionValue(code: ShiftCode): string {
+  return `SHIFT_TYPE:${code}`;
+}
+function initializeCellEditor(value: ScheduleValue | null): void {
+  if (!value) {
+    editChoice.value = null;
+    editOptionValue.value = null;
+    editShiftSettingId.value = null;
+    editHours.value = null;
+    editStartTime.value = null;
+    return;
+  }
+  if (value.kind === "STATUS") {
+    editChoice.value = value.status;
+    editOptionValue.value = value.status;
+    editShiftSettingId.value = null;
+    editHours.value = null;
+    editStartTime.value = null;
+    return;
+  }
+  if (value.kind === "EMPTY") {
+    editChoice.value = "EMPTY";
+    editOptionValue.value = "EMPTY";
+    editShiftSettingId.value = null;
+    editHours.value = null;
+    editStartTime.value = null;
+    return;
+  }
+
+  editChoice.value = value.shiftCode;
+  editHours.value = value.durationHours;
+  editStartTime.value = minuteToTime(value.startMinute);
+  const setting = shiftSettings.value.find((item) => item.id === value.shiftSettingId);
+  editShiftSettingId.value = setting?.id ?? value.shiftSettingId ?? null;
+  editOptionValue.value = setting
+    ? shiftSettingOptionValue(setting)
+    : shiftTypeOptionValue(value.shiftCode);
+}
+function selectEditChoice(optionValue: string | null): void {
+  editOptionValue.value = optionValue;
+  if (!optionValue) {
+    initializeCellEditor(null);
+    return;
+  }
+
+  const setting = shiftSettings.value.find((item) => shiftSettingOptionValue(item) === optionValue);
+  if (setting) {
+    editChoice.value = setting.shiftCode;
+    editShiftSettingId.value = setting.id ?? null;
+    editHours.value = setting.defaultDurationHours;
+    editStartTime.value = new Date(setting.startTime);
+    return;
+  }
+
+  const shiftType = allShiftTypes.find(
+    (shift) => shiftTypeOptionValue(shift.value) === optionValue,
+  );
+  if (shiftType) {
+    editChoice.value = shiftType.value;
+    editShiftSettingId.value = null;
+    editHours.value = null;
+    editStartTime.value = null;
+    return;
+  }
+
+  const choice = optionValue as CellEditorChoice;
+  editChoice.value = choice;
+  editShiftSettingId.value = null;
+  editHours.value = null;
+  editStartTime.value = null;
+}
+function editShiftSetting(id: string | undefined): void {
+  if (!id) return;
+  const existing = shiftSettings.value.find((setting) => setting.id === id);
+  if (!existing) return;
+  draftShiftCode.value = existing.shiftCode;
+  draftEditingId.value = existing.id ?? null;
+  draftStartTime.value = new Date(existing.startTime);
+  draftDurationHours.value = existing.defaultDurationHours;
+}
+function resetShiftDraft(): void {
+  draftShiftCode.value = null;
+  draftEditingId.value = null;
+  draftStartTime.value = null;
+  draftDurationHours.value = null;
+}
+async function saveShiftSetting(): Promise<void> {
+  const code = draftShiftCode.value as ShiftCode | null;
+  if (!code || !draftStartTime.value || !draftDurationHours.value) return;
+  error.value = "";
+  const previous = shiftSettings.value.map((setting) => ({ ...setting }));
+  const startTime = new Date(draftStartTime.value);
+  const nextSetting = {
+    ...(draftEditingId.value
+      ? { id: draftEditingId.value }
+      : previewMode.value
+        ? { id: crypto.randomUUID() }
+        : {}),
+    shiftCode: code,
+    startMinute: timeToMinute(startTime),
+    defaultDurationHours: draftDurationHours.value,
+    startTime,
+  };
+  const index = shiftSettings.value.findIndex((setting) => setting.id === draftEditingId.value);
+  if (index >= 0) shiftSettings.value[index] = nextSetting;
+  else shiftSettings.value.push(nextSetting);
+  await persistShiftSettings();
+  if (error.value) shiftSettings.value = previous;
+  else resetShiftDraft();
+}
+function removeShiftSetting(id: string | undefined): void {
+  if (!id) return;
+  error.value = "";
+  if (draftEditingId.value === id) resetShiftDraft();
+  const previous = [...shiftSettings.value];
+  shiftSettings.value = shiftSettings.value.filter((setting) => setting.id !== id);
+  void (async () => {
+    await persistShiftSettings();
+    if (error.value) shiftSettings.value = previous;
+  })();
+}
+function persistShiftSettings(): Promise<void> {
+  if (previewMode.value) return Promise.resolve();
+  return run(async () => {
+    const saved = await schedule.saveShiftSettings(
+      shiftSettings.value.map(({ id, ...setting }) => ({
+        ...(id ? { id } : {}),
+        shiftCode: setting.shiftCode,
+        startMinute: timeToMinute(setting.startTime),
+        defaultDurationHours: setting.defaultDurationHours,
+      })),
+    );
+    shiftSettings.value = saved.map((setting) => ({
+      ...setting,
+      startTime: minuteToTime(setting.startMinute),
+    }));
+  });
+}
+function shiftLabel(code: string): string {
+  return (
+    { MORNING: "Утро", DAY: "День", EVENING: "Вечер", NIGHT: "Ночь" }[
+      code as "MORNING" | "DAY" | "EVENING" | "NIGHT"
+    ] ?? code
+  );
+}
+function templateDaySetting(id: string | null): ShiftSettingView | undefined {
+  return id ? shiftSettings.value.find((setting) => setting.id === id) : undefined;
+}
+function templateDayLetter(id: string | null): string {
+  const setting = templateDaySetting(id);
+  return setting ? shiftLetter(setting.shiftCode) : "";
+}
+function templateDayStyle(id: string | null): Record<string, string> {
+  const setting = templateDaySetting(id);
+  return setting
+    ? shiftColorStyle(setting.shiftCode)
+    : { borderColor: "var(--p-content-border-color)" };
+}
+function templateDayTooltip(id: string | null): string {
+  const setting = templateDaySetting(id);
+  return setting ? formatShiftTime(setting.startTime, setting.defaultDurationHours) : "Выходной";
+}
+function shiftLegendName(code: ShiftCode): string {
+  return { MORNING: "Утро", DAY: "День", EVENING: "Вечер", NIGHT: "Ночь" }[code];
+}
 function formatCycleName(name: string | null | undefined): string {
-  if (!name) return "";
-  const match = /^(\d+)\/(\d+)$/.exec(name);
-  return match ? `${match[1]} | ${match[2]}` : name;
+  return name ?? "";
+}
+function minuteToTime(minutes: number): Date {
+  return new Date(0, 0, 0, Math.floor(minutes / 60), minutes % 60);
+}
+function timeToMinute(value: Date): number {
+  return value.getHours() * 60 + value.getMinutes();
+}
+function formatTimeOfDay(minutes: number): string {
+  const time = minuteToTime(minutes);
+  return `${String(time.getHours()).padStart(2, "0")}:${String(time.getMinutes()).padStart(2, "0")}`;
+}
+function formatShiftTime(startTime: Date, durationHours: number): string {
+  const start = timeToMinute(startTime);
+  const end = (start + durationHours * 60) % (24 * 60);
+  return `${formatTimeOfDay(start)}–${formatTimeOfDay(end)}`;
+}
+function cellTooltip(value: ScheduleValue | null): string | undefined {
+  if (value?.kind !== "SHIFT") return undefined;
+  return formatShiftTime(minuteToTime(value.startMinute), value.durationHours);
+}
+function appendTemplateDay(): void {
+  if (templateForm.days.length >= 31 || templateDayOptions.value.length <= 1) return;
+  templateForm.days.push(undefined);
+}
+function removeTemplateDay(index: number): void {
+  templateForm.days.splice(index, 1);
 }
 function cellStyle(
   value: ScheduleValue | null,
   selected: boolean,
 ): Record<string, string> | undefined {
   const style: Record<string, string> = {};
-  if (value?.kind === "SHIFT" && value.shiftType === "NIGHT") {
-    style.backgroundColor = "var(--p-message-info-border-color)";
-    style.color = "var(--p-surface-950)";
+  if (value?.kind === "SHIFT") {
+    style.backgroundColor = shiftBackgrounds[value.shiftCode];
+    style.color = "var(--p-text-color)";
   }
   if (value?.kind === "STATUS") {
-    style.backgroundColor =
-      value.status === "NO_SHOW"
-        ? "var(--p-message-error-border-color)"
-        : "var(--p-message-warn-border-color)";
-    style.color = "var(--p-surface-950)";
+    style.backgroundColor = statusBackground;
+    style.color = "var(--p-text-color)";
   }
   if (selected) style.boxShadow = "inset 0 0 0 2px var(--p-primary-color)";
   return Object.keys(style).length ? style : undefined;
+}
+function shiftColorStyle(code: ScheduleShiftSetting["shiftCode"]): Record<string, string> {
+  return { backgroundColor: shiftBackgrounds[code], borderColor: "var(--p-content-border-color)" };
 }
 function dayBodyStyle(day: number): Record<string, string> {
   return {
@@ -1440,8 +2173,20 @@ function isCellSelected(row: ScheduleRow, index: number): boolean {
   const cell = row.cells[index];
   return !!cell && selectedCells.value.includes(`${row.membershipId}:${cell.date}`);
 }
-function toggleEmployeeSelection(row: ScheduleRow): void {
-  if (!canEdit.value || !selectedCells.value.length) return;
+function scheduleRowClass(row: ScheduleRow): string | undefined {
+  const applicableCells = row.cells.filter((cell) => cell.applicable);
+  if (
+    applicableCells.length &&
+    applicableCells.every((cell) =>
+      selectedCells.value.includes(`${row.membershipId}:${cell.date}`),
+    )
+  ) {
+    return "schedule-row-selected";
+  }
+  return undefined;
+}
+function toggleEmployeeSelection(event: MouseEvent, row: ScheduleRow): void {
+  if (!canEdit.value || (!event.ctrlKey && !event.metaKey)) return;
   const keys = row.cells
     .filter((cell) => cell.applicable)
     .map((cell) => `${row.membershipId}:${cell.date}`);
@@ -1468,24 +2213,61 @@ function handleDayCellClick(event: MouseEvent, row: ScheduleRow, index: number):
   openCell(row, index);
 }
 function openCell(row: ScheduleRow, index: number): void {
+  bulkEditMode.value = false;
   activeRow.value = row;
   activeCellIndex.value = index;
   const value = row.cells[index].value;
-  editKind.value = value?.kind ?? "SHIFT";
-  editHours.value = value?.kind === "SHIFT" ? value.durationHours : 12;
-  editShiftType.value = value?.kind === "SHIFT" ? value.shiftType : "NORMAL";
-  editStatus.value = value?.kind === "STATUS" ? value.status : null;
-  commentText.value = row.cells[index].comment?.text ?? "";
+  initializeCellEditor(value);
+  savedValueSignature.value = value ? editValueSignature.value : null;
+  commentText.value = "";
   error.value = "";
   cellVisible.value = true;
 }
+function sameScheduleValue(left: ScheduleValue | null, right: ScheduleValue | null): boolean {
+  if (left === null || right === null) return left === right;
+  if (left.kind !== right.kind) return false;
+  if (left.kind === "SHIFT" && right.kind === "SHIFT") {
+    return (
+      left.shiftCode === right.shiftCode &&
+      left.durationHours === right.durationHours &&
+      left.startMinute === right.startMinute
+    );
+  }
+  if (left.kind === "STATUS" && right.kind === "STATUS") return left.status === right.status;
+  return left.kind === "EMPTY" && right.kind === "EMPTY";
+}
+function openBulkEditor(): void {
+  const targets = [...selectedCells.value];
+  if (!targets.length) return;
+  bulkEditMode.value = true;
+  bulkEditTargets.value = targets;
+  activeRow.value = null;
+  activeCellIndex.value = -1;
+  savedValueSignature.value = null;
+  commentText.value = "";
+  const values = bulkEditCells.value.map(({ cell }) => cell.value);
+  const firstValue = values[0] ?? null;
+  const areValuesEqual =
+    values.length === targets.length &&
+    values.every((value) => sameScheduleValue(firstValue, value));
+  initializeCellEditor(areValuesEqual ? firstValue : null);
+  error.value = "";
+  cellVisible.value = true;
+}
+function resetCellSelection(): void {
+  selectedCells.value = [];
+}
 function valueFor(
   kind: "SHIFT" | "STATUS" | "EMPTY",
-  hours = 12,
-  shiftType: "NORMAL" | "NIGHT" = "NORMAL",
-  status: typeof editStatus.value = null,
+  hours = 8,
+  shiftCode: "MORNING" | "DAY" | "EVENING" | "NIGHT" = "MORNING",
+  startMinute = 540,
+  status: "VACATION" | "SICK_LEAVE" | "NO_SHOW" | null = null,
+  shiftSettingId: string | null = null,
 ): ScheduleValue {
-  if (kind === "SHIFT") return { kind, durationHours: hours, shiftType };
+  if (kind === "SHIFT") {
+    return { kind, durationHours: hours, shiftCode, startMinute, shiftSettingId };
+  }
   if (kind === "STATUS") return { kind, status: status ?? "VACATION" };
   return { kind };
 }
@@ -1542,7 +2324,7 @@ function previewApplySchedule(
       anchor: item.anchor,
       applyFrom: item.applyFrom,
     });
-    const cycleLength = version.workDays + version.offDays;
+    const cycleLength = version.days.length;
     const anchor = new Date(`${item.anchor}T00:00:00`);
     const applyFrom = new Date(`${item.applyFrom}T00:00:00`);
     for (const cell of row.cells) {
@@ -1550,14 +2332,17 @@ function previewApplySchedule(
       if (!cell.applicable || date < applyFrom) continue;
       const offset = Math.floor((date.getTime() - anchor.getTime()) / 86_400_000);
       const cycleDay = ((offset % cycleLength) + cycleLength) % cycleLength;
-      const nextValue: ScheduleValue =
-        cycleDay < version.workDays
-          ? {
-              kind: "SHIFT",
-              durationHours: version.durationHours,
-              shiftType: version.shiftType,
-            }
-          : { kind: "EMPTY" };
+      const settingId = version.days[cycleDay]?.shiftSettingId;
+      const setting = shiftSettings.value.find((item) => item.id === settingId);
+      const nextValue: ScheduleValue = setting
+        ? {
+            kind: "SHIFT",
+            durationHours: setting.defaultDurationHours,
+            shiftCode: setting.shiftCode,
+            startMinute: setting.startMinute,
+            shiftSettingId: setting.id,
+          }
+        : { kind: "EMPTY" };
       if (!overwrite && cell.value) continue;
       if (nextValue.kind !== "EMPTY" || overwrite)
         previewSetCell(row.membershipId, cell.date, nextValue, target);
@@ -1580,60 +2365,119 @@ async function run(action: () => Promise<void>): Promise<void> {
 function waitForPreviewResponse(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 450));
 }
-function saveCell(): void {
+function saveCellChanges(): void {
   if (!activeRow.value || !activeCell.value) return;
+  const shouldSaveValue = hasUnsavedScheduleValue.value;
+  const shouldSaveComment = hasCommentDraft.value;
+  if (!shouldSaveValue && !shouldSaveComment) return;
+  const choice = editChoice.value;
+  const text = commentText.value.trim();
+  const isShift = !!choice && allShiftTypes.some((shift) => shift.value === choice);
+  void run(async () => {
+    let valueSaveError: string | null = null;
+    let commentSaveError: string | null = null;
+    if (shouldSaveValue && choice) {
+      const status =
+        choice === "VACATION" || choice === "SICK_LEAVE" || choice === "NO_SHOW" ? choice : null;
+      const cell = {
+        membershipId: activeRow.value!.membershipId,
+        date: activeCell.value!.date,
+        value: valueFor(
+          status ? "STATUS" : isShift ? "SHIFT" : "EMPTY",
+          editHours.value ?? 8,
+          isShift ? (choice as ShiftCode) : "MORNING",
+          editStartTime.value ? timeToMinute(editStartTime.value) : 540,
+          status,
+          editShiftSettingId.value,
+        ),
+      };
+      try {
+        if (previewMode.value) previewSetCell(cell.membershipId, cell.date, cell.value);
+        else await schedule.updateCell(cell);
+        savedValueSignature.value = editValueSignature.value;
+      } catch (cause) {
+        valueSaveError =
+          cause instanceof Error ? cause.message : "не удалось сохранить значение дня";
+      }
+    }
+
+    if (shouldSaveComment) {
+      try {
+        if (previewMode.value) {
+          const comment = activeCell.value!.comment;
+          const now = new Date().toISOString();
+          if (comment && comment.text !== text) {
+            comment.history.unshift({
+              text: comment.text,
+              createdAt: comment.updatedAt,
+              author: comment.updatedBy,
+            });
+          }
+          activeCell.value!.comment = {
+            text,
+            updatedAt: now,
+            updatedBy: "Вы",
+            history: comment?.history ?? [],
+          };
+        } else {
+          await schedule.saveComment(activeRow.value!.membershipId, activeCell.value!.date, text);
+        }
+        commentText.value = "";
+      } catch (cause) {
+        commentSaveError =
+          cause instanceof Error ? cause.message : "не удалось сохранить комментарий";
+      }
+    }
+
+    if (valueSaveError || commentSaveError) {
+      const savedItems: string[] = [];
+      const failedItems: string[] = [];
+      if (shouldSaveValue && !valueSaveError) {
+        savedItems.push(isShift ? "Смена сохранена" : "Значение дня сохранено");
+      }
+      if (shouldSaveComment && !commentSaveError) savedItems.push("Комментарий сохранён");
+      if (valueSaveError) failedItems.push(`Не удалось сохранить значение дня: ${valueSaveError}`);
+      if (commentSaveError)
+        failedItems.push(`Не удалось сохранить комментарий: ${commentSaveError}`);
+      error.value = [...savedItems, ...failedItems, "Повторите сохранение."].join(". ");
+      return;
+    }
+
+    cellVisible.value = false;
+  });
+}
+function deleteCellValue(): void {
+  if (!activeRow.value || !activeCell.value || !hasCellValueToDelete.value) return;
   void run(async () => {
     const cell = {
       membershipId: activeRow.value!.membershipId,
       date: activeCell.value!.date,
-      value: valueFor(editKind.value, editHours.value, editShiftType.value, editStatus.value),
+      value: valueFor("EMPTY"),
     };
     if (previewMode.value) previewSetCell(cell.membershipId, cell.date, cell.value);
     else await schedule.updateCell(cell);
     cellVisible.value = false;
   });
 }
-function saveCellComment(): void {
-  if (!activeRow.value || !activeCell.value) return;
-  void run(async () => {
-    if (previewMode.value) {
-      const comment = activeCell.value!.comment;
-      const text = commentText.value.trim();
-      const now = new Date().toISOString();
-      if (comment && comment.text !== text) {
-        comment.history.unshift({
-          text: comment.text,
-          createdAt: comment.updatedAt,
-          author: comment.updatedBy,
-        });
-      }
-      activeCell.value!.comment = {
-        text,
-        updatedAt: now,
-        updatedBy: "Вы",
-        history: comment?.history ?? [],
-      };
-    } else {
-      await schedule.saveComment(
-        activeRow.value!.membershipId,
-        activeCell.value!.date,
-        commentText.value.trim(),
-      );
-    }
-    cellVisible.value = false;
-  });
-}
-function applyBulk(): void {
-  const cells = selectedCells.value.map((key) => {
+function saveBulkEdit(): void {
+  if (!bulkEditMode.value || !canSaveScheduleValue.value) return;
+  const choice = editChoice.value;
+  if (!choice) return;
+  const status =
+    choice === "VACATION" || choice === "SICK_LEAVE" || choice === "NO_SHOW" ? choice : null;
+  const isShift = allShiftTypes.some((shift) => shift.value === choice);
+  const cells = bulkEditTargets.value.map((key) => {
     const [membershipId, date] = key.split(":");
     return {
       membershipId,
       date,
       value: valueFor(
-        bulkKind.value ?? "EMPTY",
-        bulkHours.value,
-        bulkShiftType.value,
-        bulkStatus.value,
+        status ? "STATUS" : isShift ? "SHIFT" : "EMPTY",
+        editHours.value ?? 8,
+        isShift ? (choice as ShiftCode) : "MORNING",
+        editStartTime.value ? timeToMinute(editStartTime.value) : 540,
+        status,
+        editShiftSettingId.value,
       ),
     };
   });
@@ -1642,7 +2486,27 @@ function applyBulk(): void {
       for (const cell of cells) previewSetCell(cell.membershipId, cell.date, cell.value);
     } else await schedule.updateCells(cells);
     selectedCells.value = [];
+    cellVisible.value = false;
+    bulkEditMode.value = false;
   });
+}
+function clearSelectedCells(): void {
+  const cells = selectedCells.value.map((key) => {
+    const [membershipId, date] = key.split(":");
+    return { membershipId, date, value: valueFor("EMPTY") };
+  });
+  if (!cells.length) return;
+  void run(async () => {
+    if (previewMode.value) {
+      for (const cell of cells) previewSetCell(cell.membershipId, cell.date, cell.value);
+    } else await schedule.updateCells(cells);
+    selectedCells.value = [];
+    bulkDeleteVisible.value = false;
+  });
+}
+function confirmClearSelectedCells(): void {
+  if (busy.value || !selectedCells.value.length) return;
+  clearSelectedCells();
 }
 function openGenerate(): void {
   if (!previewMode.value && schedule.templatesQuery.isLoading.value) return;
@@ -1786,7 +2650,7 @@ function generateSchedule(): void {
 }
 function saveTemplate(): void {
   if (!templateFormValid.value) {
-    error.value = "Укажите от 1 до 31 рабочего, от 0 до 30 выходных дней и не более 31 дня в цикле";
+    error.value = "Укажите название и последовательность длиной до 31 дня с хотя бы одной сменой";
     return;
   }
   if (duplicateTemplate.value) {
@@ -1796,10 +2660,9 @@ function saveTemplate(): void {
   }
   const input = {
     name: templateName.value,
-    workDays: templateForm.workDays,
-    offDays: templateForm.offDays,
-    durationHours: 12,
-    shiftType: "NORMAL" as const,
+    days: templateForm.days.map((settingId) =>
+      settingId === templateDayOffValue ? null : (settingId ?? null),
+    ),
   };
   void run(async () => {
     const editingId = selectedTemplateId.value;
@@ -1807,18 +2670,13 @@ function saveTemplate(): void {
       const existing = previewTemplates.value.find((item) => item.id === selectedTemplateId.value);
       const versionChanged =
         !existing ||
-        existing.currentVersion.workDays !== input.workDays ||
-        existing.currentVersion.offDays !== input.offDays ||
-        existing.currentVersion.durationHours !== input.durationHours ||
-        existing.currentVersion.shiftType !== input.shiftType;
+        JSON.stringify(existing.currentVersion.days.map(({ shiftSettingId }) => shiftSettingId)) !==
+          JSON.stringify(input.days);
       const version = versionChanged
         ? {
             id: `demo-template-version-${Date.now()}`,
             version: (existing?.currentVersion.version ?? 0) + 1,
-            workDays: input.workDays,
-            offDays: input.offDays,
-            durationHours: input.durationHours,
-            shiftType: input.shiftType,
+            days: input.days.map((shiftSettingId, position) => ({ position, shiftSettingId })),
           }
         : null;
       if (existing && !existing.isSystem) {
@@ -1831,10 +2689,7 @@ function saveTemplate(): void {
         const firstVersion = {
           id: `demo-template-version-${Date.now()}`,
           version: 1,
-          workDays: input.workDays,
-          offDays: input.offDays,
-          durationHours: input.durationHours,
-          shiftType: input.shiftType,
+          days: input.days.map((shiftSettingId, position) => ({ position, shiftSettingId })),
         };
         previewTemplates.value.push({
           id: `demo-template-${Date.now()}`,
@@ -1855,8 +2710,10 @@ function editTemplate(template: ScheduleTemplate): void {
   if (template.isSystem) return;
   duplicateWarningVisible.value = false;
   selectedTemplateId.value = template.id;
-  templateForm.workDays = template.currentVersion.workDays;
-  templateForm.offDays = template.currentVersion.offDays;
+  templateForm.name = template.name;
+  templateForm.days = template.currentVersion.days.map(
+    ({ shiftSettingId }) => shiftSettingId ?? templateDayOffValue,
+  );
   error.value = "";
 }
 function cancelTemplateEdit(): void {
@@ -1890,8 +2747,8 @@ function deleteTemplate(): void {
   });
 }
 function resetTemplateForm(): void {
-  templateForm.workDays = 1;
-  templateForm.offDays = 1;
+  templateForm.name = "";
+  templateForm.days = [];
 }
 function openTemplates(): void {
   templateDeleteVisible.value = false;
@@ -2029,6 +2886,12 @@ async function download(): Promise<void> {
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("ru-RU", { dateStyle: "short", timeStyle: "short" }).format(
     new Date(value),
+  );
+}
+function formatCellDayMonth(value: string): string {
+  const [yearValue, monthValue, dayValue] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(
+    new Date(yearValue, monthValue - 1, dayValue),
   );
 }
 </script>

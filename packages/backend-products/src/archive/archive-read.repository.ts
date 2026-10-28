@@ -11,7 +11,11 @@ export type ArchiveDatabase = PrismaClient | Prisma.TransactionClient;
 
 const archiveProductInclude = {
   parentComponents: { orderBy: { position: "asc" }, include: { unit: true } },
-  cocktailGarnishes: { orderBy: { position: "asc" } },
+  cocktailGarnishes: { orderBy: { position: "asc" }, include: { garnish: true } },
+  cocktailQuickGarnishes: {
+    orderBy: { position: "asc" },
+    include: { referenceValue: true },
+  },
   outputUnit: true,
   ingredient: { include: { category: true } },
   preparation: { include: { category: true } },
@@ -136,12 +140,47 @@ export class ArchiveReadRepository {
           unit: row.unit.label,
         };
       }),
-      garnishes: product.cocktailGarnishes.map((row) => {
-        const garnish = products.get(row.garnishId);
-        if (!garnish || garnish.type !== "GARNISH")
-          throw new NotFoundException("Гарнир недоступен");
-        return { id: garnish.id, type: garnish.type, name: garnish.name, status: garnish.status };
-      }),
+      garnishes: [
+        ...product.cocktailGarnishes.map((row) => {
+          const garnish = products.get(row.garnishId);
+          if (!garnish || garnish.type !== "GARNISH")
+            throw new NotFoundException("Гарнир недоступен");
+          return {
+            id: garnish.id,
+            type: garnish.type,
+            name: garnish.name,
+            status: garnish.status,
+            kind: "PRODUCT" as const,
+            position: row.position,
+          };
+        }),
+        ...product.cocktailQuickGarnishes.map((row) => ({
+          id: row.referenceValue.id,
+          type: "QUICK" as const,
+          name: row.referenceValue.label,
+          status: null,
+          kind: "QUICK" as const,
+          position: row.position,
+        })),
+      ]
+        .sort((a, b) => a.position - b.position)
+        .map((garnish) =>
+          garnish.kind === "QUICK"
+            ? {
+                id: garnish.id,
+                type: "QUICK" as const,
+                name: garnish.name,
+                status: null,
+                kind: "QUICK" as const,
+              }
+            : {
+                id: garnish.id,
+                type: garnish.type,
+                name: garnish.name,
+                status: garnish.status,
+                kind: "PRODUCT" as const,
+              },
+        ),
       output:
         product.outputAmount && product.outputUnit
           ? {

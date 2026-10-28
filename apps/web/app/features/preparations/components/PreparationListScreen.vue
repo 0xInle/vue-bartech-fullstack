@@ -3,7 +3,9 @@
     <LoadingIndicator screen />
   </div>
   <div v-else-if="errorMessage" class="mx-auto max-w-5xl pt-8">
-    <Message severity="error" :closable="false">{{ errorMessage }}</Message>
+    <Message severity="error" :closable="false" :pt="compactMessagePt">
+      {{ errorMessage }}
+    </Message>
   </div>
   <WorkspaceShell
     v-else-if="workspace && currentUser"
@@ -15,37 +17,49 @@
     <section class="mx-auto max-w-5xl">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Продукция</p>
-          <h1 class="text-xl mt-1 font-semibold tracking-tight">Заготовки</h1>
+          <h1 class="text-xl font-semibold tracking-tight">Заготовки</h1>
         </div>
         <Button
           v-if="canManage"
           label="Создать заготовку"
-          icon="pi pi-plus"
           size="small"
           @click="drawerVisible = true"
         />
       </div>
-      <div class="mt-5 grid gap-3 sm:grid-cols-3">
-        <InputText v-model="searchText" size="small" placeholder="Поиск по названию" fluid /><Select
-          v-model="categoryCode"
-          :options="referencesQuery.data.value?.preparationCategories ?? []"
-          option-label="name"
-          option-value="code"
-          placeholder="Все категории"
-          size="small"
-          show-clear
-          fluid
-        /><Select
-          v-model="sort"
-          :options="sortOptions"
-          option-label="label"
-          option-value="value"
-          size="small"
-          fluid
-        />
+      <div class="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_14rem]">
+        <FloatLabel variant="on" class="min-w-0">
+          <IconField>
+            <InputIcon class="pi pi-search" />
+            <InputText
+              id="preparation-search"
+              v-model="searchText"
+              size="small"
+              class="w-full"
+              aria-label="Поиск заготовок по названию"
+            />
+          </IconField>
+          <label for="preparation-search" class="text-xs">Поиск по названию</label>
+        </FloatLabel>
+        <FloatLabel variant="on" class="min-w-0">
+          <Select
+            v-model="categoryCode"
+            input-id="preparation-category"
+            :options="referencesQuery.data.value?.preparationCategories ?? []"
+            option-label="name"
+            option-value="code"
+            size="small"
+            show-clear
+            fluid
+          />
+          <label for="preparation-category" class="text-xs">Категория</label>
+        </FloatLabel>
       </div>
-      <Message v-if="listQuery.isError.value" severity="error" :closable="false" class="mt-5"
+      <Message
+        v-if="listQuery.isError.value"
+        severity="error"
+        :closable="false"
+        :pt="compactMessagePt"
+        class="mt-5"
         >Не удалось загрузить заготовки. Попробуйте обновить страницу.</Message
       >
       <LoadingIndicator v-else-if="listQuery.isLoading.value" screen />
@@ -54,22 +68,22 @@
           v-for="preparation in preparations"
           :key="preparation.id"
           :to="preparationPath(preparation.id)"
-          class="block rounded-lg border border-surface bg-surface-0 p-4 transition-colors hover:border-primary-200 hover:bg-primary-50"
+          class="block rounded-lg border border-surface bg-surface-0 p-4 transition-colors hover:border-primary-200 hover:bg-primary-50 sm:rounded-none sm:border-x-0 sm:border-t-0 sm:bg-transparent sm:px-3 sm:py-3 sm:hover:border-surface sm:hover:bg-primary-50 sm:last:border-b-0"
           @click="rememberScroll"
           ><div
-            class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+            class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto] sm:items-baseline sm:gap-4"
           >
             <div>
-              <p class="font-medium">{{ preparation.name }}</p>
+              <p class="font-medium sm:text-sm">{{ preparation.name }}</p>
               <p class="mt-1 text-xs text-color-secondary">{{ preparation.categoryName }}</p>
             </div>
+            <p class="mt-2 text-sm text-color-secondary sm:mt-0">
+              {{ preparation.componentSummary || "Состав будет указан в техкарте" }}
+            </p>
             <time class="text-xs text-color-secondary">{{
               formatDate(preparation.updatedAt)
             }}</time>
-          </div>
-          <p class="mt-2 text-sm text-color-secondary">
-            {{ preparation.componentSummary || "Состав будет указан в техкарте" }}
-          </p></NuxtLink
+          </div></NuxtLink
         >
       </div>
       <div v-else class="mt-5 rounded-lg border border-dashed border-surface p-6 text-center">
@@ -80,13 +94,6 @@
               : "В заведении ещё нет заготовок."
           }}
         </p>
-        <Button
-          v-if="canManage && !hasFilters"
-          label="Создать первую заготовку"
-          size="small"
-          class="mt-3"
-          @click="drawerVisible = true"
-        />
       </div>
     </section>
     <PreparationFormDrawer
@@ -105,29 +112,19 @@ import WorkspaceShell from "~/features/workspace/components/WorkspaceShell.vue";
 import { useVenueWorkspace } from "~/features/workspace/composables/useVenueWorkspace";
 import PreparationFormDrawer from "./PreparationFormDrawer.vue";
 import { usePreparations } from "../composables/usePreparations";
+import { compactMessagePt } from "~/utils/primevue-message";
+import IconField from "primevue/iconfield";
+import InputIcon from "primevue/inputicon";
 const { currentUser, errorMessage, loading, switchWorkspace, workspace, workplaces } =
   useVenueWorkspace();
 const companyId = computed(() => workspace.value?.company.id ?? "");
 const venueId = computed(() => workspace.value?.venue.id ?? "");
-const {
-  categoryCode,
-  listQuery,
-  referencesQuery,
-  rememberScroll,
-  restoreScroll,
-  searchText,
-  sort,
-} = usePreparations(companyId, venueId);
+const { categoryCode, listQuery, referencesQuery, rememberScroll, restoreScroll, searchText } =
+  usePreparations(companyId, venueId);
 const drawerVisible = ref(false);
 const preparations = computed(() => listQuery.data.value ?? []);
 const canManage = computed(() => workspace.value?.permissions.includes("manage_products") ?? false);
-const hasFilters = computed(() =>
-  Boolean(searchText.value.trim() || categoryCode.value || sort.value !== "name"),
-);
-const sortOptions = [
-  { label: "По названию", value: "name" },
-  { label: "Сначала изменённые", value: "updated" },
-];
+const hasFilters = computed(() => Boolean(searchText.value.trim() || categoryCode.value));
 const restoredScroll = ref(false);
 
 watch(

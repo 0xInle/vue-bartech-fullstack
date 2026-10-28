@@ -9,11 +9,13 @@ import type { CocktailCardComponentResponseDto } from './cocktailCardComponentRe
 import type { CocktailCardOutputResponseDto } from './cocktailCardOutputResponseDto';
 import type { CocktailCardResponseDtoStatus } from './cocktailCardResponseDtoStatus';
 import type { CocktailCardResponseDtoType } from './cocktailCardResponseDtoType';
+import type { CocktailCategoryResponseDto } from './cocktailCategoryResponseDto';
 import type { CocktailGarnishOptionResponseDto } from './cocktailGarnishOptionResponseDto';
 
 export interface CocktailCardResponseDto {
   id: string;
   name: string;
+  categories: CocktailCategoryResponseDto[];
   type: CocktailCardResponseDtoType;
   status: CocktailCardResponseDtoStatus;
   components: CocktailCardComponentResponseDto[];

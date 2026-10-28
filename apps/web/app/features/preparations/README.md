@@ -13,8 +13,7 @@
 - `PreparationComponentRows.vue` редактирует только строки состава и использует публичные
   компоненты `features/products`.
 - `usePreparations.ts` владеет TanStack Query-запросами и ключами `preparation-list`,
-  `preparation-card` и `product-references`, а также синхронизацией поиска, категории и
-  сортировки с URL.
+  `preparation-card` и `product-references`, а также синхронизацией поиска и категории с URL.
 
 Маршруты: `/app/companies/:companyId/venues/:venueId/preparations` и
 `/app/companies/:companyId/venues/:venueId/preparations/:preparationId`. Создание отдельного

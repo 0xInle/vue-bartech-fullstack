@@ -3,7 +3,9 @@
     <LoadingIndicator screen />
   </div>
   <div v-else-if="errorMessage" class="mx-auto max-w-5xl pt-8">
-    <Message severity="error" :closable="false">{{ errorMessage }}</Message>
+    <Message severity="error" :closable="false" :pt="compactMessagePt">
+      {{ errorMessage }}
+    </Message>
   </div>
   <WorkspaceShell
     v-else-if="workspace && currentUser"
@@ -14,12 +16,18 @@
   >
     <section class="mx-auto max-w-3xl">
       <NuxtLink :to="listLocation" class="text-sm text-primary hover:underline">← Гарниры</NuxtLink>
-      <Message v-if="garnishQuery.isError.value" severity="error" :closable="false" class="mt-5">
+      <Message
+        v-if="garnishQuery.isError.value"
+        severity="error"
+        :closable="false"
+        :pt="compactMessagePt"
+        class="mt-5"
+      >
         Гарнир не найден или недоступен в этом заведении.
       </Message>
       <LoadingIndicator v-else-if="garnishQuery.isLoading.value" screen />
       <article v-else-if="garnish" class="mt-5">
-        <header class="border-b border-surface pb-5">
+        <header class="pb-5">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
@@ -62,7 +70,8 @@
             class="mt-3"
           />
         </header>
-        <section class="border-b border-surface py-5">
+        <Divider class="!my-0" />
+        <section class="py-5">
           <h2 class="text-base font-semibold">Состав</h2>
           <ul class="mt-3 divide-y divide-surface">
             <li
@@ -83,17 +92,20 @@
             </li>
           </ul>
         </section>
-        <section class="border-b border-surface py-5">
+        <Divider class="!my-0" />
+        <section class="py-5">
           <h2 class="text-base font-semibold">Технология приготовления</h2>
           <p class="mt-3 whitespace-pre-line text-sm leading-6">{{ garnish.technology }}</p>
         </section>
-        <section v-if="garnish.output" class="border-b border-surface py-5">
-          <h2 class="text-base font-semibold">Фактический выход</h2>
-          <p class="mt-3 text-sm">{{ garnish.output.amount }} {{ garnish.output.unit }}</p>
-        </section>
-        <section v-if="garnish.comment" class="py-5">
-          <h2 class="text-base font-semibold">Комментарий</h2>
-          <p class="mt-3 whitespace-pre-line text-sm text-color-secondary">{{ garnish.comment }}</p>
+        <Divider v-if="garnish.output || garnish.comment" class="!my-0" />
+        <section v-if="garnish.output || garnish.comment" class="py-5">
+          <p v-if="garnish.output" class="text-sm">
+            <span class="font-medium">Фактический выход:</span> {{ garnish.output.amount }}
+            {{ garnish.output.unit }}
+          </p>
+          <p v-if="garnish.comment" class="mt-3 whitespace-pre-line text-sm text-color-secondary">
+            {{ garnish.comment }}
+          </p>
         </section>
       </article>
     </section>
@@ -114,6 +126,7 @@ import { computed, ref } from "vue";
 import WorkspaceShell from "~/features/workspace/components/WorkspaceShell.vue";
 import { ArchiveActionButton } from "~/features/archive";
 import ExportActionButton from "~/features/exports/components/ExportActionButton.vue";
+import { compactMessagePt } from "~/utils/primevue-message";
 import { useVenueWorkspace } from "~/features/workspace/composables/useVenueWorkspace";
 import { useGarnishes } from "../composables/useGarnishes";
 import GarnishFormDrawer from "./GarnishFormDrawer.vue";
@@ -133,7 +146,6 @@ const listLocation = computed(() => ({
   query: {
     query:
       typeof route.query.query === "string" ? route.query.query.trim() || undefined : undefined,
-    sort: route.query.sort === "updated" ? "updated" : undefined,
   },
 }));
 const historyLocation = computed(() => ({

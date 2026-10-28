@@ -91,12 +91,18 @@
       />
     </div>
 
-    <main class="min-w-0 flex-1 px-4 pb-24 pt-28 sm:px-6 lg:px-8 lg:pb-8 lg:pt-4">
-      <div v-if="!isHome" class="mb-5 flex justify-end xl:hidden">
+    <main
+      class="min-w-0 flex-1 px-4 pb-24 pt-28 sm:px-6 lg:px-8 lg:pb-8 lg:pt-4"
+      :class="isSchedulePage ? 'flex h-dvh min-h-0 flex-col overflow-hidden' : ''"
+    >
+      <div v-if="!isHome" class="mb-5 flex shrink-0 justify-end xl:hidden">
         <WorkspaceProductSearch :workspace="workspace" mode="trigger" />
       </div>
       <CompanyClosureBanner :company-id="workspace.company.id" />
-      <slot />
+      <div v-if="isSchedulePage" class="flex min-h-0 min-w-0 flex-1 flex-col">
+        <slot />
+      </div>
+      <slot v-else />
     </main>
 
     <nav
@@ -132,7 +138,7 @@
       v-model:visible="moreVisible"
       header="Разделы"
       position="right"
-      class="w-full sm:!w-96"
+      class="drawer-size-sm"
       :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
     >
       <WorkspaceIdentity
@@ -210,6 +216,7 @@ const paths = computed(() => ({
 }));
 const isHome = computed(() => route.path === homePath.value);
 const isProfile = computed(() => route.path === profilePath.value);
+const isSchedulePage = computed(() => route.path === paths.value.schedule);
 
 function isPathActive(path: string): boolean {
   return route.path === path || route.path.startsWith(`${path}/`);
@@ -362,20 +369,22 @@ function getMenuLink(label: string): { label: string; to: string } {
 }
 
 :deep(.workspace-panel-menu .workspace-menu-item-active .p-panelmenu-item-link) {
-  color: var(--p-text-color);
-  background: var(--p-surface-100);
+  color: var(--p-navigation-item-active-color);
+  background: var(--p-navigation-item-active-background);
 }
 
 :deep(.workspace-panel-menu .workspace-menu-item-active .p-panelmenu-item-link:hover) {
-  background: var(--p-surface-200);
+  color: var(--p-navigation-item-focus-color);
+  background: var(--p-navigation-item-focus-background);
 }
 
 :deep(.p-button.workspace-nav-active) {
-  color: var(--p-text-color);
-  background: var(--p-surface-100);
+  color: var(--p-navigation-item-active-color);
+  background: var(--p-navigation-item-active-background);
 }
 
 :deep(.p-button.workspace-nav-active:hover) {
-  background: var(--p-surface-200);
+  color: var(--p-navigation-item-focus-color);
+  background: var(--p-navigation-item-focus-background);
 }
 </style>

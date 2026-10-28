@@ -11,4 +11,5 @@ export type InternalServiceProductsControllerCocktailsListParams = {
  * @maxLength 160
  */
 query?: string;
+categoryId?: string;
 };

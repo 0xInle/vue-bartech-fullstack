@@ -78,7 +78,7 @@ model User {
   challenges                        EmailChallenge[]
   companyMemberships                CompanyMembership[]
   venueMemberships                  VenueMembership[]
-  permissionOverridesChanged       VenuePermissionOverride[]
+  permissionOverridesChanged        VenuePermissionOverride[]
   temporaryResponsibilitiesAssigned TemporaryResponsibility[]
   createdInvitations                Invitation[]
   invitationAcceptanceSessions      InvitationAcceptanceSession[]

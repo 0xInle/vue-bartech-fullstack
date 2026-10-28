@@ -70,8 +70,8 @@ export class ProductsRepository {
   }
 
   lockIngredientCategoryTree(transaction: Prisma.TransactionClient) {
-    return transaction.$queryRaw<Array<{ pg_advisory_xact_lock: null }>>`
-      SELECT pg_advisory_xact_lock(hashtextextended('ingredient-category-tree', 0))
+    return transaction.$queryRaw<Array<{ locked: boolean }>>`
+      SELECT pg_advisory_xact_lock(hashtextextended('ingredient-category-tree', 0)) IS NULL AS locked
     `;
   }
 
@@ -93,7 +93,7 @@ export class ProductsRepository {
   findActiveCocktail(database: ProductDatabase, venueId: string, cocktailId: string) {
     return database.product.findFirst({
       where: { id: cocktailId, venueId, type: "COCKTAIL", status: "ACTIVE" },
-      select: { id: true },
+      select: { id: true, venueId: true },
     });
   }
 
@@ -107,7 +107,7 @@ export class ProductsRepository {
   findUnitByCode(database: ProductDatabase, venueId: string, code: string) {
     return database.unit.findFirst({
       where: { code, OR: [{ venueId: null }, { venueId }] },
-      select: { id: true },
+      select: { id: true, venueId: true },
     });
   }
 
@@ -131,6 +131,13 @@ export class ProductsRepository {
   ) {
     return database.referenceValue.findFirst({
       where: { id, type, isActive: true, OR: [{ venueId: null }, { venueId }] },
+      select: { id: true, venueId: true },
+    });
+  }
+
+  findLocalQuickGarnishes(database: ProductDatabase, venueId: string, ids: string[]) {
+    return database.referenceValue.findMany({
+      where: { id: { in: ids }, venueId, type: "GARNISH", isActive: true },
       select: { id: true },
     });
   }
@@ -143,8 +150,8 @@ export class ProductsRepository {
   }
 
   lockPreparationGraph(transaction: Prisma.TransactionClient, venueId: string) {
-    return transaction.$queryRaw<Array<{ pg_advisory_xact_lock: null }>>`
-      SELECT pg_advisory_xact_lock(hashtextextended(${venueId}, 0))
+    return transaction.$queryRaw<Array<{ locked: boolean }>>`
+      SELECT pg_advisory_xact_lock(hashtextextended(${venueId}, 0)) IS NULL AS locked
     `;
   }
 
@@ -217,7 +224,8 @@ export class ProductsRepository {
         amount: number;
         position: number;
       }>;
-      garnishIds?: string[];
+      garnishSelections?: Array<{ id: string; kind: "PRODUCT" | "QUICK" }>;
+      categoryIds?: Array<{ id: string }>;
     },
   ) {
     return database.product.create({
@@ -242,7 +250,6 @@ export class ProductsRepository {
         cocktail: input.type === "COCKTAIL" ? { create: input.cocktailDetails } : undefined,
         parentComponents: {
           create: input.components.map((component) => ({
-            parentVenueId: input.venueId,
             componentProductId: component.productId,
             componentVenueId: component.productVenueId,
             unitId: component.unitId,
@@ -251,13 +258,44 @@ export class ProductsRepository {
           })),
         },
         cocktailGarnishes:
-          input.type === "COCKTAIL" && input.garnishIds?.length
+          input.type === "COCKTAIL" &&
+          input.garnishSelections?.some(({ kind }) => kind === "PRODUCT")
             ? {
-                create: input.garnishIds.map((garnishId, position) => ({
-                  cocktailVenueId: input.venueId,
-                  garnishId,
-                  garnishVenueId: input.venueId,
-                  position,
+                create: input.garnishSelections.flatMap(({ id: garnishId, kind }, position) =>
+                  kind === "PRODUCT"
+                    ? [
+                        {
+                          garnishId,
+                          garnishVenueId: input.venueId,
+                          position,
+                        },
+                      ]
+                    : [],
+                ),
+              }
+            : undefined,
+        cocktailQuickGarnishes:
+          input.type === "COCKTAIL" && input.garnishSelections?.some(({ kind }) => kind === "QUICK")
+            ? {
+                create: input.garnishSelections.flatMap(
+                  ({ id: referenceValueId, kind }, position) =>
+                    kind === "QUICK"
+                      ? [
+                          {
+                            referenceValueId,
+                            referenceValueVenueId: input.venueId,
+                            position,
+                          },
+                        ]
+                      : [],
+                ),
+              }
+            : undefined,
+        cocktailCategories:
+          input.type === "COCKTAIL" && input.categoryIds?.length
+            ? {
+                create: input.categoryIds.map((category) => ({
+                  referenceValueId: category.id,
                 })),
               }
             : undefined,
@@ -287,7 +325,8 @@ export class ProductsRepository {
         amount: number;
         position: number;
       }>;
-      garnishIds: string[];
+      garnishSelections: Array<{ id: string; kind: "PRODUCT" | "QUICK" }>;
+      categoryIds: Array<{ id: string }>;
     },
   ) {
     return transaction.product.update({
@@ -306,7 +345,6 @@ export class ProductsRepository {
         parentComponents: {
           deleteMany: { parentProductId: input.id, parentVenueId: input.venueId },
           create: input.components.map((component) => ({
-            parentVenueId: input.venueId,
             componentProductId: component.productId,
             componentVenueId: component.productVenueId,
             unitId: component.unitId,
@@ -316,11 +354,36 @@ export class ProductsRepository {
         },
         cocktailGarnishes: {
           deleteMany: { cocktailId: input.id, cocktailVenueId: input.venueId },
-          create: input.garnishIds.map((garnishId, position) => ({
-            cocktailVenueId: input.venueId,
-            garnishId,
-            garnishVenueId: input.venueId,
-            position,
+          create: input.garnishSelections.flatMap(({ id: garnishId, kind }, position) =>
+            kind === "PRODUCT"
+              ? [
+                  {
+                    garnishId,
+                    garnishVenueId: input.venueId,
+                    position,
+                  },
+                ]
+              : [],
+          ),
+        },
+        cocktailQuickGarnishes: {
+          deleteMany: { cocktailId: input.id, cocktailVenueId: input.venueId },
+          create: input.garnishSelections.flatMap(({ id: referenceValueId, kind }, position) =>
+            kind === "QUICK"
+              ? [
+                  {
+                    referenceValueId,
+                    referenceValueVenueId: input.venueId,
+                    position,
+                  },
+                ]
+              : [],
+          ),
+        },
+        cocktailCategories: {
+          deleteMany: { cocktailId: input.id, cocktailVenueId: input.venueId },
+          create: input.categoryIds.map((category) => ({
+            referenceValueId: category.id,
           })),
         },
       },
@@ -368,7 +431,15 @@ export class ProductsRepository {
         code: input.code,
         label: input.label,
       },
-      select: { id: true, type: true, code: true, label: true, venueId: true },
+      select: {
+        id: true,
+        type: true,
+        code: true,
+        label: true,
+        venueId: true,
+        sortOrder: true,
+        isActive: true,
+      },
     });
   }
 
