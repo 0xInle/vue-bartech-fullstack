@@ -1,6 +1,7 @@
 <template>
   <Drawer
     v-model:visible="visible"
+    :dismissable="!busy"
     position="right"
     class="drawer-size-sm"
     :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
@@ -210,7 +211,7 @@ function setPermission(permission: PermissionCode, enabled: boolean | undefined)
 }
 
 function requestClose(): void {
-  emit("close");
+  if (!props.busy) emit("close");
 }
 
 function permissionNames(codes: string[]): string {

@@ -74,7 +74,9 @@ export class ProductExportReadRepository {
           where: { OR: [{ venueId: null }, { venueId }] },
         }),
         this.database.ingredientCategory.findMany(),
-        this.database.preparationCategory.findMany(),
+        this.database.preparationCategory.findMany({
+          where: { OR: [{ venueId: null }, { venueId }] },
+        }),
         this.database.product.findMany({
           where: { id: { in: globalIds }, venueId: null, type: "INGREDIENT" },
           include: productExportInclude,

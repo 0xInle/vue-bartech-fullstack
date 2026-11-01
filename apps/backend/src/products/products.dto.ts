@@ -27,6 +27,8 @@ export const referenceValueTypes: ReferenceValueType[] = [
   "GARNISH",
   "COCKTAIL_CATEGORY",
 ];
+export const cocktailWorkflowStatuses = ["ACTIVE", "IN_DEVELOPMENT"] as const;
+export const productWorkflowStatuses = cocktailWorkflowStatuses;
 
 export class CreateLocalIngredientDto {
   @ApiProperty({ maxLength: 160 })
@@ -67,6 +69,20 @@ export class CreateLocalIngredientDto {
   externalIdentifier?: string;
 }
 
+export class UpdateLocalIngredientNameDto {
+  @ApiProperty({ maxLength: 160 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(160)
+  name!: string;
+
+  @ApiProperty({ example: "other" })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  categoryCode!: string;
+}
+
 export class ProductComponentDto {
   @ApiProperty({ format: "uuid" })
   @IsUUID()
@@ -94,6 +110,11 @@ export class ProductOutputDto {
 }
 
 export class CreateCompositeProductDto {
+  @ApiPropertyOptional({ enum: productWorkflowStatuses, default: "IN_DEVELOPMENT" })
+  @IsOptional()
+  @IsIn(productWorkflowStatuses)
+  workflowStatus?: (typeof productWorkflowStatuses)[number];
+
   @ApiProperty({ maxLength: 160 })
   @IsString()
   @IsNotEmpty()
@@ -283,6 +304,14 @@ export class CreateLocalReferenceValueDto {
   label!: string;
 }
 
+export class CreateLocalPreparationCategoryDto {
+  @ApiProperty({ maxLength: 100 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name!: string;
+}
+
 export class ProductCreatedDto {
   @ApiProperty({ format: "uuid" })
   id!: string;
@@ -363,6 +392,9 @@ export class PreparationCategoryResponseDto {
 
   @ApiProperty()
   name!: string;
+
+  @ApiProperty({ type: String, format: "uuid", nullable: true })
+  venueId!: string | null;
 
   @ApiProperty()
   sortOrder!: number;
@@ -482,6 +514,24 @@ export class ProductCatalogItemResponseDto {
   aliases!: ProductAliasResponseDto[];
 }
 
+export class LocalIngredientListQueryDto {
+  @ApiPropertyOptional({ maxLength: 160 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  query?: string;
+}
+
+export class LocalIngredientListItemResponseDto {
+  @ApiProperty({ format: "uuid" }) id!: string;
+  @ApiProperty({ enum: ["INGREDIENT"] }) type!: "INGREDIENT";
+  @ApiProperty() name!: string;
+  @ApiProperty({ enum: ["ACTIVE"] }) status!: "ACTIVE";
+  @ApiProperty({ type: String, format: "date-time" }) updatedAt!: Date;
+  @ApiProperty() category!: string;
+  @ApiProperty() categoryCode!: string;
+}
+
 export class ProductSearchQueryDto {
   @ApiProperty({ maxLength: 160, minLength: 2 })
   @IsString()
@@ -568,6 +618,9 @@ export class ProductSearchItemResponseDto {
   @ApiProperty({ enum: ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"] })
   type!: string;
 
+  @ApiProperty({ enum: cocktailWorkflowStatuses, nullable: true })
+  workflowStatus!: (typeof cocktailWorkflowStatuses)[number] | null;
+
   @ApiProperty()
   name!: string;
 
@@ -628,6 +681,11 @@ export class CocktailListQueryDto {
   @IsOptional()
   @IsUUID()
   categoryId?: string;
+
+  @ApiPropertyOptional({ enum: ["ALL", ...cocktailWorkflowStatuses], default: "ALL" })
+  @IsOptional()
+  @IsIn(["ALL", ...cocktailWorkflowStatuses])
+  workflowStatus?: "ALL" | (typeof cocktailWorkflowStatuses)[number];
 }
 
 export class PreparationListQueryDto {
@@ -643,6 +701,11 @@ export class PreparationListQueryDto {
   @MaxLength(80)
   categoryCode?: string;
 
+  @ApiPropertyOptional({ enum: ["ALL", ...productWorkflowStatuses], default: "ALL" })
+  @IsOptional()
+  @IsIn(["ALL", ...productWorkflowStatuses])
+  workflowStatus?: "ALL" | (typeof productWorkflowStatuses)[number];
+
   @ApiPropertyOptional({ enum: ["name", "updated"] })
   @IsOptional()
   @IsIn(["name", "updated"])
@@ -656,6 +719,11 @@ export class GarnishListQueryDto {
   @MaxLength(160)
   query?: string;
 
+  @ApiPropertyOptional({ enum: ["ALL", ...productWorkflowStatuses], default: "ALL" })
+  @IsOptional()
+  @IsIn(["ALL", ...productWorkflowStatuses])
+  workflowStatus?: "ALL" | (typeof productWorkflowStatuses)[number];
+
   @ApiPropertyOptional({ enum: ["name", "updated"] })
   @IsOptional()
   @IsIn(["name", "updated"])
@@ -668,6 +736,9 @@ export class CocktailListItemResponseDto {
 
   @ApiProperty()
   name!: string;
+
+  @ApiProperty({ enum: cocktailWorkflowStatuses })
+  workflowStatus!: (typeof cocktailWorkflowStatuses)[number];
 
   @ApiProperty({ type: [String] })
   categories!: string[];
@@ -748,6 +819,9 @@ export class CocktailCardResponseDto {
   @ApiProperty({ enum: ["ACTIVE"] })
   status!: "ACTIVE";
 
+  @ApiProperty({ enum: cocktailWorkflowStatuses })
+  workflowStatus!: (typeof cocktailWorkflowStatuses)[number];
+
   @ApiProperty({ type: [CocktailCardComponentResponseDto] })
   components!: CocktailCardComponentResponseDto[];
 
@@ -788,6 +862,9 @@ export class PreparationListItemResponseDto {
 
   @ApiProperty()
   name!: string;
+
+  @ApiProperty({ enum: productWorkflowStatuses })
+  workflowStatus!: (typeof productWorkflowStatuses)[number];
 
   @ApiProperty()
   categoryName!: string;
@@ -846,6 +923,9 @@ export class PreparationCardResponseDto {
   @ApiProperty({ enum: ["ACTIVE"] })
   status!: "ACTIVE";
 
+  @ApiProperty({ enum: productWorkflowStatuses })
+  workflowStatus!: (typeof productWorkflowStatuses)[number];
+
   @ApiProperty()
   categoryName!: string;
 
@@ -871,6 +951,9 @@ export class GarnishListItemResponseDto {
 
   @ApiProperty()
   name!: string;
+
+  @ApiProperty({ enum: productWorkflowStatuses })
+  workflowStatus!: (typeof productWorkflowStatuses)[number];
 
   @ApiProperty({ description: "Краткий состав через запятую" })
   componentSummary!: string;
@@ -928,6 +1011,9 @@ export class GarnishCardResponseDto {
 
   @ApiProperty({ enum: ["ACTIVE"] })
   status!: "ACTIVE";
+
+  @ApiProperty({ enum: productWorkflowStatuses })
+  workflowStatus!: (typeof productWorkflowStatuses)[number];
 
   @ApiProperty({ type: [GarnishCardComponentResponseDto] })
   components!: GarnishCardComponentResponseDto[];

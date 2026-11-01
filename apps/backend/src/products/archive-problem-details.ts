@@ -26,6 +26,17 @@ function summaries(value: unknown): Summary[] | null {
 export function readArchiveProblem(value: unknown): Record<string, unknown> | null {
   const response = record(value);
   if (!response) return null;
+  if (
+    response.code === "PRODUCT_PERMANENT_DELETE_DEPENDENCIES" ||
+    response.code === "PRODUCT_PERMANENT_DELETE_PLAN_CHANGED"
+  ) {
+    const plan = readPermanentDeletePlan(response.plan);
+    return {
+      code: response.code,
+      ...(typeof response.message === "string" ? { message: response.message } : {}),
+      ...(plan ? { plan } : {}),
+    };
+  }
   if (response.code === "PRODUCT_ARCHIVE_ACTIVE_DEPENDENCIES") {
     const affectedProducts = summaries(response.affectedProducts);
     return affectedProducts ? { code: response.code, affectedProducts } : null;
@@ -73,5 +84,62 @@ export function readArchiveProblem(value: unknown): Record<string, unknown> | nu
       dependencies,
       confirmationFingerprint: plan.confirmationFingerprint,
     },
+  };
+}
+
+function readPermanentDeletePlan(value: unknown): Record<string, unknown> | null {
+  const plan = record(value);
+  const rootValue = record(plan?.root);
+  const root = summary(rootValue);
+  const fingerprint = plan?.confirmationFingerprint;
+  if (
+    !plan ||
+    !rootValue ||
+    !root ||
+    !["ACTIVE", "ARCHIVED"].includes(String(rootValue.status)) ||
+    typeof fingerprint !== "string" ||
+    !/^[a-f0-9]{64}$/.test(fingerprint) ||
+    !Array.isArray(plan.activeUsages) ||
+    !Array.isArray(plan.archivedUsages) ||
+    !Array.isArray(plan.deleteChain)
+  )
+    return null;
+  const readUsage = (value: unknown) => {
+    const usage = record(value);
+    const replacements = summaries(usage?.replacements);
+    if (
+      !usage ||
+      typeof usage.id !== "string" ||
+      typeof usage.parentId !== "string" ||
+      typeof usage.parentName !== "string" ||
+      !["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"].includes(String(usage.parentType)) ||
+      !["ACTIVE", "ARCHIVED"].includes(String(usage.parentStatus)) ||
+      !["COMPONENT", "GARNISH"].includes(String(usage.relation)) ||
+      !replacements
+    )
+      return null;
+    return { ...usage, replacements };
+  };
+  const activeUsages = plan.activeUsages.map(readUsage);
+  const archivedUsages = plan.archivedUsages.map(readUsage);
+  const deleteChain = plan.deleteChain.map((item) => {
+    const product = record(item);
+    const base = summary(item);
+    return base && ["ACTIVE", "ARCHIVED"].includes(String(product?.status))
+      ? { ...base, status: product!.status }
+      : null;
+  });
+  if (
+    activeUsages.some((item) => item === null) ||
+    archivedUsages.some((item) => item === null) ||
+    deleteChain.some((item) => item === null)
+  )
+    return null;
+  return {
+    root: { ...root, status: rootValue.status },
+    activeUsages,
+    archivedUsages,
+    deleteChain,
+    confirmationFingerprint: fingerprint,
   };
 }

@@ -10,6 +10,8 @@ export interface PreparationCategoryResponseDto {
   id: string;
   code: string;
   name: string;
+  /** @nullable */
+  venueId: string | null;
   sortOrder: number;
   isActive: boolean;
 }

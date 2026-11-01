@@ -31,7 +31,15 @@
         @click="openDialog('company')"
       />
     </div>
-    <Dialog v-model:visible="dialogVisible" modal :header="dialogTitle" class="w-full max-w-lg">
+    <Dialog
+      v-model:visible="dialogVisible"
+      modal
+      :dismissable-mask="!preparingOperation && !isSubmitting"
+      :closable="!preparingOperation && !isSubmitting"
+      :close-on-escape="!preparingOperation && !isSubmitting"
+      :header="dialogTitle"
+      class="w-full max-w-lg"
+    >
       <p class="text-sm text-color-secondary">{{ dialogDescription }}</p>
       <Message v-if="preparingOperation" severity="info" :closable="false" class="mt-4">
         Подготавливаем операцию закрытия…

@@ -301,6 +301,7 @@ import type {
   GlobalIngredientSearchItemDto,
 } from "@bartech/api-client";
 import { useInternalAuth } from "~/features/internal-auth/composables/useInternalAuth";
+import { compareCategoryNames } from "~/utils/category-order";
 import { useInternalCatalog } from "../composables/useInternalCatalog";
 
 defineOptions({ name: "InternalCatalogScreen" });
@@ -331,7 +332,9 @@ onMounted(async () => {
   loadingSession.value = false;
   if (enabled.value) {
     try {
-      categories.value = await catalog.loadCategories();
+      categories.value = (await catalog.loadCategories()).sort((first, second) =>
+        compareCategoryNames(first.name, second.name),
+      );
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : "Не удалось загрузить категории";
     }

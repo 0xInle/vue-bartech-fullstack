@@ -5,10 +5,12 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { CocktailListItemResponseDtoWorkflowStatus } from './cocktailListItemResponseDtoWorkflowStatus';
 
 export interface CocktailListItemResponseDto {
   id: string;
   name: string;
+  workflowStatus: CocktailListItemResponseDtoWorkflowStatus;
   categories: string[];
   /** Краткий состав через запятую */
   componentSummary: string;

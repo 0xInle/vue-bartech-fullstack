@@ -100,6 +100,7 @@ function sanitizeProduct(
           ice: product.cocktail.ice?.label ?? null,
           preparationMethodId: product.cocktail.preparationMethodId,
           preparationMethod: product.cocktail.preparationMethod?.label ?? null,
+          workflowStatus: product.workflowStatus ?? "ACTIVE",
         }
       : null,
     components: product.parentComponents.map((component) => ({

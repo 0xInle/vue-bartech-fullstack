@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type ProductsControllerListArchiveIngredientOptionsType = typeof ProductsControllerListArchiveIngredientOptionsType[keyof typeof ProductsControllerListArchiveIngredientOptionsType];
+export type PermanentDeleteProductDtoType = typeof PermanentDeleteProductDtoType[keyof typeof PermanentDeleteProductDtoType];
 
 
-export const ProductsControllerListArchiveIngredientOptionsType = {
+export const PermanentDeleteProductDtoType = {
   INGREDIENT: 'INGREDIENT',
   PREPARATION: 'PREPARATION',
   GARNISH: 'GARNISH',

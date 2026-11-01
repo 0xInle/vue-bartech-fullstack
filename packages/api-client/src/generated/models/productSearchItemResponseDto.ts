@@ -8,10 +8,13 @@
 import type { ProductSearchItemResponseDtoMatchReason } from './productSearchItemResponseDtoMatchReason';
 import type { ProductSearchItemResponseDtoScope } from './productSearchItemResponseDtoScope';
 import type { ProductSearchItemResponseDtoType } from './productSearchItemResponseDtoType';
+import type { ProductSearchItemResponseDtoWorkflowStatus } from './productSearchItemResponseDtoWorkflowStatus';
 
 export interface ProductSearchItemResponseDto {
   id: string;
   type: ProductSearchItemResponseDtoType;
+  /** @nullable */
+  workflowStatus: ProductSearchItemResponseDtoWorkflowStatus;
   name: string;
   /** @nullable */
   venueId: string | null;

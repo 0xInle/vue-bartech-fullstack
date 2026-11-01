@@ -1,6 +1,7 @@
 <template>
   <Drawer
     :visible="visible"
+    dismissable
     position="right"
     class="drawer-size-md"
     :pt="{
@@ -26,8 +27,8 @@
         />
         <Tag
           v-if="cocktail"
-          :value="cocktail.status === 'ACTIVE' ? 'Активен' : 'Архивирован'"
-          :severity="cocktail.status === 'ACTIVE' ? 'success' : 'secondary'"
+          :value="cocktail.workflowStatus === 'IN_DEVELOPMENT' ? 'Проработка' : 'Активен'"
+          :severity="cocktail.workflowStatus === 'IN_DEVELOPMENT' ? 'warn' : 'success'"
           :pt="compactTagPt"
         />
       </div>
@@ -165,19 +166,18 @@
           </template>
         </Card>
       </div>
-      <div class="mt-auto flex w-full shrink-0 gap-2 bg-surface-0 py-2">
+      <div class="mt-auto flex w-full shrink-0 flex-nowrap gap-2 bg-surface-0 py-2">
         <Button
           v-if="canManage"
-          class="min-w-0 flex-1"
+          class="min-w-max flex-auto shrink-0 whitespace-nowrap !px-1"
           label="Редактировать"
-          icon="pi pi-pencil"
           size="small"
           severity="secondary"
           variant="outlined"
           @click="emit('edit', cocktail.id)"
         />
         <ExportActionButton
-          class="min-w-0 flex-1"
+          class="min-w-max flex-auto shrink-0"
           :company-id="companyId"
           :venue-id="venueId"
           :product-id="cocktail.id"
@@ -187,11 +187,10 @@
         />
         <Button
           v-if="canViewHistory"
-          class="min-w-0 flex-[1.5] whitespace-nowrap"
+          class="min-w-max flex-auto shrink-0 whitespace-nowrap !px-1"
           :to="historyLocation"
           as="router-link"
           label="История изменений"
-          icon="pi pi-history"
           size="small"
           severity="secondary"
           variant="outlined"
@@ -212,6 +211,7 @@ const props = defineProps<{
   visible: boolean;
   cocktailId: string;
   workspace: Workspace;
+  readOnly?: boolean;
 }>();
 const emit = defineEmits<{
   "update:visible": [visible: boolean];
@@ -223,8 +223,12 @@ const { cocktailQuery: createCocktailQuery } = useCocktails(companyId, venueId);
 const cocktailQuery = createCocktailQuery(() => props.cocktailId);
 const cocktail = computed(() => cocktailQuery.data.value ?? null);
 const canExport = computed(() => props.workspace.permissions.includes("export_data"));
-const canViewHistory = computed(() => props.workspace.permissions.includes("view_history"));
-const canManage = computed(() => props.workspace.permissions.includes("manage_products"));
+const canViewHistory = computed(
+  () => !props.readOnly && props.workspace.permissions.includes("view_history"),
+);
+const canManage = computed(
+  () => !props.readOnly && props.workspace.permissions.includes("manage_products"),
+);
 const compactTagPt = {
   root: { style: { fontSize: "0.75rem", padding: "0.125rem 0.375rem" } },
   label: { style: { fontWeight: "400" } },

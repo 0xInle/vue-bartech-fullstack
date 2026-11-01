@@ -9,12 +9,14 @@ import type { GarnishCardComponentResponseDto } from './garnishCardComponentResp
 import type { GarnishCardOutputResponseDto } from './garnishCardOutputResponseDto';
 import type { GarnishCardResponseDtoStatus } from './garnishCardResponseDtoStatus';
 import type { GarnishCardResponseDtoType } from './garnishCardResponseDtoType';
+import type { GarnishCardResponseDtoWorkflowStatus } from './garnishCardResponseDtoWorkflowStatus';
 
 export interface GarnishCardResponseDto {
   id: string;
   name: string;
   type: GarnishCardResponseDtoType;
   status: GarnishCardResponseDtoStatus;
+  workflowStatus: GarnishCardResponseDtoWorkflowStatus;
   components: GarnishCardComponentResponseDto[];
   technology: string;
   /** @nullable */

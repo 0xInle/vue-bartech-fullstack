@@ -31,25 +31,12 @@ export class ArchiveReadRepository {
       where: {
         venueId,
         status: "ARCHIVED",
+        type: { in: ["COCKTAIL", "PREPARATION", "GARNISH"] },
         ...(type ? { type } : {}),
         ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
       },
       orderBy: [{ nameNormalized: "asc" }, { id: "asc" }],
       select: { id: true, type: true, name: true, updatedAt: true },
-    });
-  }
-
-  ingredientOptions(venueId: string, query?: string) {
-    return this.database.product.findMany({
-      where: {
-        venueId,
-        type: "INGREDIENT",
-        status: "ACTIVE",
-        ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
-      },
-      orderBy: [{ nameNormalized: "asc" }, { id: "asc" }],
-      take: 30,
-      select: { id: true, type: true, name: true },
     });
   }
 
@@ -78,7 +65,12 @@ export class ArchiveReadRepository {
 
   async card(venueId: string, productId: string): Promise<ArchiveCard | null> {
     const product = await this.database.product.findFirst({
-      where: { id: productId, venueId, status: "ARCHIVED" },
+      where: {
+        id: productId,
+        venueId,
+        status: "ARCHIVED",
+        type: { in: ["COCKTAIL", "PREPARATION", "GARNISH"] },
+      },
       include: archiveProductInclude,
     });
     if (!product) return null;

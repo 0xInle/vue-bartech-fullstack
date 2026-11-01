@@ -10,6 +10,11 @@ enum ProductStatus {
   ARCHIVED
 }
 
+enum WorkflowStatus {
+  ACTIVE
+  IN_DEVELOPMENT
+}
+
 enum QuantityKind {
   VOLUME
   MASS
@@ -43,6 +48,7 @@ model Product {
   id                            String                 @id @default(uuid()) @db.Uuid
   type                          ProductType
   status                        ProductStatus          @default(ACTIVE)
+  workflowStatus               WorkflowStatus?
   venueId                       String?                @db.Uuid
   name                          String
   nameNormalized                String
@@ -106,14 +112,14 @@ model PreparationDetails {
 }
 
 model CocktailDetails {
-  productId           String          @id @db.Uuid
-  glassId             String?         @db.Uuid
-  iceId               String?         @db.Uuid
-  preparationMethodId String?         @db.Uuid
-  product             Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  glass               ReferenceValue? @relation("CocktailGlass", fields: [glassId], references: [id], onDelete: Restrict)
-  ice                 ReferenceValue? @relation("CocktailIce", fields: [iceId], references: [id], onDelete: Restrict)
-  preparationMethod   ReferenceValue? @relation("CocktailPreparationMethod", fields: [preparationMethodId], references: [id], onDelete: Restrict)
+  productId           String                 @id @db.Uuid
+  glassId             String?                @db.Uuid
+  iceId               String?                @db.Uuid
+  preparationMethodId String?                @db.Uuid
+  product             Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  glass               ReferenceValue?        @relation("CocktailGlass", fields: [glassId], references: [id], onDelete: Restrict)
+  ice                 ReferenceValue?        @relation("CocktailIce", fields: [iceId], references: [id], onDelete: Restrict)
+  preparationMethod   ReferenceValue?        @relation("CocktailPreparationMethod", fields: [preparationMethodId], references: [id], onDelete: Restrict)
 
   @@map("cocktail_details")
 }
@@ -217,11 +223,15 @@ model PreparationCategory {
   id           String               @id @default(uuid()) @db.Uuid
   code         String               @unique(map: "preparation_categories_code_key")
   name         String
+  venueId      String?              @db.Uuid
+  createdByUserId String?            @db.Uuid
   sortOrder    Int                  @default(0)
   isActive     Boolean              @default(true)
+  venue        Venue?               @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  createdBy    User?                @relation("PreparationCategoryCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
   preparations PreparationDetails[]
 
-  @@index([sortOrder], map: "preparation_categories_sort_idx")
+  @@index([venueId, sortOrder], map: "preparation_categories_venue_sort_idx")
   @@map("preparation_categories")
 }
 

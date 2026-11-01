@@ -52,6 +52,9 @@ export function useGarnishes(
       )
     : identity.apiFetch;
   const searchText = ref(readQuery(route.query.query));
+  const workflowStatus = ref<"ALL" | "ACTIVE" | "IN_DEVELOPMENT">(
+    readWorkflowStatus(route.query.status),
+  );
   const hasWorkspace = computed(() =>
     Boolean(company.value && venue.value && toValue(options.enabled ?? true)),
   );
@@ -62,6 +65,7 @@ export function useGarnishes(
     venue.value,
     options.serviceSessionId ?? "client",
     normalizedSearch.value,
+    workflowStatus.value,
   ]);
   const referencesKey = computed(() => [
     "product-references",
@@ -75,16 +79,23 @@ export function useGarnishes(
       () => route.query,
       (query) => {
         searchText.value = readQuery(query.query);
+        workflowStatus.value = readWorkflowStatus(query.status);
       },
     );
     watch(
-      searchText,
+      [searchText, workflowStatus],
       () => {
         const next = { ...route.query };
         if (normalizedSearch.value) next.query = normalizedSearch.value;
         else delete next.query;
+        if (workflowStatus.value === "ALL") delete next.status;
+        else next.status = workflowStatus.value;
         delete next.sort;
-        if (route.query.query !== next.query || "sort" in route.query)
+        if (
+          route.query.query !== next.query ||
+          route.query.status !== next.status ||
+          "sort" in route.query
+        )
           void router.replace({ query: next });
       },
       { immediate: true },
@@ -101,7 +112,10 @@ export function useGarnishes(
           await productsControllerListGarnishes(
             company.value,
             venue.value,
-            { query: normalizedSearch.value || undefined },
+            {
+              query: normalizedSearch.value || undefined,
+              workflowStatus: workflowStatus.value,
+            },
             { credentials: "include", signal },
             productApiFetch,
           ),
@@ -253,6 +267,9 @@ export function useGarnishes(
     sessionStorage.removeItem(key);
     if (Number.isFinite(value) && value > 0) window.scrollTo({ top: value });
   }
+  function setWorkflowStatus(value: unknown): void {
+    workflowStatus.value = readWorkflowStatus(value);
+  }
   return {
     createGarnish,
     createLocalIngredient,
@@ -264,6 +281,8 @@ export function useGarnishes(
     rememberScroll,
     restoreScroll,
     searchText,
+    workflowStatus,
+    setWorkflowStatus,
     updateGarnish,
   };
 }
@@ -286,6 +305,10 @@ function isGarnishImpact(value: unknown): value is GarnishImpact {
 }
 function readQuery(value: unknown): string {
   return typeof value === "string" ? value : "";
+}
+
+function readWorkflowStatus(value: unknown): "ALL" | "ACTIVE" | "IN_DEVELOPMENT" {
+  return value === "ACTIVE" || value === "IN_DEVELOPMENT" ? value : "ALL";
 }
 function scrollKey(companyId: string, venueId: string): string {
   return `garnish-list-scroll:${companyId}:${venueId}`;

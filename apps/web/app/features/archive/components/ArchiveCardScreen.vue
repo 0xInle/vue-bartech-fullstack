@@ -32,6 +32,16 @@
               size="small"
               @click="restoreVisible = true"
             />
+            <PermanentDeleteActionButton
+              v-if="canDeletePermanently"
+              :company-id="companyId"
+              :venue-id="venueId"
+              :product-id="product.id"
+              :product-name="product.name"
+              :product-type="product.type"
+              :can-manage="canDeletePermanently"
+              @deleted="navigateTo(`${basePath}/archive`)"
+            />
           </div>
           <p class="mt-3 text-sm text-color-secondary">
             Карточка доступна только для чтения. Для изменения сначала восстановите её.
@@ -146,6 +156,7 @@ import { useVenueWorkspace } from "~/features/workspace/composables/useVenueWork
 import { useProductArchive } from "../composables/useProductArchive";
 import { activeProductPath, productTypeLabels } from "../product-links";
 import ArchiveRestoreDialog from "./ArchiveRestoreDialog.vue";
+import PermanentDeleteActionButton from "./PermanentDeleteActionButton.vue";
 
 const props = defineProps<{ productId: string }>();
 const { currentUser, errorMessage, loading, switchWorkspace, workspace, workplaces } =
@@ -158,6 +169,9 @@ const cardQuery = card(() => props.productId);
 const product = computed(() => cardQuery.data.value);
 const canManage = computed(
   () => workspace.value?.permissions.includes("manage_product_archive") ?? false,
+);
+const canDeletePermanently = computed(
+  () => workspace.value?.permissions.includes("delete_products_permanently") ?? false,
 );
 const restoreVisible = ref(false);
 function componentPath(id: string, type: string, status: string) {

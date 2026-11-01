@@ -57,6 +57,7 @@
                 class="min-w-0"
                 maxlength="100"
                 :disabled="saving"
+                :invalid="validationAttempted && !newLabel.trim()"
                 @keydown.enter.stop.prevent="save"
               />
               <label :for="`${inputId}-new-category`" class="text-xs">Название категории</label>
@@ -107,6 +108,7 @@ import type {
   ReferenceValueResponseDto,
 } from "@bartech/api-client";
 import { compactMessagePt } from "~/utils/primevue-message";
+import { compareCategoryNames } from "~/utils/category-order";
 import {
   keepPrimeVueOverlayOpenOnScroll,
   keepPrimeVueOverlayWithinDrawer,
@@ -126,12 +128,13 @@ const creating = ref(false);
 const saving = ref(false);
 const newLabel = ref("");
 const errorMessage = ref("");
+const validationAttempted = ref(false);
 const createdOptions = ref<ReferenceValueResponseDto[]>([]);
 const optionsWithCreated = computed(() => {
   const options = new Map<string, ReferenceValueResponseDto>();
   for (const option of [...props.options, ...createdOptions.value]) options.set(option.id, option);
   return [...options.values()].sort((first, second) =>
-    first.label.localeCompare(second.label, "ru"),
+    compareCategoryNames(first.label, second.label),
   );
 });
 
@@ -139,12 +142,14 @@ function beginCreate(): void {
   creating.value = true;
   newLabel.value = "";
   errorMessage.value = "";
+  validationAttempted.value = false;
 }
 
 function resetCreateForm(): void {
   creating.value = false;
   newLabel.value = "";
   errorMessage.value = "";
+  validationAttempted.value = false;
 }
 
 function handleHide(): void {
@@ -159,8 +164,8 @@ function handleShow(): void {
 async function save(): Promise<void> {
   const label = newLabel.value.trim().replace(/\s+/gu, " ");
   if (saving.value) return;
+  validationAttempted.value = true;
   if (!label) {
-    errorMessage.value = "Укажите название категории.";
     return;
   }
   saving.value = true;

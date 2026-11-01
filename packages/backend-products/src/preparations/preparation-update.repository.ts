@@ -17,6 +17,7 @@ export class PreparationUpdateRepository {
       where: { id: preparationId, venueId, type: "PREPARATION", status: "ACTIVE" },
       select: {
         id: true,
+        workflowStatus: true,
         name: true,
         technology: true,
         comment: true,
@@ -31,9 +32,9 @@ export class PreparationUpdateRepository {
     });
   }
 
-  findCategory(transaction: Prisma.TransactionClient, categoryCode: string) {
+  findCategory(transaction: Prisma.TransactionClient, venueId: string, categoryCode: string) {
     return transaction.preparationCategory.findFirst({
-      where: { code: categoryCode, isActive: true },
+      where: { code: categoryCode, isActive: true, OR: [{ venueId: null }, { venueId }] },
       select: { code: true },
     });
   }
@@ -102,6 +103,7 @@ export class PreparationUpdateRepository {
       searchNameNormalized: string;
       searchTechnologyNormalized: string;
       technology: string;
+      workflowStatus?: "ACTIVE" | "IN_DEVELOPMENT";
       comment?: string;
       categoryCode: string;
       output?: { amount: number; unitId: string };
@@ -126,6 +128,7 @@ export class PreparationUpdateRepository {
         outputAmount: input.output?.amount ?? null,
         outputUnitId: input.output?.unitId ?? null,
         updatedByUserId: input.userId,
+        workflowStatus: input.workflowStatus,
         preparation: { update: { categoryCode: input.categoryCode } },
         parentComponents: {
           deleteMany: { parentProductId: input.id, parentVenueId: input.venueId },

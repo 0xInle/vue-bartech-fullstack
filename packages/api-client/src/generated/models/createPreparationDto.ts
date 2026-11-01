@@ -5,10 +5,12 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { CreatePreparationDtoWorkflowStatus } from './createPreparationDtoWorkflowStatus';
 import type { ProductComponentDto } from './productComponentDto';
 import type { ProductOutputDto } from './productOutputDto';
 
 export interface CreatePreparationDto {
+  workflowStatus?: CreatePreparationDtoWorkflowStatus;
   /** @maxLength 160 */
   name: string;
   /** @maxLength 10000 */

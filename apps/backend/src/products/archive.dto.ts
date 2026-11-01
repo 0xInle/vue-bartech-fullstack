@@ -3,6 +3,7 @@ import {
   ArrayUnique,
   IsArray,
   IsIn,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
@@ -14,6 +15,7 @@ import { Type } from "class-transformer";
 import type { ProductType } from "@bartech/database";
 
 const productTypes: ProductType[] = ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"];
+const archivableProductTypes: ProductType[] = ["PREPARATION", "GARNISH", "COCKTAIL"];
 
 export class ArchiveListQueryDto {
   @ApiPropertyOptional({ maxLength: 160 })
@@ -22,9 +24,9 @@ export class ArchiveListQueryDto {
   @MaxLength(160)
   query?: string;
 
-  @ApiPropertyOptional({ enum: productTypes })
+  @ApiPropertyOptional({ enum: archivableProductTypes })
   @IsOptional()
-  @IsIn(productTypes)
+  @IsIn(archivableProductTypes)
   type?: ProductType;
 }
 
@@ -133,10 +135,66 @@ export class ArchiveRestoreDto {
   newName?: string;
 }
 
+export class PermanentDeleteDto {
+  @ApiProperty({ enum: ["DELETE", "REPLACE", "DELETE_CHAIN"] })
+  @IsIn(["DELETE", "REPLACE", "DELETE_CHAIN"])
+  action!: "DELETE" | "REPLACE" | "DELETE_CHAIN";
+
+  @ApiProperty({ pattern: "^[a-f0-9]{64}$" })
+  @Matches(/^[a-f0-9]{64}$/)
+  confirmationFingerprint!: string;
+
+  @ApiPropertyOptional({ maxLength: 160 })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(160)
+  confirmationName?: string;
+
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  replacementProductId?: string;
+}
+
+export class PermanentDeleteProductDto extends ArchiveProductSummaryDto {
+  @ApiProperty({ enum: ["ACTIVE", "ARCHIVED"] })
+  status!: "ACTIVE" | "ARCHIVED";
+}
+
+export class PermanentDeleteUsageDto {
+  @ApiProperty({ format: "uuid" }) id!: string;
+  @ApiProperty({ format: "uuid" }) parentId!: string;
+  @ApiProperty({ enum: productTypes }) parentType!: ProductType;
+  @ApiProperty() parentName!: string;
+  @ApiProperty({ enum: ["ACTIVE", "ARCHIVED"] }) parentStatus!: "ACTIVE" | "ARCHIVED";
+  @ApiProperty({ enum: ["COMPONENT", "GARNISH"] }) relation!: "COMPONENT" | "GARNISH";
+  @ApiProperty({ type: ArchiveProductSummaryDto, isArray: true })
+  replacements!: ArchiveProductSummaryDto[];
+}
+
+export class PermanentDeletePlanDto {
+  @ApiProperty({ type: PermanentDeleteProductDto }) root!: PermanentDeleteProductDto;
+  @ApiProperty({ type: PermanentDeleteUsageDto, isArray: true })
+  activeUsages!: PermanentDeleteUsageDto[];
+  @ApiProperty({ type: PermanentDeleteUsageDto, isArray: true })
+  archivedUsages!: PermanentDeleteUsageDto[];
+  @ApiProperty({ type: PermanentDeleteProductDto, isArray: true })
+  deleteChain!: PermanentDeleteProductDto[];
+  @ApiProperty({ pattern: "^[a-f0-9]{64}$" }) confirmationFingerprint!: string;
+}
+
 export class ArchiveReplacementDto {
   @ApiProperty({ format: "uuid" }) parentId!: string;
   @ApiProperty({ format: "uuid" }) productId!: string;
   @ApiProperty({ format: "uuid" }) replacementProductId!: string;
+}
+
+export class PermanentDeleteResultDto {
+  @ApiProperty({ type: ArchiveProductSummaryDto, isArray: true })
+  deletedProducts!: ArchiveProductSummaryDto[];
+  @ApiProperty({ type: ArchiveReplacementDto, isArray: true })
+  replacements!: ArchiveReplacementDto[];
 }
 
 export class ArchiveRestoreResultDto {
@@ -152,6 +210,7 @@ export class ArchiveConflictDto {
       "PRODUCT_ARCHIVE_ACTIVE_DEPENDENCIES",
       "PRODUCT_ARCHIVE_RESTORE_PLAN_CHANGED",
       "PRODUCT_ARCHIVE_NAME_CONFLICT",
+      "PRODUCT_PERMANENT_DELETE_DEPENDENCIES",
     ],
   })
   code!: string;
@@ -159,4 +218,13 @@ export class ArchiveConflictDto {
   affectedProducts?: ArchiveProductSummaryDto[];
   @ApiPropertyOptional({ type: ArchiveRestorePlanDto }) restorePlan?: ArchiveRestorePlanDto;
   @ApiPropertyOptional({ format: "uuid" }) productId?: string;
+}
+
+export class PermanentDeleteConflictDto {
+  @ApiProperty({
+    enum: ["PRODUCT_PERMANENT_DELETE_DEPENDENCIES", "PRODUCT_PERMANENT_DELETE_PLAN_CHANGED"],
+  })
+  code!: "PRODUCT_PERMANENT_DELETE_DEPENDENCIES" | "PRODUCT_PERMANENT_DELETE_PLAN_CHANGED";
+  @ApiProperty() message!: string;
+  @ApiPropertyOptional({ type: PermanentDeletePlanDto }) plan?: PermanentDeletePlanDto;
 }

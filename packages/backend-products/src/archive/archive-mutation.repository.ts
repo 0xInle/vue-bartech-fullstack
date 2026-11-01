@@ -4,6 +4,8 @@ import type { CreateProductContext } from "../product.dto.js";
 import { normalizeProductName } from "../product-rules.js";
 import { normalizeSearchText } from "../search/product-search-rules.js";
 
+type ArchiveDatabase = PrismaClient | Prisma.TransactionClient;
+
 @Injectable()
 export class ArchiveMutationRepository {
   constructor(@Inject(DATABASE_CLIENT) readonly database: PrismaClient) {}
@@ -38,15 +40,35 @@ export class ArchiveMutationRepository {
     });
   }
 
+  globalIngredientReplacements(database: ArchiveDatabase) {
+    return database.product.findMany({
+      where: { venueId: null, type: "INGREDIENT", status: "ACTIVE" },
+      orderBy: [{ nameNormalized: "asc" }, { id: "asc" }],
+      select: { id: true, type: true, name: true },
+    });
+  }
+
+  deletePermanentProduct(
+    transaction: Prisma.TransactionClient,
+    venueId: string,
+    productId: string,
+  ) {
+    return transaction.product.delete({
+      where: { id: productId, venueId },
+      select: { id: true, type: true, name: true },
+    });
+  }
+
   replaceComponent(
     transaction: Prisma.TransactionClient,
     venueId: string,
     rowId: string,
     productId: string,
+    componentVenueId: string | null,
   ) {
     return transaction.productComponent.update({
       where: { id: rowId, parentVenueId: venueId },
-      data: { componentProductId: productId, componentVenueId: venueId },
+      data: { componentProductId: productId, componentVenueId },
     });
   }
 
@@ -62,11 +84,56 @@ export class ArchiveMutationRepository {
     });
   }
 
+  replacementProduct(database: ArchiveDatabase, venueId: string, productId: string) {
+    return database.product.findFirst({
+      where: {
+        id: productId,
+        status: "ACTIVE",
+        OR: [{ venueId }, { venueId: null, type: "INGREDIENT" }],
+      },
+      select: { id: true, venueId: true, type: true },
+    });
+  }
+
+  deleteReferencesToProducts(
+    transaction: Prisma.TransactionClient,
+    venueId: string,
+    ids: string[],
+  ) {
+    return Promise.all([
+      transaction.productComponent.deleteMany({
+        where: {
+          componentProductId: { in: ids },
+          componentVenueId: venueId,
+          parentVenueId: venueId,
+        },
+      }),
+      transaction.cocktailGarnish.deleteMany({
+        where: { garnishId: { in: ids }, garnishVenueId: venueId, cocktailVenueId: venueId },
+      }),
+    ]);
+  }
+
+  touchParentProduct(
+    transaction: Prisma.TransactionClient,
+    venueId: string,
+    productId: string,
+    userId: string | null,
+  ) {
+    return transaction.product.update({
+      where: { id: productId, venueId },
+      data: { updatedByUserId: userId },
+      select: { id: true },
+    });
+  }
+
   audit(
     transaction: Prisma.TransactionClient,
     context: CreateProductContext,
     productId: string,
-    eventType: "product.archived" | "product.restored",
+    eventType:
+      "product.archived" | "product.restored" | "product.updated" | "product.permanently_deleted",
+    metadata?: Prisma.InputJsonObject,
   ) {
     return transaction.auditEvent.create({
       data: {
@@ -77,6 +144,7 @@ export class ArchiveMutationRepository {
         venueId: context.venueId,
         entityType: "PRODUCT",
         entityId: productId,
+        metadata,
       },
     });
   }

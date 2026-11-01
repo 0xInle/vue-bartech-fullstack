@@ -58,6 +58,7 @@
                 class="min-w-0"
                 maxlength="100"
                 :disabled="saving"
+                :invalid="validationAttempted && !newName.trim()"
                 @keydown.enter.stop.prevent="save"
               />
               <label :for="`${inputId}-new-garnish`" class="text-xs">Название гарнира</label>
@@ -130,6 +131,7 @@ const creating = ref(false);
 const saving = ref(false);
 const newName = ref("");
 const errorMessage = ref("");
+const validationAttempted = ref(false);
 const createdOptions = ref<GarnishOption[]>([]);
 const availableOptions = computed(() => {
   const options = new Map<string, GarnishOption & { key: string }>();
@@ -144,12 +146,14 @@ function beginCreate(): void {
   creating.value = true;
   newName.value = "";
   errorMessage.value = "";
+  validationAttempted.value = false;
 }
 
 function resetCreateForm(): void {
   creating.value = false;
   newName.value = "";
   errorMessage.value = "";
+  validationAttempted.value = false;
 }
 
 function handleHide(): void {
@@ -165,8 +169,8 @@ async function save(): Promise<void> {
   if (saving.value) return;
 
   const label = newName.value.trim().replace(/\s+/gu, " ");
+  validationAttempted.value = true;
   if (!label) {
-    errorMessage.value = "Укажите название гарнира.";
     return;
   }
 

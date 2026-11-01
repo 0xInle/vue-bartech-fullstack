@@ -13,10 +13,12 @@
   <Dialog
     v-model:visible="visible"
     modal
+    :dismissable-mask="!busy"
     header="Архивировать продукт"
-    class="w-full max-w-lg"
+    class="dialog-size-md"
     :closable="!busy"
     :close-on-escape="!busy"
+    :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
   >
     <Message v-if="errorMessage" severity="error" :closable="false" class="mb-4">{{
       errorMessage

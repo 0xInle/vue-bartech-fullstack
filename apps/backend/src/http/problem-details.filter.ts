@@ -81,9 +81,22 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         ...(preparationImpact ?? {}),
         ...(garnishImpact ?? {}),
         ...(catalogCandidateProblem ?? {}),
+        ...(status === HttpStatus.CONFLICT
+          ? (readIngredientDuplicateProblem(exceptionBody) ?? {})
+          : {}),
         ...(status === HttpStatus.CONFLICT ? (readArchiveProblem(exceptionBody) ?? {}) : {}),
       });
   }
+}
+
+function readIngredientDuplicateProblem(value: unknown): {
+  code: "INGREDIENT_NAME_ALREADY_EXISTS";
+} | null {
+  if (typeof value !== "object" || value === null) return null;
+  const response = value as Record<string, unknown>;
+  return response.code === "INGREDIENT_NAME_ALREADY_EXISTS"
+    ? { code: "INGREDIENT_NAME_ALREADY_EXISTS" }
+    : null;
 }
 
 function readCatalogCandidateProblem(

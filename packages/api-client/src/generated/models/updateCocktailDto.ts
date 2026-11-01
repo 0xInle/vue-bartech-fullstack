@@ -8,8 +8,10 @@
 import type { CocktailGarnishSelectionDto } from './cocktailGarnishSelectionDto';
 import type { ProductComponentDto } from './productComponentDto';
 import type { ProductOutputDto } from './productOutputDto';
+import type { UpdateCocktailDtoWorkflowStatus } from './updateCocktailDtoWorkflowStatus';
 
 export interface UpdateCocktailDto {
+  workflowStatus?: UpdateCocktailDtoWorkflowStatus;
   /** @maxLength 160 */
   name: string;
   /** @maxLength 10000 */

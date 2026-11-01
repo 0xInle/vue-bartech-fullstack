@@ -15,6 +15,7 @@ export class CocktailReadRepository {
     venueId: string,
     matchingIds?: string[],
     categoryId?: string,
+    workflowStatus?: "ACTIVE" | "IN_DEVELOPMENT",
   ): Promise<CocktailListItem[]> {
     const cocktails = await this.database.product.findMany({
       where: {
@@ -23,11 +24,13 @@ export class CocktailReadRepository {
         status: "ACTIVE",
         ...(matchingIds ? { id: { in: matchingIds } } : {}),
         ...(categoryId ? { cocktailCategories: { some: { referenceValueId: categoryId } } } : {}),
+        ...(workflowStatus ? { workflowStatus } : {}),
       },
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       select: {
         id: true,
         name: true,
+        workflowStatus: true,
         updatedAt: true,
         cocktailCategories: {
           orderBy: { referenceValue: { label: "asc" } },
@@ -51,6 +54,7 @@ export class CocktailReadRepository {
     return cocktails.map((cocktail) => ({
       id: cocktail.id,
       name: cocktail.name,
+      workflowStatus: cocktail.workflowStatus!,
       categories: cocktail.cocktailCategories.flatMap(({ referenceValue }) =>
         referenceValue ? [referenceValue.label] : [],
       ),
@@ -68,6 +72,7 @@ export class CocktailReadRepository {
       select: {
         id: true,
         name: true,
+        workflowStatus: true,
         technology: true,
         comment: true,
         outputAmount: true,
@@ -118,6 +123,7 @@ export class CocktailReadRepository {
       name: cocktail.name,
       type: "COCKTAIL",
       status: "ACTIVE",
+      workflowStatus: cocktail.workflowStatus ?? "ACTIVE",
       components: cocktail.parentComponents.map((component) => {
         const product = requireComponentProduct(products, component.componentProductId);
         return {

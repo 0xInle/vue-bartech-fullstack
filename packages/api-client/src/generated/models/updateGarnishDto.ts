@@ -7,8 +7,10 @@
  */
 import type { ProductComponentDto } from './productComponentDto';
 import type { ProductOutputDto } from './productOutputDto';
+import type { UpdateGarnishDtoWorkflowStatus } from './updateGarnishDtoWorkflowStatus';
 
 export interface UpdateGarnishDto {
+  workflowStatus?: UpdateGarnishDtoWorkflowStatus;
   /** @maxLength 160 */
   name: string;
   /** @maxLength 10000 */

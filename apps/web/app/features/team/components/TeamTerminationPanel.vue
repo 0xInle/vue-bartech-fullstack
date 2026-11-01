@@ -65,6 +65,9 @@
     <Dialog
       v-model:visible="confirmationVisible"
       modal
+      :closable="!busy"
+      :close-on-escape="!busy"
+      :dismissable-mask="!busy"
       header="Подтвердить увольнение"
       class="w-full max-w-md"
       :pt="{

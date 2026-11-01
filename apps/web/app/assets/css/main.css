@@ -89,7 +89,7 @@ button:not(.p-inputnumber-button),
 button:not(.p-inputnumber-button),
 .p-button,
 .p-togglebutton {
-  font-size: var(--p-form-field-sm-font-size, 0.875rem) !important;
+  font-size: 12px !important;
 }
 
 .p-select,

@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col gap-2">
-    <FloatLabel v-if="floatLabel" variant="on">
+  <div class="flex w-full min-w-0 flex-col gap-2">
+    <FloatLabel v-if="floatLabel" variant="on" class="w-full min-w-0">
       <AutoComplete
         ref="autoComplete"
         v-model="selectedProduct"
@@ -16,6 +16,7 @@
         fluid
         :pt="{ overlay: { class: 'w-max min-w-full' }, emptyMessage: { class: '!hidden' } }"
         @complete="search"
+        @blur="emit('blur')"
         @show="handleShow"
         @hide="handleHide"
       >
@@ -53,6 +54,7 @@
       :placeholder="placeholder"
       :pt="{ overlay: { class: 'w-max min-w-full' }, emptyMessage: { class: '!hidden' } }"
       @complete="search"
+      @blur="emit('blur')"
       @show="handleShow"
       @hide="handleHide"
     >
@@ -99,15 +101,21 @@ const props = defineProps<{
   label?: string;
   invalid?: boolean;
   keepOverlayOpenOnScroll?: boolean;
+  searchScope?: "COMPONENT" | "WORKSPACE";
+  searchTypes?: string;
 }>();
 
 const selectedProduct = defineModel<ProductSearchItem | null>({ default: null });
-const emit = defineEmits<{ hide: [] }>();
+const emit = defineEmits<{ hide: []; blur: []; search: [query: string] }>();
 const autoComplete = ref<PrimeVueOverlayRef | null>(null);
 const { searchText, searchQuery } = useProductSearch(
   () => props.companyId,
   () => props.venueId,
-  { serviceSessionId: props.serviceSessionId },
+  {
+    serviceSessionId: props.serviceSessionId,
+    scope: props.searchScope,
+    types: props.searchTypes,
+  },
 );
 const suggestions = computed(() => searchQuery.data.value ?? []);
 const isSearching = computed(() => searchQuery.isFetching.value);
@@ -128,6 +136,7 @@ function normalizeProductName(value: string): string {
 
 function search(event: { query: string }): void {
   searchText.value = event.query;
+  emit("search", event.query);
 }
 
 function handleHide(): void {

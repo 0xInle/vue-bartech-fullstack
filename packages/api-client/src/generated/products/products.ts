@@ -46,32 +46,161 @@ import type {
   CreateCocktailDto,
   CreateGarnishDto,
   CreateLocalIngredientDto,
+  CreateLocalPreparationCategoryDto,
   CreateLocalReferenceValueDto,
   CreateLocalUnitDto,
   CreatePreparationDto,
   GarnishCardResponseDto,
   GarnishImpactResponseDto,
   GarnishListItemResponseDto,
+  LocalIngredientListItemResponseDto,
+  PermanentDeleteConflictDto,
+  PermanentDeleteDto,
+  PermanentDeletePlanDto,
+  PermanentDeleteResultDto,
   PreparationCardResponseDto,
+  PreparationCategoryResponseDto,
   PreparationImpactResponseDto,
   PreparationListItemResponseDto,
   ProductCreatedDto,
   ProductReferencesResponseDto,
   ProductSearchItemResponseDto,
   ProductSearchPageResponseDto,
-  ProductsControllerListArchiveIngredientOptionsParams,
   ProductsControllerListArchiveParams,
   ProductsControllerListCocktailGarnishesParams,
   ProductsControllerListCocktailsParams,
   ProductsControllerListGarnishesParams,
+  ProductsControllerListLocalIngredientsParams,
   ProductsControllerListPreparationsParams,
   ProductsControllerSearchParams,
   ProductsControllerSearchWorkspaceParams,
   ReferenceValueResponseDto,
   UpdateCocktailDto,
   UpdateGarnishDto,
+  UpdateLocalIngredientNameDto,
   UpdatePreparationDto
 } from '../models';
+
+
+
+
+
+export type productsControllerListLocalIngredientsResponse200 = {
+  data: LocalIngredientListItemResponseDto[]
+  status: 200
+}
+
+export type productsControllerListLocalIngredientsResponse404 = {
+  data: void
+  status: 404
+}
+
+export type productsControllerListLocalIngredientsResponseSuccess = (productsControllerListLocalIngredientsResponse200) & {
+  headers: Headers;
+};
+export type productsControllerListLocalIngredientsResponseError = (productsControllerListLocalIngredientsResponse404) & {
+  headers: Headers;
+};
+
+export type productsControllerListLocalIngredientsResponse = (productsControllerListLocalIngredientsResponseSuccess | productsControllerListLocalIngredientsResponseError)
+
+export const getProductsControllerListLocalIngredientsUrl = (companyId: string,
+    venueId: string,
+    params?: ProductsControllerListLocalIngredientsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/local-ingredients?${stringifiedParams}` : `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/local-ingredients`
+}
+
+/**
+ * @summary Получить активные локальные ингредиенты текущего заведения
+ */
+export const productsControllerListLocalIngredients = async (companyId: string,
+    venueId: string,
+    params?: ProductsControllerListLocalIngredientsParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerListLocalIngredientsResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getProductsControllerListLocalIngredientsUrl(companyId,venueId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: productsControllerListLocalIngredientsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as productsControllerListLocalIngredientsResponse
+}
+
+
+
+
+
+export const getProductsControllerListLocalIngredientsQueryKey = (companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    params?: MaybeRefOrGetter<ProductsControllerListLocalIngredientsParams>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'venues',venueId,'products','local-ingredients', ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getProductsControllerListLocalIngredientsQueryOptions = <TData = Awaited<ReturnType<typeof productsControllerListLocalIngredients>>, TError = void>(companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    params?: MaybeRefOrGetter<ProductsControllerListLocalIngredientsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerListLocalIngredients>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getProductsControllerListLocalIngredientsQueryKey(companyId,venueId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof productsControllerListLocalIngredients>>> = ({ signal }) => productsControllerListLocalIngredients(toValue(companyId),toValue(venueId),toValue(params), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined && toValue(venueId) !== null && toValue(venueId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof productsControllerListLocalIngredients>>, TError, TData>
+}
+
+export type ProductsControllerListLocalIngredientsQueryResult = NonNullable<Awaited<ReturnType<typeof productsControllerListLocalIngredients>>>
+export type ProductsControllerListLocalIngredientsQueryError = void
+
+
+/**
+ * @summary Получить активные локальные ингредиенты текущего заведения
+ */
+
+export function useProductsControllerListLocalIngredients<TData = Awaited<ReturnType<typeof productsControllerListLocalIngredients>>, TError = void>(
+ companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    params?: MaybeRefOrGetter<ProductsControllerListLocalIngredientsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerListLocalIngredients>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProductsControllerListLocalIngredientsQueryOptions(companyId,venueId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
 
 
 
@@ -185,127 +314,6 @@ export function useProductsControllerListArchive<TData = Awaited<ReturnType<type
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getProductsControllerListArchiveQueryOptions(companyId,venueId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
-
-  return query;
-}
-
-
-
-
-
-
-export type productsControllerListArchiveIngredientOptionsResponse200 = {
-  data: ArchiveProductSummaryDto[]
-  status: 200
-}
-
-export type productsControllerListArchiveIngredientOptionsResponse404 = {
-  data: void
-  status: 404
-}
-
-export type productsControllerListArchiveIngredientOptionsResponseSuccess = (productsControllerListArchiveIngredientOptionsResponse200) & {
-  headers: Headers;
-};
-export type productsControllerListArchiveIngredientOptionsResponseError = (productsControllerListArchiveIngredientOptionsResponse404) & {
-  headers: Headers;
-};
-
-export type productsControllerListArchiveIngredientOptionsResponse = (productsControllerListArchiveIngredientOptionsResponseSuccess | productsControllerListArchiveIngredientOptionsResponseError)
-
-export const getProductsControllerListArchiveIngredientOptionsUrl = (companyId: string,
-    venueId: string,
-    params?: ProductsControllerListArchiveIngredientOptionsParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/archive/ingredient-options?${stringifiedParams}` : `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/archive/ingredient-options`
-}
-
-/**
- * @summary Найти активные локальные ингредиенты для архивирования
- */
-export const productsControllerListArchiveIngredientOptions = async (companyId: string,
-    venueId: string,
-    params?: ProductsControllerListArchiveIngredientOptionsParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerListArchiveIngredientOptionsResponse> => {
-
-  const res = await (fetchFn ?? fetch)(getProductsControllerListArchiveIngredientOptionsUrl(companyId,venueId,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: productsControllerListArchiveIngredientOptionsResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as productsControllerListArchiveIngredientOptionsResponse
-}
-
-
-
-
-
-export const getProductsControllerListArchiveIngredientOptionsQueryKey = (companyId: MaybeRefOrGetter<string>,
-    venueId: MaybeRefOrGetter<string>,
-    params?: MaybeRefOrGetter<ProductsControllerListArchiveIngredientOptionsParams>,) => {
-    return [
-    'api','v1','organizations','companies',companyId,'venues',venueId,'products','archive','ingredient-options', ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getProductsControllerListArchiveIngredientOptionsQueryOptions = <TData = Awaited<ReturnType<typeof productsControllerListArchiveIngredientOptions>>, TError = void>(companyId: MaybeRefOrGetter<string>,
-    venueId: MaybeRefOrGetter<string>,
-    params?: MaybeRefOrGetter<ProductsControllerListArchiveIngredientOptionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerListArchiveIngredientOptions>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
-) => {
-
-const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
-
-  const queryKey =  getProductsControllerListArchiveIngredientOptionsQueryKey(companyId,venueId,params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof productsControllerListArchiveIngredientOptions>>> = ({ signal }) => productsControllerListArchiveIngredientOptions(toValue(companyId),toValue(venueId),toValue(params), { signal, ...fetchOptions }, fetcherFn);
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined && toValue(venueId) !== null && toValue(venueId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof productsControllerListArchiveIngredientOptions>>, TError, TData>
-}
-
-export type ProductsControllerListArchiveIngredientOptionsQueryResult = NonNullable<Awaited<ReturnType<typeof productsControllerListArchiveIngredientOptions>>>
-export type ProductsControllerListArchiveIngredientOptionsQueryError = void
-
-
-/**
- * @summary Найти активные локальные ингредиенты для архивирования
- */
-
-export function useProductsControllerListArchiveIngredientOptions<TData = Awaited<ReturnType<typeof productsControllerListArchiveIngredientOptions>>, TError = void>(
- companyId: MaybeRefOrGetter<string>,
-    venueId: MaybeRefOrGetter<string>,
-    params?: MaybeRefOrGetter<ProductsControllerListArchiveIngredientOptionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerListArchiveIngredientOptions>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
- , queryClient?: QueryClient
- ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getProductsControllerListArchiveIngredientOptionsQueryOptions(companyId,venueId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -438,6 +446,11 @@ export type productsControllerArchiveProductResponse201 = {
   status: 201
 }
 
+export type productsControllerArchiveProductResponse400 = {
+  data: void
+  status: 400
+}
+
 export type productsControllerArchiveProductResponse404 = {
   data: void
   status: 404
@@ -451,7 +464,7 @@ export type productsControllerArchiveProductResponse409 = {
 export type productsControllerArchiveProductResponseSuccess = (productsControllerArchiveProductResponse201) & {
   headers: Headers;
 };
-export type productsControllerArchiveProductResponseError = (productsControllerArchiveProductResponse404 | productsControllerArchiveProductResponse409) & {
+export type productsControllerArchiveProductResponseError = (productsControllerArchiveProductResponse400 | productsControllerArchiveProductResponse404 | productsControllerArchiveProductResponse409) & {
   headers: Headers;
 };
 
@@ -468,7 +481,7 @@ export const getProductsControllerArchiveProductUrl = (companyId: string,
 }
 
 /**
- * @summary Архивировать локальную продукцию без активных зависимостей
+ * @summary Архивировать заготовку, гарнир или коктейль без активных зависимостей
  */
 export const productsControllerArchiveProduct = async (companyId: string,
     venueId: string,
@@ -529,7 +542,7 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
     export type ProductsControllerArchiveProductMutationVariables = {companyId: string;venueId: string;productId: string}
 
     /**
- * @summary Архивировать локальную продукцию без активных зависимостей
+ * @summary Архивировать заготовку, гарнир или коктейль без активных зависимостей
  */
 export const useProductsControllerArchiveProduct = <TError = void | ArchiveConflictDto,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerArchiveProduct>>, TError,ProductsControllerArchiveProductMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
@@ -655,7 +668,244 @@ export function useProductsControllerGetArchiveRestorePlan<TData = Awaited<Retur
 
 
 
-export type productsControllerRestoreProductResponse201 = {
+export type productsControllerPermanentDeletePlanResponse200 = {
+  data: PermanentDeletePlanDto
+  status: 200
+}
+
+export type productsControllerPermanentDeletePlanResponse404 = {
+  data: void
+  status: 404
+}
+
+export type productsControllerPermanentDeletePlanResponseSuccess = (productsControllerPermanentDeletePlanResponse200) & {
+  headers: Headers;
+};
+export type productsControllerPermanentDeletePlanResponseError = (productsControllerPermanentDeletePlanResponse404) & {
+  headers: Headers;
+};
+
+export type productsControllerPermanentDeletePlanResponse = (productsControllerPermanentDeletePlanResponseSuccess | productsControllerPermanentDeletePlanResponseError)
+
+export const getProductsControllerPermanentDeletePlanUrl = (companyId: string,
+    venueId: string,
+    productId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/${productId}/permanent-delete-plan`
+}
+
+/**
+ * @summary Проверить использования локального продукта перед удалением
+ */
+export const productsControllerPermanentDeletePlan = async (companyId: string,
+    venueId: string,
+    productId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerPermanentDeletePlanResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getProductsControllerPermanentDeletePlanUrl(companyId,venueId,productId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: productsControllerPermanentDeletePlanResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as productsControllerPermanentDeletePlanResponse
+}
+
+
+
+
+
+export const getProductsControllerPermanentDeletePlanQueryKey = (companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'venues',venueId,'products',productId,'permanent-delete-plan'
+    ] as const;
+    }
+
+
+export const getProductsControllerPermanentDeletePlanQueryOptions = <TData = Awaited<ReturnType<typeof productsControllerPermanentDeletePlan>>, TError = void>(companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerPermanentDeletePlan>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getProductsControllerPermanentDeletePlanQueryKey(companyId,venueId,productId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof productsControllerPermanentDeletePlan>>> = ({ signal }) => productsControllerPermanentDeletePlan(toValue(companyId),toValue(venueId),toValue(productId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined && toValue(venueId) !== null && toValue(venueId) !== undefined && toValue(productId) !== null && toValue(productId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof productsControllerPermanentDeletePlan>>, TError, TData>
+}
+
+export type ProductsControllerPermanentDeletePlanQueryResult = NonNullable<Awaited<ReturnType<typeof productsControllerPermanentDeletePlan>>>
+export type ProductsControllerPermanentDeletePlanQueryError = void
+
+
+/**
+ * @summary Проверить использования локального продукта перед удалением
+ */
+
+export function useProductsControllerPermanentDeletePlan<TData = Awaited<ReturnType<typeof productsControllerPermanentDeletePlan>>, TError = void>(
+ companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerPermanentDeletePlan>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProductsControllerPermanentDeletePlanQueryOptions(companyId,venueId,productId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type productsControllerPermanentDeleteProductResponse200 = {
+  data: PermanentDeleteResultDto
+  status: 200
+}
+
+export type productsControllerPermanentDeleteProductResponse404 = {
+  data: void
+  status: 404
+}
+
+export type productsControllerPermanentDeleteProductResponse409 = {
+  data: PermanentDeleteConflictDto
+  status: 409
+}
+
+export type productsControllerPermanentDeleteProductResponseSuccess = (productsControllerPermanentDeleteProductResponse200) & {
+  headers: Headers;
+};
+export type productsControllerPermanentDeleteProductResponseError = (productsControllerPermanentDeleteProductResponse404 | productsControllerPermanentDeleteProductResponse409) & {
+  headers: Headers;
+};
+
+export type productsControllerPermanentDeleteProductResponse = (productsControllerPermanentDeleteProductResponseSuccess | productsControllerPermanentDeleteProductResponseError)
+
+export const getProductsControllerPermanentDeleteProductUrl = (companyId: string,
+    venueId: string,
+    productId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/${productId}/permanent-delete`
+}
+
+/**
+ * @summary Заменить использования либо удалить локальный продукт или цепочку
+ */
+export const productsControllerPermanentDeleteProduct = async (companyId: string,
+    venueId: string,
+    productId: string,
+    permanentDeleteDto: PermanentDeleteDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerPermanentDeleteProductResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getProductsControllerPermanentDeleteProductUrl(companyId,venueId,productId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(permanentDeleteDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: productsControllerPermanentDeleteProductResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as productsControllerPermanentDeleteProductResponse
+}
+
+
+
+
+
+export const getProductsControllerPermanentDeleteProductMutationKey = () => ['productsControllerPermanentDeleteProduct'] as const;
+
+export const getProductsControllerPermanentDeleteProductMutationOptions = <TError = void | PermanentDeleteConflictDto,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerPermanentDeleteProduct>>, TError,ProductsControllerPermanentDeleteProductMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof productsControllerPermanentDeleteProduct>>, TError,ProductsControllerPermanentDeleteProductMutationVariables, TContext> => {
+
+const mutationKey = getProductsControllerPermanentDeleteProductMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof productsControllerPermanentDeleteProduct>>, ProductsControllerPermanentDeleteProductMutationVariables> = (props) => {
+          const {companyId,venueId,productId,data} = props ?? {};
+
+          return  productsControllerPermanentDeleteProduct(companyId,venueId,productId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProductsControllerPermanentDeleteProductMutationResult = NonNullable<Awaited<ReturnType<typeof productsControllerPermanentDeleteProduct>>>
+    export type ProductsControllerPermanentDeleteProductMutationBody = PermanentDeleteDto
+    export type ProductsControllerPermanentDeleteProductMutationError = void | PermanentDeleteConflictDto
+    export type ProductsControllerPermanentDeleteProductMutationVariables = {companyId: string;venueId: string;productId: string;data: PermanentDeleteDto}
+
+    /**
+ * @summary Заменить использования либо удалить локальный продукт или цепочку
+ */
+export const useProductsControllerPermanentDeleteProduct = <TError = void | PermanentDeleteConflictDto,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerPermanentDeleteProduct>>, TError,ProductsControllerPermanentDeleteProductMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof productsControllerPermanentDeleteProduct>>,
+        TError,
+        ProductsControllerPermanentDeleteProductMutationVariables,
+        TContext
+      > => {
+      return useMutation(getProductsControllerPermanentDeleteProductMutationOptions(options), queryClient);
+    }
+    export type productsControllerRestoreProductResponse201 = {
   data: ArchiveRestoreResultDto
   status: 201
 }
@@ -1803,7 +2053,7 @@ export const getProductsControllerListCocktailsUrl = (companyId: string,
 }
 
 /**
- * @summary Получить активные коктейли текущего заведения
+ * @summary Получить неархивные коктейли текущего заведения
  */
 export const productsControllerListCocktails = async (companyId: string,
     venueId: string,
@@ -1863,7 +2113,7 @@ export type ProductsControllerListCocktailsQueryError = void
 
 
 /**
- * @summary Получить активные коктейли текущего заведения
+ * @summary Получить неархивные коктейли текущего заведения
  */
 
 export function useProductsControllerListCocktails<TData = Awaited<ReturnType<typeof productsControllerListCocktails>>, TError = void>(
@@ -2868,6 +3118,139 @@ export const useProductsControllerCreateIngredient = <TError = void,
       > => {
       return useMutation(getProductsControllerCreateIngredientMutationOptions(options), queryClient);
     }
+    export type productsControllerUpdateLocalIngredientNameResponse200 = {
+  data: ProductCreatedDto
+  status: 200
+}
+
+export type productsControllerUpdateLocalIngredientNameResponse400 = {
+  data: void
+  status: 400
+}
+
+export type productsControllerUpdateLocalIngredientNameResponse403 = {
+  data: void
+  status: 403
+}
+
+export type productsControllerUpdateLocalIngredientNameResponse404 = {
+  data: void
+  status: 404
+}
+
+export type productsControllerUpdateLocalIngredientNameResponse409 = {
+  data: void
+  status: 409
+}
+
+export type productsControllerUpdateLocalIngredientNameResponseSuccess = (productsControllerUpdateLocalIngredientNameResponse200) & {
+  headers: Headers;
+};
+export type productsControllerUpdateLocalIngredientNameResponseError = (productsControllerUpdateLocalIngredientNameResponse400 | productsControllerUpdateLocalIngredientNameResponse403 | productsControllerUpdateLocalIngredientNameResponse404 | productsControllerUpdateLocalIngredientNameResponse409) & {
+  headers: Headers;
+};
+
+export type productsControllerUpdateLocalIngredientNameResponse = (productsControllerUpdateLocalIngredientNameResponseSuccess | productsControllerUpdateLocalIngredientNameResponseError)
+
+export const getProductsControllerUpdateLocalIngredientNameUrl = (companyId: string,
+    venueId: string,
+    productId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/local-ingredients/${productId}`
+}
+
+/**
+ * @summary Изменить название и категорию временного локального ингредиента
+ */
+export const productsControllerUpdateLocalIngredientName = async (companyId: string,
+    venueId: string,
+    productId: string,
+    updateLocalIngredientNameDto: UpdateLocalIngredientNameDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerUpdateLocalIngredientNameResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getProductsControllerUpdateLocalIngredientNameUrl(companyId,venueId,productId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateLocalIngredientNameDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: productsControllerUpdateLocalIngredientNameResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as productsControllerUpdateLocalIngredientNameResponse
+}
+
+
+
+
+
+export const getProductsControllerUpdateLocalIngredientNameMutationKey = () => ['productsControllerUpdateLocalIngredientName'] as const;
+
+export const getProductsControllerUpdateLocalIngredientNameMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerUpdateLocalIngredientName>>, TError,ProductsControllerUpdateLocalIngredientNameMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof productsControllerUpdateLocalIngredientName>>, TError,ProductsControllerUpdateLocalIngredientNameMutationVariables, TContext> => {
+
+const mutationKey = getProductsControllerUpdateLocalIngredientNameMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof productsControllerUpdateLocalIngredientName>>, ProductsControllerUpdateLocalIngredientNameMutationVariables> = (props) => {
+          const {companyId,venueId,productId,data} = props ?? {};
+
+          return  productsControllerUpdateLocalIngredientName(companyId,venueId,productId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProductsControllerUpdateLocalIngredientNameMutationResult = NonNullable<Awaited<ReturnType<typeof productsControllerUpdateLocalIngredientName>>>
+    export type ProductsControllerUpdateLocalIngredientNameMutationBody = UpdateLocalIngredientNameDto
+    export type ProductsControllerUpdateLocalIngredientNameMutationError = void
+    export type ProductsControllerUpdateLocalIngredientNameMutationVariables = {companyId: string;venueId: string;productId: string;data: UpdateLocalIngredientNameDto}
+
+    /**
+ * @summary Изменить название и категорию временного локального ингредиента
+ */
+export const useProductsControllerUpdateLocalIngredientName = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerUpdateLocalIngredientName>>, TError,ProductsControllerUpdateLocalIngredientNameMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof productsControllerUpdateLocalIngredientName>>,
+        TError,
+        ProductsControllerUpdateLocalIngredientNameMutationVariables,
+        TContext
+      > => {
+      return useMutation(getProductsControllerUpdateLocalIngredientNameMutationOptions(options), queryClient);
+    }
     export type productsControllerCreateUnitResponse403 = {
   data: void
   status: 403
@@ -3102,6 +3485,137 @@ export const useProductsControllerCreateReferenceValue = <TError = void,
         TContext
       > => {
       return useMutation(getProductsControllerCreateReferenceValueMutationOptions(options), queryClient);
+    }
+    export type productsControllerCreatePreparationCategoryResponse201 = {
+  data: PreparationCategoryResponseDto
+  status: 201
+}
+
+export type productsControllerCreatePreparationCategoryResponse400 = {
+  data: void
+  status: 400
+}
+
+export type productsControllerCreatePreparationCategoryResponse403 = {
+  data: void
+  status: 403
+}
+
+export type productsControllerCreatePreparationCategoryResponse404 = {
+  data: void
+  status: 404
+}
+
+export type productsControllerCreatePreparationCategoryResponse409 = {
+  data: void
+  status: 409
+}
+
+export type productsControllerCreatePreparationCategoryResponseSuccess = (productsControllerCreatePreparationCategoryResponse201) & {
+  headers: Headers;
+};
+export type productsControllerCreatePreparationCategoryResponseError = (productsControllerCreatePreparationCategoryResponse400 | productsControllerCreatePreparationCategoryResponse403 | productsControllerCreatePreparationCategoryResponse404 | productsControllerCreatePreparationCategoryResponse409) & {
+  headers: Headers;
+};
+
+export type productsControllerCreatePreparationCategoryResponse = (productsControllerCreatePreparationCategoryResponseSuccess | productsControllerCreatePreparationCategoryResponseError)
+
+export const getProductsControllerCreatePreparationCategoryUrl = (companyId: string,
+    venueId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/preparation-categories`
+}
+
+/**
+ * @summary Добавить локальную категорию заготовки
+ */
+export const productsControllerCreatePreparationCategory = async (companyId: string,
+    venueId: string,
+    createLocalPreparationCategoryDto: CreateLocalPreparationCategoryDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerCreatePreparationCategoryResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getProductsControllerCreatePreparationCategoryUrl(companyId,venueId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createLocalPreparationCategoryDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: productsControllerCreatePreparationCategoryResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as productsControllerCreatePreparationCategoryResponse
+}
+
+
+
+
+
+export const getProductsControllerCreatePreparationCategoryMutationKey = () => ['productsControllerCreatePreparationCategory'] as const;
+
+export const getProductsControllerCreatePreparationCategoryMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerCreatePreparationCategory>>, TError,ProductsControllerCreatePreparationCategoryMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof productsControllerCreatePreparationCategory>>, TError,ProductsControllerCreatePreparationCategoryMutationVariables, TContext> => {
+
+const mutationKey = getProductsControllerCreatePreparationCategoryMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof productsControllerCreatePreparationCategory>>, ProductsControllerCreatePreparationCategoryMutationVariables> = (props) => {
+          const {companyId,venueId,data} = props ?? {};
+
+          return  productsControllerCreatePreparationCategory(companyId,venueId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProductsControllerCreatePreparationCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof productsControllerCreatePreparationCategory>>>
+    export type ProductsControllerCreatePreparationCategoryMutationBody = CreateLocalPreparationCategoryDto
+    export type ProductsControllerCreatePreparationCategoryMutationError = void
+    export type ProductsControllerCreatePreparationCategoryMutationVariables = {companyId: string;venueId: string;data: CreateLocalPreparationCategoryDto}
+
+    /**
+ * @summary Добавить локальную категорию заготовки
+ */
+export const useProductsControllerCreatePreparationCategory = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerCreatePreparationCategory>>, TError,ProductsControllerCreatePreparationCategoryMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof productsControllerCreatePreparationCategory>>,
+        TError,
+        ProductsControllerCreatePreparationCategoryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getProductsControllerCreatePreparationCategoryMutationOptions(options), queryClient);
     }
     export type companyProductsControllerSearchCompanyResponse200 = {
   data: ProductSearchPageResponseDto

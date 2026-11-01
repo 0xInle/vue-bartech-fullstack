@@ -19,6 +19,7 @@ export class PreparationReadRepository {
     venueId: string,
     matchingIds?: string[],
     categoryCode?: string,
+    workflowStatus?: "ACTIVE" | "IN_DEVELOPMENT",
     sort: PreparationListSort = "name",
   ): Promise<PreparationListItem[]> {
     const preparations = await this.database.product.findMany({
@@ -28,11 +29,13 @@ export class PreparationReadRepository {
         status: "ACTIVE",
         ...(matchingIds ? { id: { in: matchingIds } } : {}),
         ...(categoryCode ? { preparation: { categoryCode } } : {}),
+        ...(workflowStatus ? { workflowStatus } : {}),
       },
       orderBy: sort === "updated" ? [{ updatedAt: "desc" }, { name: "asc" }] : { name: "asc" },
       select: {
         id: true,
         name: true,
+        workflowStatus: true,
         updatedAt: true,
         preparation: { select: { category: { select: { name: true } } } },
         parentComponents: {
@@ -57,6 +60,7 @@ export class PreparationReadRepository {
         {
           id: preparation.id,
           name: preparation.name,
+          workflowStatus: preparation.workflowStatus!,
           categoryName,
           componentSummary: componentSummary(
             products,
@@ -74,6 +78,7 @@ export class PreparationReadRepository {
       select: {
         id: true,
         name: true,
+        workflowStatus: true,
         technology: true,
         comment: true,
         outputAmount: true,
@@ -102,6 +107,7 @@ export class PreparationReadRepository {
       name: preparation.name,
       type: "PREPARATION",
       status: "ACTIVE",
+      workflowStatus: preparation.workflowStatus!,
       categoryCode: preparation.preparation.categoryCode,
       categoryName: preparation.preparation.category.name,
       components: preparation.parentComponents.map((component) => {

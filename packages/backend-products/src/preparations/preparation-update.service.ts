@@ -50,7 +50,11 @@ export class PreparationUpdateService {
         );
         if (!current?.preparation) throw new NotFoundException("Заготовка не найдена");
 
-        const category = await this.repository.findCategory(transaction, normalized.categoryCode);
+        const category = await this.repository.findCategory(
+          transaction,
+          context.venueId,
+          normalized.categoryCode,
+        );
         if (!category) throw new BadRequestException("Выберите доступную категорию заготовки");
 
         const componentIds = [...new Set(normalized.components.map((item) => item.productId))];
@@ -91,7 +95,13 @@ export class PreparationUpdateService {
           };
         }
 
-        const dependents = await this.repository.findActiveDependents(transaction, context.venueId);
+        const recipeChanged = !samePreparation(current, {
+          ...normalized,
+          workflowStatus: current.workflowStatus ?? "ACTIVE",
+        });
+        const dependents = recipeChanged
+          ? await this.repository.findActiveDependents(transaction, context.venueId)
+          : [];
         const affectedProducts = findPreparationImpact(preparationId, dependents);
         if (affectedProducts.length) {
           const confirmationFingerprint = preparationImpactFingerprint(
@@ -117,6 +127,7 @@ export class PreparationUpdateService {
           ...normalized,
           searchNameNormalized: normalizeSearchText(normalized.name),
           searchTechnologyNormalized: normalizeSearchText(normalized.technology),
+          workflowStatus: normalized.workflowStatus,
           components: normalized.components.map((component, position) => ({
             ...component,
             position,
@@ -195,6 +206,7 @@ function normalizeInput(input: PreparationInput) {
   return {
     name,
     nameNormalized,
+    workflowStatus: input.workflowStatus,
     categoryCode: normalizeReferenceCode(input.categoryCode),
     technology: input.technology.trim(),
     comment: input.comment?.trim() || undefined,
@@ -213,6 +225,7 @@ function samePreparation(
 ): boolean {
   return (
     current.name === next.name &&
+    (next.workflowStatus ?? current.workflowStatus) === current.workflowStatus &&
     current.preparation?.categoryCode === next.categoryCode &&
     current.technology?.trim() === next.technology &&
     (current.comment?.trim() || undefined) === next.comment &&

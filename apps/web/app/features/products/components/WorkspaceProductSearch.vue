@@ -24,6 +24,7 @@
     />
     <Drawer
       v-model:visible="drawerVisible"
+      dismissable
       header="Поиск"
       position="right"
       class="drawer-size-lg"
@@ -49,6 +50,7 @@
 
   <Drawer
     v-model:visible="resultDrawerVisible"
+    dismissable
     :header="selectedResult?.venueName ?? 'Карточка продукции'"
     position="right"
     class="drawer-size-lg"

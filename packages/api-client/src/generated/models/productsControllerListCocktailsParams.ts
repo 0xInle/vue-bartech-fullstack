@@ -5,6 +5,7 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { ProductsControllerListCocktailsWorkflowStatus } from './productsControllerListCocktailsWorkflowStatus';
 
 export type ProductsControllerListCocktailsParams = {
 /**
@@ -12,4 +13,5 @@ export type ProductsControllerListCocktailsParams = {
  */
 query?: string;
 categoryId?: string;
+workflowStatus?: ProductsControllerListCocktailsWorkflowStatus;
 };

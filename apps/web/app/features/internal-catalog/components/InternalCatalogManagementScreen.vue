@@ -365,6 +365,7 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import type { GlobalIngredientCardDto } from "@bartech/api-client";
 import { useInternalAuth } from "~/features/internal-auth/composables/useInternalAuth";
 import { useInternalCatalogManagement } from "../composables/useInternalCatalogManagement";
+import { compareCategoryNames } from "~/utils/category-order";
 
 defineOptions({ name: "InternalCatalogManagementScreen" });
 const apiFetch = useApiFetch();
@@ -399,9 +400,9 @@ const categoryOptions = computed(() => {
     return [
       ...active,
       { code: card.value.categoryCode, name: card.value.categoryName, isActive: false },
-    ];
+    ].sort((first, second) => compareCategoryNames(first.name, second.name));
   }
-  return active;
+  return active.sort((first, second) => compareCategoryNames(first.name, second.name));
 });
 const editable = computed(() => card.value?.status === "ACTIVE");
 const statusOptions = [

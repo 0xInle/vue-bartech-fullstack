@@ -1,6 +1,7 @@
 export type CocktailListItem = {
   id: string;
   name: string;
+  workflowStatus: "ACTIVE" | "IN_DEVELOPMENT";
   categories: string[];
   componentSummary: string;
   updatedAt: Date;
@@ -17,6 +18,7 @@ export type CocktailCard = {
   name: string;
   type: "COCKTAIL";
   status: "ACTIVE";
+  workflowStatus: "ACTIVE" | "IN_DEVELOPMENT";
   components: Array<{
     id: string;
     productId: string;

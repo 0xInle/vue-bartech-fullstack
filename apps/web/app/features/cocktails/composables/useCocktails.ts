@@ -54,6 +54,9 @@ export function useCocktails(
   const categoryId = ref<string | null>(
     options.categoryFilter ? readQuery(route.query.category) || null : null,
   );
+  const workflowStatus = ref<"ALL" | "ACTIVE" | "IN_DEVELOPMENT">(
+    options.categoryFilter ? readWorkflowStatus(route.query.status) : "ALL",
+  );
   const company = computed(() => toValue(companyId));
   const venue = computed(() => toValue(venueId));
   const productApiFetch = options.serviceSessionId
@@ -73,6 +76,7 @@ export function useCocktails(
     options.serviceSessionId ?? "client",
     normalizedSearch.value,
     categoryId.value,
+    workflowStatus.value,
   ]);
   const referencesKey = computed(() => [
     "product-references",
@@ -89,18 +93,20 @@ export function useCocktails(
 
   if (options.categoryFilter) {
     watch(
-      () => [route.query.query, route.query.category],
-      ([query, category]) => {
+      () => [route.query.query, route.query.category, route.query.status],
+      ([query, category, status]) => {
         searchText.value = readQuery(query);
         categoryId.value = readQuery(category) || null;
+        workflowStatus.value = readWorkflowStatus(status);
       },
     );
     watch(
-      [normalizedSearch, categoryId],
+      [normalizedSearch, categoryId, workflowStatus],
       () => {
         const query = { ...route.query } as Record<string, string | undefined>;
         assignQuery(query, "query", normalizedSearch.value);
         assignQuery(query, "category", categoryId.value);
+        assignQuery(query, "status", workflowStatus.value === "ALL" ? null : workflowStatus.value);
         if (
           Object.keys(query).length !== Object.keys(route.query).length ||
           Object.keys(query).some((key) => query[key] !== route.query[key])
@@ -120,12 +126,11 @@ export function useCocktails(
       const response = await productsControllerListCocktails(
         company.value,
         venue.value,
-        normalizedSearch.value || categoryId.value
-          ? {
-              query: normalizedSearch.value || undefined,
-              categoryId: categoryId.value || undefined,
-            }
-          : undefined,
+        {
+          query: normalizedSearch.value || undefined,
+          categoryId: categoryId.value || undefined,
+          workflowStatus: workflowStatus.value,
+        },
         { credentials: "include", signal },
         productApiFetch,
       );
@@ -307,6 +312,7 @@ export function useCocktails(
     cocktailQuery,
     createCocktail,
     categoryId,
+    workflowStatus,
     createLocalIngredient,
     createLocalReferenceValue,
     garnishesQuery,
@@ -319,6 +325,10 @@ export function useCocktails(
 
 function readQuery(value: unknown): string {
   return typeof value === "string" ? value : "";
+}
+
+function readWorkflowStatus(value: unknown): "ALL" | "ACTIVE" | "IN_DEVELOPMENT" {
+  return value === "ACTIVE" || value === "IN_DEVELOPMENT" ? value : "ALL";
 }
 
 function assignQuery(

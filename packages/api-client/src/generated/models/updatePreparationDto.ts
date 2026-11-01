@@ -7,8 +7,10 @@
  */
 import type { ProductComponentDto } from './productComponentDto';
 import type { ProductOutputDto } from './productOutputDto';
+import type { UpdatePreparationDtoWorkflowStatus } from './updatePreparationDtoWorkflowStatus';
 
 export interface UpdatePreparationDto {
+  workflowStatus?: UpdatePreparationDtoWorkflowStatus;
   /** @maxLength 160 */
   name: string;
   /** @maxLength 10000 */

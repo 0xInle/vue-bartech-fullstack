@@ -1,12 +1,106 @@
 <template>
   <div class="flex flex-col gap-3">
-    <div
-      v-for="(row, index) in modelValue"
-      :key="row.key"
-      class="rounded-lg border border-surface p-3"
-    >
-      <div class="mb-2 flex items-center justify-between gap-2">
-        <p class="text-xs font-medium text-color-secondary">Компонент {{ index + 1 }}</p>
+    <div v-for="(row, index) in modelValue" :key="row.key" class="flex flex-col gap-2">
+      <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_4.5rem_max-content_auto]">
+        <div class="min-w-0">
+          <IngredientSelector
+            ref="ingredientSelector"
+            :model-value="row.product"
+            :company-id="companyId"
+            :venue-id="venueId"
+            :service-session-id="serviceSessionId"
+            keep-overlay-open-on-scroll
+            float-label
+            label="Ингредиент"
+            :invalid="Boolean(errors?.[index]?.productId)"
+            :input-id="`garnish-component-${row.key}-ingredient`"
+            placeholder="Найти ингредиент или заготовку"
+            @update:model-value="selectProduct(row.key, $event)"
+            @hide="handleIngredientHide(row.key)"
+          >
+            <template #footer="{ query, loading, hasResults, hasError, hasLoaded }">
+              <div
+                v-if="query.trim().length >= 2"
+                class="box-border flex w-full min-w-0 max-w-full flex-col items-center gap-2 p-2"
+                @mousedown.stop
+              >
+                <span v-if="loading" class="text-xs text-color-secondary">Ищем ингредиент…</span>
+                <template v-else-if="hasLoaded && !hasError">
+                  <span v-if="!hasResults" class="text-xs text-color-secondary"
+                    >Ингредиент не найден</span
+                  >
+                  <template v-if="canManage">
+                    <Divider class="!my-0" />
+                    <span v-if="hasResults" class="text-xs text-color-secondary"
+                      >Не нашли нужное?</span
+                    >
+                    <div
+                      v-if="activeLocalIngredientRow === row.key"
+                      class="flex w-full min-w-0 flex-col gap-2"
+                      @input.capture="markLocalIngredientDraft(row.key)"
+                      @change.capture="markLocalIngredientDraft(row.key)"
+                      @submit.stop
+                    >
+                      <LocalIngredientCreateForm
+                        compact
+                        :initial-name="localIngredientName"
+                        :categories="ingredientCategories"
+                        :create="createLocalIngredient"
+                        @cancel="closeLocalIngredientForm"
+                        @created="assignCreatedIngredient(row.key, $event)"
+                      />
+                    </div>
+                    <Button
+                      v-else
+                      type="button"
+                      label="Создать ингредиент"
+                      icon="pi pi-plus"
+                      severity="secondary"
+                      variant="text"
+                      size="small"
+                      @mousedown.prevent
+                      @click.stop="startLocalIngredientCreate(row.key, query)"
+                    />
+                  </template>
+                </template>
+              </div>
+            </template>
+          </IngredientSelector>
+        </div>
+        <FloatLabel variant="on">
+          <InputText
+            :id="`garnish-component-${row.key}-amount`"
+            :model-value="row.amount"
+            inputmode="decimal"
+            size="small"
+            fluid
+            :invalid="Boolean(errors?.[index]?.amount)"
+            @update:model-value="updateRow(row.key, { amount: String($event ?? '') })"
+          />
+          <label :for="`garnish-component-${row.key}-amount`" class="text-xs">Кол-во</label>
+        </FloatLabel>
+        <FloatLabel variant="on">
+          <Select
+            :ref="(instance) => setUnitSelectRef(row.key, instance)"
+            :input-id="`garnish-component-${row.key}-unit`"
+            :model-value="row.unitId"
+            append-to="self"
+            :pt="{ overlay: { class: 'w-max min-w-full' } }"
+            :options="availableUnits()"
+            option-label="label"
+            option-value="id"
+            size="small"
+            class="w-24"
+            :invalid="Boolean(errors?.[index]?.unitId)"
+            @show="handleUnitSelectShow(row.key)"
+            @update:model-value="updateRow(row.key, { unitId: $event })"
+          >
+            <template #value="slotProps">
+              {{ unitLabel(row.unitId) || slotProps.placeholder }}
+            </template>
+          </Select>
+          <label :for="`garnish-component-${row.key}-unit`" class="text-xs">Ед. изм.</label>
+        </FloatLabel>
         <Button
           v-if="modelValue.length > 1"
           icon="pi pi-times"
@@ -14,100 +108,26 @@
           variant="text"
           rounded
           size="small"
+          class="justify-self-end sm:self-center"
           aria-label="Удалить компонент"
           @click="remove(row.key)"
         />
       </div>
-      <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_7rem_8rem]">
-        <div class="flex flex-col gap-1">
-          <IngredientSelector
-            :model-value="row.product"
-            :company-id="companyId"
-            :venue-id="venueId"
-            :service-session-id="serviceSessionId"
-            placeholder="Найти ингредиент или заготовку"
-            @update:model-value="selectProduct(row.key, $event)"
-          />
-          <small v-if="errors?.[index]?.productId" class="text-xs text-red-500">{{
-            errors[index]?.productId
-          }}</small>
-        </div>
-        <div class="flex flex-col gap-1">
-          <FloatLabel variant="on">
-            <InputText
-              :id="`garnish-component-${row.key}-amount`"
-              :model-value="row.amount"
-              inputmode="decimal"
-              size="small"
-              fluid
-              @update:model-value="updateRow(row.key, { amount: String($event ?? '') })"
-            />
-            <label :for="`garnish-component-${row.key}-amount`" class="text-xs">Количество</label>
-          </FloatLabel>
-          <small v-if="errors?.[index]?.amount" class="text-xs text-red-500">{{
-            errors[index]?.amount
-          }}</small>
-        </div>
-        <div class="flex flex-col gap-1">
-          <FloatLabel variant="on">
-            <Select
-              :input-id="`garnish-component-${row.key}-unit`"
-              :model-value="row.unitId"
-              :options="units"
-              option-label="label"
-              option-value="id"
-              size="small"
-              class="w-full"
-              @update:model-value="updateRow(row.key, { unitId: $event })"
-            />
-            <label :for="`garnish-component-${row.key}-unit`" class="text-xs">Единица</label>
-          </FloatLabel>
-          <small v-if="errors?.[index]?.unitId" class="text-xs text-red-500">{{
-            errors[index]?.unitId
-          }}</small>
-        </div>
-      </div>
-      <Button
-        v-if="canManage && activeLocalIngredientRow !== row.key"
-        label="Нет ингредиента? Создать локальный"
-        severity="secondary"
-        variant="text"
-        size="small"
-        class="mt-2 px-0"
-        @click="activeLocalIngredientRow = row.key"
-      />
-      <div
-        v-if="canManage && activeLocalIngredientRow === row.key"
-        class="mt-3"
-        @input.capture="emit('dirty')"
-        @change.capture="emit('dirty')"
-        @submit.stop
-      >
-        <LocalIngredientCreateForm
-          :categories="ingredientCategories"
-          :create="createLocalIngredient"
-          @cancel="activeLocalIngredientRow = null"
-          @created="assignCreatedIngredient(row.key, $event)"
-        />
-      </div>
     </div>
-    <Button
-      label="Добавить компонент"
-      icon="pi pi-plus"
-      severity="secondary"
-      variant="outlined"
-      size="small"
-      class="self-start"
-      @click="add"
-    />
+    <Button label="Добавить ингредиент" size="small" class="w-full" @click="add" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import IngredientSelector from "~/features/products/components/IngredientSelector.vue";
 import LocalIngredientCreateForm from "~/features/products/components/LocalIngredientCreateForm.vue";
 import type { ProductCreated, ProductSearchItem } from "~/features/products/types";
+import {
+  keepPrimeVueOverlayOpenOnScroll,
+  keepPrimeVueOverlayWithinDrawer,
+  type PrimeVueOverlayRef,
+} from "~/utils/primevue-overlay";
 
 export type GarnishComponentRow = {
   key: string;
@@ -116,13 +136,14 @@ export type GarnishComponentRow = {
   amount: string;
   unitId: string;
 };
-export type GarnishComponentErrors = Partial<Record<"productId" | "amount" | "unitId", string>>;
+export type GarnishComponentField = "productId" | "amount" | "unitId";
+export type GarnishComponentErrors = Partial<Record<GarnishComponentField, boolean>>;
 const props = defineProps<{
   modelValue: GarnishComponentRow[];
   companyId: string;
   venueId: string;
   serviceSessionId?: string;
-  units: Array<{ id: string; label: string }>;
+  units: Array<{ id: string; code: string; label: string }>;
   ingredientCategories: Array<{ code: string; name: string }>;
   errors?: GarnishComponentErrors[];
   canManage: boolean;
@@ -132,8 +153,34 @@ const props = defineProps<{
     brand?: string;
   }) => Promise<ProductCreated>;
 }>();
-const emit = defineEmits<{ "update:modelValue": [rows: GarnishComponentRow[]]; dirty: [] }>();
+const emit = defineEmits<{
+  "update:modelValue": [rows: GarnishComponentRow[]];
+  dirty: [];
+  "local-ingredient-draft": [active: boolean];
+}>();
 const activeLocalIngredientRow = ref<string | null>(null);
+const localIngredientName = ref("");
+const localIngredientDraftRowKey = ref<string | null>(null);
+const ingredientSelector = ref<InstanceType<typeof IngredientSelector>[]>([]);
+const unitSelectRefs = new Map<string, PrimeVueOverlayRef>();
+const defaultUnitId = computed(
+  () => props.units.find((unit) => unit.label.trim().toLocaleLowerCase("ru") === "мл")?.id ?? "",
+);
+function setUnitSelectRef(key: string, instance: PrimeVueOverlayRef | null): void {
+  if (instance) unitSelectRefs.set(key, instance);
+  else unitSelectRefs.delete(key);
+}
+function handleUnitSelectShow(key: string): void {
+  const select = unitSelectRefs.get(key);
+  keepPrimeVueOverlayOpenOnScroll(select);
+  keepPrimeVueOverlayWithinDrawer(select);
+}
+function availableUnits() {
+  return props.units.filter((unit) => unit.code !== "bar-spoon");
+}
+function unitLabel(unitId: string): string {
+  return props.units.find((unit) => unit.id === unitId)?.label ?? "";
+}
 function updateRow(key: string, patch: Partial<GarnishComponentRow>): void {
   emit(
     "update:modelValue",
@@ -141,6 +188,7 @@ function updateRow(key: string, patch: Partial<GarnishComponentRow>): void {
   );
 }
 function selectProduct(key: string, product: ProductSearchItem | null): void {
+  if (activeLocalIngredientRow.value === key) closeLocalIngredientForm();
   updateRow(key, {
     product,
     productId: product && typeof product === "object" ? product.id : "",
@@ -149,11 +197,30 @@ function selectProduct(key: string, product: ProductSearchItem | null): void {
 function add(): void {
   emit("update:modelValue", [
     ...props.modelValue,
-    { key: crypto.randomUUID(), productId: "", product: null, amount: "", unitId: "" },
+    {
+      key: crypto.randomUUID(),
+      productId: "",
+      product: null,
+      amount: "",
+      unitId: defaultUnitId.value,
+    },
   ]);
 }
+function startLocalIngredientCreate(key: string, query: string): void {
+  localIngredientName.value = query;
+  activeLocalIngredientRow.value = key;
+}
+function handleIngredientHide(key: string): void {
+  if (activeLocalIngredientRow.value === key && localIngredientDraftRowKey.value !== key)
+    closeLocalIngredientForm();
+}
+function markLocalIngredientDraft(key: string): void {
+  localIngredientDraftRowKey.value = key;
+  emit("dirty");
+  emit("local-ingredient-draft", true);
+}
 function remove(key: string): void {
-  if (activeLocalIngredientRow.value === key) activeLocalIngredientRow.value = null;
+  if (activeLocalIngredientRow.value === key) closeLocalIngredientForm();
   emit(
     "update:modelValue",
     props.modelValue.filter((row) => row.key !== key),
@@ -177,7 +244,20 @@ function assignCreatedIngredient(key: string, product: ProductCreated): void {
     },
   });
   activeLocalIngredientRow.value = null;
+  localIngredientName.value = "";
+  localIngredientDraftRowKey.value = null;
+  emit("local-ingredient-draft", false);
   const control = row.amount.trim() ? "unit" : "amount";
-  void nextTick(() => document.getElementById(`garnish-component-${row.key}-${control}`)?.focus());
+  const index = props.modelValue.findIndex((item) => item.key === key);
+  void nextTick(() => {
+    if (index >= 0) ingredientSelector.value[index]?.hideSuggestions();
+    document.getElementById(`garnish-component-${row.key}-${control}`)?.focus();
+  });
+}
+function closeLocalIngredientForm(): void {
+  activeLocalIngredientRow.value = null;
+  localIngredientName.value = "";
+  localIngredientDraftRowKey.value = null;
+  emit("local-ingredient-draft", false);
 }
 </script>

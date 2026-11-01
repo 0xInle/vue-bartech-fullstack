@@ -5,6 +5,7 @@ export type ProductComponentInput = {
 };
 
 export type ProductBaseInput = {
+  workflowStatus?: "ACTIVE" | "IN_DEVELOPMENT";
   name: string;
   technology: string;
   comment?: string;

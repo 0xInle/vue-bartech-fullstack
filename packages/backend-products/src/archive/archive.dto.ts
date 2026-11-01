@@ -51,3 +51,32 @@ export type ArchiveRestoreInput = {
     newName?: string;
   }>;
 };
+
+export type PermanentDeleteUsage = {
+  id: string;
+  parentId: string;
+  parentType: ProductType;
+  parentName: string;
+  parentStatus: ProductStatus;
+  relation: "COMPONENT" | "GARNISH";
+  replacements: ArchiveProductSummary[];
+};
+
+export type PermanentDeleteProduct = ArchiveProductSummary & {
+  status: ProductStatus;
+};
+
+export type PermanentDeletePlan = {
+  root: PermanentDeleteProduct;
+  activeUsages: PermanentDeleteUsage[];
+  archivedUsages: PermanentDeleteUsage[];
+  deleteChain: PermanentDeleteProduct[];
+  confirmationFingerprint: string;
+};
+
+export type PermanentDeleteInput = {
+  action: "DELETE" | "REPLACE" | "DELETE_CHAIN";
+  confirmationFingerprint: string;
+  confirmationName?: string;
+  replacementProductId?: string;
+};

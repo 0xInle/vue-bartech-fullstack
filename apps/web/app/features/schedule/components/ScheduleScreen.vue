@@ -275,6 +275,9 @@
 
     <Drawer
       v-model:visible="shiftSettingsVisible"
+      :dismissable="!busy"
+      :show-close-icon="!busy"
+      :close-on-escape="!busy"
       position="right"
       class="drawer-size-xs h-screen max-h-screen h-dvh max-h-dvh"
       :pt="{
@@ -428,7 +431,9 @@
     <Dialog
       v-model:visible="cellVisible"
       modal
-      dismissable-mask
+      :dismissable-mask="!busy"
+      :closable="!busy"
+      :close-on-escape="!busy"
       :header="bulkEditMode ? 'Массовое изменение' : activeRow?.fullName"
       class="dialog-size-sm"
       :pt="{
@@ -591,6 +596,9 @@
     <Dialog
       v-model:visible="bulkDeleteVisible"
       modal
+      :dismissable-mask="!busy"
+      :closable="!busy"
+      :close-on-escape="!busy"
       header="Очистить выбранные ячейки?"
       class="dialog-size-sm"
       :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
@@ -620,6 +628,9 @@
 
     <Drawer
       v-model:visible="generateVisible"
+      :dismissable="!busy"
+      :show-close-icon="!busy"
+      :close-on-escape="!busy"
       position="right"
       class="drawer-size-lg h-screen max-h-screen h-dvh max-h-dvh"
       :pt="{
@@ -882,6 +893,9 @@
 
     <Drawer
       v-model:visible="templateVisible"
+      :dismissable="!busy"
+      :show-close-icon="!busy"
+      :close-on-escape="!busy"
       position="right"
       class="drawer-size-xs h-screen max-h-screen h-dvh max-h-dvh"
       :pt="{
@@ -1129,6 +1143,9 @@
     <Dialog
       v-model:visible="templateDeleteVisible"
       modal
+      :dismissable-mask="!busy"
+      :closable="!busy"
+      :close-on-escape="!busy"
       header="Удалить шаблон?"
       class="w-full max-w-md"
       :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
@@ -1166,7 +1183,9 @@
     <Dialog
       v-model:visible="exportVisible"
       modal
-      dismissable-mask
+      :dismissable-mask="!exportBusy"
+      :closable="!exportBusy"
+      :close-on-escape="!exportBusy"
       header="Выгрузка графика"
       class="w-full max-w-md"
       :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"

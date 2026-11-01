@@ -105,6 +105,8 @@
       <slot v-else />
     </main>
 
+    <WorkspaceProductDrawer :workspace="workspace" />
+
     <nav
       aria-label="Мобильная навигация"
       class="fixed inset-x-0 bottom-0 z-10 flex border-t border-surface bg-surface-0 p-1 lg:hidden"
@@ -136,6 +138,7 @@
 
     <Drawer
       v-model:visible="moreVisible"
+      dismissable
       header="Разделы"
       position="right"
       class="drawer-size-sm"
@@ -186,6 +189,7 @@ import { useColorScheme } from "~/composables/useColorScheme";
 import CompanyClosureBanner from "~/features/organizations/components/CompanyClosureBanner.vue";
 import WorkspaceIdentity from "./WorkspaceIdentity.vue";
 import WorkspaceProductSearch from "~/features/products/components/WorkspaceProductSearch.vue";
+import WorkspaceProductDrawer from "~/components/WorkspaceProductDrawer.vue";
 
 defineOptions({ name: "WorkspaceShell" });
 
@@ -206,6 +210,7 @@ const supportPath = computed(
 const paths = computed(() => ({
   archive: `${homePath.value}/archive`,
   cocktails: `${homePath.value}/cocktails`,
+  ingredients: `${homePath.value}/ingredients`,
   garnishes: `${homePath.value}/garnishes`,
   history: `${homePath.value}/history`,
   management: `${homePath.value}/management`,
@@ -261,6 +266,7 @@ const menuItems = computed<MenuItem[]>(() => {
         linkItem("Коктейли", paths.value.cocktails, isPathActive(paths.value.cocktails)),
         linkItem("Заготовки", paths.value.preparations, isPathActive(paths.value.preparations)),
         linkItem("Гарниры", paths.value.garnishes, isPathActive(paths.value.garnishes)),
+        linkItem("Ингредиенты", paths.value.ingredients, isPathActive(paths.value.ingredients)),
       ],
     });
   }

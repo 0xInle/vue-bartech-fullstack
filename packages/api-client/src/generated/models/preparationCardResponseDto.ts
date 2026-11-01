@@ -9,12 +9,14 @@ import type { PreparationCardComponentResponseDto } from './preparationCardCompo
 import type { PreparationCardOutputResponseDto } from './preparationCardOutputResponseDto';
 import type { PreparationCardResponseDtoStatus } from './preparationCardResponseDtoStatus';
 import type { PreparationCardResponseDtoType } from './preparationCardResponseDtoType';
+import type { PreparationCardResponseDtoWorkflowStatus } from './preparationCardResponseDtoWorkflowStatus';
 
 export interface PreparationCardResponseDto {
   id: string;
   name: string;
   type: PreparationCardResponseDtoType;
   status: PreparationCardResponseDtoStatus;
+  workflowStatus: PreparationCardResponseDtoWorkflowStatus;
   categoryName: string;
   categoryCode: string;
   components: PreparationCardComponentResponseDto[];

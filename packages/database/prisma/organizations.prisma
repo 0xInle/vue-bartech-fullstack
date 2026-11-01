@@ -109,6 +109,7 @@ model Venue {
   auditEvents             AuditEvent[]
   products                Product[]
   units                   Unit[]
+  preparationCategories   PreparationCategory[]
   referenceValues         ReferenceValue[]
   productExports          ProductExportRequest[]
   productExportClosures   ProductExportClosureOperation[]

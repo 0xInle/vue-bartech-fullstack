@@ -13,13 +13,23 @@ export class GarnishReadService {
     private readonly search: ProductSearchService,
   ) {}
 
-  async list(context: CreateProductContext, query?: string, sort?: string) {
+  async list(
+    context: CreateProductContext,
+    query?: string,
+    workflowStatus?: string,
+    sort?: string,
+  ) {
     await this.assertViewAccess(context);
     const normalizedQuery = normalizeQuery(query);
     const matchingIds = normalizedQuery
       ? await this.search.findWorkspaceMatches(context, "GARNISH", normalizedQuery)
       : undefined;
-    return this.repository.list(context.venueId, matchingIds, normalizeSort(sort));
+    return this.repository.list(
+      context.venueId,
+      matchingIds,
+      normalizeWorkflowStatus(workflowStatus),
+      normalizeSort(sort),
+    );
   }
 
   async getById(context: CreateProductContext, garnishId: string) {
@@ -41,4 +51,8 @@ function normalizeQuery(query?: string): string | undefined {
 
 function normalizeSort(sort?: string): GarnishListSort {
   return sort === "updated" ? "updated" : "name";
+}
+
+function normalizeWorkflowStatus(value?: string): "ACTIVE" | "IN_DEVELOPMENT" | undefined {
+  return value === "ACTIVE" || value === "IN_DEVELOPMENT" ? value : undefined;
 }

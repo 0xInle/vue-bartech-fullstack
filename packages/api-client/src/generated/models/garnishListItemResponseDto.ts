@@ -5,10 +5,12 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { GarnishListItemResponseDtoWorkflowStatus } from './garnishListItemResponseDtoWorkflowStatus';
 
 export interface GarnishListItemResponseDto {
   id: string;
   name: string;
+  workflowStatus: GarnishListItemResponseDtoWorkflowStatus;
   /** Краткий состав через запятую */
   componentSummary: string;
   updatedAt: string;

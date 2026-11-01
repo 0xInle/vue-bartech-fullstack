@@ -6,10 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CocktailGarnishSelectionDto } from './cocktailGarnishSelectionDto';
+import type { CreateCocktailDtoWorkflowStatus } from './createCocktailDtoWorkflowStatus';
 import type { ProductComponentDto } from './productComponentDto';
 import type { ProductOutputDto } from './productOutputDto';
 
 export interface CreateCocktailDto {
+  workflowStatus?: CreateCocktailDtoWorkflowStatus;
   /** @maxLength 160 */
   name: string;
   /** @maxLength 10000 */

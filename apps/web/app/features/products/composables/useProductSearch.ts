@@ -14,7 +14,12 @@ import {
 export function useProductSearch(
   companyId: MaybeRefOrGetter<string>,
   venueId: MaybeRefOrGetter<string>,
-  options: { serviceSessionId?: string; enabled?: MaybeRefOrGetter<boolean> } = {},
+  options: {
+    serviceSessionId?: string;
+    enabled?: MaybeRefOrGetter<boolean>;
+    scope?: "COMPONENT" | "WORKSPACE";
+    types?: string;
+  } = {},
 ) {
   const identity = useIdentityFlow();
   const analytics = useProductAnalytics();
@@ -34,6 +39,8 @@ export function useProductSearch(
       company.value,
       venue.value,
       options.serviceSessionId ?? "client",
+      options.scope ?? "COMPONENT",
+      options.types ?? "",
       normalizedQuery.value,
     ]),
     enabled: computed(() => normalizedQuery.value.length >= 2 && toValue(options.enabled ?? true)),
@@ -42,7 +49,11 @@ export function useProductSearch(
       const response = await productsControllerSearch(
         company.value,
         venue.value,
-        { query: normalizedQuery.value, scope: "COMPONENT" },
+        {
+          query: normalizedQuery.value,
+          scope: options.scope ?? "COMPONENT",
+          types: options.types,
+        },
         { credentials: "include", signal },
         productApiFetch,
       );

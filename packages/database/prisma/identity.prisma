@@ -86,6 +86,7 @@ model User {
   productsCreated                   Product[]                       @relation("ProductCreatedBy")
   productsUpdated                   Product[]                       @relation("ProductUpdatedBy")
   unitsCreated                      Unit[]                          @relation("UnitCreatedBy")
+  preparationCategoriesCreated      PreparationCategory[]            @relation("PreparationCategoryCreatedBy")
   referenceValuesCreated            ReferenceValue[]                @relation("ReferenceValueCreatedBy")
   productExportRequests             ProductExportRequest[]
   productExportClosures             ProductExportClosureOperation[]

@@ -38,6 +38,14 @@ export class ProductsService {
     return this.repository.getReferences(context.venueId);
   }
 
+  async listLocalIngredients(context: CreateProductContext, query?: string) {
+    await this.assertPermission(context, "view_products");
+    return this.repository.listLocalIngredients(
+      context.venueId,
+      query?.trim().replace(/\s+/gu, " ") || undefined,
+    );
+  }
+
   async createLocalIngredient(context: CreateProductContext, input: LocalIngredientInput) {
     await this.assertPermission(context, "manage_products");
     const categoryCode = normalizeReferenceCode(input.categoryCode);
@@ -51,6 +59,11 @@ export class ProductsService {
         await this.repository.lockIngredientCategoryTree(transaction);
         if (!(await this.repository.findIngredientCategory(transaction, categoryCode))) {
           throw new BadRequestException("Выберите доступную категорию ингредиента");
+        }
+        if (
+          await this.repository.findIngredientByName(transaction, context.venueId, nameNormalized)
+        ) {
+          throw ingredientNameConflict();
         }
         const product = await this.repository.createLocalIngredient(transaction, {
           id: randomUUID(),
@@ -97,6 +110,65 @@ export class ProductsService {
           }
         : null,
     };
+  }
+
+  async updateLocalIngredientName(
+    context: CreateProductContext,
+    productId: string,
+    input: { name: string; categoryCode: string },
+  ) {
+    await this.assertPermission(context, "manage_products");
+    const name = input.name.trim().replace(/\s+/gu, " ");
+    const nameNormalized = normalizeProductName(name);
+    if (!nameNormalized) throw new BadRequestException("Укажите название ингредиента");
+    const categoryCode = normalizeReferenceCode(input.categoryCode);
+    try {
+      return await this.database().$transaction(async (transaction) => {
+        await this.assertPermission(context, "manage_products", transaction);
+        await this.repository.lockIngredientCategoryTree(transaction);
+        const current = await this.repository.findLocalIngredient(
+          transaction,
+          context.venueId,
+          productId,
+        );
+        if (!current?.ingredient) throw new NotFoundException("Локальный ингредиент не найден");
+        const category = await this.repository.findIngredientCategory(transaction, categoryCode);
+        if (!category && current.ingredient.categoryCode !== categoryCode) {
+          throw new BadRequestException("Выберите доступную категорию ингредиента");
+        }
+        const duplicate = await this.repository.findActiveLocalIngredientByName(
+          transaction,
+          context.venueId,
+          nameNormalized,
+          productId,
+        );
+        if (duplicate) throw new ConflictException("Ингредиент с таким названием уже существует");
+        const product = await this.repository.renameLocalIngredient(transaction, {
+          id: productId,
+          venueId: context.venueId,
+          userId: context.userId,
+          name,
+          nameNormalized,
+          searchNameNormalized: normalizeSearchText(name),
+          categoryCode,
+          searchAttributesNormalized: normalizeSearchText(
+            [
+              categoryCode,
+              current.ingredient.brand,
+              current.ingredient.strength?.toString(),
+              current.ingredient.country,
+              current.ingredient.externalIdentifier,
+            ]
+              .filter((value) => value !== undefined && value !== null && value !== "")
+              .join(" "),
+          ),
+        });
+        await this.recordProductEvent(transaction, context, "product.updated", product);
+        return product;
+      });
+    } catch (error) {
+      throw mapProductConflict(error);
+    }
   }
 
   async updateLocalIngredient(
@@ -152,7 +224,11 @@ export class ProductsService {
   async createPreparation(context: CreateProductContext, input: PreparationInput) {
     await this.assertPermission(context, "manage_products");
     const categoryCode = normalizeReferenceCode(input.categoryCode);
-    const category = await this.repository.findPreparationCategory(this.database(), categoryCode);
+    const category = await this.repository.findPreparationCategory(
+      this.database(),
+      context.venueId,
+      categoryCode,
+    );
     if (!category) throw new BadRequestException("Выберите доступную категорию заготовки");
     return this.createComposite(context, "PREPARATION", input, { categoryCode });
   }
@@ -174,6 +250,7 @@ export class ProductsService {
       ),
     };
     return this.createComposite(context, "COCKTAIL", input, {
+      workflowStatus: input.workflowStatus,
       cocktailDetails,
       garnishSelections: normalizeGarnishSelections(input),
       categoryIds: await this.validateCocktailCategories(context.venueId, input.categoryIds ?? []),
@@ -289,6 +366,7 @@ export class ProductsService {
           technology: input.technology.trim(),
           comment: normalizeOptional(input.comment),
           output: input.output,
+          workflowStatus: input.workflowStatus ?? cocktail.workflowStatus ?? "IN_DEVELOPMENT",
           cocktailDetails: {
             glassId: glass.id,
             iceId: ice.id,
@@ -365,6 +443,33 @@ export class ProductsService {
     }
   }
 
+  async createLocalPreparationCategory(context: CreateProductContext, input: { name: string }) {
+    await this.assertPermission(context, "manage_products");
+    const name = input.name.trim().replace(/\s+/gu, " ");
+    if (!normalizeReferenceCode(name)) {
+      throw new BadRequestException("Укажите название категории заготовки");
+    }
+    const existing = await this.repository.findPreparationCategoryByName(
+      this.database(),
+      context.venueId,
+      name,
+    );
+    if (existing) throw new ConflictException("Такая категория уже доступна этому заведению");
+    try {
+      return await this.repository.createLocalPreparationCategory(this.database(), {
+        venueId: context.venueId,
+        userId: context.userId,
+        code: `local-${randomUUID()}`,
+        name,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new ConflictException("Такая категория уже доступна этому заведению");
+      }
+      throw error;
+    }
+  }
+
   private async validateCocktailCategories(
     venueId: string,
     ids: string[],
@@ -392,6 +497,7 @@ export class ProductsService {
     input: ProductBaseInput,
     options: {
       categoryCode?: string;
+      workflowStatus?: "ACTIVE" | "IN_DEVELOPMENT";
       cocktailDetails?: {
         glassId?: string;
         iceId?: string;
@@ -487,6 +593,7 @@ export class ProductsService {
           output: input.output,
           categoryCode: options.categoryCode,
           cocktailDetails: options.cocktailDetails,
+          workflowStatus: options.workflowStatus ?? input.workflowStatus ?? "IN_DEVELOPMENT",
           components: input.components.map((component, position) => ({
             productId: component.productId,
             productVenueId: productsById.get(component.productId)!.venueId,
@@ -607,4 +714,11 @@ function mapProductConflict(error: unknown): unknown {
     return new ConflictException("Связанные данные продукции изменились. Обновите страницу");
   }
   return error;
+}
+
+function ingredientNameConflict(): ConflictException {
+  return new ConflictException({
+    code: "INGREDIENT_NAME_ALREADY_EXISTS",
+    message: "Ингредиент с таким названием уже существует",
+  });
 }

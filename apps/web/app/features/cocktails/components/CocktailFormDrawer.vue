@@ -1,10 +1,11 @@
 <template>
   <Drawer
     :visible="visible"
+    :dismissable="!saving"
     position="right"
     block-scroll
     class="cocktail-drawer drawer-size-md"
-    :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
+    :pt="{ content: { class: 'min-h-0' }, pcCloseButton: { root: { class: '!rounded-md' } } }"
     @update:visible="requestVisibilityChange"
   >
     <template #header="{ class: titleClass }">
@@ -13,7 +14,13 @@
       </span>
     </template>
     <LoadingIndicator v-if="referencesQuery.isLoading.value" class="py-8" />
-    <form v-else class="flex flex-col gap-5 pt-3" @submit.prevent="submit">
+    <form
+      v-else
+      id="cocktail-form"
+      class="flex flex-col gap-5 pt-3"
+      :inert="saving"
+      @submit.prevent="submit"
+    >
       <Message v-if="saveError" severity="error" :closable="false" :pt="compactMessagePt">
         {{ saveError }}
       </Message>
@@ -26,7 +33,7 @@
         Не удалось загрузить справочники. Обновите страницу и попробуйте ещё раз.
       </Message>
 
-      <div class="flex flex-col gap-2">
+      <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
         <FloatLabel variant="on">
           <InputText
             id="cocktail-name"
@@ -37,6 +44,19 @@
             @input="markDirty"
           />
           <label for="cocktail-name" class="text-xs">Название</label>
+        </FloatLabel>
+        <FloatLabel variant="on">
+          <Select
+            v-model="workflowStatus"
+            input-id="cocktail-workflow-status"
+            :options="workflowStatusOptions"
+            option-label="label"
+            option-value="value"
+            size="small"
+            fluid
+            @update:model-value="markDirty"
+          />
+          <label for="cocktail-workflow-status" class="text-xs">Статус</label>
         </FloatLabel>
       </div>
 
@@ -118,7 +138,7 @@
             rows="5"
             size="small"
             fluid
-            class="resize-none overflow-y-auto"
+            class="block resize-none overflow-y-auto"
             :invalid="Boolean(errors.technology)"
             @input="markDirty"
           />
@@ -169,8 +189,12 @@
               :invalid="Boolean(errors.outputUnitId)"
               @show="handleOutputUnitSelectShow"
               @update:model-value="markDirty"
-            />
-            <label for="cocktail-output-unit" class="text-xs">Единица</label>
+            >
+              <template #value="slotProps">
+                {{ unitLabel(outputUnitId) || slotProps.placeholder }}
+              </template>
+            </Select>
+            <label for="cocktail-output-unit" class="text-xs">Ед. изм.</label>
           </FloatLabel>
         </div>
       </div>
@@ -183,37 +207,42 @@
             rows="3"
             size="small"
             fluid
-            class="resize-none overflow-y-auto"
+            class="block resize-none overflow-y-auto"
             :invalid="Boolean(errors.comment)"
             @input="markDirty"
           />
           <label for="cocktail-comment" class="text-xs">Комментарий</label>
         </FloatLabel>
       </div>
-
-      <div class="flex justify-end gap-2">
+    </form>
+    <template v-if="!referencesQuery.isLoading.value" #footer>
+      <div class="flex w-full justify-end gap-2">
         <Button
           label="Отмена"
+          type="button"
           severity="secondary"
           variant="text"
           size="small"
+          :disabled="saving"
           @click="requestVisibilityChange(false)"
         />
         <Button
-          :label="mode === 'edit' ? 'Сохранить изменения' : 'Создать коктейль'"
+          label="Сохранить"
+          form="cocktail-form"
           type="submit"
           size="small"
           :loading="saving"
-          :disabled="referencesQuery.isLoading.value || referencesQuery.isError.value"
+          :disabled="saving || referencesQuery.isError.value"
         />
       </div>
-    </form>
+    </template>
   </Drawer>
   <Dialog
     v-model:visible="closeConfirmationVisible"
     modal
+    dismissable-mask
     header="Закрыть форму?"
-    class="w-full max-w-md"
+    class="dialog-size-sm"
     :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
   >
     <p class="text-sm text-color-secondary">Несохранённые изменения будут потеряны.</p>
@@ -248,6 +277,7 @@ import CocktailCategorySelect from "./CocktailCategorySelect.vue";
 import { useCocktails, type CocktailCardResponseDto } from "../composables/useCocktails";
 import type { ProductSearchItem } from "~/features/products/types";
 import { compactMessagePt } from "~/utils/primevue-message";
+import { compareCategoryNames } from "~/utils/category-order";
 import {
   keepPrimeVueOverlayOpenOnScroll,
   keepPrimeVueOverlayWithinDrawer,
@@ -256,6 +286,7 @@ import {
 
 type CocktailFormValues = {
   name: string;
+  workflowStatus: "ACTIVE" | "IN_DEVELOPMENT";
   glassId: string;
   iceId: string;
   preparationMethodId: string;
@@ -299,6 +330,7 @@ const {
 const { defineField, errors, handleSubmit, resetForm, setFieldError, values } =
   useForm<CocktailFormValues>({ initialValues: initialValues() });
 const [name] = defineField("name");
+const [workflowStatus] = defineField("workflowStatus");
 const [glassId] = defineField("glassId");
 const [iceId] = defineField("iceId");
 const [preparationMethodId] = defineField("preparationMethodId");
@@ -344,11 +376,18 @@ const preparationMethods = computed(() =>
 const cocktailCategories = computed(() =>
   references.value.referenceValues
     .filter((item) => item.type === "COCKTAIL_CATEGORY")
-    .sort((first, second) => first.label.localeCompare(second.label, "ru")),
+    .sort((first, second) => compareCategoryNames(first.label, second.label)),
 );
+const workflowStatusOptions = [
+  { label: "Активен", value: "ACTIVE" },
+  { label: "Проработка", value: "IN_DEVELOPMENT" },
+];
 const cocktailUnits = computed(() =>
   references.value.units.filter((unit) => unit.code !== "bar-spoon"),
 );
+function unitLabel(unitId: string): string {
+  return references.value.units.find((unit) => unit.id === unitId)?.label ?? "";
+}
 const defaultComponentUnitId = computed(
   () =>
     references.value.units.find((unit) => unit.label.trim().toLocaleLowerCase("ru") === "мл")?.id ??
@@ -378,6 +417,7 @@ watch(
 function initialValues(): CocktailFormValues {
   return {
     name: "",
+    workflowStatus: "IN_DEVELOPMENT",
     glassId: "",
     iceId: "",
     preparationMethodId: "",
@@ -422,6 +462,7 @@ function reset(): void {
 function valuesFromCocktail(cocktail: CocktailCardResponseDto): CocktailFormValues {
   return {
     name: cocktail.name,
+    workflowStatus: cocktail.workflowStatus,
     glassId: stringValue(cocktail.glassId),
     iceId: stringValue(cocktail.iceId),
     preparationMethodId: stringValue(cocktail.preparationMethodId),
@@ -465,6 +506,10 @@ function productFromCocktailComponent(
 }
 
 function requestVisibilityChange(visible: boolean): void {
+  if (saving.value) {
+    closeConfirmationVisible.value = false;
+    return;
+  }
   if (visible) {
     emit("update:visible", true);
     return;
@@ -479,11 +524,13 @@ function requestVisibilityChange(visible: boolean): void {
 
 function discardAndClose(): void {
   closeConfirmationVisible.value = false;
+  if (saving.value) return;
   reset();
   emit("update:visible", false);
 }
 
 const submit = handleSubmit(async (values) => {
+  if (saving.value) return;
   saveError.value = "";
   componentErrors.value = [];
   const parsed = cocktailSchema.safeParse({
@@ -501,6 +548,7 @@ const submit = handleSubmit(async (values) => {
     return;
   }
 
+  closeConfirmationVisible.value = false;
   saving.value = true;
   try {
     const input = toCreateDto(parsed.data);
@@ -554,6 +602,7 @@ const cocktailSchema = z
       .trim()
       .min(1, "Укажите название коктейля.")
       .max(160, "Название коктейля не должно превышать 160 символов."),
+    workflowStatus: z.enum(["ACTIVE", "IN_DEVELOPMENT"]),
     glassId: z.string().uuid("Выберите бокал."),
     iceId: z.string().uuid("Выберите лёд."),
     preparationMethodId: z.string().uuid("Выберите метод приготовления."),
@@ -643,6 +692,7 @@ function applyValidationErrors(issues: z.ZodIssue[]): void {
   componentErrors.value = rows;
   const fieldNames: Array<keyof CocktailFormValues> = [
     "name",
+    "workflowStatus",
     "glassId",
     "iceId",
     "preparationMethodId",
@@ -660,6 +710,7 @@ function toCreateDto(value: z.infer<typeof cocktailSchema>): CreateCocktailDto {
   const hasOutput = Boolean(value.outputAmount.trim() || value.outputUnitId);
   return {
     name: value.name.trim(),
+    workflowStatus: value.workflowStatus,
     technology: value.technology.trim(),
     comment: value.comment.trim() || undefined,
     components: value.components,

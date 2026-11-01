@@ -68,7 +68,7 @@
               />
               <Select
                 v-model="categoryCode"
-                :options="preparations.referencesQuery.data.value?.ingredientCategories ?? []"
+                :options="ingredientCategoryOptions"
                 option-label="name"
                 option-value="code"
                 required
@@ -222,6 +222,9 @@
   </main>
   <Drawer
     :visible="Boolean(selectedIngredient)"
+    :dismissable="!savingIngredient"
+    :show-close-icon="!savingIngredient"
+    :close-on-escape="!savingIngredient"
     position="right"
     class="drawer-size-lg"
     header="Редактировать локальный ингредиент"
@@ -300,6 +303,7 @@ import GarnishFormDrawer from "~/features/garnishes/components/GarnishFormDrawer
 import { usePreparations } from "~/features/preparations/composables/usePreparations";
 import PreparationFormDrawer from "~/features/preparations/components/PreparationFormDrawer.vue";
 import { useProductSearch } from "~/features/products/composables/useProductSearch";
+import { compareCategoryNames } from "~/utils/category-order";
 
 defineOptions({ name: "InternalServiceProductsScreen" });
 
@@ -353,11 +357,11 @@ type InternalIngredientCard = {
 };
 const selectedIngredient = ref<InternalIngredientCard | null>(null);
 const ingredientCategoryOptions = computed(() => {
-  const active = preparations.referencesQuery.data.value?.ingredientCategories ?? [];
+  const active = [...(preparations.referencesQuery.data.value?.ingredientCategories ?? [])];
   if (selectedIngredient.value && !selectedIngredient.value.ingredient.category.isActive) {
-    return [...active, selectedIngredient.value.ingredient.category];
+    active.push(selectedIngredient.value.ingredient.category);
   }
-  return active;
+  return active.sort((first, second) => compareCategoryNames(first.name, second.name));
 });
 const formType = ref<"preparation" | "garnish" | "cocktail" | "">("");
 const formMode = ref<"create" | "edit">("create");

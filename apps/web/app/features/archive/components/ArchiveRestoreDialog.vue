@@ -2,10 +2,12 @@
   <Dialog
     v-model:visible="visible"
     modal
+    :dismissable-mask="!busy"
     header="Восстановить продукт"
-    class="w-full max-w-2xl"
+    class="dialog-size-lg"
     :closable="!busy"
     :close-on-escape="!busy"
+    :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
   >
     <Message v-if="errorMessage" severity="error" :closable="false" class="mb-4">{{
       errorMessage

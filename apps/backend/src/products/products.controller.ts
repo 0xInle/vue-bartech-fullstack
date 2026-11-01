@@ -34,7 +34,9 @@ import {
   CreateGarnishDto,
   UpdateGarnishDto,
   CreateLocalIngredientDto,
+  UpdateLocalIngredientNameDto,
   CreateLocalReferenceValueDto,
+  CreateLocalPreparationCategoryDto,
   CreateLocalUnitDto,
   CreatePreparationDto,
   UpdatePreparationDto,
@@ -46,6 +48,7 @@ import {
   ProductSearchPageResponseDto,
   ProductCreatedDto,
   ProductReferencesResponseDto,
+  PreparationCategoryResponseDto,
   ReferenceValueResponseDto,
   CocktailCardResponseDto,
   CocktailGarnishOptionResponseDto,
@@ -57,6 +60,8 @@ import {
   GarnishCardResponseDto,
   GarnishListItemResponseDto,
   GarnishListQueryDto,
+  LocalIngredientListItemResponseDto,
+  LocalIngredientListQueryDto,
 } from "./products.dto.js";
 import {
   ArchiveCardDto,
@@ -67,6 +72,10 @@ import {
   ArchiveRestoreDto,
   ArchiveRestorePlanDto,
   ArchiveRestoreResultDto,
+  PermanentDeleteDto,
+  PermanentDeleteConflictDto,
+  PermanentDeletePlanDto,
+  PermanentDeleteResultDto,
 } from "./archive.dto.js";
 
 @ApiTags("products")
@@ -88,6 +97,27 @@ export class ProductsController {
     private readonly archiveMutations: ArchiveMutationService,
   ) {}
 
+  @Get("local-ingredients")
+  @RequirePermissions("view_products")
+  @ApiOperation({ summary: "Получить активные локальные ингредиенты текущего заведения" })
+  @ApiOkResponse({ type: LocalIngredientListItemResponseDto, isArray: true })
+  listLocalIngredients(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Query() query: LocalIngredientListQueryDto,
+  ) {
+    return this.products
+      .listLocalIngredients(context(user, companyId, venueId), query.query)
+      .then((items) =>
+        items.map(({ ingredient, ...item }) => ({
+          ...item,
+          category: ingredient?.category.name ?? "",
+          categoryCode: ingredient?.categoryCode ?? "",
+        })),
+      );
+  }
+
   @Get("archive")
   @RequirePermissions("view_archive")
   @ApiOperation({ summary: "Получить архив продукции текущего заведения" })
@@ -99,19 +129,6 @@ export class ProductsController {
     @Query() query: ArchiveListQueryDto,
   ) {
     return this.archiveReads.list(context(user, companyId, venueId), query.query, query.type);
-  }
-
-  @Get("archive/ingredient-options")
-  @RequirePermissions("manage_product_archive")
-  @ApiOperation({ summary: "Найти активные локальные ингредиенты для архивирования" })
-  @ApiOkResponse({ type: ArchiveProductSummaryDto, isArray: true })
-  listArchiveIngredientOptions(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param("companyId") companyId: string,
-    @Param("venueId") venueId: string,
-    @Query() query: ArchiveListQueryDto,
-  ) {
-    return this.archiveMutations.ingredientOptions(context(user, companyId, venueId), query.query);
   }
 
   @Get("archive/:productId")
@@ -130,9 +147,12 @@ export class ProductsController {
 
   @Post(":productId/archive")
   @RequirePermissions("manage_product_archive")
-  @ApiOperation({ summary: "Архивировать локальную продукцию без активных зависимостей" })
+  @ApiOperation({
+    summary: "Архивировать заготовку, гарнир или коктейль без активных зависимостей",
+  })
   @ApiParam({ name: "productId", format: "uuid" })
   @ApiCreatedResponse({ type: ArchiveProductSummaryDto })
+  @ApiBadRequestResponse({ description: "Локальные ингредиенты нельзя архивировать" })
   @ApiConflictResponse({ type: ArchiveConflictDto })
   archiveProduct(
     @CurrentUser() user: AuthenticatedUser,
@@ -155,6 +175,42 @@ export class ProductsController {
     @Param("productId") productId: string,
   ) {
     return this.archiveMutations.restorePlan(context(user, companyId, venueId), productId);
+  }
+
+  @Get(":productId/permanent-delete-plan")
+  @RequirePermissions("delete_products_permanently")
+  @ApiOperation({
+    summary: "Проверить использования локального продукта перед удалением",
+  })
+  @ApiParam({ name: "productId", format: "uuid" })
+  @ApiOkResponse({ type: PermanentDeletePlanDto })
+  permanentDeletePlan(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Param("productId") productId: string,
+  ) {
+    return this.archiveMutations.permanentDeletePlan(context(user, companyId, venueId), productId);
+  }
+
+  @Post(":productId/permanent-delete")
+  @RequirePermissions("delete_products_permanently")
+  @ApiOperation({ summary: "Заменить использования либо удалить локальный продукт или цепочку" })
+  @ApiParam({ name: "productId", format: "uuid" })
+  @ApiOkResponse({ type: PermanentDeleteResultDto })
+  @ApiConflictResponse({ type: PermanentDeleteConflictDto })
+  permanentDeleteProduct(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Param("productId") productId: string,
+    @Body() body: PermanentDeleteDto,
+  ) {
+    return this.archiveMutations.deletePermanently(
+      context(user, companyId, venueId),
+      productId,
+      body,
+    );
   }
 
   @Post("archive/:productId/restore")
@@ -183,7 +239,12 @@ export class ProductsController {
     @Param("venueId") venueId: string,
     @Query() query: GarnishListQueryDto,
   ) {
-    return this.garnishes.list(context(user, companyId, venueId), query.query, query.sort);
+    return this.garnishes.list(
+      context(user, companyId, venueId),
+      query.query,
+      query.workflowStatus === "ALL" ? undefined : query.workflowStatus,
+      query.sort,
+    );
   }
 
   @Get("garnishes/:garnishId")
@@ -232,6 +293,7 @@ export class ProductsController {
       context(user, companyId, venueId),
       query.query,
       query.categoryCode,
+      query.workflowStatus === "ALL" ? undefined : query.workflowStatus,
       query.sort,
     );
   }
@@ -270,7 +332,7 @@ export class ProductsController {
 
   @Get("cocktails")
   @RequirePermissions("view_products")
-  @ApiOperation({ summary: "Получить активные коктейли текущего заведения" })
+  @ApiOperation({ summary: "Получить неархивные коктейли текущего заведения" })
   @ApiOkResponse({ type: CocktailListItemResponseDto, isArray: true })
   listCocktails(
     @CurrentUser() user: AuthenticatedUser,
@@ -278,7 +340,12 @@ export class ProductsController {
     @Param("venueId") venueId: string,
     @Query() query: CocktailListQueryDto,
   ) {
-    return this.cocktails.list(context(user, companyId, venueId), query.query, query.categoryId);
+    return this.cocktails.list(
+      context(user, companyId, venueId),
+      query.query,
+      query.categoryId,
+      query.workflowStatus === "ALL" ? undefined : query.workflowStatus,
+    );
   }
 
   @Get("cocktails/garnishes")
@@ -364,6 +431,27 @@ export class ProductsController {
     @Body() body: CreateLocalIngredientDto,
   ) {
     return this.products.createLocalIngredient(context(user, companyId, venueId), body);
+  }
+
+  @Patch("local-ingredients/:productId")
+  @RequirePermissions("manage_products")
+  @ApiOperation({ summary: "Изменить название и категорию временного локального ингредиента" })
+  @ApiOkResponse({ type: ProductCreatedDto })
+  @ApiBadRequestResponse({ description: "Название или категория ингредиента не прошли проверку" })
+  @ApiConflictResponse({ description: "Название ингредиента уже используется" })
+  @ApiForbiddenResponse({ description: "Нет разрешения управлять продукцией" })
+  updateLocalIngredientName(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Param("productId") productId: string,
+    @Body() body: UpdateLocalIngredientNameDto,
+  ) {
+    return this.products.updateLocalIngredientName(
+      context(user, companyId, venueId),
+      productId,
+      body,
+    );
   }
 
   @Post("preparations")
@@ -454,6 +542,22 @@ export class ProductsController {
     @Body() body: CreateLocalReferenceValueDto,
   ) {
     return this.products.createLocalReferenceValue(context(user, companyId, venueId), body);
+  }
+
+  @Post("preparation-categories")
+  @RequirePermissions("manage_products")
+  @ApiOperation({ summary: "Добавить локальную категорию заготовки" })
+  @ApiCreatedResponse({ type: PreparationCategoryResponseDto })
+  @ApiBadRequestResponse({ description: "Название категории некорректно" })
+  @ApiConflictResponse({ description: "Такая категория уже доступна этому заведению" })
+  @ApiForbiddenResponse({ description: "Нет разрешения управлять продукцией" })
+  createPreparationCategory(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Body() body: CreateLocalPreparationCategoryDto,
+  ) {
+    return this.products.createLocalPreparationCategory(context(user, companyId, venueId), body);
   }
 }
 

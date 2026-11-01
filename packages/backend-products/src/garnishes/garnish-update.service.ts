@@ -71,11 +71,13 @@ export class GarnishUpdateService {
           };
         }
 
-        const affectedProducts = await this.repository.findActiveDependents(
-          transaction,
-          context.venueId,
-          garnishId,
-        );
+        const recipeChanged = !sameGarnish(current, {
+          ...normalized,
+          workflowStatus: current.workflowStatus ?? "ACTIVE",
+        });
+        const affectedProducts = recipeChanged
+          ? await this.repository.findActiveDependents(transaction, context.venueId, garnishId)
+          : [];
         if (affectedProducts.length) {
           const confirmationFingerprint = garnishImpactFingerprint(
             context.venueId,
@@ -100,6 +102,7 @@ export class GarnishUpdateService {
           ...normalized,
           searchNameNormalized: normalizeSearchText(normalized.name),
           searchTechnologyNormalized: normalizeSearchText(normalized.technology),
+          workflowStatus: normalized.workflowStatus,
           components: normalized.components.map((component, position) => ({
             ...component,
             position,
@@ -178,6 +181,7 @@ function normalizeInput(input: ProductBaseInput) {
   return {
     name,
     nameNormalized,
+    workflowStatus: input.workflowStatus,
     technology: input.technology.trim(),
     comment: input.comment?.trim() || undefined,
     output: input.output ? { amount: input.output.amount, unitId: input.output.unitId } : undefined,
@@ -195,6 +199,7 @@ function sameGarnish(
 ): boolean {
   return (
     current.name === next.name &&
+    (next.workflowStatus ?? current.workflowStatus) === current.workflowStatus &&
     current.technology?.trim() === next.technology &&
     (current.comment?.trim() || undefined) === next.comment &&
     (current.outputAmount ? Number(current.outputAmount) : undefined) === next.output?.amount &&

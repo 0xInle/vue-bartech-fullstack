@@ -9,6 +9,7 @@ import type { CocktailCardComponentResponseDto } from './cocktailCardComponentRe
 import type { CocktailCardOutputResponseDto } from './cocktailCardOutputResponseDto';
 import type { CocktailCardResponseDtoStatus } from './cocktailCardResponseDtoStatus';
 import type { CocktailCardResponseDtoType } from './cocktailCardResponseDtoType';
+import type { CocktailCardResponseDtoWorkflowStatus } from './cocktailCardResponseDtoWorkflowStatus';
 import type { CocktailCategoryResponseDto } from './cocktailCategoryResponseDto';
 import type { CocktailGarnishOptionResponseDto } from './cocktailGarnishOptionResponseDto';
 
@@ -18,6 +19,7 @@ export interface CocktailCardResponseDto {
   categories: CocktailCategoryResponseDto[];
   type: CocktailCardResponseDtoType;
   status: CocktailCardResponseDtoStatus;
+  workflowStatus: CocktailCardResponseDtoWorkflowStatus;
   components: CocktailCardComponentResponseDto[];
   garnishes: CocktailGarnishOptionResponseDto[];
   technology: string;

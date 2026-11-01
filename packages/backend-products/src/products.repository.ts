@@ -33,9 +33,16 @@ export class ProductsRepository {
           },
         }),
         this.database.preparationCategory.findMany({
-          where: { isActive: true },
-          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-          select: { id: true, code: true, name: true, sortOrder: true, isActive: true },
+          where: { isActive: true, OR: [{ venueId: null }, { venueId }] },
+          orderBy: [{ venueId: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            venueId: true,
+            sortOrder: true,
+            isActive: true,
+          },
         }),
         this.database.unit.findMany({
           where: { OR: [{ venueId: null }, { venueId }] },
@@ -61,6 +68,31 @@ export class ProductsRepository {
     return { ingredientCategories, preparationCategories, units, referenceValues };
   }
 
+  listLocalIngredients(venueId: string, query?: string) {
+    return this.database.product.findMany({
+      where: {
+        venueId,
+        type: "INGREDIENT",
+        status: "ACTIVE",
+        ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
+      },
+      orderBy: [{ nameNormalized: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+        type: true,
+        name: true,
+        status: true,
+        updatedAt: true,
+        ingredient: {
+          select: {
+            categoryCode: true,
+            category: { select: { name: true, isActive: true } },
+          },
+        },
+      },
+    });
+  }
+
   findIngredientCategory(database: ProductDatabase, code: string) {
     return database.ingredientCategory.findFirst({ where: { code, isActive: true } });
   }
@@ -75,8 +107,35 @@ export class ProductsRepository {
     `;
   }
 
-  findPreparationCategory(database: ProductDatabase, code: string) {
-    return database.preparationCategory.findFirst({ where: { code, isActive: true } });
+  findPreparationCategory(database: ProductDatabase, venueId: string, code: string) {
+    return database.preparationCategory.findFirst({
+      where: { code, isActive: true, OR: [{ venueId: null }, { venueId }] },
+    });
+  }
+
+  findPreparationCategoryByName(database: ProductDatabase, venueId: string, name: string) {
+    return database.preparationCategory.findFirst({
+      where: {
+        name: { equals: name, mode: "insensitive" },
+        OR: [{ venueId: null }, { venueId }],
+      },
+      select: { code: true },
+    });
+  }
+
+  createLocalPreparationCategory(
+    database: ProductDatabase,
+    input: { venueId: string; userId: string | null; code: string; name: string },
+  ) {
+    return database.preparationCategory.create({
+      data: {
+        venueId: input.venueId,
+        createdByUserId: input.userId,
+        code: input.code,
+        name: input.name,
+      },
+      select: { id: true, code: true, name: true, venueId: true, sortOrder: true, isActive: true },
+    });
   }
 
   findAllowedProducts(database: ProductDatabase, venueId: string, ids: string[]) {
@@ -93,7 +152,7 @@ export class ProductsRepository {
   findActiveCocktail(database: ProductDatabase, venueId: string, cocktailId: string) {
     return database.product.findFirst({
       where: { id: cocktailId, venueId, type: "COCKTAIL", status: "ACTIVE" },
-      select: { id: true, venueId: true },
+      select: { id: true, venueId: true, workflowStatus: true },
     });
   }
 
@@ -216,7 +275,12 @@ export class ProductsRepository {
       comment?: string;
       output?: { amount: number; unitId: string };
       categoryCode?: string;
-      cocktailDetails?: { glassId?: string; iceId?: string; preparationMethodId?: string };
+      workflowStatus?: "ACTIVE" | "IN_DEVELOPMENT";
+      cocktailDetails?: {
+        glassId?: string;
+        iceId?: string;
+        preparationMethodId?: string;
+      };
       components: Array<{
         productId: string;
         productVenueId: string | null;
@@ -233,6 +297,7 @@ export class ProductsRepository {
         id: input.id,
         type: input.type,
         venueId: input.venueId,
+        workflowStatus: input.workflowStatus ?? "IN_DEVELOPMENT",
         name: input.name,
         nameNormalized: input.nameNormalized,
         searchNameNormalized: input.searchNameNormalized,
@@ -317,7 +382,12 @@ export class ProductsRepository {
       technology: string;
       comment?: string;
       output?: { amount: number; unitId: string };
-      cocktailDetails: { glassId: string; iceId: string; preparationMethodId: string };
+      workflowStatus: "ACTIVE" | "IN_DEVELOPMENT";
+      cocktailDetails: {
+        glassId: string;
+        iceId: string;
+        preparationMethodId: string;
+      };
       components: Array<{
         productId: string;
         productVenueId: string | null;
@@ -341,6 +411,7 @@ export class ProductsRepository {
         outputAmount: input.output?.amount,
         outputUnitId: input.output?.unitId,
         updatedByUserId: input.userId,
+        workflowStatus: input.workflowStatus,
         cocktail: { update: input.cocktailDetails },
         parentComponents: {
           deleteMany: { parentProductId: input.id, parentVenueId: input.venueId },
@@ -462,6 +533,66 @@ export class ProductsRepository {
           },
         },
       },
+    });
+  }
+
+  findActiveLocalIngredientByName(
+    database: ProductDatabase,
+    venueId: string,
+    nameNormalized: string,
+    excludeProductId: string,
+  ) {
+    return database.product.findFirst({
+      where: {
+        venueId,
+        type: "INGREDIENT",
+        status: "ACTIVE",
+        nameNormalized,
+        id: { not: excludeProductId },
+      },
+      select: { id: true },
+    });
+  }
+
+  findIngredientByName(database: ProductDatabase, venueId: string, nameNormalized: string) {
+    return database.product.findFirst({
+      where: {
+        type: "INGREDIENT",
+        nameNormalized,
+        OR: [{ venueId }, { venueId: null }],
+      },
+      select: { id: true },
+    });
+  }
+
+  renameLocalIngredient(
+    transaction: Prisma.TransactionClient,
+    input: {
+      id: string;
+      venueId: string;
+      userId: string | null;
+      name: string;
+      nameNormalized: string;
+      searchNameNormalized: string;
+      categoryCode: string;
+      searchAttributesNormalized: string;
+    },
+  ) {
+    return transaction.product.update({
+      where: { id: input.id, venueId: input.venueId, type: "INGREDIENT", status: "ACTIVE" },
+      data: {
+        name: input.name,
+        nameNormalized: input.nameNormalized,
+        searchNameNormalized: input.searchNameNormalized,
+        updatedByUserId: input.userId,
+        ingredient: {
+          update: {
+            categoryCode: input.categoryCode,
+            searchAttributesNormalized: input.searchAttributesNormalized,
+          },
+        },
+      },
+      select: { id: true, type: true, name: true, venueId: true },
     });
   }
 

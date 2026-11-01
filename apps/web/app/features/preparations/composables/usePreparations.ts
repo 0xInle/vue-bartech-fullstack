@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import {
   productsControllerCreateIngredient,
   productsControllerCreatePreparation,
+  productsControllerCreatePreparationCategory,
   productsControllerGetPreparation,
   productsControllerGetReferences,
   productsControllerListPreparations,
@@ -11,6 +12,7 @@ import {
 import type {
   ProductsControllerCreateIngredientMutationBody as CreateLocalIngredientDto,
   ProductsControllerCreatePreparationMutationBody as CreatePreparationDto,
+  ProductsControllerCreatePreparationCategoryMutationBody as CreateLocalPreparationCategoryDto,
   ProductsControllerUpdatePreparationMutationBody as UpdatePreparationDto,
   productsControllerCreatePreparationResponse201,
   productsControllerGetPreparationResponse200,
@@ -25,6 +27,8 @@ import { scopedProductApiFetch } from "~/features/products/composables/scopedPro
 import { useProductAnalytics } from "~/features/analytics/composables/useProductAnalytics";
 
 export type PreparationCardResponseDto = productsControllerGetPreparationResponse200["data"];
+export type PreparationCategoryResponseDto =
+  productsControllerGetReferencesResponse200["data"]["preparationCategories"][number];
 type PreparationListItemResponseDto = productsControllerListPreparationsResponse200["data"][number];
 type ProductCreatedDto = productsControllerCreatePreparationResponse201["data"];
 type ProductReferencesResponseDto = productsControllerGetReferencesResponse200["data"];
@@ -37,7 +41,7 @@ export type PreparationUpdateResult =
 export function usePreparations(
   companyId: MaybeRefOrGetter<string>,
   venueId: MaybeRefOrGetter<string>,
-  options: { serviceSessionId?: string; enabled?: MaybeRefOrGetter<boolean> } = {},
+  options: { list?: boolean; serviceSessionId?: string; enabled?: MaybeRefOrGetter<boolean> } = {},
 ) {
   const route = useRoute();
   const router = useRouter();
@@ -54,6 +58,9 @@ export function usePreparations(
     : identity.apiFetch;
   const searchText = ref(readQuery(route.query.query));
   const categoryCode = ref(readQuery(route.query.category));
+  const workflowStatus = ref<"ALL" | "ACTIVE" | "IN_DEVELOPMENT">(
+    readWorkflowStatus(route.query.status),
+  );
   const hasWorkspace = computed(() =>
     Boolean(company.value && venue.value && toValue(options.enabled ?? true)),
   );
@@ -65,6 +72,7 @@ export function usePreparations(
     options.serviceSessionId ?? "client",
     normalizedSearch.value,
     categoryCode.value,
+    workflowStatus.value,
   ]);
   const referencesKey = computed(() => [
     "product-references",
@@ -73,28 +81,32 @@ export function usePreparations(
     options.serviceSessionId ?? "client",
   ]);
 
-  watch(
-    () => route.query,
-    (query) => {
-      searchText.value = readQuery(query.query);
-      categoryCode.value = readQuery(query.category);
-    },
-  );
-  watch(
-    [searchText, categoryCode],
-    () => {
-      const next = { ...route.query } as Record<string, string | undefined>;
-      assignQuery(next, "query", normalizedSearch.value);
-      assignQuery(next, "category", categoryCode.value);
-      delete next.sort;
-      if (!sameQuery(route.query, next)) void router.replace({ query: next });
-    },
-    { immediate: true },
-  );
+  if (options.list !== false) {
+    watch(
+      () => route.query,
+      (query) => {
+        searchText.value = readQuery(query.query);
+        categoryCode.value = readQuery(query.category);
+        workflowStatus.value = readWorkflowStatus(query.status);
+      },
+    );
+    watch(
+      [searchText, categoryCode, workflowStatus],
+      () => {
+        const next = { ...route.query } as Record<string, string | undefined>;
+        assignQuery(next, "query", normalizedSearch.value);
+        assignQuery(next, "category", categoryCode.value);
+        assignQuery(next, "status", workflowStatus.value === "ALL" ? null : workflowStatus.value);
+        delete next.sort;
+        if (!sameQuery(route.query, next)) void router.replace({ query: next });
+      },
+      { immediate: true },
+    );
+  }
 
   const listQuery = useQuery({
     queryKey: listKey,
-    enabled: hasWorkspace,
+    enabled: computed(() => hasWorkspace.value && options.list !== false),
     retry: false,
     queryFn: async ({ signal }): Promise<PreparationListItemResponseDto[]> =>
       requestApi(
@@ -105,6 +117,7 @@ export function usePreparations(
             {
               query: normalizedSearch.value || undefined,
               categoryCode: categoryCode.value || undefined,
+              workflowStatus: workflowStatus.value,
             },
             { credentials: "include", signal },
             productApiFetch,
@@ -242,6 +255,24 @@ export function usePreparations(
       void analytics.track({ eventType: "PRODUCT_CREATE_COMPLETED", productType: "INGREDIENT" });
     return created;
   }
+  async function createLocalPreparationCategory(
+    input: CreateLocalPreparationCategoryDto,
+  ): Promise<PreparationCategoryResponseDto> {
+    await identity.refreshCsrf();
+    const created = await requestApi<PreparationCategoryResponseDto>(
+      Promise.resolve(
+        await productsControllerCreatePreparationCategory(
+          company.value,
+          venue.value,
+          input,
+          { credentials: "include", headers: { "x-csrf-token": identity.csrfToken.value } },
+          productApiFetch,
+        ),
+      ),
+    );
+    await queryClient.invalidateQueries({ queryKey: referencesKey.value });
+    return created;
+  }
   function rememberScroll(): void {
     if (import.meta.client)
       sessionStorage.setItem(scrollKey(company.value, venue.value), String(window.scrollY));
@@ -251,9 +282,13 @@ export function usePreparations(
     const value = Number(sessionStorage.getItem(scrollKey(company.value, venue.value)));
     if (Number.isFinite(value) && value > 0) window.scrollTo({ top: value });
   }
+  function setWorkflowStatus(value: unknown): void {
+    workflowStatus.value = readWorkflowStatus(value);
+  }
   return {
     categoryCode,
     createLocalIngredient,
+    createLocalPreparationCategory,
     createPreparation,
     listQuery,
     preparationQuery,
@@ -261,6 +296,8 @@ export function usePreparations(
     rememberScroll,
     restoreScroll,
     searchText,
+    workflowStatus,
+    setWorkflowStatus,
     updatePreparation,
   };
 }
@@ -284,7 +321,16 @@ function isPreparationImpact(value: unknown): value is PreparationImpact {
 function readQuery(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
-function assignQuery(query: Record<string, string | undefined>, key: string, value: string): void {
+
+function readWorkflowStatus(value: unknown): "ALL" | "ACTIVE" | "IN_DEVELOPMENT" {
+  return value === "ACTIVE" || value === "IN_DEVELOPMENT" ? value : "ALL";
+}
+
+function assignQuery(
+  query: Record<string, string | undefined>,
+  key: string,
+  value: string | null,
+): void {
   if (value) query[key] = value;
   else delete query[key];
 }

@@ -5,10 +5,12 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { PreparationListItemResponseDtoWorkflowStatus } from './preparationListItemResponseDtoWorkflowStatus';
 
 export interface PreparationListItemResponseDto {
   id: string;
   name: string;
+  workflowStatus: PreparationListItemResponseDtoWorkflowStatus;
   categoryName: string;
   /** Краткий состав через запятую */
   componentSummary: string;

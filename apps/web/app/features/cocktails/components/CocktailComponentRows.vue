@@ -18,15 +18,13 @@
             @update:model-value="selectProduct(index, $event)"
             @hide="activeLocalIngredientRow = null"
           >
-            <template
-              #footer="{ query, loading, hasResults, hasError, hasLoaded, hasExactIngredient }"
-            >
+            <template #footer="{ query, loading, hasResults, hasError, hasLoaded }">
               <div
                 v-if="query.trim().length >= 2"
                 class="box-border flex w-full min-w-0 max-w-full flex-col items-center gap-2 p-2"
               >
                 <span v-if="loading" class="text-xs text-color-secondary">Ищем ингредиент…</span>
-                <template v-else-if="hasLoaded && !hasError && !hasExactIngredient">
+                <template v-else-if="hasLoaded && !hasError">
                   <span v-if="!hasResults" class="text-xs text-color-secondary"
                     >Ингредиент не найден</span
                   >
@@ -71,7 +69,7 @@
             :invalid="errors?.[index]?.amount ?? false"
             @update:model-value="updateAmount(index, $event ?? '')"
           />
-          <label :for="`cocktail-component-${row.key}-amount`" class="text-xs">Объём</label>
+          <label :for="`cocktail-component-${row.key}-amount`" class="text-xs">Кол-во</label>
         </FloatLabel>
         <FloatLabel variant="on">
           <Select
@@ -93,7 +91,7 @@
               {{ unitLabel(row.unitId || defaultUnitId) || slotProps.placeholder }}
             </template>
           </Select>
-          <label :for="`cocktail-component-${row.key}-unit`" class="text-xs">Единица</label>
+          <label :for="`cocktail-component-${row.key}-unit`" class="text-xs">Ед. изм.</label>
         </FloatLabel>
         <Button
           v-if="modelValue.length > 1"
@@ -167,7 +165,9 @@ const unitSelectRefs = new Map<number, PrimeVueOverlayRef>();
 const defaultUnitId = computed(
   () => props.units.find((unit) => unit.label.trim().toLocaleLowerCase("ru") === "мл")?.id ?? "",
 );
-const availableUnits = computed(() => props.units.filter((unit) => unit.code !== "spray"));
+const availableUnits = computed(() =>
+  props.units.filter((unit) => unit.code !== "spray" && unit.code !== "bar-spoon"),
+);
 
 function setUnitSelectRef(index: number, instance: PrimeVueOverlayRef | null): void {
   if (instance) unitSelectRefs.set(index, instance);

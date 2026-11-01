@@ -34,6 +34,7 @@ import type {
   CreateCocktailDto,
   CreateGarnishDto,
   CreateLocalIngredientDto,
+  CreateLocalPreparationCategoryDto,
   CreateLocalReferenceValueDto,
   CreatePreparationDto,
   InternalServiceProductsControllerCocktailGarnishesParams,
@@ -42,6 +43,7 @@ import type {
   InternalServiceProductsControllerPreparationsListParams,
   InternalServiceProductsControllerSearchParams,
   LocalIngredientCardResponseDto,
+  PreparationCategoryResponseDto,
   ProductCreatedDto,
   UpdateCocktailDto,
   UpdateGarnishDto,
@@ -1893,6 +1895,111 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
         TContext
       > => {
       return useMutation(getInternalServiceProductsControllerCreateReferenceValueMutationOptions(options), queryClient);
+    }
+    export type internalServiceProductsControllerCreatePreparationCategoryResponse201 = {
+  data: PreparationCategoryResponseDto
+  status: 201
+}
+
+export type internalServiceProductsControllerCreatePreparationCategoryResponseSuccess = (internalServiceProductsControllerCreatePreparationCategoryResponse201) & {
+  headers: Headers;
+};
+;
+
+export type internalServiceProductsControllerCreatePreparationCategoryResponse = (internalServiceProductsControllerCreatePreparationCategoryResponseSuccess)
+
+export const getInternalServiceProductsControllerCreatePreparationCategoryUrl = (serviceSessionId: unknown,
+    companyId: unknown,
+    venueId: unknown,) => {
+
+
+
+
+  return `/api/v1/internal/service-sessions/${serviceSessionId}/companies/${companyId}/venues/${venueId}/products/preparation-categories`
+}
+
+export const internalServiceProductsControllerCreatePreparationCategory = async (serviceSessionId: unknown,
+    companyId: unknown,
+    venueId: unknown,
+    createLocalPreparationCategoryDto: CreateLocalPreparationCategoryDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<internalServiceProductsControllerCreatePreparationCategoryResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getInternalServiceProductsControllerCreatePreparationCategoryUrl(serviceSessionId,companyId,venueId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createLocalPreparationCategoryDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: internalServiceProductsControllerCreatePreparationCategoryResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as internalServiceProductsControllerCreatePreparationCategoryResponse
+}
+
+
+
+
+
+export const getInternalServiceProductsControllerCreatePreparationCategoryMutationKey = () => ['internalServiceProductsControllerCreatePreparationCategory'] as const;
+
+export const getInternalServiceProductsControllerCreatePreparationCategoryMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalServiceProductsControllerCreatePreparationCategory>>, TError,InternalServiceProductsControllerCreatePreparationCategoryMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof internalServiceProductsControllerCreatePreparationCategory>>, TError,InternalServiceProductsControllerCreatePreparationCategoryMutationVariables, TContext> => {
+
+const mutationKey = getInternalServiceProductsControllerCreatePreparationCategoryMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof internalServiceProductsControllerCreatePreparationCategory>>, InternalServiceProductsControllerCreatePreparationCategoryMutationVariables> = (props) => {
+          const {serviceSessionId,companyId,venueId,data} = props ?? {};
+
+          return  internalServiceProductsControllerCreatePreparationCategory(serviceSessionId,companyId,venueId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InternalServiceProductsControllerCreatePreparationCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof internalServiceProductsControllerCreatePreparationCategory>>>
+    export type InternalServiceProductsControllerCreatePreparationCategoryMutationBody = CreateLocalPreparationCategoryDto
+    export type InternalServiceProductsControllerCreatePreparationCategoryMutationError = unknown
+    export type InternalServiceProductsControllerCreatePreparationCategoryMutationVariables = {serviceSessionId: unknown;companyId: unknown;venueId: unknown;data: CreateLocalPreparationCategoryDto}
+
+    export const useInternalServiceProductsControllerCreatePreparationCategory = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalServiceProductsControllerCreatePreparationCategory>>, TError,InternalServiceProductsControllerCreatePreparationCategoryMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof internalServiceProductsControllerCreatePreparationCategory>>,
+        TError,
+        InternalServiceProductsControllerCreatePreparationCategoryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getInternalServiceProductsControllerCreatePreparationCategoryMutationOptions(options), queryClient);
     }
     export type internalServiceProductsControllerIngredientResponse200 = {
   data: LocalIngredientCardResponseDto

@@ -212,6 +212,12 @@ export class ExportRendererService {
     document.moveDown(0.7);
     drawText(document, productTypeLabel(String(product.type)), 11, false);
     const details = product as ProductRecord;
+    if (details.cocktail)
+      drawField(
+        document,
+        "Статус",
+        details.cocktail.workflowStatus === "IN_DEVELOPMENT" ? "Проработка" : "Активен",
+      );
     if (details.preparation?.category)
       drawField(document, "Категория", details.preparation.category);
     if (details.technology) drawField(document, "Технология приготовления", details.technology);
@@ -266,7 +272,12 @@ type ProductRecord = {
   outputAmount: string | null;
   outputUnitId: string | null;
   preparation: { category: string } | null;
-  cocktail: { glass: string | null; ice: string | null; preparationMethod: string | null } | null;
+  cocktail: {
+    glass: string | null;
+    ice: string | null;
+    preparationMethod: string | null;
+    workflowStatus: "ACTIVE" | "IN_DEVELOPMENT";
+  } | null;
   components: Array<{ amount: string; unitId: string; product: { name: string } | null }>;
   garnishes: Array<{ name: string | null }>;
 };

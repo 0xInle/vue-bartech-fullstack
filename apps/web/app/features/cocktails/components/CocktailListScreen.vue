@@ -27,7 +27,7 @@
         />
       </div>
 
-      <div class="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_14rem]">
+      <div class="mt-5 grid gap-3 pt-2 sm:grid-cols-[minmax(0,1fr)_14rem_12rem]">
         <FloatLabel variant="on" class="min-w-0">
           <IconField>
             <InputIcon class="pi pi-search" />
@@ -41,18 +41,37 @@
           </IconField>
           <label for="cocktail-search" class="text-xs">Поиск по названию</label>
         </FloatLabel>
-        <Select
-          v-model="categoryId"
-          :options="cocktailCategoryOptions"
-          option-label="label"
-          option-value="id"
-          size="small"
-          class="w-full"
-          show-clear
-          placeholder="Все категории"
-          aria-label="Фильтр по категориям коктейлей"
-          fluid
-        />
+        <FloatLabel variant="on" class="min-w-0">
+          <Select
+            v-model="categoryId"
+            input-id="cocktail-category-filter"
+            :options="cocktailCategoryOptions"
+            option-label="label"
+            option-value="id"
+            size="small"
+            class="w-full"
+            show-clear
+            aria-label="Фильтр по категориям коктейлей"
+            fluid
+          />
+          <label for="cocktail-category-filter" class="text-xs">Категория</label>
+        </FloatLabel>
+        <FloatLabel variant="on" class="min-w-0">
+          <Select
+            :model-value="workflowStatus === 'ALL' ? null : workflowStatus"
+            input-id="cocktail-workflow-status-filter"
+            :options="workflowStatusOptions"
+            option-label="label"
+            option-value="value"
+            size="small"
+            class="w-full"
+            show-clear
+            aria-label="Фильтр по статусу коктейлей"
+            fluid
+            @update:model-value="setWorkflowStatus"
+          />
+          <label for="cocktail-workflow-status-filter" class="text-xs">Статус</label>
+        </FloatLabel>
       </div>
 
       <Message
@@ -98,8 +117,12 @@
             body-class="px-2"
             :pt="cocktailColumnPt"
           >
-            <template #body>
-              <Tag value="Активен" severity="success" :pt="compactTagPt" />
+            <template #body="{ data }">
+              <Tag
+                :value="data.workflowStatus === 'IN_DEVELOPMENT' ? 'Проработка' : 'Активен'"
+                :severity="data.workflowStatus === 'IN_DEVELOPMENT' ? 'warn' : 'success'"
+                :pt="compactTagPt"
+              />
             </template>
           </Column>
           <Column
@@ -132,25 +155,15 @@
                   stay-on-page
                   @archived="listQuery.refetch()"
                 />
-                <span
-                  v-if="canDeletePermanently"
-                  v-tooltip.top="{
-                    value: 'Безвозвратное удаление пока недоступно',
-                    class: 'app-tooltip',
-                  }"
-                  class="inline-flex"
-                  tabindex="0"
-                  aria-label="Безвозвратное удаление пока недоступно"
-                >
-                  <Button
-                    icon="pi pi-trash"
-                    size="small"
-                    severity="danger"
-                    variant="text"
-                    aria-label="Безвозвратное удаление пока недоступно"
-                    disabled
-                  />
-                </span>
+                <PermanentDeleteActionButton
+                  :company-id="companyId"
+                  :venue-id="venueId"
+                  :product-id="data.id"
+                  :product-name="data.name"
+                  product-type="COCKTAIL"
+                  :can-manage="canDeletePermanently"
+                  @deleted="listQuery.refetch()"
+                />
               </div>
             </template>
           </Column>
@@ -168,7 +181,13 @@
               <dt class="text-color-secondary">Категория</dt>
               <dd>{{ cocktail.categories.join(", ") || "—" }}</dd>
               <dt class="text-color-secondary">Статус</dt>
-              <dd><Tag value="Активен" severity="success" :pt="compactTagPt" /></dd>
+              <dd>
+                <Tag
+                  :value="cocktail.workflowStatus === 'IN_DEVELOPMENT' ? 'Проработка' : 'Активен'"
+                  :severity="cocktail.workflowStatus === 'IN_DEVELOPMENT' ? 'warn' : 'success'"
+                  :pt="compactTagPt"
+                />
+              </dd>
             </dl>
             <Button
               label="Открыть"
@@ -178,15 +197,40 @@
               class="mt-2"
               @click="openCocktail(cocktail.id)"
             />
+            <div class="mt-2 flex gap-1">
+              <ArchiveActionButton
+                :company-id="companyId"
+                :venue-id="venueId"
+                :product-id="cocktail.id"
+                product-type="COCKTAIL"
+                :product-name="cocktail.name"
+                :can-manage="canArchive"
+                stay-on-page
+                @archived="listQuery.refetch()"
+              />
+              <PermanentDeleteActionButton
+                :company-id="companyId"
+                :venue-id="venueId"
+                :product-id="cocktail.id"
+                :product-name="cocktail.name"
+                product-type="COCKTAIL"
+                :can-manage="canDeletePermanently"
+                @deleted="listQuery.refetch()"
+              />
+            </div>
           </article>
         </div>
       </div>
-      <div v-else class="mt-5 rounded-lg border border-dashed border-surface p-6 text-center">
-        <p class="text-sm text-color-secondary">
+      <div
+        v-else
+        class="mt-5 rounded-lg border border-dashed border-surface p-6 text-center"
+        style="border-color: var(--p-content-border-color)"
+      >
+        <p class="text-xs text-color-secondary">
           {{
-            searchText.trim() || categoryId
+            searchText.trim() || categoryId || workflowStatus !== "ALL"
               ? "По этому названию коктейли не найдены."
-              : "В заведении ещё нет коктейлей."
+              : "Список коктейлей пуст. Вы можете их создать."
           }}
         </p>
       </div>
@@ -207,7 +251,7 @@
       :venue-id="workspace.venue.id"
       :can-manage="canManage"
       mode="create"
-      @created="openCreatedCocktail"
+      @created="handleCocktailCreated"
     />
 
     <CocktailFormDrawer
@@ -232,8 +276,10 @@ import CocktailFormDrawer from "./CocktailFormDrawer.vue";
 import CocktailCardDrawer from "./CocktailCardDrawer.vue";
 import { useCocktails } from "../composables/useCocktails";
 import { compactMessagePt } from "~/utils/primevue-message";
+import { compareCategoryNames } from "~/utils/category-order";
 import IconField from "primevue/iconfield";
 import ArchiveActionButton from "~/features/archive/components/ArchiveActionButton.vue";
+import PermanentDeleteActionButton from "~/features/archive/components/PermanentDeleteActionButton.vue";
 
 const props = defineProps<{ cocktailId?: string }>();
 const route = useRoute();
@@ -241,11 +287,8 @@ const { currentUser, errorMessage, loading, switchWorkspace, workspace, workplac
   useVenueWorkspace();
 const companyId = computed(() => workspace.value?.company.id ?? "");
 const venueId = computed(() => workspace.value?.venue.id ?? "");
-const { categoryId, cocktailQuery, listQuery, referencesQuery, searchText } = useCocktails(
-  companyId,
-  venueId,
-  { categoryFilter: true },
-);
+const { categoryId, cocktailQuery, listQuery, referencesQuery, searchText, workflowStatus } =
+  useCocktails(companyId, venueId, { categoryFilter: true });
 const drawerVisible = ref(false);
 const editCocktailId = ref("");
 const editDrawerVisible = ref(false);
@@ -266,8 +309,15 @@ const selectedCocktailId = computed(() => {
 const cocktailCategoryOptions = computed(() =>
   (referencesQuery.data.value?.referenceValues ?? [])
     .filter((item) => item.type === "COCKTAIL_CATEGORY")
-    .sort((first, second) => first.label.localeCompare(second.label, "ru")),
+    .sort((first, second) => compareCategoryNames(first.label, second.label)),
 );
+const workflowStatusOptions = [
+  { label: "Активен", value: "ACTIVE" },
+  { label: "Проработка", value: "IN_DEVELOPMENT" },
+];
+function setWorkflowStatus(value: unknown): void {
+  workflowStatus.value = value === "ACTIVE" || value === "IN_DEVELOPMENT" ? value : "ALL";
+}
 const cocktailTablePt = {
   root: {
     style: {
@@ -326,8 +376,8 @@ async function handleCardVisibilityChange(visible: boolean): Promise<void> {
   });
 }
 
-async function openCreatedCocktail(cocktailId: string): Promise<void> {
-  await navigateTo(cocktailPath(cocktailId));
+function handleCocktailCreated(): void {
+  void listQuery.refetch();
 }
 
 function openCocktail(value: string | { data: { id: string } }): void {

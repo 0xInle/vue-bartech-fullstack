@@ -5,10 +5,12 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { CreateGarnishDtoWorkflowStatus } from './createGarnishDtoWorkflowStatus';
 import type { ProductComponentDto } from './productComponentDto';
 import type { ProductOutputDto } from './productOutputDto';
 
 export interface CreateGarnishDto {
+  workflowStatus?: CreateGarnishDtoWorkflowStatus;
   /** @maxLength 160 */
   name: string;
   /** @maxLength 10000 */

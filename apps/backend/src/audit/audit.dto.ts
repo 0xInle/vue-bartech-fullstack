@@ -11,6 +11,7 @@ const auditEventTypes = [
   "service_access.ended",
   "product.archived",
   "product.restored",
+  "product.permanently_deleted",
   "export.requested",
   "export.completed",
   "export.failed",

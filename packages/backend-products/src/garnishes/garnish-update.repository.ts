@@ -17,6 +17,7 @@ export class GarnishUpdateRepository {
       where: { id: garnishId, venueId, type: "GARNISH", status: "ACTIVE" },
       select: {
         id: true,
+        workflowStatus: true,
         name: true,
         technology: true,
         comment: true,
@@ -77,6 +78,7 @@ export class GarnishUpdateRepository {
       searchNameNormalized: string;
       searchTechnologyNormalized: string;
       technology: string;
+      workflowStatus?: "ACTIVE" | "IN_DEVELOPMENT";
       comment?: string;
       output?: { amount: number; unitId: string };
       components: Array<{
@@ -100,6 +102,7 @@ export class GarnishUpdateRepository {
         outputAmount: input.output?.amount ?? null,
         outputUnitId: input.output?.unitId ?? null,
         updatedByUserId: input.userId,
+        workflowStatus: input.workflowStatus,
         parentComponents: {
           deleteMany: { parentProductId: input.id, parentVenueId: input.venueId },
           create: input.components.map((component) => ({

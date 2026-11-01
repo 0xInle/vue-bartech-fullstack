@@ -4,7 +4,10 @@ import {
   productsControllerArchiveProduct,
   productsControllerGetArchiveCard,
   productsControllerGetArchiveRestorePlan,
+  productsControllerPermanentDeletePlan,
+  productsControllerPermanentDeleteProduct,
   productsControllerListArchive,
+  productsControllerListLocalIngredients,
   productsControllerRestoreProduct,
 } from "@bartech/api-client";
 import type { ProductAnalyticsEventDto } from "@bartech/api-client";
@@ -13,6 +16,8 @@ import type {
   productsControllerGetArchiveRestorePlanResponse200,
   productsControllerListArchiveResponse200,
   productsControllerArchiveProductResponse409,
+  productsControllerPermanentDeleteProductResponse409,
+  ProductsControllerPermanentDeleteProductMutationBody,
   ProductsControllerRestoreProductMutationBody,
 } from "@bartech/api-client";
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
@@ -25,10 +30,25 @@ export type ArchiveItem = productsControllerListArchiveResponse200["data"][numbe
 export type RestoreInput = ProductsControllerRestoreProductMutationBody;
 export type ProductAnalyticsType = NonNullable<ProductAnalyticsEventDto["productType"]>;
 type ArchiveProblem = productsControllerArchiveProductResponse409["data"] & { detail?: string };
+type PermanentDeleteProblem = productsControllerPermanentDeleteProductResponse409["data"] & {
+  detail?: string;
+};
+export type PermanentDeletePlan = Awaited<
+  ReturnType<typeof productsControllerPermanentDeletePlan>
+>["data"];
+export type LocalIngredient = Awaited<
+  ReturnType<typeof productsControllerListLocalIngredients>
+>["data"][number];
 
 export class ArchiveRequestError extends Error {
   constructor(readonly problem: ArchiveProblem) {
     super(problem.detail ?? "Не удалось выполнить действие. Попробуйте ещё раз.");
+  }
+}
+
+export class PermanentDeleteRequestError extends Error {
+  constructor(readonly problem: PermanentDeleteProblem) {
+    super(problem.message ?? problem.detail ?? "Не удалось удалить продукт. Попробуйте ещё раз.");
   }
 }
 
@@ -115,6 +135,7 @@ export function useProductArchive(
       "cocktail-garnishes",
       "product-search",
       "archive-ingredient-options",
+      "local-ingredients",
     ]);
     await queryClient.invalidateQueries({
       refetchType: "none",
@@ -177,5 +198,65 @@ export function useProductArchive(
     void analytics.track({ eventType: "PRODUCT_RESTORED", productType });
   }
 
-  return { list, card, archive, restorePlan, restore };
+  async function permanentDeletePlan(productId: string) {
+    return requestApi<PermanentDeletePlan>(
+      productsControllerPermanentDeletePlan(
+        company.value,
+        venue.value,
+        productId,
+        { credentials: "include" },
+        identity.apiFetch,
+      ),
+    );
+  }
+
+  function localIngredients(query: MaybeRefOrGetter<string>) {
+    return useQuery({
+      queryKey: computed(() => ["local-ingredients", company.value, venue.value, toValue(query)]),
+      enabled,
+      retry: false,
+      queryFn: async ({ signal }) =>
+        requestApi<LocalIngredient[]>(
+          productsControllerListLocalIngredients(
+            company.value,
+            venue.value,
+            { query: toValue(query) || undefined },
+            { credentials: "include", signal },
+            identity.apiFetch,
+          ),
+        ),
+    });
+  }
+
+  async function deletePermanently(
+    productId: string,
+    input: ProductsControllerPermanentDeleteProductMutationBody,
+  ) {
+    const currentCompany = company.value;
+    const currentVenue = venue.value;
+    await identity.refreshCsrf();
+    const response = await productsControllerPermanentDeleteProduct(
+      currentCompany,
+      currentVenue,
+      productId,
+      input,
+      { credentials: "include", headers: { "x-csrf-token": identity.csrfToken.value } },
+      identity.apiFetch,
+    );
+    if (response.status < 200 || response.status >= 300)
+      throw new PermanentDeleteRequestError(response.data as PermanentDeleteProblem);
+    await invalidate(currentCompany, currentVenue);
+    return response.data;
+  }
+
+  return {
+    list,
+    card,
+    archive,
+    restorePlan,
+    restore,
+    permanentDeletePlan,
+    deletePermanently,
+    localIngredients,
+  };
 }

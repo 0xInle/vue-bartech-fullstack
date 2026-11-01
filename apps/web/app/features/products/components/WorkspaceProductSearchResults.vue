@@ -29,6 +29,13 @@
       <Column field="name" header="Наименование">
         <template #body="{ data }">
           <span class="font-medium">{{ data.name }}</span>
+          <Tag
+            v-if="data.workflowStatus === 'IN_DEVELOPMENT'"
+            value="Проработка"
+            severity="warn"
+            :pt="compactTagPt"
+            class="ml-2 align-middle"
+          />
           <span v-if="companySearch && data.venueName" class="block text-xs text-color-secondary">
             {{ data.venueName }}
           </span>
@@ -92,6 +99,10 @@ const productSearchTablePt = {
     },
   },
   bodyRow: { class: "cursor-pointer" },
+};
+const compactTagPt = {
+  root: { style: { fontSize: "0.75rem", padding: "0.125rem 0.375rem" } },
+  label: { style: { fontWeight: "400" } },
 };
 
 watch(

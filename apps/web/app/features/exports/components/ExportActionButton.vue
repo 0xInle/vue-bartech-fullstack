@@ -2,12 +2,12 @@
   <div
     v-if="canExport"
     class="flex flex-col gap-2"
-    :class="fullWidth ? 'min-w-0 items-stretch' : 'items-start'"
+    :class="fullWidth ? 'min-w-max items-stretch' : 'items-start'"
   >
     <Button
+      class="whitespace-nowrap !px-1"
       :class="{ 'w-full': fullWidth }"
       :label="label"
-      icon="pi pi-file-pdf"
       size="small"
       severity="secondary"
       variant="outlined"

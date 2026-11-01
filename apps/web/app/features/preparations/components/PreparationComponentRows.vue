@@ -1,32 +1,72 @@
 <template>
   <div class="flex flex-col gap-3">
-    <div
-      v-for="(row, index) in modelValue"
-      :key="row.key"
-      class="rounded-lg border border-surface p-3"
-    >
-      <div class="mb-2 flex items-center justify-between gap-2">
-        <p class="text-xs font-medium text-color-secondary">Компонент {{ index + 1 }}</p>
-        <Button
-          v-if="modelValue.length > 1"
-          icon="pi pi-times"
-          severity="secondary"
-          variant="text"
-          rounded
-          size="small"
-          aria-label="Удалить компонент"
-          @click="remove(index)"
-        />
-      </div>
-      <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_7rem_8rem]">
-        <IngredientSelector
-          :model-value="row.product"
-          :company-id="companyId"
-          :venue-id="venueId"
-          :service-session-id="serviceSessionId"
-          placeholder="Найти ингредиент или заготовку"
-          @update:model-value="selectProduct(index, $event)"
-        />
+    <div v-for="(row, index) in modelValue" :key="row.key" class="flex flex-col gap-2">
+      <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_4.5rem_max-content_auto]">
+        <div class="min-w-0">
+          <IngredientSelector
+            ref="ingredientSelector"
+            :model-value="row.product"
+            :company-id="companyId"
+            :venue-id="venueId"
+            :service-session-id="serviceSessionId"
+            keep-overlay-open-on-scroll
+            float-label
+            label="Ингредиент"
+            :invalid="Boolean(errors?.[index]?.productId)"
+            :input-id="`preparation-component-${row.key}-ingredient`"
+            placeholder="Найти ингредиент или заготовку"
+            @update:model-value="selectProduct(row.key, $event)"
+            @hide="handleIngredientHide(row.key)"
+          >
+            <template #footer="{ query, loading, hasResults, hasError, hasLoaded }">
+              <div
+                v-if="query.trim().length >= 2"
+                class="box-border flex w-full min-w-0 max-w-full flex-col items-center gap-2 p-2"
+                @mousedown.stop
+              >
+                <span v-if="loading" class="text-xs text-color-secondary">Ищем ингредиент…</span>
+                <template v-else-if="hasLoaded && !hasError">
+                  <span v-if="!hasResults" class="text-xs text-color-secondary"
+                    >Ингредиент не найден</span
+                  >
+                  <template v-if="canManage">
+                    <Divider class="!my-0" />
+                    <span v-if="hasResults" class="text-xs text-color-secondary"
+                      >Не нашли нужное?</span
+                    >
+                    <div
+                      v-if="activeLocalIngredientRow === row.key"
+                      class="flex w-full min-w-0 flex-col gap-2"
+                      @input.capture="markLocalIngredientDraft(row.key)"
+                      @change.capture="markLocalIngredientDraft(row.key)"
+                      @submit.stop
+                    >
+                      <LocalIngredientCreateForm
+                        compact
+                        :initial-name="localIngredientName"
+                        :categories="ingredientCategories"
+                        :create="createLocalIngredient"
+                        @cancel="closeLocalIngredientForm"
+                        @created="assignCreatedIngredient(row.key, $event)"
+                      />
+                    </div>
+                    <Button
+                      v-else
+                      type="button"
+                      label="Создать ингредиент"
+                      icon="pi pi-plus"
+                      severity="secondary"
+                      variant="text"
+                      size="small"
+                      @mousedown.prevent
+                      @click.stop="startLocalIngredientCreate(row.key, query)"
+                    />
+                  </template>
+                </template>
+              </div>
+            </template>
+          </IngredientSelector>
+        </div>
         <FloatLabel variant="on">
           <InputText
             :id="`preparation-component-${row.key}-amount`"
@@ -34,60 +74,60 @@
             inputmode="decimal"
             size="small"
             fluid
-            @update:model-value="updateAmount(index, $event ?? '')"
+            :invalid="Boolean(errors?.[index]?.amount)"
+            @update:model-value="updateAmount(row.key, $event ?? '')"
           />
-          <label :for="`preparation-component-${row.key}-amount`" class="text-xs">Количество</label>
+          <label :for="`preparation-component-${row.key}-amount`" class="text-xs">Кол-во</label>
         </FloatLabel>
         <FloatLabel variant="on">
           <Select
+            :ref="(instance) => setUnitSelectRef(row.key, instance)"
             :input-id="`preparation-component-${row.key}-unit`"
             :model-value="row.unitId"
-            :options="units"
+            append-to="self"
+            :pt="{ overlay: { class: 'w-max min-w-full' } }"
+            :options="availableUnits()"
             option-label="label"
             option-value="id"
             size="small"
-            class="w-full"
-            @update:model-value="updateUnit(index, $event)"
-          />
-          <label :for="`preparation-component-${row.key}-unit`" class="text-xs">Единица</label>
+            class="w-24"
+            :invalid="Boolean(errors?.[index]?.unitId)"
+            @show="handleUnitSelectShow(row.key)"
+            @update:model-value="updateUnit(row.key, $event)"
+          >
+            <template #value="slotProps">
+              {{ unitLabel(row.unitId) || slotProps.placeholder }}
+            </template>
+          </Select>
+          <label :for="`preparation-component-${row.key}-unit`" class="text-xs">Ед. изм.</label>
         </FloatLabel>
+        <Button
+          v-if="modelValue.length > 1"
+          icon="pi pi-times"
+          severity="secondary"
+          variant="text"
+          rounded
+          size="small"
+          class="justify-self-end sm:self-center"
+          aria-label="Удалить компонент"
+          @click="remove(row.key)"
+        />
       </div>
-      <p v-if="errors?.[index]" class="mt-2 text-xs text-red-500">{{ errors[index] }}</p>
-      <Button
-        v-if="canManage && activeLocalIngredientRow !== index"
-        label="Нет ингредиента? Создать локальный"
-        severity="secondary"
-        variant="text"
-        size="small"
-        class="mt-2 px-0"
-        @click="activeLocalIngredientRow = index"
-      />
-      <LocalIngredientCreateForm
-        v-if="canManage && activeLocalIngredientRow === index"
-        class="mt-3"
-        :categories="ingredientCategories"
-        :create="createLocalIngredient"
-        @cancel="activeLocalIngredientRow = null"
-        @created="assignCreatedIngredient(index, $event)"
-      />
     </div>
-    <Button
-      label="Добавить компонент"
-      icon="pi pi-plus"
-      severity="secondary"
-      variant="outlined"
-      size="small"
-      class="self-start"
-      @click="add"
-    />
+    <Button label="Добавить ингредиент" size="small" class="w-full" @click="add" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import IngredientSelector from "~/features/products/components/IngredientSelector.vue";
 import LocalIngredientCreateForm from "~/features/products/components/LocalIngredientCreateForm.vue";
 import type { ProductCreated, ProductSearchItem } from "~/features/products/types";
+import {
+  keepPrimeVueOverlayOpenOnScroll,
+  keepPrimeVueOverlayWithinDrawer,
+  type PrimeVueOverlayRef,
+} from "~/utils/primevue-overlay";
 
 export type PreparationComponentRow = {
   key: string;
@@ -96,14 +136,16 @@ export type PreparationComponentRow = {
   amount: string;
   unitId: string;
 };
+export type PreparationComponentField = "productId" | "amount" | "unitId";
+export type PreparationComponentError = Partial<Record<PreparationComponentField, boolean>>;
 const props = defineProps<{
   modelValue: PreparationComponentRow[];
   companyId: string;
   venueId: string;
   serviceSessionId?: string;
-  units: Array<{ id: string; label: string }>;
+  units: Array<{ id: string; code: string; label: string }>;
   ingredientCategories: Array<{ code: string; name: string }>;
-  errors?: string[];
+  errors?: PreparationComponentError[];
   canManage: boolean;
   createLocalIngredient: (input: {
     name: string;
@@ -111,39 +153,86 @@ const props = defineProps<{
     brand?: string;
   }) => Promise<ProductCreated>;
 }>();
-const emit = defineEmits<{ "update:modelValue": [rows: PreparationComponentRow[]] }>();
-const activeLocalIngredientRow = ref<number | null>(null);
-function emptyRow(): PreparationComponentRow {
-  return { key: crypto.randomUUID(), productId: "", product: null, amount: "", unitId: "" };
+const emit = defineEmits<{
+  "update:modelValue": [rows: PreparationComponentRow[]];
+  dirty: [];
+  "local-ingredient-draft": [active: boolean];
+}>();
+const activeLocalIngredientRow = ref<string | null>(null);
+const localIngredientName = ref("");
+const localIngredientDraftRowKey = ref<string | null>(null);
+const ingredientSelector = ref<InstanceType<typeof IngredientSelector>[]>([]);
+const unitSelectRefs = new Map<string, PrimeVueOverlayRef>();
+const defaultUnitId = computed(
+  () => props.units.find((unit) => unit.label.trim().toLocaleLowerCase("ru") === "мл")?.id ?? "",
+);
+function setUnitSelectRef(key: string, instance: PrimeVueOverlayRef | null): void {
+  if (instance) unitSelectRefs.set(key, instance);
+  else unitSelectRefs.delete(key);
 }
-function updateRow(index: number, patch: Partial<PreparationComponentRow>): void {
+function handleUnitSelectShow(key: string): void {
+  const select = unitSelectRefs.get(key);
+  keepPrimeVueOverlayOpenOnScroll(select);
+  keepPrimeVueOverlayWithinDrawer(select);
+}
+function emptyRow(): PreparationComponentRow {
+  return {
+    key: crypto.randomUUID(),
+    productId: "",
+    product: null,
+    amount: "",
+    unitId: defaultUnitId.value,
+  };
+}
+function availableUnits() {
+  return props.units.filter((unit) => unit.code !== "bar-spoon");
+}
+function unitLabel(unitId: string): string {
+  return props.units.find((unit) => unit.id === unitId)?.label ?? "";
+}
+function updateRow(key: string, patch: Partial<PreparationComponentRow>): void {
   emit(
     "update:modelValue",
-    props.modelValue.map((row, position) => (position === index ? { ...row, ...patch } : row)),
+    props.modelValue.map((row) => (row.key === key ? { ...row, ...patch } : row)),
   );
 }
-function selectProduct(index: number, product: ProductSearchItem | null): void {
-  updateRow(index, { product, productId: product?.id ?? "" });
+function selectProduct(key: string, product: ProductSearchItem | null): void {
+  if (activeLocalIngredientRow.value === key) closeLocalIngredientForm();
+  updateRow(key, { product, productId: product?.id ?? "" });
 }
-function updateAmount(index: number, amount: string | number): void {
-  updateRow(index, { amount: String(amount ?? "") });
+function updateAmount(key: string, amount: string | number): void {
+  updateRow(key, { amount: String(amount ?? "") });
 }
-function updateUnit(index: number, unitId: string): void {
-  updateRow(index, { unitId });
+function updateUnit(key: string, unitId: string): void {
+  updateRow(key, { unitId });
 }
 function add(): void {
   emit("update:modelValue", [...props.modelValue, emptyRow()]);
 }
-function remove(index: number): void {
+function startLocalIngredientCreate(key: string, query: string): void {
+  localIngredientName.value = query;
+  activeLocalIngredientRow.value = key;
+}
+function handleIngredientHide(key: string): void {
+  if (activeLocalIngredientRow.value === key && localIngredientDraftRowKey.value !== key)
+    closeLocalIngredientForm();
+}
+function markLocalIngredientDraft(key: string): void {
+  localIngredientDraftRowKey.value = key;
+  emit("dirty");
+  emit("local-ingredient-draft", true);
+}
+function remove(key: string): void {
+  if (activeLocalIngredientRow.value === key) closeLocalIngredientForm();
   emit(
     "update:modelValue",
-    props.modelValue.filter((_, position) => position !== index),
+    props.modelValue.filter((row) => row.key !== key),
   );
 }
-function assignCreatedIngredient(index: number, product: ProductCreated): void {
-  const row = props.modelValue[index];
+function assignCreatedIngredient(key: string, product: ProductCreated): void {
+  const row = props.modelValue.find((item) => item.key === key);
   if (!row) return;
-  updateRow(index, {
+  updateRow(key, {
     productId: product.id,
     product: {
       id: product.id,
@@ -158,10 +247,21 @@ function assignCreatedIngredient(index: number, product: ProductCreated): void {
     },
   });
   activeLocalIngredientRow.value = null;
+  localIngredientName.value = "";
+  localIngredientDraftRowKey.value = null;
+  emit("local-ingredient-draft", false);
+  const index = props.modelValue.findIndex((item) => item.key === key);
+  if (index >= 0) void nextTick(() => ingredientSelector.value[index]?.hideSuggestions());
   const control = !row.amount.trim() ? "amount" : !row.unitId ? "unit" : null;
   if (control)
     void nextTick(() =>
       document.getElementById(`preparation-component-${row.key}-${control}`)?.focus(),
     );
+}
+function closeLocalIngredientForm(): void {
+  activeLocalIngredientRow.value = null;
+  localIngredientName.value = "";
+  localIngredientDraftRowKey.value = null;
+  emit("local-ingredient-draft", false);
 }
 </script>

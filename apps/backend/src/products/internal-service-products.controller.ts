@@ -35,9 +35,11 @@ import {
   CreateGarnishDto,
   CreateLocalIngredientDto,
   CreateLocalReferenceValueDto,
+  CreateLocalPreparationCategoryDto,
   CreatePreparationDto,
   LocalIngredientCardResponseDto,
   ProductCreatedDto,
+  PreparationCategoryResponseDto,
   GarnishListQueryDto,
   PreparationListQueryDto,
   ProductSearchQueryDto,
@@ -106,7 +108,12 @@ export class InternalServiceProductsController {
     @Param() params: ProductScopeParams,
     @Query() query: CocktailListQueryDto,
   ) {
-    return this.cocktails.list(await this.context(identity, params), query.query, query.categoryId);
+    return this.cocktails.list(
+      await this.context(identity, params),
+      query.query,
+      query.categoryId,
+      query.workflowStatus === "ALL" ? undefined : query.workflowStatus,
+    );
   }
 
   @Get("cocktails/garnishes")
@@ -140,6 +147,7 @@ export class InternalServiceProductsController {
       await this.context(identity, params),
       query.query,
       query.categoryCode,
+      query.workflowStatus === "ALL" ? undefined : query.workflowStatus,
       query.sort,
     );
   }
@@ -161,7 +169,12 @@ export class InternalServiceProductsController {
     @Param() params: ProductScopeParams,
     @Query() query: GarnishListQueryDto,
   ) {
-    return this.garnishes.list(await this.context(identity, params), query.query, query.sort);
+    return this.garnishes.list(
+      await this.context(identity, params),
+      query.query,
+      query.workflowStatus === "ALL" ? undefined : query.workflowStatus,
+      query.sort,
+    );
   }
 
   @Get("garnishes/:productId")
@@ -192,6 +205,19 @@ export class InternalServiceProductsController {
     @Body() input: CreateLocalReferenceValueDto,
   ) {
     return this.products.createLocalReferenceValue(await this.context(identity, params), input);
+  }
+
+  @Post("preparation-categories")
+  @ApiCreatedResponse({ type: PreparationCategoryResponseDto })
+  async createPreparationCategory(
+    @CurrentInternalIdentity() identity: InternalIdentity,
+    @Param() params: ProductScopeParams,
+    @Body() input: CreateLocalPreparationCategoryDto,
+  ) {
+    return this.products.createLocalPreparationCategory(
+      await this.context(identity, params),
+      input,
+    );
   }
 
   @Get("ingredients/:productId")

@@ -14,6 +14,7 @@ export class GarnishReadRepository {
   async list(
     venueId: string,
     matchingIds?: string[],
+    workflowStatus?: "ACTIVE" | "IN_DEVELOPMENT",
     sort: GarnishListSort = "name",
   ): Promise<GarnishListItem[]> {
     const garnishes = await this.database.product.findMany({
@@ -22,11 +23,13 @@ export class GarnishReadRepository {
         type: "GARNISH",
         status: "ACTIVE",
         ...(matchingIds ? { id: { in: matchingIds } } : {}),
+        ...(workflowStatus ? { workflowStatus } : {}),
       },
       orderBy: sort === "updated" ? [{ updatedAt: "desc" }, { name: "asc" }] : { name: "asc" },
       select: {
         id: true,
         name: true,
+        workflowStatus: true,
         updatedAt: true,
         parentComponents: {
           orderBy: { position: "asc" },
@@ -46,6 +49,7 @@ export class GarnishReadRepository {
     return garnishes.map((garnish) => ({
       id: garnish.id,
       name: garnish.name,
+      workflowStatus: garnish.workflowStatus!,
       componentSummary: componentSummary(
         products,
         garnish.parentComponents.map((component) => component.componentProductId),
@@ -60,6 +64,7 @@ export class GarnishReadRepository {
       select: {
         id: true,
         name: true,
+        workflowStatus: true,
         technology: true,
         comment: true,
         outputAmount: true,
@@ -88,6 +93,7 @@ export class GarnishReadRepository {
       name: garnish.name,
       type: "GARNISH",
       status: "ACTIVE",
+      workflowStatus: garnish.workflowStatus!,
       components: garnish.parentComponents.map((component) => {
         const product = requireComponentProduct(products, component.componentProductId);
         return {

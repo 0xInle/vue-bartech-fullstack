@@ -13,6 +13,7 @@ export type ProductSearchItem = {
   brand: string | null;
   categoryCode: string | null;
   strength: number | null;
+  workflowStatus: "ACTIVE" | "IN_DEVELOPMENT" | null;
 };
 
 type ProductSearchInput = {
@@ -65,7 +66,8 @@ export class ProductSearchRepository {
         END AS "matchReason",
         brand,
         "categoryCode",
-        strength
+        strength,
+        "workflowStatus"
       FROM ranked
       ORDER BY match_rank ASC, score DESC, name ASC, id ASC
       LIMIT 20
@@ -152,7 +154,8 @@ export class ProductSearchRepository {
               END,
               'brand', brand,
               'categoryCode', "categoryCode",
-              'strength', strength
+              'strength', strength,
+              'workflowStatus', "workflowStatus"
             ) ORDER BY match_rank ASC, score DESC, name ASC, id ASC
           ) FROM paged),
           '[]'::jsonb
@@ -247,6 +250,7 @@ function buildRankedSearchCte(input: ProductSearchInput): Prisma.Sql {
         i.brand,
         i."categoryCode",
         i.strength::float8 AS strength,
+        CASE WHEN p.type = 'COCKTAIL' THEN p."workflowStatus"::text END AS "workflowStatus",
         (p."searchNameNormalized" = ANY(${input.variants}::text[])) AS exact_name,
         EXISTS (
           SELECT 1 FROM product_aliases a

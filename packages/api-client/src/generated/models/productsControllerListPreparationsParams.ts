@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ProductsControllerListPreparationsSort } from './productsControllerListPreparationsSort';
+import type { ProductsControllerListPreparationsWorkflowStatus } from './productsControllerListPreparationsWorkflowStatus';
 
 export type ProductsControllerListPreparationsParams = {
 /**
@@ -16,5 +17,6 @@ query?: string;
  * @maxLength 80
  */
 categoryCode?: string;
+workflowStatus?: ProductsControllerListPreparationsWorkflowStatus;
 sort?: ProductsControllerListPreparationsSort;
 };

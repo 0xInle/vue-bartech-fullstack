@@ -1,13 +1,14 @@
 <template>
   <div
     v-if="compact"
-    class="flex w-full min-w-0 flex-col gap-2"
+    class="flex w-full min-w-0 flex-col"
+    :class="dialogLayout ? 'gap-3' : 'gap-2'"
     role="group"
     aria-label="Создание ингредиента"
   >
     <Message
       v-if="errorMessage"
-      severity="error"
+      :severity="errorSeverity"
       size="small"
       :closable="false"
       :pt="compactMessagePt"
@@ -15,35 +16,51 @@
     >
       {{ errorMessage }}
     </Message>
-    <FloatLabel variant="on" class="w-full min-w-0">
+    <div :class="dialogLayout ? 'pt-2' : ''">
+      <FloatLabel variant="on" class="w-full min-w-0">
+        <InputText
+          id="local-ingredient-name"
+          v-model="name"
+          size="small"
+          fluid
+          :invalid="validationAttempted && !name.trim()"
+          @keydown.enter.prevent="submit"
+        />
+        <label for="local-ingredient-name" class="text-xs">Название ингредиента</label>
+      </FloatLabel>
+    </div>
+    <div :class="dialogLayout ? 'pt-2' : ''">
+      <FloatLabel variant="on" class="w-full min-w-0">
+        <Select
+          ref="categorySelect"
+          v-model="categoryCode"
+          input-id="local-ingredient-category"
+          :options="categoryOptions"
+          option-label="name"
+          option-value="code"
+          size="small"
+          fluid
+          :invalid="validationAttempted && !categoryCode"
+          :append-to="categorySelectAppendTo ?? 'self'"
+          :pt="{ overlay: { class: 'w-max min-w-full' } }"
+          @show="handleCategorySelectShow"
+        >
+          <template #option="{ option }">
+            <div @mousedown.stop @click="selectCategory(option.code)">{{ option.name }}</div>
+          </template>
+        </Select>
+        <label for="local-ingredient-category" class="text-xs">Категория</label>
+      </FloatLabel>
+    </div>
+    <FloatLabel v-if="showBrand" variant="on" class="w-full min-w-0">
       <InputText
-        id="local-ingredient-name"
-        v-model="name"
+        id="local-ingredient-brand"
+        v-model="brand"
         size="small"
         fluid
         @keydown.enter.prevent="submit"
       />
-      <label for="local-ingredient-name" class="text-xs">Ингредиент</label>
-    </FloatLabel>
-    <FloatLabel variant="on" class="w-full min-w-0">
-      <Select
-        ref="categorySelect"
-        v-model="categoryCode"
-        input-id="local-ingredient-category"
-        :options="categories"
-        option-label="name"
-        option-value="code"
-        size="small"
-        fluid
-        append-to="self"
-        :pt="{ overlay: { class: 'w-max min-w-full' } }"
-        @show="handleCategorySelectShow"
-      >
-        <template #option="{ option }">
-          <div @mousedown.stop @click="selectCategory(option.code)">{{ option.name }}</div>
-        </template>
-      </Select>
-      <label for="local-ingredient-category" class="text-xs">Категория</label>
+      <label for="local-ingredient-brand" class="text-xs">Бренд — необязательно</label>
     </FloatLabel>
     <div class="flex w-full min-w-0 flex-wrap justify-end gap-2">
       <Button
@@ -54,7 +71,13 @@
         :disabled="saving"
         @click.stop="emit('cancel')"
       />
-      <Button label="Добавить" type="button" size="small" :loading="saving" @click.stop="submit" />
+      <Button
+        :label="submitLabel ?? 'Добавить'"
+        type="button"
+        size="small"
+        :loading="saving"
+        @click.stop="submit"
+      />
     </div>
   </div>
   <Card v-else class="border border-surface bg-surface-50">
@@ -66,7 +89,7 @@
         </div>
         <Message
           v-if="errorMessage"
-          severity="error"
+          :severity="errorSeverity"
           size="small"
           :closable="false"
           :pt="compactMessagePt"
@@ -74,18 +97,25 @@
           {{ errorMessage }}
         </Message>
         <FloatLabel variant="on">
-          <InputText id="local-ingredient-name" v-model="name" size="small" fluid />
+          <InputText
+            id="local-ingredient-name"
+            v-model="name"
+            size="small"
+            fluid
+            :invalid="validationAttempted && !name.trim()"
+          />
           <label for="local-ingredient-name" class="text-xs">Название ингредиента</label>
         </FloatLabel>
         <FloatLabel variant="on">
           <Select
             v-model="categoryCode"
             input-id="local-ingredient-category"
-            :options="categories"
+            :options="categoryOptions"
             option-label="name"
             option-value="code"
             size="small"
             fluid
+            :invalid="validationAttempted && !categoryCode"
           />
           <label for="local-ingredient-category" class="text-xs">Категория</label>
         </FloatLabel>
@@ -109,8 +139,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import type { ProductCreated } from "../types";
+import { ApiRequestError } from "~/utils/api-response";
+import { compareCategoryNames } from "~/utils/category-order";
 import { compactMessagePt } from "~/utils/primevue-message";
 import {
   keepPrimeVueOverlayOpenOnScroll,
@@ -121,6 +153,10 @@ import {
 const props = defineProps<{
   categories: Array<{ code: string; name: string }>;
   compact?: boolean;
+  dialogLayout?: boolean;
+  showBrand?: boolean;
+  submitLabel?: string;
+  categorySelectAppendTo?: "self" | "body";
   initialName?: string;
   create: (input: {
     name: string;
@@ -136,8 +172,14 @@ const categorySelect = ref<PrimeVueOverlayRef | null>(null);
 const brand = ref("");
 const saving = ref(false);
 const errorMessage = ref("");
+const errorSeverity = ref<"error" | "warn">("error");
+const validationAttempted = ref(false);
+const categoryOptions = computed(() =>
+  [...props.categories].sort((first, second) => compareCategoryNames(first.name, second.name)),
+);
 
 function handleCategorySelectShow(): void {
+  if (props.categorySelectAppendTo === "body") return;
   keepPrimeVueOverlayOpenOnScroll(categorySelect.value);
   keepPrimeVueOverlayWithinDrawer(categorySelect.value);
 }
@@ -149,8 +191,9 @@ function selectCategory(code: string): void {
 
 async function submit(): Promise<void> {
   errorMessage.value = "";
+  errorSeverity.value = "error";
+  validationAttempted.value = true;
   if (!name.value.trim() || !categoryCode.value) {
-    errorMessage.value = "Укажите название и категорию ингредиента.";
     return;
   }
   saving.value = true;
@@ -162,11 +205,20 @@ async function submit(): Promise<void> {
     });
     emit("created", product);
   } catch (error) {
-    errorMessage.value = props.compact
-      ? "Не удалось создать ингредиент."
-      : error instanceof Error
-        ? error.message
-        : "Не удалось создать ингредиент.";
+    if (
+      error instanceof ApiRequestError &&
+      (error.code === "INGREDIENT_NAME_ALREADY_EXISTS" || error.status === 409)
+    ) {
+      errorSeverity.value = "warn";
+      errorMessage.value = "Ингредиент с таким названием уже существует.";
+    } else if (error instanceof ApiRequestError && error.status >= 500) {
+      errorMessage.value = "Ошибка сервера. Не удалось создать ингредиент. Попробуйте ещё раз.";
+    } else if (error instanceof ApiRequestError) {
+      errorMessage.value = error.message;
+    } else {
+      errorMessage.value =
+        "Не удалось связаться с сервером. Проверьте соединение и попробуйте ещё раз.";
+    }
   } finally {
     saving.value = false;
   }

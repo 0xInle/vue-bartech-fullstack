@@ -3,6 +3,7 @@ export type PreparationListSort = "name" | "updated";
 export type PreparationListItem = {
   id: string;
   name: string;
+  workflowStatus: "ACTIVE" | "IN_DEVELOPMENT";
   categoryName: string;
   componentSummary: string;
   updatedAt: Date;
@@ -13,6 +14,7 @@ export type PreparationCard = {
   name: string;
   type: "PREPARATION";
   status: "ACTIVE";
+  workflowStatus: "ACTIVE" | "IN_DEVELOPMENT";
   categoryCode: string;
   categoryName: string;
   components: Array<{

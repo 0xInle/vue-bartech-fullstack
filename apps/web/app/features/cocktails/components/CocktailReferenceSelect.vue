@@ -35,6 +35,7 @@
                 class="min-w-0"
                 maxlength="100"
                 :disabled="saving"
+                :invalid="validationAttempted && !newLabel.trim()"
                 @keydown.enter.stop.prevent="save"
               />
               <label :for="`${inputId}-new-value`" class="text-xs">Новое значение</label>
@@ -107,17 +108,20 @@ const creating = ref(false);
 const newLabel = ref("");
 const errorMessage = ref("");
 const saving = ref(false);
+const validationAttempted = ref(false);
 
 function beginCreate(): void {
   creating.value = true;
   newLabel.value = "";
   errorMessage.value = "";
+  validationAttempted.value = false;
 }
 
 function resetCreateForm(): void {
   creating.value = false;
   newLabel.value = "";
   errorMessage.value = "";
+  validationAttempted.value = false;
 }
 
 function handleHide(): void {
@@ -132,8 +136,8 @@ function handleShow(): void {
 async function save(): Promise<void> {
   const label = newLabel.value.trim();
   if (saving.value) return;
+  validationAttempted.value = true;
   if (!label) {
-    errorMessage.value = "Введите название варианта.";
     return;
   }
 

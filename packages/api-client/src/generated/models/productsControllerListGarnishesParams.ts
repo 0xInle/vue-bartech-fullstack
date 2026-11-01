@@ -6,11 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ProductsControllerListGarnishesSort } from './productsControllerListGarnishesSort';
+import type { ProductsControllerListGarnishesWorkflowStatus } from './productsControllerListGarnishesWorkflowStatus';
 
 export type ProductsControllerListGarnishesParams = {
 /**
  * @maxLength 160
  */
 query?: string;
+workflowStatus?: ProductsControllerListGarnishesWorkflowStatus;
 sort?: ProductsControllerListGarnishesSort;
 };

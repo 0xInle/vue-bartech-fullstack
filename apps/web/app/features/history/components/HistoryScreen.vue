@@ -121,6 +121,7 @@ const eventOptions = [
   { label: "Изменение", value: "product.updated" },
   { label: "Архивирование", value: "product.archived" },
   { label: "Восстановление", value: "product.restored" },
+  { label: "Безвозвратное удаление", value: "product.permanently_deleted" },
   { label: "Запрос выгрузки", value: "export.requested" },
   { label: "Выгрузка готова", value: "export.completed" },
   { label: "Ошибка выгрузки", value: "export.failed" },

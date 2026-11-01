@@ -1880,6 +1880,62 @@
         ]
       }
     },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/local-ingredients": {
+      "get": {
+        "operationId": "ProductsController_listLocalIngredients",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 160,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LocalIngredientListItemResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Рабочее пространство или связанная запись недоступны"
+          }
+        },
+        "summary": "Получить активные локальные ингредиенты текущего заведения",
+        "tags": [
+          "products"
+        ]
+      }
+    },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/archive": {
       "get": {
         "operationId": "ProductsController_listArchive",
@@ -1918,7 +1974,6 @@
             "schema": {
               "type": "string",
               "enum": [
-                "INGREDIENT",
                 "PREPARATION",
                 "GARNISH",
                 "COCKTAIL"
@@ -1945,76 +2000,6 @@
           }
         },
         "summary": "Получить архив продукции текущего заведения",
-        "tags": [
-          "products"
-        ]
-      }
-    },
-    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/archive/ingredient-options": {
-      "get": {
-        "operationId": "ProductsController_listArchiveIngredientOptions",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "venueId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "query",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 160,
-              "type": "string"
-            }
-          },
-          {
-            "name": "type",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "INGREDIENT",
-                "PREPARATION",
-                "GARNISH",
-                "COCKTAIL"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ArchiveProductSummaryDto"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Рабочее пространство или связанная запись недоступны"
-          }
-        },
-        "summary": "Найти активные локальные ингредиенты для архивирования",
         "tags": [
           "products"
         ]
@@ -2116,6 +2101,9 @@
               }
             }
           },
+          "400": {
+            "description": "Локальные ингредиенты нельзя архивировать"
+          },
           "404": {
             "description": "Рабочее пространство или связанная запись недоступны"
           },
@@ -2130,7 +2118,7 @@
             }
           }
         },
-        "summary": "Архивировать локальную продукцию без активных зависимостей",
+        "summary": "Архивировать заготовку, гарнир или коктейль без активных зависимостей",
         "tags": [
           "products"
         ]
@@ -2184,6 +2172,132 @@
           }
         },
         "summary": "Рассчитать план восстановления и допустимые замены",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/{productId}/permanent-delete-plan": {
+      "get": {
+        "operationId": "ProductsController_permanentDeletePlan",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermanentDeletePlanDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Рабочее пространство или связанная запись недоступны"
+          }
+        },
+        "summary": "Проверить использования локального продукта перед удалением",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/{productId}/permanent-delete": {
+      "post": {
+        "operationId": "ProductsController_permanentDeleteProduct",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermanentDeleteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermanentDeleteResultDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Рабочее пространство или связанная запись недоступны"
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermanentDeleteConflictDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Заменить использования либо удалить локальный продукт или цепочку",
         "tags": [
           "products"
         ]
@@ -2291,6 +2405,20 @@
             "schema": {
               "maxLength": 160,
               "type": "string"
+            }
+          },
+          {
+            "name": "workflowStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "ALL",
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ACTIVE",
+                "IN_DEVELOPMENT"
+              ]
             }
           },
           {
@@ -2559,6 +2687,20 @@
             }
           },
           {
+            "name": "workflowStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "ALL",
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ACTIVE",
+                "IN_DEVELOPMENT"
+              ]
+            }
+          },
+          {
             "name": "sort",
             "required": false,
             "in": "query",
@@ -2822,6 +2964,20 @@
               "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "name": "workflowStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "ALL",
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ACTIVE",
+                "IN_DEVELOPMENT"
+              ]
+            }
           }
         ],
         "responses": {
@@ -2842,7 +2998,7 @@
             "description": "Рабочее пространство или связанная запись недоступны"
           }
         },
-        "summary": "Получить активные коктейли текущего заведения",
+        "summary": "Получить неархивные коктейли текущего заведения",
         "tags": [
           "products"
         ]
@@ -2944,6 +3100,20 @@
             "schema": {
               "format": "uuid",
               "type": "string"
+            }
+          },
+          {
+            "name": "workflowStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "ALL",
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ACTIVE",
+                "IN_DEVELOPMENT"
+              ]
             }
           }
         ],
@@ -3403,6 +3573,77 @@
         ]
       }
     },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/local-ingredients/{productId}": {
+      "patch": {
+        "operationId": "ProductsController_updateLocalIngredientName",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLocalIngredientNameDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCreatedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Название или категория ингредиента не прошли проверку"
+          },
+          "403": {
+            "description": "Нет разрешения управлять продукцией"
+          },
+          "404": {
+            "description": "Рабочее пространство или связанная запись недоступны"
+          },
+          "409": {
+            "description": "Название ингредиента уже используется"
+          }
+        },
+        "summary": "Изменить название и категорию временного локального ингредиента",
+        "tags": [
+          "products"
+        ]
+      }
+    },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/units": {
       "post": {
         "operationId": "ProductsController_createUnit",
@@ -3502,6 +3743,69 @@
           }
         },
         "summary": "Добавить локальное значение справочника",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/preparation-categories": {
+      "post": {
+        "operationId": "ProductsController_createPreparationCategory",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLocalPreparationCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparationCategoryResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Название категории некорректно"
+          },
+          "403": {
+            "description": "Нет разрешения управлять продукцией"
+          },
+          "404": {
+            "description": "Рабочее пространство или связанная запись недоступны"
+          },
+          "409": {
+            "description": "Такая категория уже доступна этому заведению"
+          }
+        },
+        "summary": "Добавить локальную категорию заготовки",
         "tags": [
           "products"
         ]
@@ -3826,6 +4130,20 @@
             }
           },
           {
+            "name": "workflowStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "ALL",
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ACTIVE",
+                "IN_DEVELOPMENT"
+              ]
+            }
+          },
+          {
             "name": "venueId",
             "required": true,
             "in": "path",
@@ -3927,6 +4245,20 @@
             "schema": {
               "format": "uuid",
               "type": "string"
+            }
+          },
+          {
+            "name": "workflowStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "ALL",
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ACTIVE",
+                "IN_DEVELOPMENT"
+              ]
             }
           },
           {
@@ -4086,6 +4418,20 @@
             "schema": {
               "maxLength": 80,
               "type": "string"
+            }
+          },
+          {
+            "name": "workflowStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "ALL",
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ACTIVE",
+                "IN_DEVELOPMENT"
+              ]
             }
           },
           {
@@ -4295,6 +4641,20 @@
             "schema": {
               "maxLength": 160,
               "type": "string"
+            }
+          },
+          {
+            "name": "workflowStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "ALL",
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ACTIVE",
+                "IN_DEVELOPMENT"
+              ]
             }
           },
           {
@@ -4584,6 +4944,62 @@
         "responses": {
           "201": {
             "description": ""
+          }
+        },
+        "tags": [
+          "internal-service-products"
+        ]
+      }
+    },
+    "/api/v1/internal/service-sessions/{serviceSessionId}/companies/{companyId}/venues/{venueId}/products/preparation-categories": {
+      "post": {
+        "operationId": "InternalServiceProductsController_createPreparationCategory",
+        "parameters": [
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceSessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLocalPreparationCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparationCategoryResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -8802,6 +9218,49 @@
           "terminationDate"
         ]
       },
+      "LocalIngredientListItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INGREDIENT"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "category": {
+            "type": "string"
+          },
+          "categoryCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name",
+          "status",
+          "updatedAt",
+          "category",
+          "categoryCode"
+        ]
+      },
       "ArchiveListItemDto": {
         "type": "object",
         "properties": {
@@ -8831,32 +9290,6 @@
           "type",
           "name",
           "updatedAt"
-        ]
-      },
-      "ArchiveProductSummaryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "INGREDIENT",
-              "PREPARATION",
-              "GARNISH",
-              "COCKTAIL"
-            ]
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "name"
         ]
       },
       "ArchiveComponentDto": {
@@ -9088,6 +9521,32 @@
           "preparationMethod"
         ]
       },
+      "ArchiveProductSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name"
+        ]
+      },
       "ArchiveRestoreRootDto": {
         "type": "object",
         "properties": {
@@ -9192,7 +9651,8 @@
             "enum": [
               "PRODUCT_ARCHIVE_ACTIVE_DEPENDENCIES",
               "PRODUCT_ARCHIVE_RESTORE_PLAN_CHANGED",
-              "PRODUCT_ARCHIVE_NAME_CONFLICT"
+              "PRODUCT_ARCHIVE_NAME_CONFLICT",
+              "PRODUCT_PERMANENT_DELETE_DEPENDENCIES"
             ]
           },
           "affectedProducts": {
@@ -9211,6 +9671,225 @@
         },
         "required": [
           "code"
+        ]
+      },
+      "PermanentDeleteProductDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name",
+          "status"
+        ]
+      },
+      "PermanentDeleteUsageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentType": {
+            "type": "string",
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
+          },
+          "parentName": {
+            "type": "string"
+          },
+          "parentStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "COMPONENT",
+              "GARNISH"
+            ]
+          },
+          "replacements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveProductSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "parentId",
+          "parentType",
+          "parentName",
+          "parentStatus",
+          "relation",
+          "replacements"
+        ]
+      },
+      "PermanentDeletePlanDto": {
+        "type": "object",
+        "properties": {
+          "root": {
+            "$ref": "#/components/schemas/PermanentDeleteProductDto"
+          },
+          "activeUsages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermanentDeleteUsageDto"
+            }
+          },
+          "archivedUsages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermanentDeleteUsageDto"
+            }
+          },
+          "deleteChain": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermanentDeleteProductDto"
+            }
+          },
+          "confirmationFingerprint": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "root",
+          "activeUsages",
+          "archivedUsages",
+          "deleteChain",
+          "confirmationFingerprint"
+        ]
+      },
+      "PermanentDeleteDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "DELETE",
+              "REPLACE",
+              "DELETE_CHAIN"
+            ]
+          },
+          "confirmationFingerprint": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "confirmationName": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "replacementProductId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "action",
+          "confirmationFingerprint"
+        ]
+      },
+      "ArchiveReplacementDto": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "replacementProductId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "parentId",
+          "productId",
+          "replacementProductId"
+        ]
+      },
+      "PermanentDeleteResultDto": {
+        "type": "object",
+        "properties": {
+          "deletedProducts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveProductSummaryDto"
+            }
+          },
+          "replacements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveReplacementDto"
+            }
+          }
+        },
+        "required": [
+          "deletedProducts",
+          "replacements"
+        ]
+      },
+      "PermanentDeleteConflictDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "PRODUCT_PERMANENT_DELETE_DEPENDENCIES",
+              "PRODUCT_PERMANENT_DELETE_PLAN_CHANGED"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PermanentDeletePlanDto"
+          }
+        },
+        "required": [
+          "code",
+          "message"
         ]
       },
       "ArchiveRestoreDecisionDto": {
@@ -9263,28 +9942,6 @@
           "decisions"
         ]
       },
-      "ArchiveReplacementDto": {
-        "type": "object",
-        "properties": {
-          "parentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "productId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "replacementProductId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "parentId",
-          "productId",
-          "replacementProductId"
-        ]
-      },
       "ArchiveRestoreResultDto": {
         "type": "object",
         "properties": {
@@ -9316,6 +9973,13 @@
           "name": {
             "type": "string"
           },
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ]
+          },
           "componentSummary": {
             "type": "string",
             "description": "Краткий состав через запятую"
@@ -9328,6 +9992,7 @@
         "required": [
           "id",
           "name",
+          "workflowStatus",
           "componentSummary",
           "updatedAt"
         ]
@@ -9422,6 +10087,13 @@
               "ACTIVE"
             ]
           },
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ]
+          },
           "components": {
             "type": "array",
             "items": {
@@ -9450,6 +10122,7 @@
           "name",
           "type",
           "status",
+          "workflowStatus",
           "components",
           "technology",
           "output",
@@ -9498,6 +10171,14 @@
       "UpdateGarnishDto": {
         "type": "object",
         "properties": {
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ],
+            "default": "IN_DEVELOPMENT"
+          },
           "name": {
             "type": "string",
             "maxLength": 160
@@ -9621,6 +10302,13 @@
           "name": {
             "type": "string"
           },
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ]
+          },
           "categoryName": {
             "type": "string"
           },
@@ -9636,6 +10324,7 @@
         "required": [
           "id",
           "name",
+          "workflowStatus",
           "categoryName",
           "componentSummary",
           "updatedAt"
@@ -9725,6 +10414,13 @@
               "ACTIVE"
             ]
           },
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ]
+          },
           "categoryName": {
             "type": "string"
           },
@@ -9759,6 +10455,7 @@
           "name",
           "type",
           "status",
+          "workflowStatus",
           "categoryName",
           "categoryCode",
           "components",
@@ -9770,6 +10467,14 @@
       "UpdatePreparationDto": {
         "type": "object",
         "properties": {
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ],
+            "default": "IN_DEVELOPMENT"
+          },
           "name": {
             "type": "string",
             "maxLength": 160
@@ -9869,6 +10574,13 @@
           "name": {
             "type": "string"
           },
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ]
+          },
           "categories": {
             "type": "array",
             "items": {
@@ -9887,6 +10599,7 @@
         "required": [
           "id",
           "name",
+          "workflowStatus",
           "categories",
           "componentSummary",
           "updatedAt"
@@ -10022,6 +10735,13 @@
               "ACTIVE"
             ]
           },
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ]
+          },
           "components": {
             "type": "array",
             "items": {
@@ -10084,6 +10804,7 @@
           "categories",
           "type",
           "status",
+          "workflowStatus",
           "components",
           "garnishes",
           "technology",
@@ -10143,6 +10864,11 @@
           "name": {
             "type": "string"
           },
+          "venueId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "sortOrder": {
             "type": "number"
           },
@@ -10154,6 +10880,7 @@
           "id",
           "code",
           "name",
+          "venueId",
           "sortOrder",
           "isActive"
         ]
@@ -10291,6 +11018,14 @@
               "COCKTAIL"
             ]
           },
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ],
+            "nullable": true
+          },
           "name": {
             "type": "string"
           },
@@ -10336,6 +11071,7 @@
         "required": [
           "id",
           "type",
+          "workflowStatus",
           "name",
           "venueId",
           "venueName",
@@ -10428,9 +11164,34 @@
           "categoryCode"
         ]
       },
+      "UpdateLocalIngredientNameDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "categoryCode": {
+            "type": "string",
+            "example": "other"
+          }
+        },
+        "required": [
+          "name",
+          "categoryCode"
+        ]
+      },
       "CreatePreparationDto": {
         "type": "object",
         "properties": {
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ],
+            "default": "IN_DEVELOPMENT"
+          },
           "name": {
             "type": "string",
             "maxLength": 160
@@ -10469,6 +11230,14 @@
       "CreateGarnishDto": {
         "type": "object",
         "properties": {
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ],
+            "default": "IN_DEVELOPMENT"
+          },
           "name": {
             "type": "string",
             "maxLength": 160
@@ -10522,6 +11291,14 @@
       "CreateCocktailDto": {
         "type": "object",
         "properties": {
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ],
+            "default": "IN_DEVELOPMENT"
+          },
           "name": {
             "type": "string",
             "maxLength": 160
@@ -10601,6 +11378,14 @@
       "UpdateCocktailDto": {
         "type": "object",
         "properties": {
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IN_DEVELOPMENT"
+            ],
+            "default": "IN_DEVELOPMENT"
+          },
           "name": {
             "type": "string",
             "maxLength": 160
@@ -10719,6 +11504,18 @@
         "required": [
           "type",
           "label"
+        ]
+      },
+      "CreateLocalPreparationCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "name"
         ]
       },
       "LocalIngredientDetailsResponseDto": {

@@ -2,8 +2,12 @@
   <Dialog
     :visible="visible"
     modal
+    :closable="!saving"
+    :close-on-escape="!saving"
+    :dismissable-mask="!saving"
     header="Изменение затронет другие карточки"
-    class="w-[calc(100vw-2rem)] max-w-xl"
+    class="dialog-size-md"
+    :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
     @update:visible="emit('cancel')"
   >
     <p class="text-sm text-color-secondary">

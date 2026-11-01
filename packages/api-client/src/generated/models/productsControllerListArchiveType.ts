@@ -10,7 +10,6 @@ export type ProductsControllerListArchiveType = typeof ProductsControllerListArc
 
 
 export const ProductsControllerListArchiveType = {
-  INGREDIENT: 'INGREDIENT',
   PREPARATION: 'PREPARATION',
   GARNISH: 'GARNISH',
   COCKTAIL: 'COCKTAIL',

@@ -13,7 +13,13 @@ export class PreparationReadService {
     private readonly search: ProductSearchService,
   ) {}
 
-  async list(context: CreateProductContext, query?: string, categoryCode?: string, sort?: string) {
+  async list(
+    context: CreateProductContext,
+    query?: string,
+    categoryCode?: string,
+    workflowStatus?: string,
+    sort?: string,
+  ) {
     await this.assertViewAccess(context);
     const normalizedQuery = normalizeQuery(query);
     const matchingIds = normalizedQuery
@@ -23,6 +29,7 @@ export class PreparationReadService {
       context.venueId,
       matchingIds,
       normalizeCategoryCode(categoryCode),
+      normalizeWorkflowStatus(workflowStatus),
       normalizeSort(sort),
     );
   }
@@ -51,4 +58,8 @@ function normalizeCategoryCode(categoryCode?: string): string | undefined {
 
 function normalizeSort(sort?: string): PreparationListSort {
   return sort === "updated" ? "updated" : "name";
+}
+
+function normalizeWorkflowStatus(value?: string): "ACTIVE" | "IN_DEVELOPMENT" | undefined {
+  return value === "ACTIVE" || value === "IN_DEVELOPMENT" ? value : undefined;
 }

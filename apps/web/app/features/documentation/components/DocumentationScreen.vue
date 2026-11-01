@@ -66,6 +66,7 @@
 
     <Drawer
       v-model:visible="drawerVisible"
+      dismissable
       :header="drawerTitle"
       position="left"
       class="drawer-size-md"

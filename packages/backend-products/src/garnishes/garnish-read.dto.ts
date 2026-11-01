@@ -3,6 +3,7 @@ export type GarnishListSort = "name" | "updated";
 export type GarnishListItem = {
   id: string;
   name: string;
+  workflowStatus: "ACTIVE" | "IN_DEVELOPMENT";
   componentSummary: string;
   updatedAt: Date;
 };
@@ -12,6 +13,7 @@ export type GarnishCard = {
   name: string;
   type: "GARNISH";
   status: "ACTIVE";
+  workflowStatus: "ACTIVE" | "IN_DEVELOPMENT";
   components: Array<{
     id: string;
     productId: string;
