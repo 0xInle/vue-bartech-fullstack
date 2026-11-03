@@ -41,6 +41,30 @@ export function readArchiveProblem(value: unknown): Record<string, unknown> | nu
     const affectedProducts = summaries(response.affectedProducts);
     return affectedProducts ? { code: response.code, affectedProducts } : null;
   }
+  if (response.code === "PRODUCT_ARCHIVE_PLAN_CHANGED") {
+    const rawPlan = record(response.plan);
+    const archiveChain = rawPlan?.archiveChain;
+    const permanentPlan = Array.isArray(archiveChain)
+      ? readPermanentDeletePlan({ ...rawPlan, deleteChain: archiveChain })
+      : null;
+    const canReplace = rawPlan?.canReplace;
+    const plan =
+      permanentPlan && typeof canReplace === "boolean"
+        ? {
+            root: permanentPlan.root,
+            activeUsages: permanentPlan.activeUsages,
+            archivedUsages: permanentPlan.archivedUsages,
+            archiveChain: permanentPlan.deleteChain,
+            canReplace,
+            confirmationFingerprint: permanentPlan.confirmationFingerprint,
+          }
+        : null;
+    return {
+      code: response.code,
+      ...(typeof response.message === "string" ? { message: response.message } : {}),
+      ...(plan ? { plan } : {}),
+    };
+  }
   if (response.code === "PRODUCT_ARCHIVE_NAME_CONFLICT" && typeof response.productId === "string")
     return { code: response.code, productId: response.productId };
   if (response.code !== "PRODUCT_ARCHIVE_RESTORE_PLAN_CHANGED") return null;
@@ -60,22 +84,8 @@ export function readArchiveProblem(value: unknown): Record<string, unknown> | nu
   for (const value of plan.dependencies) {
     const node = record(value);
     const base = summary(value);
-    const replacements = summaries(node?.replacements);
-    if (
-      !node ||
-      !base ||
-      !replacements ||
-      typeof node.nameConflict !== "boolean" ||
-      !Array.isArray(node.parentIds) ||
-      !node.parentIds.every((id: unknown) => typeof id === "string")
-    )
-      return null;
-    dependencies.push({
-      ...base,
-      nameConflict: node.nameConflict,
-      parentIds: node.parentIds,
-      replacements,
-    });
+    if (!node || !base || typeof node.nameConflict !== "boolean") return null;
+    dependencies.push({ ...base, nameConflict: node.nameConflict });
   }
   return {
     code: response.code,

@@ -1,4 +1,13 @@
 <template>
+  <Toast
+    position="top-right"
+    :pt="{
+      messageContent: { class: '!items-center' },
+      messageIcon: { class: '!hidden' },
+      summary: { class: '!text-xs' },
+      detail: { class: '!text-xs' },
+    }"
+  />
   <NetworkStatusBanner />
   <PwaUpdatePrompt />
   <NuxtPage />

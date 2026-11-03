@@ -66,9 +66,11 @@ import {
 import {
   ArchiveCardDto,
   ArchiveConflictDto,
+  ArchivePlanDto,
+  ArchiveProductDto,
+  ArchiveProductResultDto,
   ArchiveListItemDto,
   ArchiveListQueryDto,
-  ArchiveProductSummaryDto,
   ArchiveRestoreDto,
   ArchiveRestorePlanDto,
   ArchiveRestoreResultDto,
@@ -145,13 +147,27 @@ export class ProductsController {
     return this.archiveReads.getById(context(user, companyId, venueId), productId);
   }
 
+  @Get(":productId/archive-plan")
+  @RequirePermissions("manage_product_archive")
+  @ApiOperation({ summary: "Рассчитать план архивации и допустимые замены" })
+  @ApiParam({ name: "productId", format: "uuid" })
+  @ApiOkResponse({ type: ArchivePlanDto })
+  getArchivePlan(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Param("productId") productId: string,
+  ) {
+    return this.archiveMutations.archivePlan(context(user, companyId, venueId), productId);
+  }
+
   @Post(":productId/archive")
   @RequirePermissions("manage_product_archive")
   @ApiOperation({
-    summary: "Архивировать заготовку, гарнир или коктейль без активных зависимостей",
+    summary: "Архивировать продукт, заменив ссылки или архивировав связанные продукты",
   })
   @ApiParam({ name: "productId", format: "uuid" })
-  @ApiCreatedResponse({ type: ArchiveProductSummaryDto })
+  @ApiCreatedResponse({ type: ArchiveProductResultDto })
   @ApiBadRequestResponse({ description: "Локальные ингредиенты нельзя архивировать" })
   @ApiConflictResponse({ type: ArchiveConflictDto })
   archiveProduct(
@@ -159,13 +175,14 @@ export class ProductsController {
     @Param("companyId") companyId: string,
     @Param("venueId") venueId: string,
     @Param("productId") productId: string,
+    @Body() input: ArchiveProductDto,
   ) {
-    return this.archiveMutations.archive(context(user, companyId, venueId), productId);
+    return this.archiveMutations.archive(context(user, companyId, venueId), productId, input);
   }
 
   @Get("archive/:productId/restore-plan")
   @RequirePermissions("manage_product_archive")
-  @ApiOperation({ summary: "Рассчитать план восстановления и допустимые замены" })
+  @ApiOperation({ summary: "Рассчитать цепочку продукции для восстановления" })
   @ApiParam({ name: "productId", format: "uuid" })
   @ApiOkResponse({ type: ArchiveRestorePlanDto })
   getArchiveRestorePlan(

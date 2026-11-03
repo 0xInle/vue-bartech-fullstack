@@ -6,12 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ArchiveConflictDtoCode } from './archiveConflictDtoCode';
+import type { ArchivePlanDto } from './archivePlanDto';
 import type { ArchiveProductSummaryDto } from './archiveProductSummaryDto';
 import type { ArchiveRestorePlanDto } from './archiveRestorePlanDto';
 
 export interface ArchiveConflictDto {
   code: ArchiveConflictDtoCode;
+  message?: string;
   affectedProducts?: ArchiveProductSummaryDto[];
+  plan?: ArchivePlanDto;
   restorePlan?: ArchiveRestorePlanDto;
   productId?: string;
 }

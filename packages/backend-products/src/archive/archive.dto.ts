@@ -32,9 +32,7 @@ export type ArchiveCard = ArchiveProductSummary & {
   preparationMethod: string | null;
 };
 export type ArchiveRestoreNode = ArchiveProductSummary & {
-  parentIds: string[];
   nameConflict: boolean;
-  replacements: ArchiveProductSummary[];
 };
 export type ArchiveRestorePlan = {
   root: ArchiveProductSummary & { nameConflict: boolean };
@@ -43,12 +41,9 @@ export type ArchiveRestorePlan = {
 };
 export type ArchiveRestoreInput = {
   confirmationFingerprint: string;
-  newName?: string;
-  decisions: Array<{
+  names: Array<{
     productId: string;
-    action: "RESTORE" | "REPLACE";
-    replacementProductId?: string;
-    newName?: string;
+    name: string;
   }>;
 };
 
@@ -76,6 +71,17 @@ export type PermanentDeletePlan = {
 
 export type PermanentDeleteInput = {
   action: "DELETE" | "REPLACE" | "DELETE_CHAIN";
+  confirmationFingerprint: string;
+  confirmationName?: string;
+  replacementProductId?: string;
+};
+
+export type ArchivePlan = Omit<PermanentDeletePlan, "deleteChain"> & {
+  archiveChain: PermanentDeleteProduct[];
+  canReplace: boolean;
+};
+export type ArchiveInput = {
+  action: "ARCHIVE" | "REPLACE" | "ARCHIVE_CHAIN";
   confirmationFingerprint: string;
   confirmationName?: string;
   replacementProductId?: string;

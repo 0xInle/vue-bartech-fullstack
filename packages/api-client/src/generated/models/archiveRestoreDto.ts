@@ -5,11 +5,9 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
-import type { ArchiveRestoreDecisionDto } from './archiveRestoreDecisionDto';
+import type { ArchiveRestoreNameDto } from './archiveRestoreNameDto';
 
 export interface ArchiveRestoreDto {
   confirmationFingerprint: string;
-  decisions: ArchiveRestoreDecisionDto[];
-  /** @maxLength 160 */
-  newName?: string;
+  names: ArchiveRestoreNameDto[];
 }

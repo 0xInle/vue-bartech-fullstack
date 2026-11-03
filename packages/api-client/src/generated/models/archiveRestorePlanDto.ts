@@ -5,11 +5,10 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
-import type { ArchiveRestoreNodeDto } from './archiveRestoreNodeDto';
 import type { ArchiveRestoreRootDto } from './archiveRestoreRootDto';
 
 export interface ArchiveRestorePlanDto {
   root: ArchiveRestoreRootDto;
-  dependencies: ArchiveRestoreNodeDto[];
+  dependencies: ArchiveRestoreRootDto[];
   confirmationFingerprint: string;
 }

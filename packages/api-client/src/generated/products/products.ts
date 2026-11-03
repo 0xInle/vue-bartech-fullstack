@@ -34,7 +34,9 @@ import type {
   ArchiveCardDto,
   ArchiveConflictDto,
   ArchiveListItemDto,
-  ArchiveProductSummaryDto,
+  ArchivePlanDto,
+  ArchiveProductDto,
+  ArchiveProductResultDto,
   ArchiveRestoreDto,
   ArchiveRestorePlanDto,
   ArchiveRestoreResultDto,
@@ -441,8 +443,122 @@ export function useProductsControllerGetArchiveCard<TData = Awaited<ReturnType<t
 
 
 
+export type productsControllerGetArchivePlanResponse200 = {
+  data: ArchivePlanDto
+  status: 200
+}
+
+export type productsControllerGetArchivePlanResponse404 = {
+  data: void
+  status: 404
+}
+
+export type productsControllerGetArchivePlanResponseSuccess = (productsControllerGetArchivePlanResponse200) & {
+  headers: Headers;
+};
+export type productsControllerGetArchivePlanResponseError = (productsControllerGetArchivePlanResponse404) & {
+  headers: Headers;
+};
+
+export type productsControllerGetArchivePlanResponse = (productsControllerGetArchivePlanResponseSuccess | productsControllerGetArchivePlanResponseError)
+
+export const getProductsControllerGetArchivePlanUrl = (companyId: string,
+    venueId: string,
+    productId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/${productId}/archive-plan`
+}
+
+/**
+ * @summary Рассчитать план архивации и допустимые замены
+ */
+export const productsControllerGetArchivePlan = async (companyId: string,
+    venueId: string,
+    productId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerGetArchivePlanResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getProductsControllerGetArchivePlanUrl(companyId,venueId,productId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: productsControllerGetArchivePlanResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as productsControllerGetArchivePlanResponse
+}
+
+
+
+
+
+export const getProductsControllerGetArchivePlanQueryKey = (companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'venues',venueId,'products',productId,'archive-plan'
+    ] as const;
+    }
+
+
+export const getProductsControllerGetArchivePlanQueryOptions = <TData = Awaited<ReturnType<typeof productsControllerGetArchivePlan>>, TError = void>(companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerGetArchivePlan>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getProductsControllerGetArchivePlanQueryKey(companyId,venueId,productId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof productsControllerGetArchivePlan>>> = ({ signal }) => productsControllerGetArchivePlan(toValue(companyId),toValue(venueId),toValue(productId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined && toValue(venueId) !== null && toValue(venueId) !== undefined && toValue(productId) !== null && toValue(productId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof productsControllerGetArchivePlan>>, TError, TData>
+}
+
+export type ProductsControllerGetArchivePlanQueryResult = NonNullable<Awaited<ReturnType<typeof productsControllerGetArchivePlan>>>
+export type ProductsControllerGetArchivePlanQueryError = void
+
+
+/**
+ * @summary Рассчитать план архивации и допустимые замены
+ */
+
+export function useProductsControllerGetArchivePlan<TData = Awaited<ReturnType<typeof productsControllerGetArchivePlan>>, TError = void>(
+ companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerGetArchivePlan>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProductsControllerGetArchivePlanQueryOptions(companyId,venueId,productId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
 export type productsControllerArchiveProductResponse201 = {
-  data: ArchiveProductSummaryDto
+  data: ArchiveProductResultDto
   status: 201
 }
 
@@ -481,18 +597,33 @@ export const getProductsControllerArchiveProductUrl = (companyId: string,
 }
 
 /**
- * @summary Архивировать заготовку, гарнир или коктейль без активных зависимостей
+ * @summary Архивировать продукт, заменив ссылки или архивировав связанные продукты
  */
 export const productsControllerArchiveProduct = async (companyId: string,
     venueId: string,
-    productId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerArchiveProductResponse> => {
+    productId: string,
+    archiveProductDto: ArchiveProductDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerArchiveProductResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getProductsControllerArchiveProductUrl(companyId,venueId,productId),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getProductsControllerArchiveProductUrl(companyId,venueId,productId),
   {
     ...options,
-    method: 'POST'
-
-
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(archiveProductDto)
   }
 )
 
@@ -524,9 +655,9 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof productsControllerArchiveProduct>>, ProductsControllerArchiveProductMutationVariables> = (props) => {
-          const {companyId,venueId,productId} = props ?? {};
+          const {companyId,venueId,productId,data} = props ?? {};
 
-          return  productsControllerArchiveProduct(companyId,venueId,productId,fetchOptions, fetcherFn)
+          return  productsControllerArchiveProduct(companyId,venueId,productId,data,fetchOptions, fetcherFn)
         }
 
 
@@ -537,12 +668,12 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
   return  { mutationFn, ...mutationOptions }}
 
     export type ProductsControllerArchiveProductMutationResult = NonNullable<Awaited<ReturnType<typeof productsControllerArchiveProduct>>>
-
+    export type ProductsControllerArchiveProductMutationBody = ArchiveProductDto
     export type ProductsControllerArchiveProductMutationError = void | ArchiveConflictDto
-    export type ProductsControllerArchiveProductMutationVariables = {companyId: string;venueId: string;productId: string}
+    export type ProductsControllerArchiveProductMutationVariables = {companyId: string;venueId: string;productId: string;data: ArchiveProductDto}
 
     /**
- * @summary Архивировать заготовку, гарнир или коктейль без активных зависимостей
+ * @summary Архивировать продукт, заменив ссылки или архивировав связанные продукты
  */
 export const useProductsControllerArchiveProduct = <TError = void | ArchiveConflictDto,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerArchiveProduct>>, TError,ProductsControllerArchiveProductMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
@@ -584,7 +715,7 @@ export const getProductsControllerGetArchiveRestorePlanUrl = (companyId: string,
 }
 
 /**
- * @summary Рассчитать план восстановления и допустимые замены
+ * @summary Рассчитать цепочку продукции для восстановления
  */
 export const productsControllerGetArchiveRestorePlan = async (companyId: string,
     venueId: string,
@@ -644,7 +775,7 @@ export type ProductsControllerGetArchiveRestorePlanQueryError = void
 
 
 /**
- * @summary Рассчитать план восстановления и допустимые замены
+ * @summary Рассчитать цепочку продукции для восстановления
  */
 
 export function useProductsControllerGetArchiveRestorePlan<TData = Awaited<ReturnType<typeof productsControllerGetArchiveRestorePlan>>, TError = void>(

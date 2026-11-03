@@ -2,6 +2,7 @@ import { computed, toValue, type MaybeRefOrGetter } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import {
   productsControllerArchiveProduct,
+  productsControllerGetArchivePlan,
   productsControllerGetArchiveCard,
   productsControllerGetArchiveRestorePlan,
   productsControllerPermanentDeletePlan,
@@ -16,6 +17,7 @@ import type {
   productsControllerGetArchiveRestorePlanResponse200,
   productsControllerListArchiveResponse200,
   productsControllerArchiveProductResponse409,
+  ProductsControllerArchiveProductMutationBody,
   productsControllerPermanentDeleteProductResponse409,
   ProductsControllerPermanentDeleteProductMutationBody,
   ProductsControllerRestoreProductMutationBody,
@@ -26,10 +28,16 @@ import { useProductAnalytics } from "~/features/analytics/composables/useProduct
 
 export type ArchiveCard = productsControllerGetArchiveCardResponse200["data"];
 export type ArchivePlan = productsControllerGetArchiveRestorePlanResponse200["data"];
+export type ProductArchivePlan = Awaited<
+  ReturnType<typeof productsControllerGetArchivePlan>
+>["data"];
 export type ArchiveItem = productsControllerListArchiveResponse200["data"][number];
 export type RestoreInput = ProductsControllerRestoreProductMutationBody;
 export type ProductAnalyticsType = NonNullable<ProductAnalyticsEventDto["productType"]>;
-type ArchiveProblem = productsControllerArchiveProductResponse409["data"] & { detail?: string };
+type ArchiveProblem = productsControllerArchiveProductResponse409["data"] & {
+  detail?: string;
+  plan?: ProductArchivePlan;
+};
 type PermanentDeleteProblem = productsControllerPermanentDeleteProductResponse409["data"] & {
   detail?: string;
 };
@@ -146,7 +154,23 @@ export function useProductArchive(
     });
   }
 
-  async function archive(productId: string, productType: ProductAnalyticsType) {
+  async function archivePlan(productId: string): Promise<ProductArchivePlan> {
+    return requestApi<ProductArchivePlan>(
+      productsControllerGetArchivePlan(
+        company.value,
+        venue.value,
+        productId,
+        { credentials: "include" },
+        identity.apiFetch,
+      ),
+    );
+  }
+
+  async function archive(
+    productId: string,
+    productType: ProductAnalyticsType,
+    input: ProductsControllerArchiveProductMutationBody,
+  ) {
     const currentCompany = company.value;
     const currentVenue = venue.value;
     await identity.refreshCsrf();
@@ -155,6 +179,7 @@ export function useProductArchive(
         currentCompany,
         currentVenue,
         productId,
+        input,
         { credentials: "include", headers: { "x-csrf-token": identity.csrfToken.value } },
         identity.apiFetch,
       ),
@@ -253,6 +278,7 @@ export function useProductArchive(
     list,
     card,
     archive,
+    archivePlan,
     restorePlan,
     restore,
     permanentDeletePlan,

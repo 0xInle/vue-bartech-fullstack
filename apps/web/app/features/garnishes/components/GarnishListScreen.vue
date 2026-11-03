@@ -13,12 +13,14 @@
     <section class="w-full">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <h1 class="text-xl font-semibold tracking-tight">Гарниры</h1>
-        <Button
-          v-if="canManage"
-          label="Создать гарнир"
-          size="small"
-          @click="drawerVisible = true"
-        />
+        <div class="flex flex-wrap gap-2">
+          <Button
+            v-if="canManage"
+            label="Создать гарнир"
+            size="small"
+            @click="drawerVisible = true"
+          />
+        </div>
       </div>
       <div class="mt-5 grid gap-3 pt-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
         <FloatLabel variant="on" class="min-w-0"

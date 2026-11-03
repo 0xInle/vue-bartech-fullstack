@@ -2058,6 +2058,59 @@
         ]
       }
     },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/{productId}/archive-plan": {
+      "get": {
+        "operationId": "ProductsController_getArchivePlan",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArchivePlanDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Рабочее пространство или связанная запись недоступны"
+          }
+        },
+        "summary": "Рассчитать план архивации и допустимые замены",
+        "tags": [
+          "products"
+        ]
+      }
+    },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/{productId}/archive": {
       "post": {
         "operationId": "ProductsController_archiveProduct",
@@ -2090,13 +2143,23 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveProductDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ArchiveProductSummaryDto"
+                  "$ref": "#/components/schemas/ArchiveProductResultDto"
                 }
               }
             }
@@ -2118,7 +2181,7 @@
             }
           }
         },
-        "summary": "Архивировать заготовку, гарнир или коктейль без активных зависимостей",
+        "summary": "Архивировать продукт, заменив ссылки или архивировав связанные продукты",
         "tags": [
           "products"
         ]
@@ -2171,7 +2234,7 @@
             "description": "Рабочее пространство или связанная запись недоступны"
           }
         },
-        "summary": "Рассчитать план восстановления и допустимые замены",
+        "summary": "Рассчитать цепочку продукции для восстановления",
         "tags": [
           "products"
         ]
@@ -9521,158 +9584,6 @@
           "preparationMethod"
         ]
       },
-      "ArchiveProductSummaryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "INGREDIENT",
-              "PREPARATION",
-              "GARNISH",
-              "COCKTAIL"
-            ]
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "name"
-        ]
-      },
-      "ArchiveRestoreRootDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "INGREDIENT",
-              "PREPARATION",
-              "GARNISH",
-              "COCKTAIL"
-            ]
-          },
-          "name": {
-            "type": "string"
-          },
-          "nameConflict": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "name",
-          "nameConflict"
-        ]
-      },
-      "ArchiveRestoreNodeDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "INGREDIENT",
-              "PREPARATION",
-              "GARNISH",
-              "COCKTAIL"
-            ]
-          },
-          "name": {
-            "type": "string"
-          },
-          "nameConflict": {
-            "type": "boolean"
-          },
-          "parentIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "replacements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ArchiveProductSummaryDto"
-            }
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "name",
-          "nameConflict",
-          "parentIds",
-          "replacements"
-        ]
-      },
-      "ArchiveRestorePlanDto": {
-        "type": "object",
-        "properties": {
-          "root": {
-            "$ref": "#/components/schemas/ArchiveRestoreRootDto"
-          },
-          "dependencies": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ArchiveRestoreNodeDto"
-            }
-          },
-          "confirmationFingerprint": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "root",
-          "dependencies",
-          "confirmationFingerprint"
-        ]
-      },
-      "ArchiveConflictDto": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "PRODUCT_ARCHIVE_ACTIVE_DEPENDENCIES",
-              "PRODUCT_ARCHIVE_RESTORE_PLAN_CHANGED",
-              "PRODUCT_ARCHIVE_NAME_CONFLICT",
-              "PRODUCT_PERMANENT_DELETE_DEPENDENCIES"
-            ]
-          },
-          "affectedProducts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ArchiveProductSummaryDto"
-            }
-          },
-          "restorePlan": {
-            "$ref": "#/components/schemas/ArchiveRestorePlanDto"
-          },
-          "productId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "code"
-        ]
-      },
       "PermanentDeleteProductDto": {
         "type": "object",
         "properties": {
@@ -9705,6 +9616,32 @@
           "type",
           "name",
           "status"
+        ]
+      },
+      "ArchiveProductSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name"
         ]
       },
       "PermanentDeleteUsageDto": {
@@ -9759,6 +9696,208 @@
           "parentStatus",
           "relation",
           "replacements"
+        ]
+      },
+      "ArchivePlanDto": {
+        "type": "object",
+        "properties": {
+          "root": {
+            "$ref": "#/components/schemas/PermanentDeleteProductDto"
+          },
+          "activeUsages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermanentDeleteUsageDto"
+            }
+          },
+          "archivedUsages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermanentDeleteUsageDto"
+            }
+          },
+          "archiveChain": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermanentDeleteProductDto"
+            }
+          },
+          "canReplace": {
+            "type": "boolean"
+          },
+          "confirmationFingerprint": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "root",
+          "activeUsages",
+          "archivedUsages",
+          "archiveChain",
+          "canReplace",
+          "confirmationFingerprint"
+        ]
+      },
+      "ArchiveProductDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "ARCHIVE",
+              "REPLACE",
+              "ARCHIVE_CHAIN"
+            ]
+          },
+          "confirmationFingerprint": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "confirmationName": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "replacementProductId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "action",
+          "confirmationFingerprint"
+        ]
+      },
+      "ArchiveReplacementDto": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "replacementProductId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "parentId",
+          "productId",
+          "replacementProductId"
+        ]
+      },
+      "ArchiveProductResultDto": {
+        "type": "object",
+        "properties": {
+          "archivedProducts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveProductSummaryDto"
+            }
+          },
+          "replacements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveReplacementDto"
+            }
+          }
+        },
+        "required": [
+          "archivedProducts",
+          "replacements"
+        ]
+      },
+      "ArchiveRestoreRootDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameConflict": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name",
+          "nameConflict"
+        ]
+      },
+      "ArchiveRestorePlanDto": {
+        "type": "object",
+        "properties": {
+          "root": {
+            "$ref": "#/components/schemas/ArchiveRestoreRootDto"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveRestoreRootDto"
+            }
+          },
+          "confirmationFingerprint": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "root",
+          "dependencies",
+          "confirmationFingerprint"
+        ]
+      },
+      "ArchiveConflictDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "PRODUCT_ARCHIVE_ACTIVE_DEPENDENCIES",
+              "PRODUCT_ARCHIVE_PLAN_CHANGED",
+              "PRODUCT_ARCHIVE_RESTORE_PLAN_CHANGED",
+              "PRODUCT_ARCHIVE_NAME_CONFLICT",
+              "PRODUCT_PERMANENT_DELETE_DEPENDENCIES"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "affectedProducts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveProductSummaryDto"
+            }
+          },
+          "plan": {
+            "$ref": "#/components/schemas/ArchivePlanDto"
+          },
+          "restorePlan": {
+            "$ref": "#/components/schemas/ArchiveRestorePlanDto"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "code"
         ]
       },
       "PermanentDeletePlanDto": {
@@ -9827,28 +9966,6 @@
           "confirmationFingerprint"
         ]
       },
-      "ArchiveReplacementDto": {
-        "type": "object",
-        "properties": {
-          "parentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "productId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "replacementProductId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "parentId",
-          "productId",
-          "replacementProductId"
-        ]
-      },
       "PermanentDeleteResultDto": {
         "type": "object",
         "properties": {
@@ -9892,32 +10009,21 @@
           "message"
         ]
       },
-      "ArchiveRestoreDecisionDto": {
+      "ArchiveRestoreNameDto": {
         "type": "object",
         "properties": {
           "productId": {
             "type": "string",
             "format": "uuid"
           },
-          "action": {
-            "type": "string",
-            "enum": [
-              "RESTORE",
-              "REPLACE"
-            ]
-          },
-          "replacementProductId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "newName": {
+          "name": {
             "type": "string",
             "maxLength": 160
           }
         },
         "required": [
           "productId",
-          "action"
+          "name"
         ]
       },
       "ArchiveRestoreDto": {
@@ -9926,20 +10032,16 @@
           "confirmationFingerprint": {
             "type": "string"
           },
-          "decisions": {
+          "names": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ArchiveRestoreDecisionDto"
+              "$ref": "#/components/schemas/ArchiveRestoreNameDto"
             }
-          },
-          "newName": {
-            "type": "string",
-            "maxLength": 160
           }
         },
         "required": [
           "confirmationFingerprint",
-          "decisions"
+          "names"
         ]
       },
       "ArchiveRestoreResultDto": {
@@ -9950,17 +10052,10 @@
             "items": {
               "$ref": "#/components/schemas/ArchiveProductSummaryDto"
             }
-          },
-          "replacements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ArchiveReplacementDto"
-            }
           }
         },
         "required": [
-          "restoredProducts",
-          "replacements"
+          "restoredProducts"
         ]
       },
       "GarnishListItemResponseDto": {

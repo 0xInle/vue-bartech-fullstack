@@ -8,8 +8,8 @@ import {
 import { Prisma, type ProductType } from "@bartech/database";
 import { OrganizationsService } from "@bartech/backend-organizations";
 import type { CreateProductContext } from "../product.dto.js";
-import type { ArchiveRestoreInput, PermanentDeleteInput } from "./archive.dto.js";
-import type { PermanentDeletePlan } from "./archive.dto.js";
+import type { ArchiveInput, ArchiveRestoreInput, PermanentDeleteInput } from "./archive.dto.js";
+import type { ArchivePlan, PermanentDeletePlan } from "./archive.dto.js";
 import { ArchiveReadRepository } from "./archive-read.repository.js";
 import { ArchiveMutationRepository } from "./archive-mutation.repository.js";
 import { buildRestorePlan, productLinks, resolveRestore } from "./archive-restore-plan.js";
@@ -24,7 +24,23 @@ export class ArchiveMutationService {
     private readonly organizations: OrganizationsService,
   ) {}
 
-  async archive(context: CreateProductContext, productId: string) {
+  async archivePlan(context: CreateProductContext, productId: string): Promise<ArchivePlan> {
+    await this.assertPermission(context);
+    return this.repository.database.$transaction(async (transaction) => {
+      await this.repository.lockVenue(transaction, context.venueId);
+      const graph = await this.reads.graph(transaction, context.venueId);
+      const plan = buildPermanentDeletePlan(
+        graph,
+        productId,
+        await this.repository.globalIngredientReplacements(transaction),
+      );
+      if (plan.root.status !== "ACTIVE" || plan.root.type === "INGREDIENT")
+        throw new NotFoundException("Продукт не найден или недоступен");
+      return this.toArchivePlan(plan);
+    });
+  }
+
+  async archive(context: CreateProductContext, productId: string, input: ArchiveInput) {
     await this.assertPermission(context);
     return this.repository.database.$transaction(async (transaction) => {
       await this.repository.lockVenue(transaction, context.venueId);
@@ -34,22 +50,128 @@ export class ArchiveMutationService {
       if (!product) throw new NotFoundException("Продукт не найден или недоступен");
       if (product.type === "INGREDIENT")
         throw new BadRequestException("Локальные ингредиенты нельзя архивировать");
-      const affectedProducts = graph.local
-        .filter(
-          (item) =>
-            item.status === "ACTIVE" &&
-            productLinks(item).some((link) => link.productId === productId),
-        )
-        .map(({ id, type, name }) => ({ id, type, name }));
-      if (affectedProducts.length)
+      const plan = buildPermanentDeletePlan(
+        graph,
+        productId,
+        await this.repository.globalIngredientReplacements(transaction),
+      );
+      if (input.confirmationFingerprint !== plan.confirmationFingerprint)
+        throw new ConflictException({
+          code: "PRODUCT_ARCHIVE_PLAN_CHANGED",
+          message:
+            "Связи продукции изменились. Проверьте обновлённый план и подтвердите действие ещё раз",
+          plan: this.toArchivePlan(plan),
+        });
+      if (input.action !== "ARCHIVE_CHAIN" && input.confirmationName)
+        throw new BadRequestException("Для этого сценария ввод названия не требуется");
+      if (input.action === "REPLACE") {
+        const replacementId = input.replacementProductId;
+        if (!replacementId || !plan.activeUsages.length)
+          throw new BadRequestException("Выберите замену для активных использований");
+        const commonCandidates = plan.activeUsages[0]!.replacements.filter((candidate) =>
+          plan.activeUsages.every((usage) =>
+            usage.replacements.some((replacement) => replacement.id === candidate.id),
+          ),
+        );
+        if (!commonCandidates.some((candidate) => candidate.id === replacementId))
+          throw new BadRequestException("Выберите замену, подходящую для всех использований");
+        const candidate = await this.repository.replacementProduct(
+          transaction,
+          context.venueId,
+          replacementId,
+        );
+        if (!candidate) throw new ConflictException("Выбранная замена больше недоступна");
+        const replacementRows = new Map(plan.activeUsages.map(({ id }) => [id, candidate.id]));
+        const finalLinks = new Map<string, string[]>();
+        for (const parent of graph.local.filter(
+          (item) => item.id !== productId && item.status === "ACTIVE",
+        ))
+          finalLinks.set(
+            parent.id,
+            productLinks(parent).map((link) => replacementRows.get(link.rowId) ?? link.productId),
+          );
+        const visited = new Set<string>();
+        const visiting = new Set<string>();
+        const visit = (id: string) => {
+          if (visiting.has(id))
+            throw new ConflictException("Выбранная замена создаёт цикл зависимостей");
+          if (visited.has(id)) return;
+          visiting.add(id);
+          for (const childId of finalLinks.get(id) ?? []) visit(childId);
+          visiting.delete(id);
+          visited.add(id);
+        };
+        for (const id of finalLinks.keys()) visit(id);
+        const result = [];
+        const changedParents = new Map<string, { type: string; name: string }>();
+        for (const usage of plan.activeUsages) {
+          const parent = graph.local.find((item) => item.id === usage.parentId);
+          if (!parent || parent.status !== "ACTIVE")
+            throw new ConflictException("Использующая карточка изменилась. Обновите план");
+          if (usage.relation === "GARNISH")
+            await this.repository.replaceGarnish(
+              transaction,
+              context.venueId,
+              usage.id,
+              candidate.id,
+            );
+          else
+            await this.repository.replaceComponent(
+              transaction,
+              context.venueId,
+              usage.id,
+              candidate.id,
+              candidate.venueId,
+            );
+          changedParents.set(parent.id, { type: parent.type, name: parent.name });
+          result.push({ parentId: parent.id, productId, replacementProductId: candidate.id });
+        }
+        for (const [parentId, parent] of changedParents) {
+          await this.repository.touchParentProduct(
+            transaction,
+            context.venueId,
+            parentId,
+            context.userId,
+          );
+          await this.repository.audit(transaction, context, parentId, "product.updated", {
+            productType: parent.type,
+            name: parent.name,
+          });
+        }
+        await this.repository.setStatus(transaction, context, productId, "ARCHIVED");
+        await this.repository.audit(transaction, context, productId, "product.archived");
+        return { archivedProducts: [plan.root], replacements: result };
+      }
+      if (input.replacementProductId)
+        throw new BadRequestException("Для архивации замены не передаются");
+      if (input.action === "ARCHIVE_CHAIN" && input.confirmationName !== plan.root.name)
+        throw new BadRequestException(
+          "Введите точное название исходной карточки для подтверждения",
+        );
+      if (
+        input.action === "ARCHIVE" &&
+        plan.deleteChain.some((item) => item.id !== productId && item.status === "ACTIVE")
+      )
         throw new ConflictException({
           code: "PRODUCT_ARCHIVE_ACTIVE_DEPENDENCIES",
-          message: "Сначала измените или архивируйте использующие продукт техкарты",
-          affectedProducts,
+          message: "Выберите замену или архивирование связанных продуктов",
         });
-      const result = await this.repository.setStatus(transaction, context, productId, "ARCHIVED");
-      await this.repository.audit(transaction, context, productId, "product.archived");
-      return result;
+      if (
+        input.action === "ARCHIVE_CHAIN" &&
+        !plan.deleteChain.some((item) => item.id !== productId && item.status === "ACTIVE")
+      )
+        throw new BadRequestException("Связанные активные продукты отсутствуют");
+      if (input.action !== "ARCHIVE" && input.action !== "ARCHIVE_CHAIN")
+        throw new BadRequestException("Неизвестный сценарий архивации");
+      const toArchive =
+        input.action === "ARCHIVE_CHAIN"
+          ? plan.deleteChain.filter((item) => item.status === "ACTIVE")
+          : [plan.root];
+      for (const item of toArchive) {
+        await this.repository.setStatus(transaction, context, item.id, "ARCHIVED");
+        await this.repository.audit(transaction, context, item.id, "product.archived");
+      }
+      return { archivedProducts: toArchive, replacements: [] };
     });
   }
 
@@ -100,6 +222,20 @@ export class ArchiveMutationService {
               "Данные использования изменились. Обновите план и подтвердите действие ещё раз",
             plan,
           });
+        if (plan.root.status === "ARCHIVED") {
+          const activeDependants = plan.deleteChain.filter(
+            (item) => item.id !== plan.root.id && item.status === "ACTIVE",
+          );
+          if (activeDependants.length)
+            throw new ConflictException({
+              code: "PRODUCT_PERMANENT_DELETE_DEPENDENCIES",
+              message:
+                "Архивную карточку нельзя удалить, пока у неё есть активные зависимые продукты. Сначала архивируйте их отдельно",
+              plan,
+            });
+          if (input.action === "REPLACE")
+            throw new BadRequestException("Для архивной карточки замена недоступна");
+        }
         if (input.action === "REPLACE") {
           if (plan.archivedUsages.length)
             throw new ConflictException("Архивные карточки нужно восстановить и изменить отдельно");
@@ -275,6 +411,24 @@ export class ArchiveMutationService {
     });
   }
 
+  private toArchivePlan(plan: PermanentDeletePlan): ArchivePlan {
+    const commonReplacementIds = plan.activeUsages.length
+      ? plan.activeUsages[0]!.replacements.filter((candidate) =>
+          plan.activeUsages.every((usage) =>
+            usage.replacements.some((replacement) => replacement.id === candidate.id),
+          ),
+        ).map(({ id }) => id)
+      : [];
+    return {
+      root: plan.root,
+      activeUsages: plan.activeUsages,
+      archivedUsages: plan.archivedUsages,
+      archiveChain: plan.deleteChain.filter((item) => item.status === "ACTIVE"),
+      canReplace: commonReplacementIds.length > 0,
+      confirmationFingerprint: plan.confirmationFingerprint,
+    };
+  }
+
   async restore(context: CreateProductContext, productId: string, input: ArchiveRestoreInput) {
     await this.assertPermission(context);
     try {
@@ -290,23 +444,6 @@ export class ArchiveMutationService {
             restorePlan: plan,
           });
         const resolved = resolveRestore(graph, plan, input);
-        for (const replacement of resolved.replacements) {
-          if (replacement.garnish)
-            await this.repository.replaceGarnish(
-              transaction,
-              context.venueId,
-              replacement.rowId,
-              replacement.replacementProductId,
-            );
-          else
-            await this.repository.replaceComponent(
-              transaction,
-              context.venueId,
-              replacement.rowId,
-              replacement.replacementProductId,
-              context.venueId,
-            );
-        }
         const restoredProducts = [];
         for (const [id, name] of resolved.restored) {
           restoredProducts.push(
@@ -314,16 +451,7 @@ export class ArchiveMutationService {
           );
           await this.repository.audit(transaction, context, id, "product.restored");
         }
-        return {
-          restoredProducts,
-          replacements: resolved.replacements.map(
-            ({ parentId, productId, replacementProductId }) => ({
-              parentId,
-              productId,
-              replacementProductId,
-            }),
-          ),
-        };
+        return { restoredProducts };
       });
     } catch (error) {
       if (

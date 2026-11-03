@@ -95,44 +95,48 @@ export class ArchiveRestoreRootDto extends ArchiveProductSummaryDto {
   @ApiProperty() nameConflict!: boolean;
 }
 
-export class ArchiveRestoreNodeDto extends ArchiveRestoreRootDto {
-  @ApiProperty({ type: String, isArray: true }) parentIds!: string[];
-  @ApiProperty({ type: ArchiveProductSummaryDto, isArray: true })
-  replacements!: ArchiveProductSummaryDto[];
-}
-
 export class ArchiveRestorePlanDto {
   @ApiProperty({ type: ArchiveRestoreRootDto }) root!: ArchiveRestoreRootDto;
-  @ApiProperty({ type: ArchiveRestoreNodeDto, isArray: true })
-  dependencies!: ArchiveRestoreNodeDto[];
+  @ApiProperty({ type: ArchiveRestoreRootDto, isArray: true })
+  dependencies!: ArchiveRestoreRootDto[];
   @ApiProperty() confirmationFingerprint!: string;
 }
 
-export class ArchiveRestoreDecisionDto {
-  @ApiProperty({ format: "uuid" }) @IsUUID() productId!: string;
-  @ApiProperty({ enum: ["RESTORE", "REPLACE"] }) @IsIn(["RESTORE", "REPLACE"]) action!:
-    "RESTORE" | "REPLACE";
-  @ApiPropertyOptional({ format: "uuid" }) @IsOptional() @IsUUID() replacementProductId?: string;
+export class ArchiveProductDto {
+  @ApiProperty({ enum: ["ARCHIVE", "REPLACE", "ARCHIVE_CHAIN"] })
+  @IsIn(["ARCHIVE", "REPLACE", "ARCHIVE_CHAIN"])
+  action!: "ARCHIVE" | "REPLACE" | "ARCHIVE_CHAIN";
+
+  @ApiProperty({ pattern: "^[a-f0-9]{64}$" })
+  @Matches(/^[a-f0-9]{64}$/)
+  confirmationFingerprint!: string;
+
   @ApiPropertyOptional({ maxLength: 160 })
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(160)
-  newName?: string;
+  confirmationName?: string;
+
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  replacementProductId?: string;
+}
+
+export class ArchiveRestoreNameDto {
+  @ApiProperty({ format: "uuid" }) @IsUUID() productId!: string;
+  @ApiProperty({ maxLength: 160 }) @IsString() @IsNotEmpty() @MaxLength(160) name!: string;
 }
 
 export class ArchiveRestoreDto {
   @ApiProperty() @Matches(/^[a-f0-9]{64}$/) confirmationFingerprint!: string;
-  @ApiProperty({ type: ArchiveRestoreDecisionDto, isArray: true })
+  @ApiProperty({ type: ArchiveRestoreNameDto, isArray: true })
   @IsArray()
-  @ArrayUnique((decision: ArchiveRestoreDecisionDto) => decision.productId)
+  @ArrayUnique((item: ArchiveRestoreNameDto) => item.productId)
   @ValidateNested({ each: true })
-  @Type(() => ArchiveRestoreDecisionDto)
-  decisions!: ArchiveRestoreDecisionDto[];
-  @ApiPropertyOptional({ maxLength: 160 })
-  @IsOptional()
-  @IsString()
-  @MaxLength(160)
-  newName?: string;
+  @Type(() => ArchiveRestoreNameDto)
+  names!: ArchiveRestoreNameDto[];
 }
 
 export class PermanentDeleteDto {
@@ -184,10 +188,29 @@ export class PermanentDeletePlanDto {
   @ApiProperty({ pattern: "^[a-f0-9]{64}$" }) confirmationFingerprint!: string;
 }
 
+export class ArchivePlanDto {
+  @ApiProperty({ type: PermanentDeleteProductDto }) root!: PermanentDeleteProductDto;
+  @ApiProperty({ type: PermanentDeleteUsageDto, isArray: true })
+  activeUsages!: PermanentDeleteUsageDto[];
+  @ApiProperty({ type: PermanentDeleteUsageDto, isArray: true })
+  archivedUsages!: PermanentDeleteUsageDto[];
+  @ApiProperty({ type: PermanentDeleteProductDto, isArray: true })
+  archiveChain!: PermanentDeleteProductDto[];
+  @ApiProperty() canReplace!: boolean;
+  @ApiProperty({ pattern: "^[a-f0-9]{64}$" }) confirmationFingerprint!: string;
+}
+
 export class ArchiveReplacementDto {
   @ApiProperty({ format: "uuid" }) parentId!: string;
   @ApiProperty({ format: "uuid" }) productId!: string;
   @ApiProperty({ format: "uuid" }) replacementProductId!: string;
+}
+
+export class ArchiveProductResultDto {
+  @ApiProperty({ type: ArchiveProductSummaryDto, isArray: true })
+  archivedProducts!: ArchiveProductSummaryDto[];
+  @ApiProperty({ type: ArchiveReplacementDto, isArray: true })
+  replacements!: ArchiveReplacementDto[];
 }
 
 export class PermanentDeleteResultDto {
@@ -200,22 +223,23 @@ export class PermanentDeleteResultDto {
 export class ArchiveRestoreResultDto {
   @ApiProperty({ type: ArchiveProductSummaryDto, isArray: true })
   restoredProducts!: ArchiveProductSummaryDto[];
-  @ApiProperty({ type: ArchiveReplacementDto, isArray: true })
-  replacements!: ArchiveReplacementDto[];
 }
 
 export class ArchiveConflictDto {
   @ApiProperty({
     enum: [
       "PRODUCT_ARCHIVE_ACTIVE_DEPENDENCIES",
+      "PRODUCT_ARCHIVE_PLAN_CHANGED",
       "PRODUCT_ARCHIVE_RESTORE_PLAN_CHANGED",
       "PRODUCT_ARCHIVE_NAME_CONFLICT",
       "PRODUCT_PERMANENT_DELETE_DEPENDENCIES",
     ],
   })
   code!: string;
+  @ApiPropertyOptional() message?: string;
   @ApiPropertyOptional({ type: ArchiveProductSummaryDto, isArray: true })
   affectedProducts?: ArchiveProductSummaryDto[];
+  @ApiPropertyOptional({ type: ArchivePlanDto }) plan?: ArchivePlanDto;
   @ApiPropertyOptional({ type: ArchiveRestorePlanDto }) restorePlan?: ArchiveRestorePlanDto;
   @ApiPropertyOptional({ format: "uuid" }) productId?: string;
 }

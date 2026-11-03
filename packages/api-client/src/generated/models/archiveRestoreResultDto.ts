@@ -6,9 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ArchiveProductSummaryDto } from './archiveProductSummaryDto';
-import type { ArchiveReplacementDto } from './archiveReplacementDto';
 
 export interface ArchiveRestoreResultDto {
   restoredProducts: ArchiveProductSummaryDto[];
-  replacements: ArchiveReplacementDto[];
 }

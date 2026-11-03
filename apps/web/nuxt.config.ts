@@ -117,6 +117,7 @@ export default defineNuxtConfig({
         "ProgressSpinner",
         "Select",
         "Tag",
+        "Toast",
       ],
     },
     composables: { include: [] },
