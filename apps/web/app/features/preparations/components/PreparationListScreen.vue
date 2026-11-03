@@ -95,6 +95,12 @@
             ><template #body="{ data }">{{ data.categoryName }}</template></Column
           >
           <Column
+            header=""
+            style="width: 30px; min-width: 30px; max-width: 30px"
+            header-class="!p-0"
+            body-class="!p-0"
+          />
+          <Column
             header="Статус"
             style="width: 1%; white-space: nowrap"
             header-class="px-2"
@@ -106,6 +112,12 @@
                 :severity="data.workflowStatus === 'IN_DEVELOPMENT' ? 'warn' : 'success'"
                 :pt="compactTagPt" /></template
           ></Column>
+          <Column
+            header=""
+            style="width: 30px; min-width: 30px; max-width: 30px"
+            header-class="!p-0"
+            body-class="!p-0"
+          />
           <Column
             header="Действие"
             style="width: 1%; white-space: nowrap"

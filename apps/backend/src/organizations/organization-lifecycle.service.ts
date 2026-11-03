@@ -4,7 +4,7 @@ import { DATABASE_CLIENT, type Prisma, type PrismaClient } from "@bartech/databa
 import { EmailOutboxService } from "@bartech/backend-identity";
 import { ExportRepository, ExportService } from "@bartech/backend-exports";
 import { OrganizationsService } from "@bartech/backend-organizations";
-import type { ExportKind, ExportParameters } from "@bartech/backend-exports";
+import type { ClosureExportKind, ExportParameters } from "@bartech/backend-exports";
 import { SupportAccessService } from "@bartech/backend-support";
 
 const COMPANY_CLOSURE_MS = 168 * 60 * 60_000;
@@ -181,7 +181,7 @@ export class OrganizationLifecycleService {
     userId: string,
     companyId: string,
     operationId: string,
-    type: ExportKind,
+    type: ClosureExportKind,
     parameters: ExportParameters,
   ) {
     const operation = await this.database.productExportClosureOperation.findFirst({
@@ -191,8 +191,8 @@ export class OrganizationLifecycleService {
       throw new NotFoundException("Операция закрытия недоступна");
     }
     if (operation.type === "COMPANY") {
-      if (type !== "COMPANY_CLOSURE_BACKUP_ZIP") {
-        throw new ConflictException("Для закрытия компании доступна резервная выгрузка компании");
+      if (type !== "COMPANY_CLOSURE_PDF_ZIP") {
+        throw new ConflictException("Для закрытия компании доступен ZIP с PDF техкарт");
       }
       const company = await this.database.company.findUnique({
         where: { id: companyId },
@@ -225,12 +225,11 @@ export class OrganizationLifecycleService {
         type,
         parameters: {
           venueIds: company.venues.map(({ id }) => id),
-          companyName: company.name,
         },
       });
     }
     const venueId = operation.venueId;
-    if (!venueId || type === "COMPANY_CLOSURE_BACKUP_ZIP") {
+    if (!venueId || type === "COMPANY_CLOSURE_PDF_ZIP") {
       throw new NotFoundException("Операция закрытия недоступна");
     }
     const workspace = await this.organizations.findWorkspaceForUser(userId, companyId, venueId);

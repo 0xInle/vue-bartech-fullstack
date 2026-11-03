@@ -88,6 +88,13 @@
           </Column>
           <Column
             v-if="canManageArchive || canDeletePermanently"
+            header=""
+            style="width: 30px; min-width: 30px; max-width: 30px"
+            header-class="!p-0"
+            body-class="!p-0"
+          />
+          <Column
+            v-if="canManageArchive || canDeletePermanently"
             header="Действие"
             style="width: 1%; white-space: nowrap"
             header-class="px-2"

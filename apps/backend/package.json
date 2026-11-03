@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "nest start --watch --builder tsc",
-    "dev:worker": "nest start --watch --entryFile worker --builder tsc",
+    "dev:worker": "nest start --watch --entryFile worker --builder tsc --path tsconfig.worker.json",
     "build": "nest build --builder tsc",
     "build:worker": "tsc -p tsconfig.build.json && node --check dist/worker.js",
     "start": "node dist/main.js",

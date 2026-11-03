@@ -9,7 +9,6 @@ import type { ClosureExportDtoType } from './closureExportDtoType';
 
 export interface ClosureExportDto {
   type: ClosureExportDtoType;
-  /** @maxItems 100 */
   productIds?: string[];
   includeArchived?: boolean;
 }

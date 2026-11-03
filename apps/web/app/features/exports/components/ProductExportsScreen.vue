@@ -1,149 +1,196 @@
 <template>
-  <section class="mx-auto max-w-5xl">
-    <header class="mb-6">
-      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Продукция</p>
-      <h1 class="text-xl mt-2 font-semibold tracking-tight">Выгрузка данных</h1>
-      <p class="mt-2 text-sm text-color-secondary">
-        Подготовьте PDF техкарты, пакет выбранных карточек или резервную копию продукции заведения.
-      </p>
+  <section class="w-full">
+    <header class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-xl font-semibold tracking-tight">Выгрузка</h1>
+      <div v-if="!exportId" class="flex flex-wrap items-center gap-2">
+        <Button
+          label="Выгрузить"
+          size="small"
+          :disabled="!filteredProducts.length || isExportPending"
+          :loading="creating"
+          @click="createBatch"
+        />
+      </div>
     </header>
 
-    <template v-if="exportId">
-      <LoadingIndicator v-if="exports.statusQuery.isLoading.value" screen />
-      <Message v-else-if="exports.statusQuery.isError.value" severity="error" :closable="false">
-        Запрос выгрузки недоступен. Проверьте доступ к рабочему пространству.
-      </Message>
-      <Message v-else-if="pageError" severity="error" :closable="false" class="mb-4">
-        {{ pageError }}
-      </Message>
-      <div v-else-if="request" class="rounded-lg border border-surface p-5">
-        <h2 class="text-base font-semibold">{{ statusTitle(request.status) }}</h2>
-        <p class="mt-2 text-sm text-color-secondary">
-          {{ exportTypeLabel(request.type) }} · создано {{ formatDate(request.createdAt) }}
-        </p>
-        <Message v-if="request.status === 'FAILED'" severity="error" :closable="false" class="mt-4">
-          Не удалось подготовить файл. Создайте новую выгрузку.
-        </Message>
-        <Message
-          v-else-if="request.status === 'EXPIRED'"
-          severity="warn"
-          :closable="false"
-          class="mt-4"
-        >
-          Срок хранения завершён. Создайте новую выгрузку.
-        </Message>
-        <div class="mt-5 flex flex-wrap gap-2">
-          <Button
-            v-if="request.status === 'READY'"
-            label="Скачать файл"
-            icon="pi pi-download"
+    <template v-if="!exportId">
+      <div
+        class="export-filters mt-5 flex flex-col gap-3 pt-2 md:flex-row md:flex-nowrap md:items-end"
+      >
+        <FloatLabel variant="on" class="min-w-0 flex-1">
+          <IconField>
+            <InputIcon class="pi pi-search" />
+            <InputText
+              id="export-search"
+              v-model="query"
+              size="small"
+              class="w-full"
+              maxlength="160"
+              aria-label="Поиск по названию продукции"
+            />
+          </IconField>
+          <label for="export-search" class="text-xs">Поиск по названию</label>
+        </FloatLabel>
+        <FloatLabel variant="on" class="w-full min-w-0 md:w-56 md:flex-none">
+          <MultiSelect
+            v-model="types"
+            input-id="export-type-filter"
+            :options="typeOptions"
+            option-label="label"
+            option-value="value"
             size="small"
-            @click="download"
+            class="w-full"
+            show-clear
+            :show-toggle-all="false"
+            fluid
+            :max-selected-labels="1"
+            selected-items-label="{0} выбрано"
+            aria-label="Фильтр по категории продукции"
           />
-          <Button
-            v-if="['FAILED', 'EXPIRED', 'READY'].includes(request.status)"
-            label="Новая выгрузка"
-            icon="pi pi-plus"
-            severity="secondary"
-            outlined
+          <label for="export-type-filter" class="text-xs">Категория</label>
+        </FloatLabel>
+        <FloatLabel variant="on" class="w-full min-w-0 md:w-56 md:flex-none">
+          <MultiSelect
+            v-model="statuses"
+            input-id="export-status-filter"
+            :options="statusOptions"
+            option-label="label"
+            option-value="value"
             size="small"
-            :to="basePath"
-            as="router-link"
+            class="w-full"
+            show-clear
+            :show-toggle-all="false"
+            fluid
+            :max-selected-labels="1"
+            selected-items-label="{0} выбрано"
+            aria-label="Фильтр по статусу продукции"
           />
-        </div>
+          <label for="export-status-filter" class="text-xs">Статус продукции</label>
+        </FloatLabel>
       </div>
-    </template>
 
-    <template v-else>
-      <Message v-if="pageError" severity="error" :closable="false" class="mb-4">
-        {{ pageError }}
+      <Message
+        v-if="!canViewArchive"
+        severity="info"
+        :closable="false"
+        :pt="compactMessagePt"
+        class="mt-5"
+      >
+        Архивные карточки не отображаются: у вас нет доступа к архиву.
       </Message>
-      <LoadingIndicator v-if="productsQuery.isLoading.value" screen />
-      <Message v-else-if="productsQuery.isError.value" severity="error" :closable="false">
+      <Message
+        v-if="productsQuery.isError.value"
+        severity="error"
+        :closable="false"
+        :pt="compactMessagePt"
+        class="mt-5"
+      >
         Не удалось загрузить продукцию. Проверьте доступ и повторите попытку.
         <Button label="Повторить" size="small" text @click="productsQuery.refetch()" />
       </Message>
-      <template v-else>
-        <div
-          class="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-surface p-4"
+      <div v-else-if="productsQuery.isLoading.value" class="mt-5">
+        <LoadingIndicator screen />
+      </div>
+      <template v-else-if="filteredProducts.length">
+        <DataTable
+          :value="pageItems"
+          data-key="id"
+          size="small"
+          row-hover
+          class="product-list-table mt-5 hidden text-sm md:block"
+          :pt="exportTablePt"
         >
-          <span class="text-sm font-medium">Тип продукции:</span>
-          <label
-            v-for="option in typeOptions"
-            :key="option.value"
-            class="flex items-center gap-2 text-sm"
-          >
-            <Checkbox
-              v-model="visibleTypes"
-              :input-id="`export-type-${option.value}`"
-              :value="option.value"
-            />
-            <span>{{ option.label }}</span>
-          </label>
-        </div>
-
-        <label v-if="canViewArchive" class="mb-4 flex items-center gap-2 text-sm">
-          <Checkbox v-model="includeArchived" input-id="include-export-archive" binary />
-          <span>Показывать и включать доступные архивные карточки</span>
-        </label>
-
-        <div class="mb-4 flex flex-wrap gap-2">
-          <Button
-            label="Скачать выбранные PDF в ZIP"
-            icon="pi pi-file-export"
-            size="small"
-            :disabled="!selectedIds.length || creating"
-            :loading="creating"
-            @click="createBatch"
+          <Column field="name" header="Название">
+            <template #body="{ data }">
+              <span class="font-medium">{{ data.name }}</span>
+            </template>
+          </Column>
+          <Column field="type" header="Категория" style="width: 1%; white-space: nowrap">
+            <template #body="{ data }">
+              <Tag :value="productTypeLabel(data.type)" severity="secondary" :pt="compactTagPt" />
+            </template>
+          </Column>
+          <Column
+            header=""
+            style="width: 30px; min-width: 30px; max-width: 30px"
+            header-class="!p-0"
+            body-class="!p-0"
           />
-          <Button
-            label="Резервная выгрузка заведения"
-            icon="pi pi-database"
-            severity="secondary"
-            outlined
-            size="small"
-            :disabled="creating || !canViewArchive"
-            :loading="creatingBackup"
-            @click="createBackup"
-          />
-        </div>
-
-        <Message v-if="!canViewArchive" severity="info" :closable="false" class="mb-4">
-          Для резервной выгрузки активных и архивных карточек нужен доступ к архиву.
-        </Message>
-
-        <div
-          v-if="visibleProducts.length"
-          class="divide-y divide-surface rounded-lg border border-surface"
-        >
-          <label
-            v-for="product in visibleProducts"
+          <Column field="status" header="Статус" style="width: 1%; white-space: nowrap">
+            <template #body="{ data }">
+              <Tag
+                :value="productStatusLabel(data)"
+                :severity="productStatusSeverity(data)"
+                :pt="compactTagPt"
+              />
+            </template>
+          </Column>
+        </DataTable>
+        <div class="mt-5 grid gap-3 md:hidden">
+          <article
+            v-for="product in pageItems"
             :key="product.id"
-            class="flex cursor-pointer items-center gap-3 p-3"
+            class="rounded-lg border border-surface bg-surface-0 p-4"
+            style="border-color: var(--p-content-border-color)"
           >
-            <Checkbox
-              v-model="selectedIds"
-              :input-id="`export-product-${product.id}`"
-              :value="product.id"
-            />
-            <span class="min-w-0 flex-1 truncate text-sm">{{ product.name }}</span>
-            <span class="text-xs text-color-secondary">{{ productTypeLabel(product.type) }}</span>
-            <span v-if="product.status === 'ARCHIVED'" class="text-xs text-color-secondary"
-              >Архив</span
-            >
-          </label>
+            <div class="min-w-0 flex-1">
+              <h2 class="text-sm font-semibold">{{ product.name }}</h2>
+              <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                <span class="text-color-secondary">Категория</span>
+                <Tag
+                  :value="productTypeLabel(product.type)"
+                  severity="secondary"
+                  :pt="compactTagPt"
+                />
+              </div>
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                <span class="text-color-secondary">Статус</span>
+                <Tag
+                  :value="productStatusLabel(product)"
+                  :severity="productStatusSeverity(product)"
+                  :pt="compactTagPt"
+                />
+              </div>
+            </div>
+          </article>
         </div>
-        <Message v-else severity="secondary" :closable="false">
-          По выбранным типам нет доступных техкарт.
-        </Message>
+        <Paginator
+          v-if="filteredProducts.length > pageSize"
+          :first="first"
+          :rows="pageSize"
+          :total-records="filteredProducts.length"
+          :rows-per-page-options="[10, 20, 30]"
+          :pt="paginatorPt"
+          class="mt-3"
+          @page="handlePageChange"
+        />
       </template>
+      <p v-else class="mt-6 text-sm text-color-secondary">
+        {{
+          query || types.length || statuses.length
+            ? "По выбранным условиям ничего не найдено."
+            : "В заведении пока нет продукции для выгрузки."
+        }}
+      </p>
     </template>
+    <ProductExportProgressDialog
+      :visible="exportDialogVisible"
+      :creating="creating"
+      :loading="exports.statusQuery.isLoading.value"
+      :status-error="exports.statusQuery.isError.value"
+      :request="request"
+      :error-message="exportDialogError"
+      :download-loading="downloading"
+      @close="closeExportDialog"
+      @download="download"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useQuery } from "@tanstack/vue-query";
+import type { LocationQueryRaw } from "vue-router";
 import {
   productsControllerListArchive,
   productsControllerListCocktails,
@@ -159,6 +206,10 @@ import type {
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
 import { useProductExports } from "../composables/useProductExports";
 import { requestApi } from "~/utils/api-response";
+import { compactMessagePt } from "~/utils/primevue-message";
+import IconField from "primevue/iconfield";
+import InputIcon from "primevue/inputicon";
+import ProductExportProgressDialog from "./ProductExportProgressDialog.vue";
 
 const props = defineProps<{
   companyId: string;
@@ -167,30 +218,110 @@ const props = defineProps<{
   permissions: string[];
 }>();
 const identity = useIdentityFlow();
+const route = useRoute();
+const router = useRouter();
+const pageSize = ref(20);
+const creating = ref(false);
+const downloading = ref(false);
+const exportDialogVisible = ref(Boolean(props.exportId));
+const exportDialogError = ref("");
+const currentExportId = ref(props.exportId ?? "");
 const canViewArchive = computed(() => props.permissions.includes("view_archive"));
 const company = computed(() => props.companyId);
 const venue = computed(() => props.venueId);
-const exports = useProductExports(company, venue, () => props.exportId ?? "");
-const selectedIds = ref<string[]>([]);
-const includeArchived = ref(false);
-const visibleTypes = ref(["COCKTAIL", "PREPARATION", "GARNISH"]);
-const creating = ref(false);
-const creatingBackup = ref(false);
-const pageError = ref("");
+const exports = useProductExports(company, venue, currentExportId);
 const typeOptions = [
   { label: "Коктейли", value: "COCKTAIL" },
   { label: "Заготовки", value: "PREPARATION" },
   { label: "Гарниры", value: "GARNISH" },
-];
-const basePath = computed(
-  () => `/app/companies/${props.companyId}/venues/${props.venueId}/exports`,
-);
+] as const;
+const statusOptions = computed<{ label: string; value: ExportProductStatus }[]>(() => [
+  { label: "Активен", value: "ACTIVE" },
+  { label: "Проработка", value: "IN_DEVELOPMENT" },
+  ...(canViewArchive.value ? [{ label: "В архиве", value: "ARCHIVED" }] : []),
+]);
+const compactTagPt = {
+  root: { style: { fontSize: "0.75rem", padding: "0.125rem 0.375rem" } },
+  label: { style: { fontWeight: "400" } },
+};
+const exportTablePt = {
+  root: {
+    style: {
+      "--p-datatable-border-color": "var(--p-content-border-color)",
+      "--p-datatable-header-cell-background": "transparent",
+      "--p-datatable-row-background": "transparent",
+      "--p-datatable-row-hover-background":
+        "color-mix(in srgb, var(--p-primary-100) 70%, var(--p-content-background))",
+      border: "1px solid var(--p-content-border-color)",
+      borderRadius: "var(--p-content-border-radius)",
+    },
+  },
+  headerCell: {
+    class: "whitespace-nowrap px-1 py-1 text-sm",
+    style: {
+      borderTop: "0",
+      borderRight: "0",
+      borderLeft: "0",
+      borderBottom: "1px solid var(--p-content-border-color)",
+      fontWeight: "400",
+    },
+  },
+  bodyCell: {
+    class: "px-1 py-1 text-sm",
+    style: {
+      borderTop: "0",
+      borderRight: "0",
+      borderLeft: "0",
+      borderBottom: "1px solid var(--p-content-border-color)",
+    },
+  },
+};
+const paginatorPt = {
+  root: { class: "gap-1 border-0 bg-transparent p-0 text-sm" },
+  first: { class: "!h-8 !min-w-8 text-xs" },
+  prev: { class: "!h-8 !min-w-8 text-xs" },
+  page: { class: "!h-8 !min-w-8 text-xs" },
+  next: { class: "!h-8 !min-w-8 text-xs" },
+  last: { class: "!h-8 !min-w-8 text-xs" },
+  pcRowPerPageDropdown: {
+    root: { class: "!h-8" },
+    label: { class: "!text-xs" },
+  },
+};
+function updateQuery(nextQuery: LocationQueryRaw): void {
+  void router.replace({ query: { ...route.query, ...nextQuery } });
+}
+
+function queryValues(value: string | null | (string | null)[] | undefined): string[] {
+  const values = Array.isArray(value) ? value : [value];
+  return values.filter((item): item is string => typeof item === "string");
+}
+
+const query = computed({
+  get: () => (typeof route.query.query === "string" ? route.query.query : ""),
+  set: (value: string) => updateQuery({ query: value || undefined, page: undefined }),
+});
+const types = computed<ProductType[]>({
+  get: () =>
+    queryValues(route.query.type).filter((value): value is ProductType =>
+      typeOptions.some((item) => item.value === value),
+    ),
+  set: (value) => updateQuery({ type: value.length ? value : undefined, page: undefined }),
+});
+const statuses = computed<ExportProductStatus[]>({
+  get: () =>
+    queryValues(route.query.status).filter((value): value is ExportProductStatus =>
+      statusOptions.value.some((item) => item.value === value),
+    ),
+  set: (value) => updateQuery({ status: value.length ? value : undefined, page: undefined }),
+});
+
 const productsQuery = useQuery({
   queryKey: computed(() => [
     "product-export-options",
     props.companyId,
     props.venueId,
-    includeArchived.value,
+    canViewArchive.value,
   ]),
   enabled: computed(() => Boolean(props.companyId && props.venueId && !props.exportId)),
   retry: false,
@@ -217,7 +348,7 @@ const productsQuery = useQuery({
         { credentials: "include", signal },
         identity.apiFetch,
       ),
-      includeArchived.value && canViewArchive.value
+      canViewArchive.value
         ? productsControllerListArchive(
             props.companyId,
             props.venueId,
@@ -227,114 +358,179 @@ const productsQuery = useQuery({
           )
         : Promise.resolve({ data: [], status: 200 }),
     ]);
-    const activeProducts = [
-      ...(await requestApi<CocktailListItemResponseDto[]>(Promise.resolve(cocktails)).then(
-        (items) =>
-          items.map((item) => ({ ...item, type: "COCKTAIL" as const, status: "ACTIVE" as const })),
-      )),
-      ...(await requestApi<PreparationListItemResponseDto[]>(Promise.resolve(preparations)).then(
-        (items) =>
-          items.map((item) => ({
-            ...item,
-            type: "PREPARATION" as const,
-            status: "ACTIVE" as const,
-          })),
-      )),
-      ...(await requestApi<GarnishListItemResponseDto[]>(Promise.resolve(garnishes)).then((items) =>
-        items.map((item) => ({ ...item, type: "GARNISH" as const, status: "ACTIVE" as const })),
-      )),
+    const activeProducts: ExportProduct[] = [
+      ...(await requestApi<CocktailListItemResponseDto[]>(Promise.resolve(cocktails))).map(
+        (item) => ({ ...item, type: "COCKTAIL" as const, storageStatus: "ACTIVE" as const }),
+      ),
+      ...(await requestApi<PreparationListItemResponseDto[]>(Promise.resolve(preparations))).map(
+        (item) => ({ ...item, type: "PREPARATION" as const, storageStatus: "ACTIVE" as const }),
+      ),
+      ...(await requestApi<GarnishListItemResponseDto[]>(Promise.resolve(garnishes))).map(
+        (item) => ({
+          ...item,
+          type: "GARNISH" as const,
+          storageStatus: "ACTIVE" as const,
+        }),
+      ),
     ];
     const archived = await requestApi<ArchiveListItemDto[]>(Promise.resolve(archive));
     return [
       ...activeProducts,
-      ...archived.map((item) => ({ ...item, status: "ARCHIVED" as const })),
+      ...archived.map((item) => ({ ...item, storageStatus: "ARCHIVED" as const })),
     ];
   },
 });
-const visibleProducts = computed(() =>
-  (productsQuery.data.value ?? []).filter((product) => visibleTypes.value.includes(product.type)),
+const products = computed(() => productsQuery.data.value ?? []);
+const filteredProducts = computed(() =>
+  products.value.filter((product) => {
+    const matchesQuery = product.name
+      .toLocaleLowerCase("ru-RU")
+      .includes(query.value.trim().toLocaleLowerCase("ru-RU"));
+    const matchesType = !types.value.length || types.value.includes(product.type);
+    const matchesStatus = !statuses.value.length || statuses.value.includes(productStatus(product));
+    return matchesQuery && matchesType && matchesStatus;
+  }),
 );
-const selectedVisibleIds = computed(() => new Set(visibleProducts.value.map(({ id }) => id)));
-const selectedVisible = computed(() =>
-  selectedIds.value.filter((id) => selectedVisibleIds.value.has(id)),
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredProducts.value.length / pageSize.value)),
 );
-const request = computed(() => exports.statusQuery.data.value ?? null);
+const currentPage = computed(() => {
+  const parsed = Number.parseInt(String(route.query.page ?? "1"), 10);
+  return Math.min(Math.max(Number.isFinite(parsed) ? parsed : 1, 1), totalPages.value);
+});
+const first = computed(() => (currentPage.value - 1) * pageSize.value);
+const pageItems = computed(() =>
+  filteredProducts.value.slice(first.value, first.value + pageSize.value),
+);
+const request = computed(() => {
+  const data = exports.statusQuery.data.value;
+  return data?.id === currentExportId.value ? data : null;
+});
+const isExportPending = computed(
+  () =>
+    creating.value || request.value?.status === "QUEUED" || request.value?.status === "PROCESSING",
+);
+
+watch(
+  () => props.exportId,
+  (id) => {
+    if (id) {
+      currentExportId.value = id;
+      exportDialogVisible.value = true;
+    }
+  },
+);
+
+watch(filteredProducts, (items) => {
+  if (items.length <= pageSize.value) {
+    if (route.query.page) updateQuery({ page: undefined });
+    return;
+  }
+  if (currentPage.value !== Number.parseInt(String(route.query.page ?? "1"), 10))
+    updateQuery({ page: String(currentPage.value) });
+});
+
+function handlePageChange(event: { page: number; rows: number }): void {
+  pageSize.value = event.rows;
+  updateQuery({ page: String(event.page + 1) });
+}
 
 async function createBatch(): Promise<void> {
-  pageError.value = "";
+  exportDialogError.value = "";
+  currentExportId.value = "";
+  exportDialogVisible.value = true;
   creating.value = true;
   try {
-    const id = await exports.createBatch({
-      productIds: selectedVisible.value,
-      includeArchived: includeArchived.value,
+    currentExportId.value = await exports.createBatch({
+      productIds: filteredProducts.value.map((product) => product.id),
+      includeArchived: filteredProducts.value.some(
+        (product) => product.storageStatus === "ARCHIVED",
+      ),
     });
-    await exports.open(id);
   } catch (error) {
-    pageError.value =
+    exportDialogError.value =
       error instanceof Error ? error.message : "Не удалось создать запрос выгрузки.";
   } finally {
     creating.value = false;
   }
 }
 
-async function createBackup(): Promise<void> {
-  pageError.value = "";
-  creatingBackup.value = true;
-  try {
-    const id = await exports.createBackup();
-    await exports.open(id);
-  } catch (error) {
-    pageError.value =
-      error instanceof Error ? error.message : "Не удалось создать запрос выгрузки.";
-  } finally {
-    creatingBackup.value = false;
-  }
-}
-
 async function download(): Promise<void> {
+  downloading.value = true;
+  exportDialogError.value = "";
   try {
     await exports.download();
   } catch (error) {
-    pageError.value =
+    exportDialogError.value =
       error instanceof Error ? error.message : "Не удалось получить ссылку на файл.";
+  } finally {
+    downloading.value = false;
   }
 }
 
-function statusTitle(status: string): string {
+function closeExportDialog(): void {
+  if (isExportPending.value) return;
+  exportDialogVisible.value = false;
+  exportDialogError.value = "";
+  currentExportId.value = "";
+  if (props.exportId) {
+    void navigateTo(`/app/companies/${props.companyId}/venues/${props.venueId}/exports`);
+  }
+}
+
+function productStatus(product: ExportProduct): ExportProductStatus {
+  if (product.storageStatus === "ARCHIVED") return "ARCHIVED";
+  return "workflowStatus" in product && product.workflowStatus === "IN_DEVELOPMENT"
+    ? "IN_DEVELOPMENT"
+    : "ACTIVE";
+}
+
+function productStatusLabel(product: ExportProduct): string {
+  return {
+    ACTIVE: "Активен",
+    IN_DEVELOPMENT: "Проработка",
+    ARCHIVED: "В архиве",
+  }[productStatus(product)];
+}
+
+function productStatusSeverity(product: ExportProduct): "success" | "warn" | "secondary" {
+  return {
+    ACTIVE: "success",
+    IN_DEVELOPMENT: "warn",
+    ARCHIVED: "secondary",
+  }[productStatus(product)];
+}
+
+function productTypeLabel(productType: ProductType): string {
   return (
     {
-      QUEUED: "В очереди",
-      PROCESSING: "Подготавливаем файл",
-      READY: "Файл готов",
-      FAILED: "Не удалось подготовить файл",
-      EXPIRED: "Срок хранения завершён",
-    }[status] ?? "Состояние выгрузки"
+      COCKTAIL: "Коктейли",
+      PREPARATION: "Заготовки",
+      GARNISH: "Гарниры",
+      INGREDIENT: "Ингредиенты",
+    }[productType] ?? "Техкарта"
   );
 }
 
-function exportTypeLabel(type: string): string {
-  return (
-    {
-      SINGLE_PDF: "PDF техкарты",
-      BATCH_PDF_ZIP: "ZIP с PDF техкарт",
-      VENUE_BACKUP_ZIP: "Резервная выгрузка заведения",
-    }[type] ?? "Выгрузка"
-  );
-}
-
-function productTypeLabel(type: string): string {
-  return typeOptions.find((item) => item.value === type)?.label ?? "Техкарта";
-}
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(
-    new Date(value),
-  );
-}
-
-type ExportProduct =
-  | (CocktailListItemResponseDto & { type: "COCKTAIL"; status: "ACTIVE" })
-  | (PreparationListItemResponseDto & { type: "PREPARATION"; status: "ACTIVE" })
-  | (GarnishListItemResponseDto & { type: "GARNISH"; status: "ACTIVE" })
-  | (ArchiveListItemDto & { status: "ARCHIVED" });
+type ProductType = ArchiveListItemDto["type"];
+type ExportProductStatus = "ACTIVE" | "IN_DEVELOPMENT" | "ARCHIVED";
+type ActiveExportProduct =
+  | (CocktailListItemResponseDto & { type: "COCKTAIL"; storageStatus: "ACTIVE" })
+  | (PreparationListItemResponseDto & { type: "PREPARATION"; storageStatus: "ACTIVE" })
+  | (GarnishListItemResponseDto & { type: "GARNISH"; storageStatus: "ACTIVE" });
+type ExportProduct = ActiveExportProduct | (ArchiveListItemDto & { storageStatus: "ARCHIVED" });
 </script>
+
+<style scoped>
+@media (min-width: 48rem) {
+  .export-filters {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+  }
+}
+
+:deep(.product-list-table .p-datatable-tbody > tr:last-child > td) {
+  border-block-end-width: 0;
+}
+</style>

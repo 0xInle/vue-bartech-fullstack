@@ -8,7 +8,7 @@ import PDFDocument from "pdfkit";
 import { ZipArchive } from "archiver";
 import { Injectable } from "@nestjs/common";
 import { ProductExportReadService, type ProductExportSnapshot } from "@bartech/backend-products";
-import type { ExportParameters } from "./export.dto.js";
+import type { ExportKind, ExportParameters } from "./export.dto.js";
 
 export type RenderedExport = {
   path: string;
@@ -29,7 +29,7 @@ type ExportRenderRequest = {
   id: string;
   companyId: string | null;
   venueId: string | null;
-  type: "SINGLE_PDF" | "BATCH_PDF_ZIP" | "VENUE_BACKUP_ZIP" | "COMPANY_CLOSURE_BACKUP_ZIP";
+  type: ExportKind;
   parameters: unknown;
 };
 
@@ -42,10 +42,12 @@ export class ExportRendererService {
     try {
       const parameters = request.parameters as ExportParameters;
       const path = join(folder, request.type === "SINGLE_PDF" ? "product.pdf" : "products.zip");
-      const fileName = this.outputName(request.type, request.id, request.venueId ?? request.id);
-      if (request.type === "COMPANY_CLOSURE_BACKUP_ZIP") {
-        return await this.renderCompanyBackup(request, parameters, folder, path, fileName);
+      const fileName = this.outputName(request.type, request.id);
+      if (request.type === "COMPANY_CLOSURE_PDF_ZIP") {
+        return await this.renderCompanyPdfArchive(request, parameters, folder, path, fileName);
       }
+      if (request.type === "VENUE_BACKUP_ZIP" || request.type === "COMPANY_CLOSURE_BACKUP_ZIP")
+        throw new Error("Этот формат выгрузки больше не поддерживается");
       if (!request.companyId || !request.venueId) throw new Error("Область выгрузки недоступна");
       const snapshot = await this.products.readSnapshot(
         { companyId: request.companyId, venueId: request.venueId },
@@ -69,43 +71,10 @@ export class ExportRendererService {
       const output = createWriteStream(path, { flags: "wx" });
       archive.on("error", (error) => output.destroy(error));
       archive.pipe(output);
-      if (request.type === "BATCH_PDF_ZIP") {
-        for (const product of snapshot.products) {
-          const pdfPath = join(folder, `${String(product.id)}.pdf`);
-          await this.writePdf(pdfPath, product, snapshot);
-          archive.file(pdfPath, { name: productArchivePath(product) });
-        }
-      } else {
-        const generatedAt = new Date().toISOString();
-        const recipeProducts = snapshot.products.filter(isRecipeProduct);
-        const files = [
-          { path: "data/products.json", purpose: "Структурированные данные продукции" },
-          ...recipeProducts.map((product) => ({
-            path: productArchivePath(product),
-            purpose: "PDF техкарты",
-          })),
-        ];
-        archive.append(JSON.stringify({ schemaVersion: 1, ...snapshot, generatedAt }, null, 2), {
-          name: "data/products.json",
-        });
-        archive.append(
-          JSON.stringify(
-            {
-              schemaVersion: 1,
-              scope: { type: "VENUE", venueId: snapshot.venue.id, venueName: snapshot.venue.name },
-              generatedAt,
-              files,
-            },
-            null,
-            2,
-          ),
-          { name: "manifest.json" },
-        );
-        for (const product of recipeProducts) {
-          const pdfPath = join(folder, `${String(product.id)}.pdf`);
-          await this.writePdf(pdfPath, product, snapshot);
-          archive.file(pdfPath, { name: productArchivePath(product) });
-        }
+      for (const product of snapshot.products) {
+        const pdfPath = join(folder, `${String(product.id)}.pdf`);
+        await this.writePdf(pdfPath, product, snapshot);
+        archive.file(pdfPath, { name: productArchivePath(product) });
       }
       const outputFinished = finished(output);
       await archive.finalize();
@@ -124,7 +93,7 @@ export class ExportRendererService {
     }
   }
 
-  private async renderCompanyBackup(
+  private async renderCompanyPdfArchive(
     request: ExportRenderRequest,
     parameters: ExportParameters,
     folder: string,
@@ -142,44 +111,20 @@ export class ExportRendererService {
     const output = createWriteStream(path, { flags: "wx" });
     archive.on("error", (error) => output.destroy(error));
     archive.pipe(output);
-    const generatedAt = new Date().toISOString();
-    const files: Array<{ path: string; venueId: string; venueName: string }> = [];
-    const rendered: RenderedExport[] = [];
     try {
       for (const venueId of venueIds) {
-        const inner = await this.render({
-          id: `${request.id}-${venueId}`,
-          companyId: request.companyId,
-          venueId,
-          type: "VENUE_BACKUP_ZIP",
-          parameters: {},
-        });
-        rendered.push(inner);
         const snapshot = await this.products.readSnapshot({
           companyId: request.companyId,
           venueId,
         });
-        const entryPath = `venues/${venueId}-${slug(snapshot.venue.name)}/products.zip`;
-        files.push({ path: entryPath, venueId, venueName: snapshot.venue.name });
-        archive.file(inner.path, { name: entryPath });
+        const venuePath = `venues/${slug(snapshot.venue.name)}-${venueId}`;
+        const recipeProducts = snapshot.products.filter(isRecipeProduct);
+        for (const product of recipeProducts) {
+          const pdfPath = join(folder, `${venueId}-${String(product.id)}.pdf`);
+          await this.writePdf(pdfPath, product, snapshot);
+          archive.file(pdfPath, { name: `${venuePath}/${productArchivePath(product)}` });
+        }
       }
-      archive.append(
-        JSON.stringify(
-          {
-            schemaVersion: 1,
-            scope: {
-              type: "COMPANY",
-              companyId: request.companyId,
-              companyName: parameters.companyName ?? "",
-            },
-            generatedAt,
-            files,
-          },
-          null,
-          2,
-        ),
-        { name: "manifest.json" },
-      );
       const outputFinished = finished(output);
       await archive.finalize();
       await outputFinished;
@@ -189,13 +134,10 @@ export class ExportRendererService {
         fileName,
         contentType: "application/zip",
         size: BigInt(file.size),
-        cleanup: async () => {
-          await Promise.all(rendered.map((entry) => entry.cleanup()));
-          await rm(folder, { recursive: true, force: true });
-        },
+        cleanup: () => rm(folder, { recursive: true, force: true }),
       };
     } catch (error) {
-      for (const entry of rendered) await entry.cleanup();
+      output.destroy(error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -208,58 +150,74 @@ export class ExportRendererService {
     const output = createWriteStream(path, { flags: "wx" });
     const document = new PDFDocument({ size: "A4", margin: 48 });
     document.pipe(output);
-    drawText(document, String(product.name), 22, true);
-    document.moveDown(0.7);
-    drawText(document, productTypeLabel(String(product.type)), 11, false);
     const details = product as ProductRecord;
-    if (details.cocktail)
-      drawField(
+    drawText(document, String(product.name), 22, true);
+    document.moveDown(0.35);
+    const metadata = [productTypeLabel(details.type)];
+    if (details.categories.length) metadata.push(...details.categories.map(({ label }) => label));
+    if (details.preparation?.category) metadata.push(details.preparation.category);
+    metadata.push(productStatusLabel(details));
+    drawText(document, metadata.join(" · "), 10, false);
+
+    drawSectionHeading(document, "Состав:");
+    for (const [index, component] of details.components.entries()) {
+      const unit = snapshot.dependencies.units.find((entry) => entry.id === component.unitId);
+      drawText(
         document,
-        "Статус",
-        details.cocktail.workflowStatus === "IN_DEVELOPMENT" ? "Проработка" : "Активен",
+        `${component.product?.name ?? "Компонент"} — ${formatAmount(component.amount)} ${String(unit?.label ?? "")}`,
+        11,
+        false,
       );
-    if (details.preparation?.category)
-      drawField(document, "Категория", details.preparation.category);
-    if (details.technology) drawField(document, "Технология приготовления", details.technology);
-    if (details.components.length) {
-      drawLabel(document, "Состав");
-      for (const component of details.components) {
-        const unit = snapshot.dependencies.units.find((entry) => entry.id === component.unitId);
-        drawText(
-          document,
-          `${component.product?.name ?? "Компонент"} — ${component.amount} ${String(unit?.label ?? "")}`,
-          11,
-          false,
-        );
-      }
+      if (index < details.components.length - 1) drawRowDivider(document);
     }
     if (details.outputAmount && details.outputUnitId) {
       const unit = snapshot.dependencies.units.find((entry) => entry.id === details.outputUnitId);
-      drawField(document, "Выход", `${details.outputAmount} ${String(unit?.label ?? "")}`);
-    }
-    if (details.cocktail?.glass) drawField(document, "Посуда", details.cocktail.glass);
-    if (details.cocktail?.ice) drawField(document, "Лёд", details.cocktail.ice);
-    if (details.cocktail?.preparationMethod)
-      drawField(document, "Метод приготовления", details.cocktail.preparationMethod);
-    if (details.garnishes.length)
-      drawField(
+      document.moveDown(0.5);
+      drawText(
         document,
-        "Гарниши",
+        `Фактический выход: ${formatAmount(details.outputAmount)} ${String(unit?.label ?? "")}`,
+        11,
+        false,
+      );
+    }
+    if (details.cocktail && details.garnishes.length) {
+      drawSectionHeading(document, "Гарнир:");
+      drawText(
+        document,
         details.garnishes
           .map(({ name }) => name)
           .filter(Boolean)
           .join(", "),
+        11,
+        false,
       );
-    if (details.comment) drawField(document, "Комментарий", details.comment);
+    }
+    if (details.cocktail?.glass || details.cocktail?.ice || details.cocktail?.preparationMethod) {
+      drawSectionHeading(document, "Подача и приготовление:");
+      if (details.cocktail.glass) drawDetailRow(document, "Посуда:", details.cocktail.glass);
+      if (details.cocktail.ice) drawDetailRow(document, "Лёд:", details.cocktail.ice);
+      if (details.cocktail.preparationMethod)
+        drawDetailRow(document, "Метод:", details.cocktail.preparationMethod);
+    }
+    if (details.technology) {
+      drawSectionHeading(document, "Технология приготовления:");
+      drawText(document, details.technology, 11, false);
+    }
+    if (details.comment) {
+      drawSectionHeading(document, "Комментарий:");
+      drawText(document, details.comment, 11, false);
+    }
     document.end();
     await finished(output);
   }
 
-  private outputName(type: string, id: string, venueId: string): string {
+  private outputName(type: string, id: string): string {
     if (type === "SINGLE_PDF") return `tech-card-${id}.pdf`;
     if (type === "BATCH_PDF_ZIP") return `tech-cards-${id}.zip`;
-    if (type === "COMPANY_CLOSURE_BACKUP_ZIP") return `company-products-${id}.zip`;
-    return `venue-products-${venueId}-${id}.zip`;
+    if (type === "COMPANY_CLOSURE_PDF_ZIP") return `company-tech-cards-${id}.zip`;
+    if (type === "VENUE_BACKUP_ZIP" || type === "COMPANY_CLOSURE_BACKUP_ZIP")
+      return `unsupported-${id}.zip`;
+    return `tech-cards-${id}.zip`;
   }
 }
 
@@ -272,6 +230,9 @@ type ProductRecord = {
   outputAmount: string | null;
   outputUnitId: string | null;
   preparation: { category: string } | null;
+  categories: Array<{ id: string; label: string }>;
+  status: "ACTIVE" | "ARCHIVED";
+  workflowStatus: "ACTIVE" | "IN_DEVELOPMENT" | null;
   cocktail: {
     glass: string | null;
     ice: string | null;
@@ -304,20 +265,63 @@ function productTypeLabel(value: string): string {
   return { COCKTAIL: "Коктейль", PREPARATION: "Заготовка", GARNISH: "Гарнир" }[value] ?? "Техкарта";
 }
 
-function drawLabel(document: PDFKit.PDFDocument, value: string) {
+function productStatusLabel(product: ProductRecord): string {
+  if (product.status === "ARCHIVED") return "В архиве";
+  return product.workflowStatus === "IN_DEVELOPMENT" ? "Проработка" : "Активен";
+}
+
+function formatAmount(value: string): string {
+  const amount = Number(value);
+  return Number.isFinite(amount)
+    ? new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 6 }).format(amount)
+    : value;
+}
+
+function drawSectionHeading(document: PDFKit.PDFDocument, value: string): void {
+  ensureSpace(document, 48);
   document.moveDown(0.7);
-  drawText(document, value, 13, true);
+  const x = document.page.margins.left;
+  const y = document.y;
+  const width = document.page.width - document.page.margins.left - document.page.margins.right;
+  document.roundedRect(x, y, width, 24, 4).fill("#f3f4f6");
+  document.roundedRect(x + 8, y + 6, 3, 12, 1.5).fill("#10b981");
+  document.x = x + 16;
+  document.y = y + 5;
+  drawText(document, value, 11, true);
+  document.x = x;
+  document.y = y + 31;
 }
 
-function drawField(document: PDFKit.PDFDocument, label: string, value: string) {
-  drawLabel(document, label);
-  drawText(document, value, 11, false);
+function drawDetailRow(document: PDFKit.PDFDocument, label: string, value: string): void {
+  drawText(document, `${label} ${value}`, 11, false);
+  document.moveDown(0.35);
 }
 
-function drawText(document: PDFKit.PDFDocument, value: string, size: number, bold: boolean) {
-  const latin = value.split(/([\u0400-\u04ff\u0500-\u052f]+)/u);
-  for (const part of latin) {
-    const isCyrillic = part && /[\u0400-\u052f]/u.test(part);
+function drawRowDivider(document: PDFKit.PDFDocument): void {
+  ensureSpace(document, 8);
+  const x = document.page.margins.left;
+  const width = document.page.width - document.page.margins.left - document.page.margins.right;
+  const y = document.y + 3;
+  document
+    .strokeColor("#e5e7eb")
+    .lineWidth(0.5)
+    .moveTo(x, y)
+    .lineTo(x + width, y)
+    .stroke();
+  document.y = y + 7;
+  document.x = x;
+}
+
+function ensureSpace(document: PDFKit.PDFDocument, height: number): void {
+  if (document.y + height > document.page.maxY()) document.addPage();
+}
+
+function drawText(document: PDFKit.PDFDocument, value: string, size: number, bold: boolean): void {
+  const startX = document.x;
+  const width = document.page.width - startX - document.page.margins.right;
+  const parts = value.split(/([\u0400-\u04ff\u0500-\u052f]+)/u).filter(Boolean);
+  for (const [index, part] of parts.entries()) {
+    const isCyrillic = /[\u0400-\u052f]/u.test(part);
     document.font(
       bold
         ? isCyrillic
@@ -327,7 +331,14 @@ function drawText(document: PDFKit.PDFDocument, value: string, size: number, bol
           ? cyrillicFont
           : latinFont,
     );
-    document.fontSize(size).fillColor("#1f2937").text(part, { continued: true });
+    document
+      .fontSize(size)
+      .fillColor("#1f2937")
+      .text(part, {
+        width,
+        lineGap: 3,
+        continued: index < parts.length - 1,
+      });
   }
-  document.text("", { continued: false });
+  document.x = startX;
 }

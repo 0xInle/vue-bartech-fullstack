@@ -68,6 +68,7 @@ function sanitizeProduct(
     id: product.id,
     type: product.type,
     status: product.status,
+    workflowStatus: product.workflowStatus,
     venueId: product.venueId,
     name: product.name,
     technology: product.technology,
@@ -92,6 +93,9 @@ function sanitizeProduct(
           category: product.preparation.category.name,
         }
       : null,
+    categories: product.cocktailCategories.flatMap(({ referenceValue }) =>
+      referenceValue ? [{ id: referenceValue.id, label: referenceValue.label }] : [],
+    ),
     cocktail: product.cocktail
       ? {
           glassId: product.cocktail.glassId,

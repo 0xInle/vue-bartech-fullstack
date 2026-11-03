@@ -1,28 +1,24 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  ArrayMaxSize,
-  ArrayMinSize,
-  IsArray,
-  IsBoolean,
-  IsOptional,
-  IsUUID,
-} from "class-validator";
+import { ArrayMinSize, IsArray, IsBoolean, IsOptional, IsUUID } from "class-validator";
 
 export type ExportKind =
-  "SINGLE_PDF" | "BATCH_PDF_ZIP" | "VENUE_BACKUP_ZIP" | "COMPANY_CLOSURE_BACKUP_ZIP";
+  | "SINGLE_PDF"
+  | "BATCH_PDF_ZIP"
+  | "VENUE_BACKUP_ZIP"
+  | "COMPANY_CLOSURE_BACKUP_ZIP"
+  | "COMPANY_CLOSURE_PDF_ZIP";
+export type ClosureExportKind = "SINGLE_PDF" | "BATCH_PDF_ZIP" | "COMPANY_CLOSURE_PDF_ZIP";
 export type ExportState = "QUEUED" | "PROCESSING" | "READY" | "FAILED" | "EXPIRED";
 export type ExportParameters = {
   productIds?: string[];
   includeArchived?: boolean;
   venueIds?: string[];
-  companyName?: string;
 };
 
 export class CreateProductExportDto {
-  @ApiProperty({ type: String, format: "uuid", isArray: true, maxItems: 100 })
+  @ApiProperty({ type: String, format: "uuid", isArray: true })
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(100)
   @IsUUID("all", { each: true })
   productIds!: string[];
 
@@ -40,7 +36,13 @@ export class ProductExportResponseDto {
   status!: ExportState;
 
   @ApiProperty({
-    enum: ["SINGLE_PDF", "BATCH_PDF_ZIP", "VENUE_BACKUP_ZIP", "COMPANY_CLOSURE_BACKUP_ZIP"],
+    enum: [
+      "SINGLE_PDF",
+      "BATCH_PDF_ZIP",
+      "VENUE_BACKUP_ZIP",
+      "COMPANY_CLOSURE_BACKUP_ZIP",
+      "COMPANY_CLOSURE_PDF_ZIP",
+    ],
   })
   type!: ExportKind;
 

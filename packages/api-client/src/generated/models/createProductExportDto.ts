@@ -7,7 +7,6 @@
  */
 
 export interface CreateProductExportDto {
-  /** @maxItems 100 */
   productIds: string[];
   includeArchived?: boolean;
 }

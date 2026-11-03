@@ -3,7 +3,7 @@ import { OrganizationsService } from "@bartech/backend-organizations";
 import { ProductExportReadService } from "@bartech/backend-products";
 import { FILE_STORAGE, type FileStorage } from "@bartech/backend-files";
 import { Inject } from "@nestjs/common";
-import type { ExportKind, ExportParameters, ExportState } from "./export.dto.js";
+import type { ClosureExportKind, ExportKind, ExportParameters, ExportState } from "./export.dto.js";
 import { ExportRepository } from "./export.repository.js";
 
 export type ExportWorkspace = { userId: string; companyId: string; venueId: string };
@@ -18,21 +18,17 @@ export class ExportService {
   ) {}
 
   createSinglePdf(context: ExportWorkspace, productId: string) {
-    return this.create(context, "SINGLE_PDF", { productIds: [productId] });
+    return this.createRequest(context, "SINGLE_PDF", { productIds: [productId] });
   }
 
   createBatch(context: ExportWorkspace, parameters: ExportParameters) {
-    return this.create(context, "BATCH_PDF_ZIP", parameters);
-  }
-
-  createVenueBackup(context: ExportWorkspace) {
-    return this.create(context, "VENUE_BACKUP_ZIP", {});
+    return this.createRequest(context, "BATCH_PDF_ZIP", parameters);
   }
 
   createClosureExport(input: {
     context: { userId: string; companyId: string; venueId: string | null };
     operationId: string;
-    type: ExportKind;
+    type: ClosureExportKind;
     parameters: ExportParameters;
   }) {
     return this.createRequest(input.context, input.type, input.parameters, input.operationId);
@@ -134,17 +130,13 @@ export class ExportService {
     };
   }
 
-  async create(context: ExportWorkspace, type: ExportKind, parameters: ExportParameters) {
-    return this.createRequest(context, type, parameters);
-  }
-
   private async createRequest(
     context: { userId: string; companyId: string; venueId: string | null },
     type: ExportKind,
     parameters: ExportParameters,
     closureOperationId?: string,
   ) {
-    if (type === "COMPANY_CLOSURE_BACKUP_ZIP") {
+    if (type === "COMPANY_CLOSURE_PDF_ZIP") {
       if (!closureOperationId || !Array.isArray(parameters.venueIds)) {
         throw new NotFoundException("Операция выгрузки недоступна");
       }
@@ -155,6 +147,9 @@ export class ExportService {
         parameters,
       });
       return this.toResponse(request);
+    }
+    if (type === "VENUE_BACKUP_ZIP" || type === "COMPANY_CLOSURE_BACKUP_ZIP") {
+      throw new NotFoundException("Этот формат выгрузки больше не поддерживается");
     }
     if (!context.venueId) throw new NotFoundException("Рабочее пространство не найдено");
     const workspace = await this.organizations.findWorkspaceForUser(
@@ -171,9 +166,6 @@ export class ExportService {
     }
     if (!workspace.permissions.includes("export_data"))
       throw new ForbiddenException("У вас нет доступа к выгрузке данных");
-    if (type === "VENUE_BACKUP_ZIP" && !workspace.permissions.includes("view_archive")) {
-      throw new ForbiddenException("Для резервной выгрузки нужен доступ к архиву");
-    }
     if (parameters.includeArchived && !workspace.permissions.includes("view_archive")) {
       throw new ForbiddenException("У вас нет доступа к архиву");
     }

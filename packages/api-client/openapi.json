@@ -6252,48 +6252,6 @@
         ]
       }
     },
-    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/exports/backup": {
-      "post": {
-        "operationId": "ExportsController_createBackup",
-        "parameters": [
-          {
-            "name": "venueId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductExportResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Рабочее пространство или запрос выгрузки недоступны"
-          }
-        },
-        "summary": "Поставить в очередь резервную ZIP-выгрузку продукции заведения",
-        "tags": [
-          "exports"
-        ]
-      }
-    },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/exports/{exportId}": {
       "get": {
         "operationId": "ExportsController_getStatus",
@@ -8358,12 +8316,10 @@
             "enum": [
               "SINGLE_PDF",
               "BATCH_PDF_ZIP",
-              "VENUE_BACKUP_ZIP",
-              "COMPANY_CLOSURE_BACKUP_ZIP"
+              "COMPANY_CLOSURE_PDF_ZIP"
             ]
           },
           "productIds": {
-            "maxItems": 100,
             "type": "array",
             "items": {
               "type": "string",
@@ -8402,7 +8358,8 @@
               "SINGLE_PDF",
               "BATCH_PDF_ZIP",
               "VENUE_BACKUP_ZIP",
-              "COMPANY_CLOSURE_BACKUP_ZIP"
+              "COMPANY_CLOSURE_BACKUP_ZIP",
+              "COMPANY_CLOSURE_PDF_ZIP"
             ]
           },
           "createdAt": {
@@ -8439,7 +8396,8 @@
               "SINGLE_PDF",
               "BATCH_PDF_ZIP",
               "VENUE_BACKUP_ZIP",
-              "COMPANY_CLOSURE_BACKUP_ZIP"
+              "COMPANY_CLOSURE_BACKUP_ZIP",
+              "COMPANY_CLOSURE_PDF_ZIP"
             ]
           },
           "status": {
@@ -12439,7 +12397,6 @@
         "type": "object",
         "properties": {
           "productIds": {
-            "maxItems": 100,
             "type": "array",
             "items": {
               "type": "string",

@@ -5,6 +5,10 @@ const productExportInclude = {
   ingredient: { include: { category: true } },
   preparation: { include: { category: true } },
   cocktail: { include: { glass: true, ice: true, preparationMethod: true } },
+  cocktailCategories: {
+    orderBy: { referenceValue: { label: "asc" } },
+    select: { referenceValue: { select: { id: true, label: true } } },
+  },
   outputUnit: true,
   parentComponents: {
     orderBy: { position: "asc" },

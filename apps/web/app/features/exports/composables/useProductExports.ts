@@ -1,7 +1,6 @@
 import { computed, toValue, watch, type MaybeRefOrGetter } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import {
-  exportsControllerCreateBackup,
   exportsControllerCreateBatch,
   exportsControllerCreateSingle,
   exportsControllerGetDownloadUrl,
@@ -93,24 +92,6 @@ export function useProductExports(
     return result.id;
   }
 
-  async function createBackup(): Promise<string> {
-    await identity.refreshCsrf();
-    const result = await requestApi<ProductExportResponseDto>(
-      Promise.resolve(
-        await exportsControllerCreateBackup(
-          company.value,
-          venue.value,
-          {
-            credentials: "include",
-            headers: { "x-csrf-token": identity.csrfToken.value },
-          },
-          identity.apiFetch,
-        ),
-      ),
-    );
-    return result.id;
-  }
-
   async function download(): Promise<void> {
     const response = await requestApi<{ url: string }>(
       Promise.resolve(
@@ -128,9 +109,5 @@ export function useProductExports(
     window.location.assign(response.url);
   }
 
-  async function open(id: string): Promise<void> {
-    await navigateTo(`/app/companies/${company.value}/venues/${venue.value}/exports/${id}`);
-  }
-
-  return { createBackup, createBatch, createSingle, download, open, statusQuery };
+  return { createBatch, createSingle, download, statusQuery };
 }

@@ -56,16 +56,6 @@ export class ExportsController {
     });
   }
 
-  @Post("backup")
-  @ApiOperation({ summary: "Поставить в очередь резервную ZIP-выгрузку продукции заведения" })
-  @ApiCreatedResponse({ type: ProductExportResponseDto })
-  createBackup(
-    @CurrentUser() user: AuthenticatedUser,
-    @CurrentWorkspace() workspace: WorkspaceSummary,
-  ) {
-    return this.exports.createVenueBackup(context(user, workspace));
-  }
-
   @Get(":exportId")
   @ApiOperation({ summary: "Получить состояние собственного запроса выгрузки" })
   @ApiOkResponse({ type: ProductExportResponseDto })

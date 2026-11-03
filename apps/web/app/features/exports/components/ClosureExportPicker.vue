@@ -6,19 +6,23 @@
     </p>
     <div v-if="operationType === 'COMPANY'" class="mt-4">
       <Button
-        label="Подготовить резервную выгрузку компании"
-        icon="pi pi-database"
+        label="Подготовить PDF-архив компании"
         size="small"
         :loading="creating"
         :disabled="creating || isProcessing || !canCreate"
-        @click="create('COMPANY_CLOSURE_BACKUP_ZIP')"
+        @click="create('COMPANY_CLOSURE_PDF_ZIP')"
       />
     </div>
     <template v-else>
       <LoadingIndicator v-if="productsQuery.isLoading.value" class="mt-4" />
       <div v-else-if="productsQuery.isSuccess.value" class="mt-4">
         <label v-if="canViewArchive" class="mb-3 flex items-center gap-2 text-sm">
-          <Checkbox v-model="includeArchived" input-id="closure-include-archive" binary />
+          <Checkbox
+            v-model="includeArchived"
+            input-id="closure-include-archive"
+            binary
+            size="small"
+          />
           <span>Включить архивные карточки в PDF</span>
         </label>
         <div v-if="visibleProducts.length" class="max-h-48 divide-y divide-surface overflow-auto">
@@ -31,6 +35,7 @@
               v-model="selectedIds"
               :input-id="`closure-product-${product.id}`"
               :value="product.id"
+              size="small"
             />
             <span class="min-w-0 flex-1 truncate">{{ product.name }}</span>
             <span class="text-xs text-color-secondary">{{ productTypeLabel(product.type) }}</span>
@@ -40,16 +45,6 @@
           Нет доступных техкарт для PDF-выгрузки.
         </Message>
         <div class="mt-4 flex flex-wrap gap-2">
-          <Button
-            label="Резервная ZIP заведения"
-            icon="pi pi-database"
-            severity="secondary"
-            outlined
-            size="small"
-            :loading="creating"
-            :disabled="creating || isProcessing || !canCreate || !canViewArchive"
-            @click="create('VENUE_BACKUP_ZIP')"
-          />
           <Button
             label="PDF выбранной карточки"
             icon="pi pi-file-pdf"
@@ -277,15 +272,19 @@ async function create(type: ClosureExportDtoType) {
   creating.value = true;
   errorMessage.value = "";
   try {
+    const parameters =
+      type === "COMPANY_CLOSURE_PDF_ZIP"
+        ? { type }
+        : {
+            type,
+            productIds: type === "SINGLE_PDF" ? selectedIds.value.slice(0, 1) : selectedIds.value,
+            includeArchived: includeArchived.value,
+          };
     const response = await requestApi<ProductExportResponseDto>(
       organizationsControllerCreateClosureExport(
         props.companyId,
         props.operationId,
-        {
-          type,
-          productIds: type === "SINGLE_PDF" ? selectedIds.value.slice(0, 1) : selectedIds.value,
-          includeArchived: includeArchived.value,
-        },
+        parameters,
         identity.mutationOptions(),
         identity.apiFetch,
       ),

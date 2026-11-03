@@ -184,7 +184,13 @@ function safeMetadata(value: Prisma.JsonValue | null): Record<string, unknown> |
     Object.entries(value).filter(([key, entry]) => {
       if (!allowed.includes(key)) return false;
       if (key === "exportType")
-        return ["SINGLE_PDF", "BATCH_PDF_ZIP", "VENUE_BACKUP_ZIP"].includes(String(entry));
+        return [
+          "SINGLE_PDF",
+          "BATCH_PDF_ZIP",
+          "VENUE_BACKUP_ZIP",
+          "COMPANY_CLOSURE_BACKUP_ZIP",
+          "COMPANY_CLOSURE_PDF_ZIP",
+        ].includes(String(entry));
       if (key === "errorCode")
         return ["EXPORT_PROCESSING_FAILED", "DEADLINE_EXCEEDED"].includes(String(entry));
       return true;

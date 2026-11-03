@@ -11,7 +11,6 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import {
-  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsBoolean,
@@ -121,16 +120,15 @@ class CloseCompanyDto {
 
 class ClosureExportDto {
   @ApiProperty({
-    enum: ["SINGLE_PDF", "BATCH_PDF_ZIP", "VENUE_BACKUP_ZIP", "COMPANY_CLOSURE_BACKUP_ZIP"],
+    enum: ["SINGLE_PDF", "BATCH_PDF_ZIP", "COMPANY_CLOSURE_PDF_ZIP"],
   })
-  @IsIn(["SINGLE_PDF", "BATCH_PDF_ZIP", "VENUE_BACKUP_ZIP", "COMPANY_CLOSURE_BACKUP_ZIP"])
-  type!: "SINGLE_PDF" | "BATCH_PDF_ZIP" | "VENUE_BACKUP_ZIP" | "COMPANY_CLOSURE_BACKUP_ZIP";
+  @IsIn(["SINGLE_PDF", "BATCH_PDF_ZIP", "COMPANY_CLOSURE_PDF_ZIP"])
+  type!: "SINGLE_PDF" | "BATCH_PDF_ZIP" | "COMPANY_CLOSURE_PDF_ZIP";
 
-  @ApiPropertyOptional({ type: String, format: "uuid", isArray: true, maxItems: 100 })
+  @ApiPropertyOptional({ type: String, format: "uuid", isArray: true })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(100)
   @IsUUID("all", { each: true })
   productIds?: string[];
 
@@ -197,9 +195,20 @@ class ClosureOperationExportResponseDto {
   id!: string;
 
   @ApiProperty({
-    enum: ["SINGLE_PDF", "BATCH_PDF_ZIP", "VENUE_BACKUP_ZIP", "COMPANY_CLOSURE_BACKUP_ZIP"],
+    enum: [
+      "SINGLE_PDF",
+      "BATCH_PDF_ZIP",
+      "VENUE_BACKUP_ZIP",
+      "COMPANY_CLOSURE_BACKUP_ZIP",
+      "COMPANY_CLOSURE_PDF_ZIP",
+    ],
   })
-  type!: "SINGLE_PDF" | "BATCH_PDF_ZIP" | "VENUE_BACKUP_ZIP" | "COMPANY_CLOSURE_BACKUP_ZIP";
+  type!:
+    | "SINGLE_PDF"
+    | "BATCH_PDF_ZIP"
+    | "VENUE_BACKUP_ZIP"
+    | "COMPANY_CLOSURE_BACKUP_ZIP"
+    | "COMPANY_CLOSURE_PDF_ZIP";
 
   @ApiProperty({ enum: ["QUEUED", "PROCESSING", "READY", "FAILED", "EXPIRED"] })
   status!: "QUEUED" | "PROCESSING" | "READY" | "FAILED" | "EXPIRED";

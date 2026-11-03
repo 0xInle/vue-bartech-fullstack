@@ -8,4 +8,4 @@ export {
   ProductExportResponseDto,
   ProductExportDownloadResponseDto,
 } from "./export.dto.js";
-export type { ExportKind, ExportParameters, ExportState } from "./export.dto.js";
+export type { ClosureExportKind, ExportKind, ExportParameters, ExportState } from "./export.dto.js";
