@@ -38,6 +38,7 @@ export * from './archiveRestoreResultDto';
 export * from './archiveRestoreRootDto';
 export * from './archiveRestoreRootDtoType';
 export * from './auditControllerListAuthorsParams';
+export * from './auditControllerListLimit';
 export * from './auditControllerListParams';
 export * from './auditEventHttpDto';
 export * from './auditEventHttpDtoMetadata';

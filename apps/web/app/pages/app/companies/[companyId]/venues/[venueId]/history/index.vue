@@ -12,7 +12,7 @@
     :full-name="currentUser.fullName"
     @switch="switchWorkspace"
   >
-    <HistoryScreen :company-id="companyId" :venue-id="venueId" />
+    <HistoryScreen :company-id="companyId" :venue-id="venueId" :scope="workspace.scope" />
   </WorkspaceShell>
 </template>
 

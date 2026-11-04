@@ -14,6 +14,7 @@ import {
   normalizeProductName,
 } from "../product-rules.js";
 import { normalizeSearchText } from "../search/product-search-rules.js";
+import { componentAuditDiff, valueAuditDiff } from "../product-audit-diff.js";
 import { garnishImpactFingerprint } from "./garnish-impact.js";
 import { GarnishUpdateRepository } from "./garnish-update.repository.js";
 
@@ -41,11 +42,19 @@ export class GarnishUpdateService {
         if (!current || !current.technology) throw new NotFoundException("Гарнир не найден");
 
         const componentIds = [...new Set(normalized.components.map((item) => item.productId))];
+        const auditComponentIds = [
+          ...new Set([
+            ...componentIds,
+            ...current.parentComponents.map(({ componentProductId }) => componentProductId),
+          ]),
+        ];
         const [products, units] = await Promise.all([
-          this.repository.findAllowedProducts(transaction, context.venueId, componentIds),
+          this.repository.findAllowedProducts(transaction, context.venueId, auditComponentIds),
           this.repository.findAllowedUnits(transaction, context.venueId, [
             ...normalized.components.map((item) => item.unitId),
+            ...current.parentComponents.map(({ unitId }) => unitId),
             ...(normalized.output ? [normalized.output.unitId] : []),
+            ...(current.outputUnitId ? [current.outputUnitId] : []),
           ]),
         ]);
         const productsById = new Map(products.map((product) => [product.id, product]));
@@ -110,6 +119,7 @@ export class GarnishUpdateService {
           })),
         });
         if (context.internalUserId) {
+          const changes = garnishAuditDiff(current, normalized, productsById, units);
           await Promise.all([
             transaction.auditEvent.create({
               data: {
@@ -121,7 +131,7 @@ export class GarnishUpdateService {
                 venueId: context.venueId,
                 entityType: "PRODUCT",
                 entityId: product.id,
-                metadata: { productType: product.type, name: product.name },
+                metadata: { productType: product.type, name: product.name, changes },
               },
             }),
             transaction.internalAuditEvent.create({
@@ -152,7 +162,11 @@ export class GarnishUpdateService {
               venueId: context.venueId,
               entityType: "PRODUCT",
               entityId: product.id,
-              metadata: { productType: product.type, name: product.name },
+              metadata: {
+                productType: product.type,
+                name: product.name,
+                changes: garnishAuditDiff(current, normalized, productsById, units),
+              },
             },
           });
         }
@@ -172,6 +186,49 @@ export class GarnishUpdateService {
   private async assertPermission(context: CreateProductContext): Promise<void> {
     await this.access.assert(context, "manage_products");
   }
+}
+
+function garnishAuditDiff(
+  current: NonNullable<Awaited<ReturnType<GarnishUpdateRepository["findActive"]>>>,
+  next: ReturnType<typeof normalizeInput>,
+  products: Map<string, { name: string }>,
+  units: Array<{ id: string; label: string }>,
+) {
+  const unitLabels = new Map([
+    ...current.parentComponents.map(({ unitId, unit }) => [unitId, unit.label] as const),
+    ...units.map(({ id, label }) => [id, label] as const),
+  ]);
+  const productNames = new Map([
+    ...current.parentComponents.flatMap(({ componentProductId, componentProduct }) =>
+      componentProduct ? [[componentProductId, componentProduct.name] as const] : [],
+    ),
+    ...[...products].map(([id, product]) => [id, product.name] as const),
+  ]);
+  const changes = [
+    valueAuditDiff("Название", current.name, next.name),
+    current.technology?.trim() !== next.technology ? "Технология: изменено" : null,
+    (current.comment?.trim() || undefined) !== next.comment ? "Комментарий: изменено" : null,
+    valueAuditDiff(
+      "Статус разработки",
+      current.workflowStatus,
+      next.workflowStatus ?? current.workflowStatus,
+    ),
+    current.outputAmount?.toString() !== next.output?.amount?.toString() ||
+    (current.outputUnitId ?? undefined) !== next.output?.unitId
+      ? `Выход: ${current.outputAmount?.toString() ?? "не задано"}${current.outputUnitId ? ` ${unitLabels.get(current.outputUnitId) ?? "ед."}` : ""} → ${next.output ? `${next.output.amount} ${unitLabels.get(next.output.unitId) ?? "ед."}` : "не задано"}`
+      : null,
+    ...componentAuditDiff(
+      current.parentComponents.map(({ componentProductId, unitId, amount }) => ({
+        productId: componentProductId,
+        unitId,
+        amount,
+      })),
+      next.components,
+      productNames,
+      unitLabels,
+    ),
+  ].filter((change): change is string => Boolean(change));
+  return changes.length ? changes : ["Изменённые поля не удалось определить"];
 }
 
 function normalizeInput(input: ProductBaseInput) {

@@ -280,7 +280,6 @@ export class OrganizationsService {
             rolePeriods: { create: { role: "BAR_MANAGER", startedOn } },
           },
         });
-
         return { company, venue };
       });
     } catch (error) {

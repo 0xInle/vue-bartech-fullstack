@@ -172,7 +172,11 @@ export class CatalogReviewService {
       select: { companyId: true },
     });
     if (!venue) throw new NotFoundException("Кандидат каталога не найден");
-    await this.repository.replaceVenueReferences(
+    const global = await transaction.product.findUnique({
+      where: { id: globalProductId },
+      select: { name: true },
+    });
+    const changedReferences = await this.repository.replaceVenueReferences(
       transaction,
       local.venueId,
       local.id,
@@ -187,7 +191,13 @@ export class CatalogReviewService {
         venueId: local.venueId,
         entityType: "PRODUCT",
         entityId: local.id,
-        metadata: { localProductId: local.id, globalProductId, resolution },
+        metadata: {
+          productType: "INGREDIENT",
+          localName: local.name,
+          globalName: global?.name,
+          resolution,
+          changedReferences: changedReferences.count,
+        },
       },
     });
     await transaction.internalAuditEvent.create({

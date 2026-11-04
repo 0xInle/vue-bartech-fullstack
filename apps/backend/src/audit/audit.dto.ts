@@ -12,9 +12,6 @@ const auditEventTypes = [
   "product.archived",
   "product.restored",
   "product.permanently_deleted",
-  "export.requested",
-  "export.completed",
-  "export.failed",
   "PRODUCT_CATALOG_MATCHED",
   "GLOBAL_INGREDIENT.UPDATED",
   "GLOBAL_ALIAS.CREATED",
@@ -22,13 +19,13 @@ const auditEventTypes = [
   "GLOBAL_ALIAS.DELETED",
   "GLOBAL_INGREDIENT.MERGED",
   "membership.role_changed",
-  "membership.delegated_permissions_changed",
+  "membership.permission_overrides_changed",
+  "membership.ended",
   "temporary_responsibility.ended",
   "invitation.created",
   "invitation.revoked",
   "invitation.expired",
   "invitation.completed",
-  "venue.created",
 ];
 
 export class AuditHistoryQueryDto {
@@ -63,18 +60,20 @@ export class AuditHistoryQueryDto {
   @IsUUID()
   entityId?: string;
 
-  @ApiPropertyOptional({ minimum: 1, maximum: 50, default: 30 })
+  @ApiPropertyOptional({ minimum: 1, maximum: 100000, default: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(50)
-  limit?: number;
+  @Max(100000)
+  page?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: [10, 20, 30], default: 20 })
   @IsOptional()
-  @IsString()
-  cursor?: string;
+  @Type(() => Number)
+  @IsInt()
+  @IsIn([10, 20, 30])
+  limit?: number;
 }
 
 export class AuditHistoryAuthorsQueryDto {
@@ -138,6 +137,12 @@ export class AuditEventHttpDto {
   @ApiProperty({ type: String, nullable: true })
   entityName!: string | null;
 
+  @ApiProperty()
+  summary!: string;
+
+  @ApiProperty({ type: [String] })
+  details!: string[];
+
   @ApiProperty({ type: Object, nullable: true })
   metadata!: Record<string, unknown> | null;
 
@@ -149,6 +154,6 @@ export class AuditHistoryPageHttpDto {
   @ApiProperty({ type: [AuditEventHttpDto] })
   items!: AuditEventHttpDto[];
 
-  @ApiProperty({ type: String, nullable: true })
-  nextCursor!: string | null;
+  @ApiProperty()
+  totalRecords!: number;
 }

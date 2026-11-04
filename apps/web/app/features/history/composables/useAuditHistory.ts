@@ -28,6 +28,8 @@ export function useAuditHistory(
   const historyQuery = useQuery({
     queryKey: computed(() => ["audit-history", company.value, venue.value, filters.value]),
     enabled: computed(() => Boolean(company.value && venue.value)),
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     retry: false,
     queryFn: async ({ signal }) => {
       const response = await auditControllerList(

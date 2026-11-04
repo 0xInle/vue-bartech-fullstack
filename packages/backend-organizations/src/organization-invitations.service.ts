@@ -360,18 +360,6 @@ export class OrganizationInvitationsService {
         rolePeriods: { create: { role: "BAR_MANAGER", startedOn: currentDate() } },
       },
     });
-    await transaction.auditEvent.create({
-      data: {
-        eventType: "venue.created",
-        actorType: "USER",
-        actorId: input.userId,
-        companyId: input.companyId,
-        venueId: venue.id,
-        entityType: "venue",
-        entityId: venue.id,
-        metadata: { source: "invitation", initialRole: "BAR_MANAGER" },
-      },
-    });
     return { id: venue.id };
   }
 

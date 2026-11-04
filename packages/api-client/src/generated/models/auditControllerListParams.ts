@@ -5,6 +5,7 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { AuditControllerListLimit } from './auditControllerListLimit';
 
 export type AuditControllerListParams = {
 from?: string;
@@ -15,8 +16,8 @@ entityType?: string;
 entityId?: string;
 /**
  * @minimum 1
- * @maximum 50
+ * @maximum 100000
  */
-limit?: number;
-cursor?: string;
+page?: number;
+limit?: AuditControllerListLimit;
 };

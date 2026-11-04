@@ -128,7 +128,7 @@ export class IngredientMatchingRepository {
           : aliasMatches;
       if (strictMatches.length === 1) {
         const candidate = strictMatches[0]!;
-        await transaction.productComponent.updateMany({
+        const changedReferences = await transaction.productComponent.updateMany({
           where: {
             parentVenueId: local.venueId,
             componentVenueId: local.venueId,
@@ -148,7 +148,13 @@ export class IngredientMatchingRepository {
             venueId: local.venueId,
             entityType: "PRODUCT",
             entityId: local.id,
-            metadata: { localProductId: local.id, globalProductId: candidate.id },
+            metadata: {
+              productType: "INGREDIENT",
+              localName: local.name,
+              globalName: candidate.name,
+              resolution: "automatic_exact",
+              changedReferences: changedReferences.count,
+            },
           },
         });
         await transaction.product.delete({ where: { id: local.id } });

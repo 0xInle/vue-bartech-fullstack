@@ -103,7 +103,7 @@ export class ArchiveMutationService {
         };
         for (const id of finalLinks.keys()) visit(id);
         const result = [];
-        const changedParents = new Map<string, { type: string; name: string }>();
+        const changedParents = new Map<string, { type: string; name: string; changes: string[] }>();
         for (const usage of plan.activeUsages) {
           const parent = graph.local.find((item) => item.id === usage.parentId);
           if (!parent || parent.status !== "ACTIVE")
@@ -123,7 +123,17 @@ export class ArchiveMutationService {
               candidate.id,
               candidate.venueId,
             );
-          changedParents.set(parent.id, { type: parent.type, name: parent.name });
+          const details = changedParents.get(parent.id) ?? {
+            type: parent.type,
+            name: parent.name,
+            changes: [],
+          };
+          details.changes.push(
+            usage.relation === "GARNISH"
+              ? `Гарнир «${product.name}» заменён на «${candidate.name}»`
+              : `Компонент «${product.name}» заменён на «${candidate.name}»; количество и единица не изменены`,
+          );
+          changedParents.set(parent.id, details);
           result.push({ parentId: parent.id, productId, replacementProductId: candidate.id });
         }
         for (const [parentId, parent] of changedParents) {
@@ -136,10 +146,14 @@ export class ArchiveMutationService {
           await this.repository.audit(transaction, context, parentId, "product.updated", {
             productType: parent.type,
             name: parent.name,
+            changes: parent.changes,
           });
         }
         await this.repository.setStatus(transaction, context, productId, "ARCHIVED");
-        await this.repository.audit(transaction, context, productId, "product.archived");
+        await this.repository.audit(transaction, context, productId, "product.archived", {
+          productType: product.type,
+          name: product.name,
+        });
         return { archivedProducts: [plan.root], replacements: result };
       }
       if (input.replacementProductId)
@@ -169,7 +183,10 @@ export class ArchiveMutationService {
           : [plan.root];
       for (const item of toArchive) {
         await this.repository.setStatus(transaction, context, item.id, "ARCHIVED");
-        await this.repository.audit(transaction, context, item.id, "product.archived");
+        await this.repository.audit(transaction, context, item.id, "product.archived", {
+          productType: item.type,
+          name: item.name,
+        });
       }
       return { archivedProducts: toArchive, replacements: [] };
     });
@@ -250,7 +267,7 @@ export class ArchiveMutationService {
           if (!candidate) throw new ConflictException("Выбранная замена больше недоступна");
           const replacementCandidates = new Map<
             string,
-            { id: string; type: ProductType; venueId: string | null }
+            { id: string; type: ProductType; venueId: string | null; name: string }
           >();
           for (const usage of plan.activeUsages) {
             if (!usage.replacements.some((item) => item.id === replacementId))
@@ -296,7 +313,10 @@ export class ArchiveMutationService {
           };
           for (const id of finalLinks.keys()) visit(id);
           const replacementResults = [];
-          const changedParents = new Map<string, { type: string; name: string }>();
+          const changedParents = new Map<
+            string,
+            { type: string; name: string; changes: string[] }
+          >();
           for (const usage of plan.activeUsages) {
             const candidate = replacementCandidates.get(usage.id)!;
             const parent = graph.local.find((item) => item.id === usage.parentId);
@@ -317,7 +337,17 @@ export class ArchiveMutationService {
                 candidate.id,
                 candidate.venueId,
               );
-            changedParents.set(parent.id, { type: parent.type, name: parent.name });
+            const details = changedParents.get(parent.id) ?? {
+              type: parent.type,
+              name: parent.name,
+              changes: [],
+            };
+            details.changes.push(
+              usage.relation === "GARNISH"
+                ? `Гарнир «${plan.root.name}» заменён на «${candidate.name}»`
+                : `Компонент «${plan.root.name}» заменён на «${candidate.name}»; количество и единица не изменены`,
+            );
+            changedParents.set(parent.id, details);
             replacementResults.push({
               parentId: parent.id,
               productId: productId,
@@ -334,6 +364,7 @@ export class ArchiveMutationService {
             await this.repository.audit(transaction, context, parentId, "product.updated", {
               productType: parent.type,
               name: parent.name,
+              changes: parent.changes,
             });
           }
           await this.auditPermanentDelete(transaction, context, plan.root);
@@ -406,7 +437,7 @@ export class ArchiveMutationService {
   ) {
     return this.repository.audit(transaction, context, product.id, "product.permanently_deleted", {
       name: product.name,
-      type: product.type,
+      productType: product.type,
       status: product.status,
     });
   }
@@ -446,10 +477,14 @@ export class ArchiveMutationService {
         const resolved = resolveRestore(graph, plan, input);
         const restoredProducts = [];
         for (const [id, name] of resolved.restored) {
+          const product = graph.local.find((item) => item.id === id);
           restoredProducts.push(
             await this.repository.setStatus(transaction, context, id, "ACTIVE", name),
           );
-          await this.repository.audit(transaction, context, id, "product.restored");
+          await this.repository.audit(transaction, context, id, "product.restored", {
+            ...(product ? { productType: product.type } : {}),
+            name,
+          });
         }
         return { restoredProducts };
       });

@@ -75,7 +75,11 @@ export class TeamService {
           include: {
             memberships: {
               where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
-              include: { permissionOverrides: true, temporaryResponsibility: true },
+              include: {
+                permissionOverrides: true,
+                temporaryResponsibility: true,
+                user: { include: { profile: true } },
+              },
             },
             company: {
               select: {
@@ -94,7 +98,11 @@ export class TeamService {
             venueId,
             OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
           },
-          include: { permissionOverrides: true, temporaryResponsibility: true },
+          include: {
+            permissionOverrides: true,
+            temporaryResponsibility: true,
+            user: { include: { profile: true } },
+          },
         }),
       ]);
       if (!venue || !target) throw new NotFoundException("Сотрудник не найден в этом заведении");
@@ -238,6 +246,10 @@ export class TeamService {
           hasChefBartender,
         }),
       );
+      const nextTargetPermissions = roleChanged ? targetRoleDefaults : new Set(input.permissions);
+      const auditedPermissionChanges = VENUE_PERMISSION_CODES.filter(
+        (code) => currentTargetPermissions.has(code) !== nextTargetPermissions.has(code),
+      );
       const editablePermissions = new Set<PermissionCode>([
         ...(actorIsBarManager
           ? VENUE_PERMISSION_CODES
@@ -369,6 +381,7 @@ export class TeamService {
               previousRole: target.role,
               newRole: input.role,
               subjectUserId: target.userId,
+              subjectName: target.user.profile?.fullName,
             },
           },
         });
@@ -392,7 +405,7 @@ export class TeamService {
             venueId,
             entityType: "venue_membership",
             entityId: target.id,
-            metadata: { subjectUserId: target.userId },
+            metadata: { subjectUserId: target.userId, subjectName: target.user.profile?.fullName },
           },
         });
       }
@@ -412,8 +425,10 @@ export class TeamService {
             entityType: "venue_membership",
             entityId: target.id,
             metadata: {
-              permissions: input.permissions,
+              granted: auditedPermissionChanges.filter((code) => nextTargetPermissions.has(code)),
+              revoked: auditedPermissionChanges.filter((code) => !nextTargetPermissions.has(code)),
               subjectUserId: target.userId,
+              subjectName: target.user.profile?.fullName,
             },
           },
         });
@@ -438,7 +453,10 @@ export class TeamService {
               venueId,
               entityType: "venue_membership",
               entityId: temporaryMembership.id,
-              metadata: { subjectUserId: temporaryMembership.userId },
+              metadata: {
+                subjectUserId: temporaryMembership.userId,
+                subjectName: temporaryMembership.user.profile?.fullName,
+              },
             },
           });
         }
@@ -491,7 +509,10 @@ export class TeamService {
           venueId,
           OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
         },
-        include: { rolePeriods: { orderBy: { startedOn: "asc" } } },
+        include: {
+          rolePeriods: { orderBy: { startedOn: "asc" } },
+          user: { include: { profile: true } },
+        },
       });
       if (!venue || !target) throw new NotFoundException("Сотрудник не найден в этом заведении");
       await transaction.$queryRaw`SELECT "id" FROM "venue_memberships" WHERE "id" = ${target.id}::uuid FOR UPDATE`;
@@ -622,7 +643,12 @@ export class TeamService {
           venueId,
           entityType: "venue_membership",
           entityId: target.id,
-          metadata: { subjectUserId: target.userId, terminationDate: terminationDateInput },
+          metadata: {
+            subjectUserId: target.userId,
+            subjectName: target.user.profile?.fullName,
+            subjectRole: target.role,
+            terminationDate: terminationDateInput,
+          },
         },
       });
     });

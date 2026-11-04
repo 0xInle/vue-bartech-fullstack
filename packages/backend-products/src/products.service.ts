@@ -25,6 +25,7 @@ import {
 } from "./product-rules.js";
 import { ProductsRepository } from "./products.repository.js";
 import { normalizeSearchText } from "./search/product-search-rules.js";
+import { componentAuditDiff, valueAuditDiff } from "./product-audit-diff.js";
 
 @Injectable()
 export class ProductsService {
@@ -163,7 +164,9 @@ export class ProductsService {
               .join(" "),
           ),
         });
-        await this.recordProductEvent(transaction, context, "product.updated", product);
+        await this.recordProductEvent(transaction, context, "product.updated", product, [
+          `Название: ${current.name} → ${product.name}`,
+        ]);
         return product;
       });
     } catch (error) {
@@ -213,7 +216,33 @@ export class ProductsService {
           country: normalizeOptional(input.country),
           externalIdentifier: normalizeOptional(input.externalIdentifier),
         });
-        await this.recordProductEvent(transaction, context, "product.updated", product);
+        await this.recordProductEvent(
+          transaction,
+          context,
+          "product.updated",
+          product,
+          [
+            valueAuditDiff("Название", current.name, product.name),
+            valueAuditDiff("Категория", current.ingredient.category.name, category.name),
+            input.brand?.trim()
+              ? valueAuditDiff("Бренд", current.ingredient.brand, input.brand.trim())
+              : null,
+            input.strength !== undefined
+              ? valueAuditDiff(
+                  "Крепость",
+                  current.ingredient.strength?.toString(),
+                  input.strength.toString(),
+                )
+              : null,
+            input.country?.trim() && current.ingredient.country !== input.country.trim()
+              ? "Страна: изменено"
+              : null,
+            input.externalIdentifier?.trim() &&
+            current.ingredient.externalIdentifier !== input.externalIdentifier.trim()
+              ? "Внешний идентификатор: изменён"
+              : null,
+          ].filter((change): change is string => Boolean(change)),
+        );
         return product;
       });
     } catch (error) {
@@ -311,6 +340,7 @@ export class ProductsService {
         const garnishIds = garnishSelections
           .filter(({ kind }) => kind === "PRODUCT")
           .map(({ id }) => id);
+        const previousGarnishIds = cocktail.cocktailGarnishes.map(({ garnishId }) => garnishId);
         const quickGarnishIds = garnishSelections
           .filter(({ kind }) => kind === "QUICK")
           .map(({ id }) => id);
@@ -324,10 +354,14 @@ export class ProductsService {
           this.repository.findAllowedProducts(transaction, context.venueId, [
             ...componentIds,
             ...garnishIds,
+            ...cocktail.parentComponents.map(({ componentProductId }) => componentProductId),
+            ...previousGarnishIds,
           ]),
           this.repository.findAllowedUnits(transaction, context.venueId, [
             ...input.components.map(({ unitId }) => unitId),
+            ...cocktail.parentComponents.map(({ unitId }) => unitId),
             ...(input.output ? [input.output.unitId] : []),
+            ...(cocktail.outputUnitId ? [cocktail.outputUnitId] : []),
           ]),
         ]);
         const quickGarnishes = await this.repository.findLocalQuickGarnishes(
@@ -382,7 +416,23 @@ export class ProductsService {
           garnishSelections,
           categoryIds,
         });
-        await this.recordProductEvent(transaction, context, "product.updated", product);
+        await this.recordProductEvent(
+          transaction,
+          context,
+          "product.updated",
+          product,
+          cocktailAuditDiff(
+            cocktail,
+            input,
+            new Map([
+              ...products.map(({ id, name }) => [id, name] as const),
+              ...quickGarnishes.map(({ id, label }) => [id, label] as const),
+            ]),
+            new Map(units.map(({ id, label }) => [id, label])),
+            categoryIds.map(({ id }) => id),
+            garnishSelections,
+          ),
+        );
         return product;
       });
     } catch (error) {
@@ -644,7 +694,14 @@ export class ProductsService {
     context: CreateProductContext,
     eventType: "product.created" | "product.updated",
     product: { id: string; type: string; name: string },
+    changes: string[] = [],
   ) {
+    const auditChanges =
+      eventType === "product.updated"
+        ? changes.length
+          ? changes
+          : ["Изменённые поля не удалось определить"]
+        : [];
     if (context.internalUserId) {
       return Promise.all([
         transaction.auditEvent.create({
@@ -657,7 +714,11 @@ export class ProductsService {
             venueId: context.venueId,
             entityType: "PRODUCT",
             entityId: product.id,
-            metadata: { productType: product.type, name: product.name },
+            metadata: {
+              productType: product.type,
+              name: product.name,
+              ...(auditChanges.length ? { changes: auditChanges } : {}),
+            },
           },
         }),
         transaction.internalAuditEvent.create({
@@ -688,7 +749,11 @@ export class ProductsService {
         venueId: context.venueId,
         entityType: "PRODUCT",
         entityId: product.id,
-        metadata: { productType: product.type, name: product.name },
+        metadata: {
+          productType: product.type,
+          name: product.name,
+          ...(auditChanges.length ? { changes: auditChanges } : {}),
+        },
       },
     });
   }
@@ -700,6 +765,85 @@ function normalizeGarnishSelections(input: CocktailInput) {
     ...(input.garnishIds ?? []).map((id) => ({ id, kind: "PRODUCT" as const })),
     ...(input.quickGarnishIds ?? []).map((id) => ({ id, kind: "QUICK" as const })),
   ];
+}
+
+function cocktailAuditDiff(
+  current: NonNullable<Awaited<ReturnType<ProductsRepository["findActiveCocktail"]>>>,
+  input: CocktailInput,
+  productNames: Map<string, string>,
+  unitLabels: Map<string, string>,
+  categoryIds: string[],
+  garnishSelections: Array<{ id: string; kind: "PRODUCT" | "QUICK" }>,
+) {
+  const changes = [
+    valueAuditDiff("Название", current.name, input.name.trim().replace(/\s+/gu, " ")),
+    current.technology?.trim() !== input.technology.trim() ? "Технология: изменено" : null,
+    input.comment?.trim() && current.comment?.trim() !== input.comment.trim()
+      ? "Комментарий: изменено"
+      : null,
+    valueAuditDiff(
+      "Статус разработки",
+      current.workflowStatus,
+      input.workflowStatus ?? current.workflowStatus,
+    ),
+    current.outputAmount?.toString() !== input.output?.amount?.toString() ||
+    (current.outputUnitId ?? undefined) !== input.output?.unitId
+      ? `Выход: ${current.outputAmount?.toString() ?? "не задано"}${current.outputUnitId ? ` ${unitLabels.get(current.outputUnitId) ?? "ед."}` : ""} → ${input.output ? `${input.output.amount} ${unitLabels.get(input.output.unitId) ?? "ед."}` : "не задано"}`
+      : null,
+    current.cocktail?.glassId !== input.glassId ? "Бокал: изменён" : null,
+    current.cocktail?.iceId !== input.iceId ? "Лёд: изменён" : null,
+    current.cocktail?.preparationMethodId !== input.preparationMethodId
+      ? "Способ приготовления: изменён"
+      : null,
+    !sameIds(
+      current.cocktailCategories.map(({ referenceValueId }) => referenceValueId),
+      categoryIds,
+    )
+      ? "Категории: изменены"
+      : null,
+    ...componentAuditDiff(
+      current.parentComponents.map(({ componentProductId, unitId, amount }) => ({
+        productId: componentProductId,
+        unitId,
+        amount,
+      })),
+      input.components,
+      new Map([
+        ...current.parentComponents.map(
+          ({ componentProductId, componentProduct }) =>
+            [componentProductId, componentProduct?.name ?? "Компонент"] as const,
+        ),
+        ...productNames,
+      ]),
+      new Map([
+        ...current.parentComponents.map(({ unitId, unit }) => [unitId, unit.label] as const),
+        ...unitLabels,
+      ]),
+    ),
+  ].filter((change): change is string => Boolean(change));
+
+  const oldGarnishes = new Map<string, string>([
+    ...current.cocktailGarnishes.map(
+      ({ garnishId, garnish }) => [`PRODUCT:${garnishId}`, garnish.name] as const,
+    ),
+    ...current.cocktailQuickGarnishes.map(
+      ({ referenceValueId, referenceValue }) =>
+        [`QUICK:${referenceValueId}`, referenceValue.label] as const,
+    ),
+  ]);
+  const nextGarnishes = new Set<string>(garnishSelections.map(({ id, kind }) => `${kind}:${id}`));
+  for (const [key, name] of oldGarnishes)
+    if (!nextGarnishes.has(key)) changes.push(`Удалён гарнир: ${name}`);
+  for (const { id, kind } of garnishSelections) {
+    const key = `${kind}:${id}`;
+    if (!oldGarnishes.has(key))
+      changes.push(`Добавлен гарнир: ${productNames.get(id) ?? "Гарнир"}`);
+  }
+  return changes.length ? changes : ["Изменённые поля не удалось определить"];
+}
+
+function sameIds(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((id) => right.includes(id));
 }
 
 function normalizeOptional(value?: string): string | undefined {

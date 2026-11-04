@@ -19,6 +19,8 @@ export interface AuditEventHttpDto {
   actorId: string | null;
   /** @nullable */
   entityName: string | null;
+  summary: string;
+  details: string[];
   /** @nullable */
   metadata: AuditEventHttpDtoMetadata;
   /** @nullable */

@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class AuditEventDto {
   @ApiProperty({ format: "uuid" })
@@ -36,6 +36,6 @@ export class AuditHistoryPageDto {
   @ApiProperty({ type: [AuditEventDto] })
   items!: AuditEventDto[];
 
-  @ApiPropertyOptional({ nullable: true })
-  nextCursor!: string | null;
+  @ApiProperty()
+  totalRecords!: number;
 }

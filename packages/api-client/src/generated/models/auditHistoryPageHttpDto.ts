@@ -9,6 +9,5 @@ import type { AuditEventHttpDto } from './auditEventHttpDto';
 
 export interface AuditHistoryPageHttpDto {
   items: AuditEventHttpDto[];
-  /** @nullable */
-  nextCursor: string | null;
+  totalRecords: number;
 }

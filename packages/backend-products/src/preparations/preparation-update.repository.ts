@@ -23,10 +23,16 @@ export class PreparationUpdateRepository {
         comment: true,
         outputAmount: true,
         outputUnitId: true,
-        preparation: { select: { categoryCode: true } },
+        preparation: { select: { categoryCode: true, category: { select: { name: true } } } },
         parentComponents: {
           orderBy: { position: "asc" },
-          select: { componentProductId: true, unitId: true, amount: true },
+          select: {
+            componentProductId: true,
+            unitId: true,
+            amount: true,
+            componentProduct: { select: { name: true } },
+            unit: { select: { label: true } },
+          },
         },
       },
     });
@@ -35,7 +41,7 @@ export class PreparationUpdateRepository {
   findCategory(transaction: Prisma.TransactionClient, venueId: string, categoryCode: string) {
     return transaction.preparationCategory.findFirst({
       where: { code: categoryCode, isActive: true, OR: [{ venueId: null }, { venueId }] },
-      select: { code: true },
+      select: { code: true, name: true },
     });
   }
 
@@ -46,14 +52,14 @@ export class PreparationUpdateRepository {
         status: "ACTIVE",
         OR: [{ venueId }, { venueId: null, type: "INGREDIENT" }],
       },
-      select: { id: true, type: true, venueId: true },
+      select: { id: true, type: true, venueId: true, name: true },
     });
   }
 
   findAllowedUnits(transaction: Prisma.TransactionClient, venueId: string, ids: string[]) {
     return transaction.unit.findMany({
       where: { id: { in: ids }, OR: [{ venueId }, { venueId: null }] },
-      select: { id: true },
+      select: { id: true, label: true },
     });
   }
 

@@ -25,7 +25,13 @@ export class GarnishUpdateRepository {
         outputUnitId: true,
         parentComponents: {
           orderBy: { position: "asc" },
-          select: { componentProductId: true, unitId: true, amount: true },
+          select: {
+            componentProductId: true,
+            unitId: true,
+            amount: true,
+            componentProduct: { select: { name: true } },
+            unit: { select: { label: true } },
+          },
         },
       },
     });
@@ -38,14 +44,14 @@ export class GarnishUpdateRepository {
         status: "ACTIVE",
         OR: [{ venueId }, { venueId: null, type: "INGREDIENT" }],
       },
-      select: { id: true, type: true, venueId: true },
+      select: { id: true, type: true, venueId: true, name: true },
     });
   }
 
   findAllowedUnits(transaction: Prisma.TransactionClient, venueId: string, ids: string[]) {
     return transaction.unit.findMany({
       where: { id: { in: ids }, OR: [{ venueId }, { venueId: null }] },
-      select: { id: true },
+      select: { id: true, label: true },
     });
   }
 

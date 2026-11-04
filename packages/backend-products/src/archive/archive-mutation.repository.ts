@@ -91,7 +91,7 @@ export class ArchiveMutationRepository {
         status: "ACTIVE",
         OR: [{ venueId }, { venueId: null, type: "INGREDIENT" }],
       },
-      select: { id: true, venueId: true, type: true },
+      select: { id: true, venueId: true, type: true, name: true },
     });
   }
 

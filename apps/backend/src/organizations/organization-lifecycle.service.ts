@@ -554,23 +554,6 @@ export class OrganizationLifecycleService {
       }
       const affectedMembers = venueMemberships.map(({ userId }) => userId);
       await this.supportAccess.revokeForVenue(transaction, companyId, venueId);
-      await transaction.auditEvent.create({
-        data: {
-          eventType: "venue.closed",
-          actorType: "USER",
-          actorId,
-          companyId,
-          venueId,
-          entityType: "VENUE",
-          entityId: venueId,
-          metadata: {
-            name: venue.name,
-            closedAt: new Date().toISOString(),
-            closureOperationId: operation.id,
-            exportRequestId: selectedExport?.id ?? null,
-          },
-        },
-      });
       await transaction.productExportClosureOperation.update({
         where: { id: operation.id },
         data: { status: "CLOSED", closedAt: new Date(), companyId: null, venueId: null },
@@ -716,22 +699,6 @@ export class OrganizationLifecycleService {
         where: { id: companyId },
         data: { status: "PENDING_CLOSURE", closureDeadline: deadline },
       });
-      await transaction.auditEvent.create({
-        data: {
-          eventType: "company.closure_started",
-          actorType: "USER",
-          actorId,
-          companyId,
-          entityType: "COMPANY",
-          entityId: companyId,
-          metadata: {
-            name: company.name,
-            closureDeadline: deadline.toISOString(),
-            closureOperationId: operation.id,
-            exportRequestId: withoutExport ? null : (operation.exportRequest?.id ?? null),
-          },
-        },
-      });
       await transaction.productExportClosureOperation.update({
         where: { id: operation.id },
         data: { status: "PENDING_CLOSURE" },
@@ -815,16 +782,6 @@ export class OrganizationLifecycleService {
         },
         data: { status: "CANCELLED", cancelledAt: now },
       });
-      await transaction.auditEvent.create({
-        data: {
-          eventType: "company.closure_cancelled",
-          actorType: "USER",
-          actorId,
-          companyId,
-          entityType: "COMPANY",
-          entityId: companyId,
-        },
-      });
       return { accepted: true as const };
     });
   }
@@ -888,21 +845,6 @@ export class OrganizationLifecycleService {
           }
         }
         await this.closeCompanyInvitations(transaction, id, null);
-        await transaction.auditEvent.create({
-          data: {
-            eventType: "company.closed",
-            actorType: "SYSTEM",
-            companyId: id,
-            entityType: "COMPANY",
-            entityId: id,
-            metadata: {
-              name: company.name,
-              closedAt: now.toISOString(),
-              closureOperationId: operation?.id ?? null,
-              exportRequestId: retainedRequest?.id ?? null,
-            },
-          },
-        });
         await transaction.company.delete({ where: { id } });
       });
     }

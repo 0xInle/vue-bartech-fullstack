@@ -6014,22 +6014,28 @@
             }
           },
           {
-            "name": "limit",
+            "name": "page",
             "required": false,
             "in": "query",
             "schema": {
               "minimum": 1,
-              "maximum": 50,
-              "default": 30,
+              "maximum": 100000,
+              "default": 1,
               "type": "number"
             }
           },
           {
-            "name": "cursor",
+            "name": "limit",
             "required": false,
             "in": "query",
             "schema": {
-              "type": "string"
+              "default": 20,
+              "type": "number",
+              "enum": [
+                10,
+                20,
+                30
+              ]
             }
           }
         ],
@@ -12335,6 +12341,15 @@
             "type": "string",
             "nullable": true
           },
+          "summary": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "metadata": {
             "type": "object",
             "nullable": true
@@ -12354,6 +12369,8 @@
           "actorName",
           "actorId",
           "entityName",
+          "summary",
+          "details",
           "metadata",
           "venueId"
         ]
@@ -12367,14 +12384,13 @@
               "$ref": "#/components/schemas/AuditEventHttpDto"
             }
           },
-          "nextCursor": {
-            "type": "string",
-            "nullable": true
+          "totalRecords": {
+            "type": "number"
           }
         },
         "required": [
           "items",
-          "nextCursor"
+          "totalRecords"
         ]
       },
       "AuditHistoryAuthorHttpDto": {

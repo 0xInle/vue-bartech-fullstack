@@ -145,21 +145,46 @@ export class ProductsRepository {
         OR: [{ venueId }, { venueId: null, type: "INGREDIENT" }],
         status: "ACTIVE",
       },
-      select: { id: true, type: true, venueId: true },
+      select: { id: true, type: true, venueId: true, name: true },
     });
   }
 
   findActiveCocktail(database: ProductDatabase, venueId: string, cocktailId: string) {
     return database.product.findFirst({
       where: { id: cocktailId, venueId, type: "COCKTAIL", status: "ACTIVE" },
-      select: { id: true, venueId: true, workflowStatus: true },
+      select: {
+        id: true,
+        venueId: true,
+        workflowStatus: true,
+        name: true,
+        technology: true,
+        comment: true,
+        outputAmount: true,
+        outputUnitId: true,
+        cocktail: { select: { glassId: true, iceId: true, preparationMethodId: true } },
+        parentComponents: {
+          orderBy: { position: "asc" },
+          select: {
+            componentProductId: true,
+            unitId: true,
+            amount: true,
+            componentProduct: { select: { name: true } },
+            unit: { select: { label: true } },
+          },
+        },
+        cocktailCategories: { select: { referenceValueId: true } },
+        cocktailGarnishes: { select: { garnishId: true, garnish: { select: { name: true } } } },
+        cocktailQuickGarnishes: {
+          select: { referenceValueId: true, referenceValue: { select: { label: true } } },
+        },
+      },
     });
   }
 
   findAllowedUnits(database: ProductDatabase, venueId: string, ids: string[]) {
     return database.unit.findMany({
       where: { id: { in: ids }, OR: [{ venueId }, { venueId: null }] },
-      select: { id: true, venueId: true },
+      select: { id: true, venueId: true, label: true },
     });
   }
 
@@ -197,7 +222,7 @@ export class ProductsRepository {
   findLocalQuickGarnishes(database: ProductDatabase, venueId: string, ids: string[]) {
     return database.referenceValue.findMany({
       where: { id: { in: ids }, venueId, type: "GARNISH", isActive: true },
-      select: { id: true },
+      select: { id: true, label: true },
     });
   }
 
