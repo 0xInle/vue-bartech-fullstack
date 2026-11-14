@@ -1,10 +1,11 @@
 <template>
   <section>
-    <form class="space-y-3" @submit.prevent="$emit('submit')">
+    <form class="space-y-3 pt-2" novalidate @submit.prevent="submit">
       <FloatLabel class="w-full" variant="on">
         <InputText
           id="registration-company"
           :model-value="companyName"
+          :invalid="companyNameInvalid"
           required
           maxlength="120"
           autocomplete="organization"
@@ -18,6 +19,7 @@
         <InputText
           id="registration-venue"
           :model-value="venueName"
+          :invalid="venueNameInvalid"
           required
           maxlength="120"
           autocomplete="organization-title"
@@ -31,6 +33,7 @@
         <InputText
           id="full-name"
           :model-value="fullName"
+          :invalid="fullNameInvalid"
           required
           maxlength="120"
           autocomplete="name"
@@ -38,20 +41,19 @@
           class="w-full"
           @update:model-value="$emit('update:fullName', String($event))"
         />
-        <label for="full-name" class="text-xs">ФИО</label>
+        <label for="full-name" class="text-xs">Имя и фамилия</label>
       </FloatLabel>
-      <FloatLabel class="w-full md:w-56" variant="on">
-        <CascadeSelect
+      <FloatLabel class="w-full" variant="on">
+        <Select
+          v-model="selectedRole"
           input-id="registration-role"
-          :model-value="selectedRole"
-          :options="roleGroups"
+          :options="roles"
           option-label="label"
-          option-group-label="label"
-          :option-group-children="['roles']"
+          option-value="value"
           size="small"
+          :invalid="roleInvalid"
           required
           class="w-full"
-          @update:model-value="updateRole"
         />
         <label for="registration-role" class="text-xs">Должность</label>
       </FloatLabel>
@@ -59,6 +61,7 @@
         <InputText
           id="registration-email"
           :model-value="email"
+          :invalid="emailInvalid"
           required
           type="email"
           maxlength="254"
@@ -74,6 +77,7 @@
           :model-value="password"
           input-id="registration-password"
           :input-props="{ autocomplete: 'new-password', minlength: 8, maxlength: 256 }"
+          :invalid="passwordInvalid"
           required
           :feedback="false"
           toggle-mask
@@ -89,6 +93,7 @@
           :model-value="passwordConfirmation"
           input-id="registration-password-confirmation"
           :input-props="{ autocomplete: 'new-password', minlength: 8, maxlength: 256 }"
+          :invalid="passwordConfirmationInvalid"
           required
           :feedback="false"
           toggle-mask
@@ -115,6 +120,8 @@
 </template>
 
 <script setup lang="ts">
+import { isValidPersonName } from "~/utils/person-name";
+
 type InitialRole = "CHEF_BARTENDER" | "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER";
 const props = defineProps<{
   fullName: string;
@@ -138,29 +145,54 @@ const emit = defineEmits<{
   "update:initialRole": [value: InitialRole];
   submit: [];
 }>();
-const selectedRole = computed(() => {
-  for (const group of roleGroups) {
-    const role = group.roles.find((item) => item.value === props.initialRole);
-    if (role) return role;
-  }
-  return null;
+const selectedRole = computed({
+  get: () => props.initialRole || null,
+  set: (role: InitialRole | null) => {
+    if (role) emit("update:initialRole", role);
+  },
 });
-const roleGroups = [
-  {
-    label: "Компания",
-    roles: [{ label: "Шеф-бармен", value: "CHEF_BARTENDER" as const }],
-  },
-  {
-    label: "Заведение",
-    roles: [
-      { label: "Бар-менеджер", value: "BAR_MANAGER" as const },
-      { label: "Старший бармен", value: "SENIOR_BARTENDER" as const },
-      { label: "Бармен", value: "BARTENDER" as const },
-    ],
-  },
-];
+const validationAttempted = ref(false);
+const companyNameInvalid = computed(() => validationAttempted.value && !props.companyName.trim());
+const venueNameInvalid = computed(() => validationAttempted.value && !props.venueName.trim());
+const fullNameInvalid = computed(
+  () => validationAttempted.value && !isValidPersonName(props.fullName),
+);
+const roleInvalid = computed(() => validationAttempted.value && !props.initialRole);
+const emailInvalid = computed(
+  () => validationAttempted.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(props.email.trim()),
+);
+const passwordInvalid = computed(
+  () => validationAttempted.value && (props.password.length < 8 || props.password.length > 256),
+);
+const passwordConfirmationInvalid = computed(
+  () =>
+    validationAttempted.value &&
+    (props.passwordConfirmation.length < 8 ||
+      props.passwordConfirmation.length > 256 ||
+      props.passwordConfirmation !== props.password ||
+      Boolean(props.passwordConfirmationError)),
+);
 
-function updateRole(option: { value: InitialRole } | null): void {
-  if (option) emit("update:initialRole", option.value);
+function submit(): void {
+  validationAttempted.value = true;
+  if (
+    companyNameInvalid.value ||
+    venueNameInvalid.value ||
+    fullNameInvalid.value ||
+    roleInvalid.value ||
+    emailInvalid.value ||
+    passwordInvalid.value ||
+    props.passwordConfirmation.length < 8 ||
+    props.passwordConfirmation.length > 256
+  ) {
+    return;
+  }
+  emit("submit");
 }
+const roles: { label: string; value: InitialRole }[] = [
+  { label: "Шеф-бармен", value: "CHEF_BARTENDER" },
+  { label: "Бар-менеджер", value: "BAR_MANAGER" },
+  { label: "Старший бармен", value: "SENIOR_BARTENDER" },
+  { label: "Бармен", value: "BARTENDER" },
+];
 </script>

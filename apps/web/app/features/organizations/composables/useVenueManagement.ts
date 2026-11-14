@@ -14,11 +14,23 @@ export function useVenueManagement(companyId: string) {
         ),
     ),
   );
-  const canCreateVenue = computed(() =>
-    (identity.currentUser.value?.workplaces ?? []).some(
-      (workspace: Workspace) =>
-        workspace.company.id === companyId && workspace.permissions.includes("create_venues"),
-    ),
+  const canCreateVenue = computed(
+    () =>
+      (identity.currentUser.value?.workplaces ?? []).some(
+        (workspace: Workspace) =>
+          workspace.company.id === companyId && workspace.permissions.includes("create_venues"),
+      ) ||
+      (identity.currentUser.value?.companies ?? []).some((company) => company.id === companyId),
+  );
+  const isChefBartender = computed(
+    () =>
+      (identity.currentUser.value?.workplaces ?? []).some(
+        (workspace: Workspace) =>
+          workspace.company.id === companyId &&
+          workspace.permissions.includes("create_venues") &&
+          workspace.role === "chef_bartender",
+      ) ||
+      (identity.currentUser.value?.companies ?? []).some((company) => company.id === companyId),
   );
   const canInviteManager = computed(() =>
     (identity.currentUser.value?.workplaces ?? []).some(
@@ -27,17 +39,20 @@ export function useVenueManagement(companyId: string) {
     ),
   );
 
-  async function createVenue(venueName: string) {
+  async function createVenue(
+    venueName: string,
+    initialRole?: "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER",
+  ) {
     if (!identity.csrfToken.value) await identity.refreshCsrf();
     return requestApi(
       organizationsControllerCreateVenue(
         companyId,
-        { venueName },
+        { venueName, ...(initialRole ? { initialRole } : {}) },
         identity.mutationOptions(),
         identity.apiFetch,
       ),
     );
   }
 
-  return { canCreateVenue, canInviteManager, createVenue, managedWorkspaces };
+  return { canCreateVenue, canInviteManager, createVenue, isChefBartender, managedWorkspaces };
 }

@@ -6,6 +6,7 @@ import {
   organizationsControllerCloseVenue,
   organizationsControllerGetCompanyClosure,
   organizationsControllerGetLeaveAndCloseAvailability,
+  organizationsControllerLeaveVenue,
   organizationsControllerLeaveAndCloseVenue,
   organizationsControllerPrepareCompanyClosure,
   organizationsControllerPrepareVenueClosure,
@@ -128,6 +129,24 @@ export function useOrganizationLifecycle(
     return result;
   }
 
+  async function leaveVenue(venueId: string, confirmationName: string) {
+    if (!identity.csrfToken.value) await identity.refreshCsrf();
+    const result = await requestApi(
+      organizationsControllerLeaveVenue(
+        toValue(companyId),
+        venueId,
+        { confirmationName },
+        identity.mutationOptions(),
+        identity.apiFetch,
+      ),
+    );
+    await queryClient.invalidateQueries({ queryKey: ["workspace", toValue(companyId), venueId] });
+    await queryClient.invalidateQueries({
+      queryKey: ["venue-leave-and-close", toValue(companyId), venueId],
+    });
+    return result;
+  }
+
   async function beginCompanyClosure(
     confirmationName: string,
     operationId: string | undefined,
@@ -162,6 +181,7 @@ export function useOrganizationLifecycle(
     prepareCompanyClosure,
     closeVenue,
     leaveAndCloseVenue,
+    leaveVenue,
     beginCompanyClosure,
     cancelCompanyClosure,
   };

@@ -58,16 +58,7 @@ const READ_PERMISSIONS: PermissionCode[] = [
   "view_team",
   "view_schedule",
 ];
-const TEMPORARY_OPERATIONAL_PERMISSIONS: PermissionCode[] = [
-  "manage_products",
-  "manage_product_archive",
-  "invite_employees",
-  "invite_bar_manager",
-  "manage_team",
-  "manage_delegated_permissions",
-  "manage_schedule",
-];
-const BAR_MANAGER_PERMISSIONS: PermissionCode[] = [
+export const FULL_VENUE_MANAGEMENT_PERMISSIONS: PermissionCode[] = [
   ...READ_PERMISSIONS,
   "manage_products",
   "manage_product_archive",
@@ -75,30 +66,27 @@ const BAR_MANAGER_PERMISSIONS: PermissionCode[] = [
   "export_data",
   "invite_employees",
   "invite_bar_manager",
-  "invite_chef_bartender",
-  "create_venues",
   "manage_team",
   "manage_delegated_permissions",
+  "create_venues",
   "manage_venue",
   "view_history",
   "manage_schedule",
 ];
-const CHEF_BARTENDER_PERMISSIONS: PermissionCode[] = [
-  ...READ_PERMISSIONS,
-  "export_data",
-  "invite_employees",
-  "invite_bar_manager",
+export const BAR_MANAGER_PERMISSIONS: PermissionCode[] = [
+  ...FULL_VENUE_MANAGEMENT_PERMISSIONS,
   "invite_chef_bartender",
-  "manage_team",
+];
+const CHEF_BARTENDER_PERMISSIONS: PermissionCode[] = [
+  "invite_chef_bartender",
   "manage_venues",
   "manage_company",
-  "view_history",
 ];
 
 export type PermissionEvaluationInput = {
   role: WorkspaceRole;
   permissionOverrides?: Array<{ code: string; enabled: boolean }>;
-  temporaryResponsibility?: boolean;
+  fullVenueManagement?: boolean;
   hasBarManager?: boolean;
   hasChefBartender?: boolean;
 };
@@ -110,24 +98,26 @@ export class PermissionService {
 
     if (input.role === "bar_manager") {
       BAR_MANAGER_PERMISSIONS.forEach((permission) => permissions.add(permission));
-      if (!input.hasChefBartender) permissions.add("manage_company");
-      return applyOverrides(permissions, input.permissionOverrides);
+      return permissionsArray(permissions);
     }
 
     if (input.role === "chef_bartender") {
       CHEF_BARTENDER_PERMISSIONS.forEach((permission) => permissions.add(permission));
-      if (!input.hasBarManager) {
-        TEMPORARY_OPERATIONAL_PERMISSIONS.forEach((permission) => permissions.add(permission));
-      }
-      return applyOverrides(permissions, input.permissionOverrides);
+      FULL_VENUE_MANAGEMENT_PERMISSIONS.forEach((permission) => permissions.add(permission));
+      return permissionsArray(permissions);
     }
 
-    if (input.temporaryResponsibility && !input.hasBarManager && !input.hasChefBartender) {
-      TEMPORARY_OPERATIONAL_PERMISSIONS.forEach((permission) => permissions.add(permission));
+    if (input.fullVenueManagement) {
+      FULL_VENUE_MANAGEMENT_PERMISSIONS.forEach((permission) => permissions.add(permission));
+      return permissionsArray(permissions);
     }
 
     return applyOverrides(permissions, input.permissionOverrides);
   }
+}
+
+function permissionsArray(permissions: Set<PermissionCode>): PermissionCode[] {
+  return [...permissions];
 }
 
 function applyOverrides(

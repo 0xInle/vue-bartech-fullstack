@@ -4,11 +4,12 @@
     <p class="brand-description mt-2 text-sm">
       Введите шестизначный код из письма для {{ email }}.
     </p>
-    <form class="mt-6 space-y-4" @submit.prevent="$emit('submit')">
+    <form class="mt-6 space-y-4" novalidate @submit.prevent="submit">
       <FloatLabel class="w-full" variant="on">
         <InputText
           id="registration-code"
           :model-value="code"
+          :invalid="codeInvalid"
           required
           inputmode="numeric"
           pattern="[0-9]{6}"
@@ -54,11 +55,20 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ email: string; code: string; busy: boolean; disabled: boolean }>();
-defineEmits<{
+const props = defineProps<{ email: string; code: string; busy: boolean; disabled: boolean }>();
+const emit = defineEmits<{
   "update:code": [value: string];
   submit: [];
   resend: [];
   edit: [];
 }>();
+
+const validationAttempted = ref(false);
+const codeInvalid = computed(() => validationAttempted.value && !/^\d{6}$/.test(props.code.trim()));
+
+function submit(): void {
+  validationAttempted.value = true;
+  if (codeInvalid.value) return;
+  emit("submit");
+}
 </script>

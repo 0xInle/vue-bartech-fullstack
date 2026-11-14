@@ -2,6 +2,13 @@ enum ChallengePurpose {
   EMAIL_VERIFICATION
   PASSWORD_RESET
   INVITATION_EMAIL_VERIFICATION
+  EMAIL_CHANGE
+}
+
+enum AccountStatus {
+  ACTIVE
+  PENDING_DELETION
+  DELETED
 }
 
 enum OutboxStatus {
@@ -69,15 +76,20 @@ model User {
   id                                String                          @id @default(uuid()) @db.Uuid
   email                             String
   emailNormalized                   String                          @unique(map: "users_email_normalized_key")
-  passwordHash                      String
+  passwordHash                      String?
   emailVerifiedAt                   DateTime                        @db.Timestamptz(6)
+  status                            AccountStatus                   @default(ACTIVE)
+  deletionRequestedAt               DateTime?                       @db.Timestamptz(6)
+  deletionScheduledAt               DateTime?                       @db.Timestamptz(6)
   createdAt                         DateTime                        @default(now()) @db.Timestamptz(6)
   updatedAt                         DateTime                        @updatedAt @db.Timestamptz(6)
   profile                           UserProfile?
   sessions                          Session[]
   challenges                        EmailChallenge[]
   companyMemberships                CompanyMembership[]
+  companiesInitiallyCreated          Company[]                       @relation("CompanyInitialCreator")
   venueMemberships                  VenueMembership[]
+  venueManagementPackagesChanged     VenueMembership[]                 @relation("VenueManagementPackageChangedBy")
   permissionOverridesChanged        VenuePermissionOverride[]
   temporaryResponsibilitiesAssigned TemporaryResponsibility[]
   createdInvitations                Invitation[]
@@ -139,6 +151,7 @@ model RegistrationAttempt {
 
 model EmailChallenge {
   id                    String                       @id @default(uuid()) @db.Uuid
+  email                 String?
   emailNormalized       String
   purpose               ChallengePurpose
   codeHash              String

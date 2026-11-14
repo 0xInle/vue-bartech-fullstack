@@ -1,10 +1,12 @@
 export { OrganizationsModule } from "./organizations.module.js";
+export { canOpenAdditionalVenue } from "./venue-opening-authority.js";
 export {
   normalizeName,
   normalizeVenueName,
   OrganizationsService,
 } from "./organizations.service.js";
 export { OrganizationInvitationsService } from "./organization-invitations.service.js";
+export type { NewVenueInviteRole } from "./organization-invitations.service.js";
 export type { CompanySummary, VenueInviteRole, WorkspaceInput } from "./organizations.service.js";
 export { PermissionService, permissionCatalog } from "./permissions/permission.service.js";
 export { DELEGATABLE_PERMISSION_CODES } from "./permissions/permission.service.js";

@@ -12,11 +12,8 @@
             {{ invitation.companyName }} · {{ invitation.venueName }}
           </p>
           <p v-else class="mt-2 text-sm text-zinc-600">{{ invitation.companyName }}</p>
-          <p
-            v-if="invitation.purpose === 'CREATE_VENUE_AS_BAR_MANAGER'"
-            class="text-sm text-zinc-600"
-          >
-            Вы создадите новое заведение в этой компании и станете его бар-менеджером.
+          <p v-if="invitation.purpose === 'CREATE_VENUE'" class="text-sm text-zinc-600">
+            Вы создадите новое заведение в этой компании и получите указанную должность.
           </p>
           <p class="text-sm text-zinc-600">Должность: {{ invitation.roleLabel }}</p>
           <p v-if="invitation.accessDescription" class="text-sm text-zinc-600">
@@ -80,7 +77,8 @@
         </section>
         <form
           v-else-if="stage === 'register'"
-          class="space-y-3"
+          class="space-y-3 pt-2"
+          novalidate
           @submit.prevent="startRegistration"
         >
           <h2 class="text-base font-semibold">Создать аккаунт</h2>
@@ -88,13 +86,16 @@
             <InputText
               id="invite-full-name"
               v-model="form.fullName"
-              required
+              :invalid="fullNameInvalid"
               maxlength="120"
               size="small"
               class="w-full"
             />
-            <label for="invite-full-name" class="text-xs">ФИО</label>
+            <label for="invite-full-name" class="text-xs">Имя и фамилия</label>
           </FloatLabel>
+          <Message v-if="fullNameError" severity="error" :closable="false">
+            {{ fullNameError }}
+          </Message>
           <FloatLabel variant="on">
             <InputText
               id="invite-email"
@@ -109,6 +110,7 @@
             <Password
               id="invite-password"
               v-model="form.password"
+              :invalid="passwordInvalid"
               :feedback="false"
               toggle-mask
               required
@@ -118,6 +120,9 @@
             />
             <label for="invite-password" class="text-xs">Пароль</label>
           </FloatLabel>
+          <Message v-if="passwordError" severity="error" :closable="false">
+            {{ passwordError }}
+          </Message>
           <Button type="submit" label="Продолжить" size="small" :loading="busy" />
         </form>
         <form v-else-if="stage === 'verify'" class="space-y-3" @submit.prevent="verifyRegistration">
@@ -254,6 +259,10 @@ const {
   invitation,
   stage,
   error,
+  fullNameError,
+  fullNameInvalid,
+  passwordError,
+  passwordInvalid,
   venueNameError,
   busy,
   form,

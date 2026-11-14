@@ -6,12 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CompanySummaryDto } from './companySummaryDto';
+import type { CurrentIdentityResponseDtoAccountStatus } from './currentIdentityResponseDtoAccountStatus';
 import type { WorkspaceSummaryDto } from './workspaceSummaryDto';
 
 export interface CurrentIdentityResponseDto {
   id: string;
   email: string;
   fullName: string;
+  accountStatus?: CurrentIdentityResponseDtoAccountStatus;
   workplaces: WorkspaceSummaryDto[];
   companies: CompanySummaryDto[];
+  deletionScheduledAt?: string;
 }

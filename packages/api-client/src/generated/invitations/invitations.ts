@@ -36,8 +36,8 @@ import type {
   CompleteExistingInvitationDto,
   CompleteInvitationRegistrationDto,
   CreateChefInvitationDto,
+  CreateNewVenueInvitationDto,
   CreateVenueInvitationDto,
-  CreateVenueManagerInvitationDto,
   InvitationAcceptanceStateDto,
   InviteTokenDto,
   PublicInvitationDto,
@@ -458,19 +458,19 @@ export function useInvitationsControllerCompanyVenueInvitations<TData = Awaited<
 
 
 
-export type invitationsControllerCreateVenueManagerInvitationResponse200 = {
+export type invitationsControllerCreateNewVenueInvitationResponse200 = {
   data: void
   status: 200
 }
 
-export type invitationsControllerCreateVenueManagerInvitationResponseSuccess = (invitationsControllerCreateVenueManagerInvitationResponse200) & {
+export type invitationsControllerCreateNewVenueInvitationResponseSuccess = (invitationsControllerCreateNewVenueInvitationResponse200) & {
   headers: Headers;
 };
 ;
 
-export type invitationsControllerCreateVenueManagerInvitationResponse = (invitationsControllerCreateVenueManagerInvitationResponseSuccess)
+export type invitationsControllerCreateNewVenueInvitationResponse = (invitationsControllerCreateNewVenueInvitationResponseSuccess)
 
-export const getInvitationsControllerCreateVenueManagerInvitationUrl = (companyId: string,) => {
+export const getInvitationsControllerCreateNewVenueInvitationUrl = (companyId: string,) => {
 
 
 
@@ -479,10 +479,10 @@ export const getInvitationsControllerCreateVenueManagerInvitationUrl = (companyI
 }
 
 /**
- * @summary Пригласить бар-менеджера для нового заведения
+ * @summary Пригласить сотрудника для нового заведения
  */
-export const invitationsControllerCreateVenueManagerInvitation = async (companyId: string,
-    createVenueManagerInvitationDto: CreateVenueManagerInvitationDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<invitationsControllerCreateVenueManagerInvitationResponse> => {
+export const invitationsControllerCreateNewVenueInvitation = async (companyId: string,
+    createNewVenueInvitationDto: CreateNewVenueInvitationDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<invitationsControllerCreateNewVenueInvitationResponse> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -498,33 +498,33 @@ export const invitationsControllerCreateVenueManagerInvitation = async (companyI
     }
     return headers;
   };
-const res = await (fetchFn ?? fetch)(getInvitationsControllerCreateVenueManagerInvitationUrl(companyId),
+const res = await (fetchFn ?? fetch)(getInvitationsControllerCreateNewVenueInvitationUrl(companyId),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(createVenueManagerInvitationDto)
+    body: JSON.stringify(createNewVenueInvitationDto)
   }
 )
 
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: invitationsControllerCreateVenueManagerInvitationResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as invitationsControllerCreateVenueManagerInvitationResponse
+  const data: invitationsControllerCreateNewVenueInvitationResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as invitationsControllerCreateNewVenueInvitationResponse
 }
 
 
 
 
 
-export const getInvitationsControllerCreateVenueManagerInvitationMutationKey = () => ['invitationsControllerCreateVenueManagerInvitation'] as const;
+export const getInvitationsControllerCreateNewVenueInvitationMutationKey = () => ['invitationsControllerCreateNewVenueInvitation'] as const;
 
-export const getInvitationsControllerCreateVenueManagerInvitationMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>, TError,InvitationsControllerCreateVenueManagerInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
-): UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>, TError,InvitationsControllerCreateVenueManagerInvitationMutationVariables, TContext> => {
+export const getInvitationsControllerCreateNewVenueInvitationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCreateNewVenueInvitation>>, TError,InvitationsControllerCreateNewVenueInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCreateNewVenueInvitation>>, TError,InvitationsControllerCreateNewVenueInvitationMutationVariables, TContext> => {
 
-const mutationKey = getInvitationsControllerCreateVenueManagerInvitationMutationKey();
+const mutationKey = getInvitationsControllerCreateNewVenueInvitationMutationKey();
 const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -534,10 +534,10 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>, InvitationsControllerCreateVenueManagerInvitationMutationVariables> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitationsControllerCreateNewVenueInvitation>>, InvitationsControllerCreateNewVenueInvitationMutationVariables> = (props) => {
           const {companyId,data} = props ?? {};
 
-          return  invitationsControllerCreateVenueManagerInvitation(companyId,data,fetchOptions, fetcherFn)
+          return  invitationsControllerCreateNewVenueInvitation(companyId,data,fetchOptions, fetcherFn)
         }
 
 
@@ -547,37 +547,37 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type InvitationsControllerCreateVenueManagerInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>>
-    export type InvitationsControllerCreateVenueManagerInvitationMutationBody = CreateVenueManagerInvitationDto
-    export type InvitationsControllerCreateVenueManagerInvitationMutationError = unknown
-    export type InvitationsControllerCreateVenueManagerInvitationMutationVariables = {companyId: string;data: CreateVenueManagerInvitationDto}
+    export type InvitationsControllerCreateNewVenueInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof invitationsControllerCreateNewVenueInvitation>>>
+    export type InvitationsControllerCreateNewVenueInvitationMutationBody = CreateNewVenueInvitationDto
+    export type InvitationsControllerCreateNewVenueInvitationMutationError = unknown
+    export type InvitationsControllerCreateNewVenueInvitationMutationVariables = {companyId: string;data: CreateNewVenueInvitationDto}
 
     /**
- * @summary Пригласить бар-менеджера для нового заведения
+ * @summary Пригласить сотрудника для нового заведения
  */
-export const useInvitationsControllerCreateVenueManagerInvitation = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>, TError,InvitationsControllerCreateVenueManagerInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+export const useInvitationsControllerCreateNewVenueInvitation = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerCreateNewVenueInvitation>>, TError,InvitationsControllerCreateNewVenueInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
  , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof invitationsControllerCreateVenueManagerInvitation>>,
+        Awaited<ReturnType<typeof invitationsControllerCreateNewVenueInvitation>>,
         TError,
-        InvitationsControllerCreateVenueManagerInvitationMutationVariables,
+        InvitationsControllerCreateNewVenueInvitationMutationVariables,
         TContext
       > => {
-      return useMutation(getInvitationsControllerCreateVenueManagerInvitationMutationOptions(options), queryClient);
+      return useMutation(getInvitationsControllerCreateNewVenueInvitationMutationOptions(options), queryClient);
     }
-    export type invitationsControllerRevokeVenueManagerInvitationResponse200 = {
+    export type invitationsControllerRevokeNewVenueInvitationResponse200 = {
   data: void
   status: 200
 }
 
-export type invitationsControllerRevokeVenueManagerInvitationResponseSuccess = (invitationsControllerRevokeVenueManagerInvitationResponse200) & {
+export type invitationsControllerRevokeNewVenueInvitationResponseSuccess = (invitationsControllerRevokeNewVenueInvitationResponse200) & {
   headers: Headers;
 };
 ;
 
-export type invitationsControllerRevokeVenueManagerInvitationResponse = (invitationsControllerRevokeVenueManagerInvitationResponseSuccess)
+export type invitationsControllerRevokeNewVenueInvitationResponse = (invitationsControllerRevokeNewVenueInvitationResponseSuccess)
 
-export const getInvitationsControllerRevokeVenueManagerInvitationUrl = (companyId: string,) => {
+export const getInvitationsControllerRevokeNewVenueInvitationUrl = (companyId: string,) => {
 
 
 
@@ -588,8 +588,8 @@ export const getInvitationsControllerRevokeVenueManagerInvitationUrl = (companyI
 /**
  * @summary Отозвать приглашение для нового заведения
  */
-export const invitationsControllerRevokeVenueManagerInvitation = async (companyId: string,
-    revokeInvitationDto: RevokeInvitationDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<invitationsControllerRevokeVenueManagerInvitationResponse> => {
+export const invitationsControllerRevokeNewVenueInvitation = async (companyId: string,
+    revokeInvitationDto: RevokeInvitationDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<invitationsControllerRevokeNewVenueInvitationResponse> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -605,7 +605,7 @@ export const invitationsControllerRevokeVenueManagerInvitation = async (companyI
     }
     return headers;
   };
-const res = await (fetchFn ?? fetch)(getInvitationsControllerRevokeVenueManagerInvitationUrl(companyId),
+const res = await (fetchFn ?? fetch)(getInvitationsControllerRevokeNewVenueInvitationUrl(companyId),
   {
     ...options,
     method: 'POST',
@@ -617,21 +617,21 @@ const res = await (fetchFn ?? fetch)(getInvitationsControllerRevokeVenueManagerI
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: invitationsControllerRevokeVenueManagerInvitationResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as invitationsControllerRevokeVenueManagerInvitationResponse
+  const data: invitationsControllerRevokeNewVenueInvitationResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as invitationsControllerRevokeNewVenueInvitationResponse
 }
 
 
 
 
 
-export const getInvitationsControllerRevokeVenueManagerInvitationMutationKey = () => ['invitationsControllerRevokeVenueManagerInvitation'] as const;
+export const getInvitationsControllerRevokeNewVenueInvitationMutationKey = () => ['invitationsControllerRevokeNewVenueInvitation'] as const;
 
-export const getInvitationsControllerRevokeVenueManagerInvitationMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>, TError,InvitationsControllerRevokeVenueManagerInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
-): UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>, TError,InvitationsControllerRevokeVenueManagerInvitationMutationVariables, TContext> => {
+export const getInvitationsControllerRevokeNewVenueInvitationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerRevokeNewVenueInvitation>>, TError,InvitationsControllerRevokeNewVenueInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerRevokeNewVenueInvitation>>, TError,InvitationsControllerRevokeNewVenueInvitationMutationVariables, TContext> => {
 
-const mutationKey = getInvitationsControllerRevokeVenueManagerInvitationMutationKey();
+const mutationKey = getInvitationsControllerRevokeNewVenueInvitationMutationKey();
 const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -641,10 +641,10 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>, InvitationsControllerRevokeVenueManagerInvitationMutationVariables> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitationsControllerRevokeNewVenueInvitation>>, InvitationsControllerRevokeNewVenueInvitationMutationVariables> = (props) => {
           const {companyId,data} = props ?? {};
 
-          return  invitationsControllerRevokeVenueManagerInvitation(companyId,data,fetchOptions, fetcherFn)
+          return  invitationsControllerRevokeNewVenueInvitation(companyId,data,fetchOptions, fetcherFn)
         }
 
 
@@ -654,23 +654,23 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type InvitationsControllerRevokeVenueManagerInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>>
-    export type InvitationsControllerRevokeVenueManagerInvitationMutationBody = RevokeInvitationDto
-    export type InvitationsControllerRevokeVenueManagerInvitationMutationError = unknown
-    export type InvitationsControllerRevokeVenueManagerInvitationMutationVariables = {companyId: string;data: RevokeInvitationDto}
+    export type InvitationsControllerRevokeNewVenueInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof invitationsControllerRevokeNewVenueInvitation>>>
+    export type InvitationsControllerRevokeNewVenueInvitationMutationBody = RevokeInvitationDto
+    export type InvitationsControllerRevokeNewVenueInvitationMutationError = unknown
+    export type InvitationsControllerRevokeNewVenueInvitationMutationVariables = {companyId: string;data: RevokeInvitationDto}
 
     /**
  * @summary Отозвать приглашение для нового заведения
  */
-export const useInvitationsControllerRevokeVenueManagerInvitation = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>, TError,InvitationsControllerRevokeVenueManagerInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+export const useInvitationsControllerRevokeNewVenueInvitation = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitationsControllerRevokeNewVenueInvitation>>, TError,InvitationsControllerRevokeNewVenueInvitationMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
  , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof invitationsControllerRevokeVenueManagerInvitation>>,
+        Awaited<ReturnType<typeof invitationsControllerRevokeNewVenueInvitation>>,
         TError,
-        InvitationsControllerRevokeVenueManagerInvitationMutationVariables,
+        InvitationsControllerRevokeNewVenueInvitationMutationVariables,
         TContext
       > => {
-      return useMutation(getInvitationsControllerRevokeVenueManagerInvitationMutationOptions(options), queryClient);
+      return useMutation(getInvitationsControllerRevokeNewVenueInvitationMutationOptions(options), queryClient);
     }
     export type invitationsControllerTeamResponse200 = {
   data: VenueTeamResponseDto

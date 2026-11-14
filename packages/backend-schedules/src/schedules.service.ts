@@ -642,6 +642,7 @@ export class SchedulesService {
         tx.companyMembership.findFirst({
           where: {
             userId,
+            OR: [{ endedOn: null }, { endedOn: { gt: today } }],
             companyRole: "CHEF_BARTENDER",
             company: { venues: { some: { id: venueId } } },
           },

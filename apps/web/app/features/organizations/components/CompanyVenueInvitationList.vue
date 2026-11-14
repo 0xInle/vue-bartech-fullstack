@@ -11,7 +11,8 @@
         <div class="min-w-0">
           <p class="truncate text-sm font-medium">{{ invitation.email }}</p>
           <p class="text-xs text-zinc-500">
-            Бар-менеджер нового заведения · {{ statusLabel(invitation.status) }} · до
+            {{ roleLabel(invitation.role) }} нового заведения ·
+            {{ statusLabel(invitation.status) }} · до
             {{ formatDate(invitation.expiresAt) }}
           </p>
         </div>
@@ -42,5 +43,13 @@ function formatDate(value: string): string {
 
 function statusLabel(status: CompanyVenueInvitation["status"]): string {
   return status === "IN_PROGRESS" ? "принято, ожидает завершения" : "ожидает ответа";
+}
+
+function roleLabel(role: CompanyVenueInvitation["role"]): string {
+  return {
+    BAR_MANAGER: "Бар-менеджер",
+    SENIOR_BARTENDER: "Старший бармен",
+    BARTENDER: "Бармен",
+  }[role];
 }
 </script>

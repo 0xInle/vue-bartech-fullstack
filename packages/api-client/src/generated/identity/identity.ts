@@ -27,6 +27,8 @@ import {
 
 import type {
   AcceptedDto,
+  AccountDeletionResponseDto,
+  AccountPasswordConfirmationDto,
   ChangePasswordDto,
   CsrfTokenResponseDto,
   CurrentIdentityResponseDto,
@@ -36,6 +38,9 @@ import type {
   PasswordRecoveryRequestDto,
   RegistrationCompleteResponseDto,
   RegistrationStartDto,
+  StartEmailChangeDto,
+  UpdateProfileNameDto,
+  VerifyEmailChangeDto,
   VerifyEmailDto
 } from '../models';
 
@@ -1148,4 +1153,534 @@ export const useIdentityControllerChangePassword = <TError = unknown,
         TContext
       > => {
       return useMutation(getIdentityControllerChangePasswordMutationOptions(options), queryClient);
+    }
+    export type identityControllerUpdateProfileNameResponse200 = {
+  data: AcceptedDto
+  status: 200
+}
+
+export type identityControllerUpdateProfileNameResponseSuccess = (identityControllerUpdateProfileNameResponse200) & {
+  headers: Headers;
+};
+;
+
+export type identityControllerUpdateProfileNameResponse = (identityControllerUpdateProfileNameResponseSuccess)
+
+export const getIdentityControllerUpdateProfileNameUrl = () => {
+
+
+
+
+  return `/api/v1/identity/profile/name`
+}
+
+/**
+ * @summary Изменить имя и фамилию текущего пользователя
+ */
+export const identityControllerUpdateProfileName = async (updateProfileNameDto: UpdateProfileNameDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<identityControllerUpdateProfileNameResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getIdentityControllerUpdateProfileNameUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateProfileNameDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: identityControllerUpdateProfileNameResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as identityControllerUpdateProfileNameResponse
+}
+
+
+
+
+
+export const getIdentityControllerUpdateProfileNameMutationKey = () => ['identityControllerUpdateProfileName'] as const;
+
+export const getIdentityControllerUpdateProfileNameMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerUpdateProfileName>>, TError,IdentityControllerUpdateProfileNameMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof identityControllerUpdateProfileName>>, TError,IdentityControllerUpdateProfileNameMutationVariables, TContext> => {
+
+const mutationKey = getIdentityControllerUpdateProfileNameMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof identityControllerUpdateProfileName>>, IdentityControllerUpdateProfileNameMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  identityControllerUpdateProfileName(data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IdentityControllerUpdateProfileNameMutationResult = NonNullable<Awaited<ReturnType<typeof identityControllerUpdateProfileName>>>
+    export type IdentityControllerUpdateProfileNameMutationBody = UpdateProfileNameDto
+    export type IdentityControllerUpdateProfileNameMutationError = unknown
+    export type IdentityControllerUpdateProfileNameMutationVariables = {data: UpdateProfileNameDto}
+
+    /**
+ * @summary Изменить имя и фамилию текущего пользователя
+ */
+export const useIdentityControllerUpdateProfileName = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerUpdateProfileName>>, TError,IdentityControllerUpdateProfileNameMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof identityControllerUpdateProfileName>>,
+        TError,
+        IdentityControllerUpdateProfileNameMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIdentityControllerUpdateProfileNameMutationOptions(options), queryClient);
+    }
+    export type identityControllerStartEmailChangeResponse200 = {
+  data: AcceptedDto
+  status: 200
+}
+
+export type identityControllerStartEmailChangeResponseSuccess = (identityControllerStartEmailChangeResponse200) & {
+  headers: Headers;
+};
+;
+
+export type identityControllerStartEmailChangeResponse = (identityControllerStartEmailChangeResponseSuccess)
+
+export const getIdentityControllerStartEmailChangeUrl = () => {
+
+
+
+
+  return `/api/v1/identity/email-change`
+}
+
+/**
+ * @summary Отправить код подтверждения на новый основной email
+ */
+export const identityControllerStartEmailChange = async (startEmailChangeDto: StartEmailChangeDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<identityControllerStartEmailChangeResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getIdentityControllerStartEmailChangeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(startEmailChangeDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: identityControllerStartEmailChangeResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as identityControllerStartEmailChangeResponse
+}
+
+
+
+
+
+export const getIdentityControllerStartEmailChangeMutationKey = () => ['identityControllerStartEmailChange'] as const;
+
+export const getIdentityControllerStartEmailChangeMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerStartEmailChange>>, TError,IdentityControllerStartEmailChangeMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof identityControllerStartEmailChange>>, TError,IdentityControllerStartEmailChangeMutationVariables, TContext> => {
+
+const mutationKey = getIdentityControllerStartEmailChangeMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof identityControllerStartEmailChange>>, IdentityControllerStartEmailChangeMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  identityControllerStartEmailChange(data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IdentityControllerStartEmailChangeMutationResult = NonNullable<Awaited<ReturnType<typeof identityControllerStartEmailChange>>>
+    export type IdentityControllerStartEmailChangeMutationBody = StartEmailChangeDto
+    export type IdentityControllerStartEmailChangeMutationError = unknown
+    export type IdentityControllerStartEmailChangeMutationVariables = {data: StartEmailChangeDto}
+
+    /**
+ * @summary Отправить код подтверждения на новый основной email
+ */
+export const useIdentityControllerStartEmailChange = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerStartEmailChange>>, TError,IdentityControllerStartEmailChangeMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof identityControllerStartEmailChange>>,
+        TError,
+        IdentityControllerStartEmailChangeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIdentityControllerStartEmailChangeMutationOptions(options), queryClient);
+    }
+    export type identityControllerVerifyEmailChangeResponse200 = {
+  data: AcceptedDto
+  status: 200
+}
+
+export type identityControllerVerifyEmailChangeResponseSuccess = (identityControllerVerifyEmailChangeResponse200) & {
+  headers: Headers;
+};
+;
+
+export type identityControllerVerifyEmailChangeResponse = (identityControllerVerifyEmailChangeResponseSuccess)
+
+export const getIdentityControllerVerifyEmailChangeUrl = () => {
+
+
+
+
+  return `/api/v1/identity/email-change/verify`
+}
+
+/**
+ * @summary Подтвердить новый основной email
+ */
+export const identityControllerVerifyEmailChange = async (verifyEmailChangeDto: VerifyEmailChangeDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<identityControllerVerifyEmailChangeResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getIdentityControllerVerifyEmailChangeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(verifyEmailChangeDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: identityControllerVerifyEmailChangeResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as identityControllerVerifyEmailChangeResponse
+}
+
+
+
+
+
+export const getIdentityControllerVerifyEmailChangeMutationKey = () => ['identityControllerVerifyEmailChange'] as const;
+
+export const getIdentityControllerVerifyEmailChangeMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerVerifyEmailChange>>, TError,IdentityControllerVerifyEmailChangeMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof identityControllerVerifyEmailChange>>, TError,IdentityControllerVerifyEmailChangeMutationVariables, TContext> => {
+
+const mutationKey = getIdentityControllerVerifyEmailChangeMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof identityControllerVerifyEmailChange>>, IdentityControllerVerifyEmailChangeMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  identityControllerVerifyEmailChange(data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IdentityControllerVerifyEmailChangeMutationResult = NonNullable<Awaited<ReturnType<typeof identityControllerVerifyEmailChange>>>
+    export type IdentityControllerVerifyEmailChangeMutationBody = VerifyEmailChangeDto
+    export type IdentityControllerVerifyEmailChangeMutationError = unknown
+    export type IdentityControllerVerifyEmailChangeMutationVariables = {data: VerifyEmailChangeDto}
+
+    /**
+ * @summary Подтвердить новый основной email
+ */
+export const useIdentityControllerVerifyEmailChange = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerVerifyEmailChange>>, TError,IdentityControllerVerifyEmailChangeMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof identityControllerVerifyEmailChange>>,
+        TError,
+        IdentityControllerVerifyEmailChangeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIdentityControllerVerifyEmailChangeMutationOptions(options), queryClient);
+    }
+    export type identityControllerRequestAccountDeletionResponse200 = {
+  data: AccountDeletionResponseDto
+  status: 200
+}
+
+export type identityControllerRequestAccountDeletionResponseSuccess = (identityControllerRequestAccountDeletionResponse200) & {
+  headers: Headers;
+};
+;
+
+export type identityControllerRequestAccountDeletionResponse = (identityControllerRequestAccountDeletionResponseSuccess)
+
+export const getIdentityControllerRequestAccountDeletionUrl = () => {
+
+
+
+
+  return `/api/v1/identity/account-deletion`
+}
+
+/**
+ * @summary Запустить семидневное ожидание удаления аккаунта
+ */
+export const identityControllerRequestAccountDeletion = async (accountPasswordConfirmationDto: AccountPasswordConfirmationDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<identityControllerRequestAccountDeletionResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getIdentityControllerRequestAccountDeletionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(accountPasswordConfirmationDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: identityControllerRequestAccountDeletionResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as identityControllerRequestAccountDeletionResponse
+}
+
+
+
+
+
+export const getIdentityControllerRequestAccountDeletionMutationKey = () => ['identityControllerRequestAccountDeletion'] as const;
+
+export const getIdentityControllerRequestAccountDeletionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerRequestAccountDeletion>>, TError,IdentityControllerRequestAccountDeletionMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof identityControllerRequestAccountDeletion>>, TError,IdentityControllerRequestAccountDeletionMutationVariables, TContext> => {
+
+const mutationKey = getIdentityControllerRequestAccountDeletionMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof identityControllerRequestAccountDeletion>>, IdentityControllerRequestAccountDeletionMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  identityControllerRequestAccountDeletion(data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IdentityControllerRequestAccountDeletionMutationResult = NonNullable<Awaited<ReturnType<typeof identityControllerRequestAccountDeletion>>>
+    export type IdentityControllerRequestAccountDeletionMutationBody = AccountPasswordConfirmationDto
+    export type IdentityControllerRequestAccountDeletionMutationError = unknown
+    export type IdentityControllerRequestAccountDeletionMutationVariables = {data: AccountPasswordConfirmationDto}
+
+    /**
+ * @summary Запустить семидневное ожидание удаления аккаунта
+ */
+export const useIdentityControllerRequestAccountDeletion = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerRequestAccountDeletion>>, TError,IdentityControllerRequestAccountDeletionMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof identityControllerRequestAccountDeletion>>,
+        TError,
+        IdentityControllerRequestAccountDeletionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIdentityControllerRequestAccountDeletionMutationOptions(options), queryClient);
+    }
+    export type identityControllerCancelAccountDeletionResponse200 = {
+  data: AcceptedDto
+  status: 200
+}
+
+export type identityControllerCancelAccountDeletionResponseSuccess = (identityControllerCancelAccountDeletionResponse200) & {
+  headers: Headers;
+};
+;
+
+export type identityControllerCancelAccountDeletionResponse = (identityControllerCancelAccountDeletionResponseSuccess)
+
+export const getIdentityControllerCancelAccountDeletionUrl = () => {
+
+
+
+
+  return `/api/v1/identity/account-deletion/cancel`
+}
+
+/**
+ * @summary Отменить ожидающее удаление аккаунта
+ */
+export const identityControllerCancelAccountDeletion = async (accountPasswordConfirmationDto: AccountPasswordConfirmationDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<identityControllerCancelAccountDeletionResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getIdentityControllerCancelAccountDeletionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(accountPasswordConfirmationDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: identityControllerCancelAccountDeletionResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as identityControllerCancelAccountDeletionResponse
+}
+
+
+
+
+
+export const getIdentityControllerCancelAccountDeletionMutationKey = () => ['identityControllerCancelAccountDeletion'] as const;
+
+export const getIdentityControllerCancelAccountDeletionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerCancelAccountDeletion>>, TError,IdentityControllerCancelAccountDeletionMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof identityControllerCancelAccountDeletion>>, TError,IdentityControllerCancelAccountDeletionMutationVariables, TContext> => {
+
+const mutationKey = getIdentityControllerCancelAccountDeletionMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof identityControllerCancelAccountDeletion>>, IdentityControllerCancelAccountDeletionMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  identityControllerCancelAccountDeletion(data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IdentityControllerCancelAccountDeletionMutationResult = NonNullable<Awaited<ReturnType<typeof identityControllerCancelAccountDeletion>>>
+    export type IdentityControllerCancelAccountDeletionMutationBody = AccountPasswordConfirmationDto
+    export type IdentityControllerCancelAccountDeletionMutationError = unknown
+    export type IdentityControllerCancelAccountDeletionMutationVariables = {data: AccountPasswordConfirmationDto}
+
+    /**
+ * @summary Отменить ожидающее удаление аккаунта
+ */
+export const useIdentityControllerCancelAccountDeletion = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof identityControllerCancelAccountDeletion>>, TError,IdentityControllerCancelAccountDeletionMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof identityControllerCancelAccountDeletion>>,
+        TError,
+        IdentityControllerCancelAccountDeletionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIdentityControllerCancelAccountDeletionMutationOptions(options), queryClient);
     }

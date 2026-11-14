@@ -11,4 +11,5 @@ import type { UpdateTeamMemberDtoRole } from './updateTeamMemberDtoRole';
 export interface UpdateTeamMemberDto {
   role: UpdateTeamMemberDtoRole;
   permissions: UpdateTeamMemberDtoPermissionsItem[];
+  hasFullManagementPackage?: boolean;
 }

@@ -71,7 +71,11 @@ export class ExportRendererService {
       const output = createWriteStream(path, { flags: "wx" });
       archive.on("error", (error) => output.destroy(error));
       archive.pipe(output);
-      for (const product of snapshot.products) {
+      const products =
+        request.type === "VENUE_CLOSURE_PDF_ZIP"
+          ? snapshot.products.filter(isRecipeProduct)
+          : snapshot.products;
+      for (const product of products) {
         const pdfPath = join(folder, `${String(product.id)}.pdf`);
         await this.writePdf(pdfPath, product, snapshot);
         archive.file(pdfPath, { name: productArchivePath(product) });
@@ -213,7 +217,7 @@ export class ExportRendererService {
 
   private outputName(type: string, id: string): string {
     if (type === "SINGLE_PDF") return `tech-card-${id}.pdf`;
-    if (type === "BATCH_PDF_ZIP") return `tech-cards-${id}.zip`;
+    if (type === "BATCH_PDF_ZIP" || type === "VENUE_CLOSURE_PDF_ZIP") return `tech-cards-${id}.zip`;
     if (type === "COMPANY_CLOSURE_PDF_ZIP") return `company-tech-cards-${id}.zip`;
     if (type === "VENUE_BACKUP_ZIP" || type === "COMPANY_CLOSURE_BACKUP_ZIP")
       return `unsupported-${id}.zip`;

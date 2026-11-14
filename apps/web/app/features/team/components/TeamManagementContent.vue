@@ -28,16 +28,66 @@
       <Divider class="!my-0 lg:!hidden" />
       <aside v-if="canInvite || canManageTeam" class="min-h-0 min-w-0 overflow-y-auto">
         <div class="space-y-4">
+          <section v-if="availableCompanyMembers.length" class="space-y-3">
+            <h2 class="text-base font-semibold">Добавить сотрудника компании</h2>
+            <FloatLabel variant="on">
+              <Select
+                v-model="selectedCompanyMember"
+                input-id="existing-company-member"
+                :options="availableCompanyMembers"
+                option-label="label"
+                option-value="value"
+                size="small"
+                class="w-full"
+                :disabled="existingMemberBusy"
+              />
+              <label for="existing-company-member" class="text-xs">Сотрудник</label>
+            </FloatLabel>
+            <FloatLabel variant="on">
+              <Select
+                v-model="existingMemberRole"
+                input-id="existing-company-member-role"
+                :options="existingRoleOptions"
+                option-label="label"
+                option-value="value"
+                size="small"
+                class="w-full"
+                :disabled="existingMemberBusy"
+              />
+              <label for="existing-company-member-role" class="text-xs"
+                >Должность в заведении</label
+              >
+            </FloatLabel>
+            <Message
+              v-if="existingMemberError"
+              severity="error"
+              :closable="false"
+              :pt="compactMessagePt"
+            >
+              {{ existingMemberError }}
+            </Message>
+            <Button
+              label="Добавить сотрудника"
+              size="small"
+              class="w-full"
+              :loading="existingMemberBusy"
+              :disabled="!selectedCompanyMember || existingMemberBusy"
+              @click="addCompanyMember"
+            />
+          </section>
+          <Divider v-if="availableCompanyMembers.length && (canInvite || canManageTeam)" />
           <TeamInvitationPanel
             v-if="canInvite"
             :allow-venue-invites="canInviteVenue"
             :allow-bar-manager="workspace.permissions.includes('invite_bar_manager')"
             :allow-chef-bartender="canInviteChef"
+            :allow-new-venue-invite="canInviteBarManager"
             :busy="invitationBusy"
             :busy-id="busyInvitationId"
             :error="invitationError"
             :chef-error="canInviteChef && chefTeamQuery.isError.value"
-            :loading="chefTeamQuery.isLoading.value"
+            :new-venue-error="canInviteBarManager && newVenueTeamQuery.isError.value"
+            :loading="chefTeamQuery.isLoading.value || newVenueTeamQuery.isLoading.value"
             :invitations="pendingInvitations"
             @submit="invite"
             @revoke="revoke"
@@ -73,30 +123,55 @@ import {
   type VenueRole,
 } from "../composables/useVenueTeam";
 import { useCompanyChefTeam } from "../composables/useCompanyChefTeam";
+import { useCompanyVenueInvitations } from "~/features/organizations/composables/useCompanyVenueInvitations";
 import TeamMemberEditorDrawer from "./TeamMemberEditorDrawer.vue";
 import TeamMembersTable from "./TeamMembersTable.vue";
 import TeamInvitationPanel from "./TeamInvitationPanel.vue";
 import TeamTerminationPanel from "./TeamTerminationPanel.vue";
 
 const props = defineProps<{ workspace: Workspace }>();
-const { teamQuery, createInvitation, revokeInvitation, updateMember, endMembership } = useVenueTeam(
-  props.workspace.company.id,
-  props.workspace.venue.id,
-);
+const {
+  teamQuery,
+  createInvitation,
+  revokeInvitation,
+  updateMember,
+  endMembership,
+  addExistingMember,
+} = useVenueTeam(props.workspace.company.id, props.workspace.venue.id);
 type TeamMemberRow = TeamMember & { isPreview?: true };
 const previewMembers = ref<TeamMemberRow[]>(createPreviewMembers());
 const displayedMembers = computed(() => [
   ...(teamQuery.data.value?.members ?? []),
   ...previewMembers.value,
 ]);
+const availableCompanyMembers = computed(() =>
+  (teamQuery.data.value?.availableCompanyMembers ?? []).map(({ id, fullName, email }) => ({
+    value: id,
+    label: `${fullName} (${email})`,
+  })),
+);
+const selectedCompanyMember = ref<string | null>(null);
+const existingMemberRole = ref<"BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER">("BARTENDER");
+const existingMemberBusy = ref(false);
+const existingMemberError = ref("");
+const existingRoleOptions = [
+  { label: "Бар-менеджер", value: "BAR_MANAGER" },
+  { label: "Старший бармен", value: "SENIOR_BARTENDER" },
+  { label: "Бармен", value: "BARTENDER" },
+];
 const canInviteVenue = props.workspace.permissions.includes("invite_employees");
 const canInviteChef = props.workspace.permissions.includes("invite_chef_bartender");
 const canInvite = canInviteVenue || canInviteChef;
+const canInviteBarManager = props.workspace.permissions.includes("invite_bar_manager");
 const canManageTeam = props.workspace.permissions.includes("manage_team");
-const canOpenManagement = props.workspace.role === "bar_manager";
+const canOpenManagement = props.workspace.permissions.includes("manage_team");
 const chefTeam = useCompanyChefTeam(props.workspace.company.id, canInviteChef);
 const chefTeamQuery = chefTeam.teamQuery;
 const { createInvitation: createChefInvitation, revokeInvitation: revokeChefInvitation } = chefTeam;
+const newVenueTeam = useCompanyVenueInvitations(props.workspace.company.id, canInviteBarManager);
+const newVenueTeamQuery = newVenueTeam.invitationsQuery;
+const { createInvitation: createNewVenueInvitation, revokeInvitation: revokeNewVenueInvitation } =
+  newVenueTeam;
 const invitationBusy = ref(false);
 const invitationError = ref("");
 const busyInvitationId = ref("");
@@ -114,14 +189,27 @@ const pendingInvitations = computed(() => [
     canRevoke: true,
     scope: "company" as const,
   })),
+  ...(newVenueTeamQuery.data.value?.invitations ?? []).map((invitation) => ({
+    ...invitation,
+    scope: "newVenue" as const,
+  })),
 ]);
 
-async function invite(email: string, role: VenueRole | "CHEF_BARTENDER"): Promise<void> {
+async function invite(
+  email: string,
+  role: VenueRole | "CHEF_BARTENDER",
+  newVenue = false,
+): Promise<void> {
   invitationBusy.value = true;
   invitationError.value = "";
   try {
     if (role === "CHEF_BARTENDER") await createChefInvitation(email);
-    else await createInvitation(email, role);
+    else if (newVenue) {
+      if (role !== "BAR_MANAGER" && role !== "SENIOR_BARTENDER" && role !== "BARTENDER") {
+        throw new Error("Выберите должность для нового заведения");
+      }
+      await createNewVenueInvitation(email, role);
+    } else await createInvitation(email, role);
   } catch (cause) {
     invitationError.value =
       cause instanceof Error ? cause.message : "Не удалось создать приглашение";
@@ -130,11 +218,15 @@ async function invite(email: string, role: VenueRole | "CHEF_BARTENDER"): Promis
   }
 }
 
-async function revoke(invitation: { id: string; scope: "venue" | "company" }): Promise<void> {
+async function revoke(invitation: {
+  id: string;
+  scope: "venue" | "company" | "newVenue";
+}): Promise<void> {
   busyInvitationId.value = invitation.id;
   invitationError.value = "";
   try {
     if (invitation.scope === "company") await revokeChefInvitation(invitation.id);
+    else if (invitation.scope === "newVenue") await revokeNewVenueInvitation(invitation.id);
     else await revokeInvitation(invitation.id);
   } catch (cause) {
     invitationError.value =
@@ -187,6 +279,21 @@ async function confirmMemberRole(role: VenueRole): Promise<void> {
     editorError.value = cause instanceof Error ? cause.message : "Не удалось изменить должность";
   } finally {
     editorBusy.value = false;
+  }
+}
+
+async function addCompanyMember(): Promise<void> {
+  if (!selectedCompanyMember.value) return;
+  existingMemberBusy.value = true;
+  existingMemberError.value = "";
+  try {
+    await addExistingMember(selectedCompanyMember.value, existingMemberRole.value);
+    selectedCompanyMember.value = null;
+  } catch (cause) {
+    existingMemberError.value =
+      cause instanceof Error ? cause.message : "Не удалось добавить сотрудника";
+  } finally {
+    existingMemberBusy.value = false;
   }
 }
 

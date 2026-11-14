@@ -24,7 +24,7 @@
       }"
       @row-select="onRowSelect"
     >
-      <Column field="fullName" header="ФИО">
+      <Column field="fullName" header="Сотрудник">
         <template #body="{ data }">
           <span class="font-medium">{{ data.fullName }}</span>
         </template>

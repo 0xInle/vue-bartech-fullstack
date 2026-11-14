@@ -1,10 +1,11 @@
 <template>
   <section>
-    <form class="space-y-3" @submit.prevent="$emit('submit')">
+    <form class="space-y-3" novalidate @submit.prevent="submit">
       <FloatLabel class="w-full" variant="on">
         <InputText
           id="login-email"
           :model-value="email"
+          :invalid="emailInvalid"
           required
           type="email"
           maxlength="254"
@@ -20,6 +21,7 @@
           :model-value="password"
           input-id="login-password"
           :input-props="{ autocomplete: 'current-password', maxlength: 256 }"
+          :invalid="passwordInvalid"
           required
           :feedback="false"
           toggle-mask
@@ -53,11 +55,23 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ email: string; password: string; busy: boolean; disabled: boolean }>();
-defineEmits<{
+const props = defineProps<{ email: string; password: string; busy: boolean; disabled: boolean }>();
+const emit = defineEmits<{
   "update:email": [value: string];
   "update:password": [value: string];
   submit: [];
   recover: [];
 }>();
+
+const validationAttempted = ref(false);
+const emailInvalid = computed(
+  () => validationAttempted.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(props.email.trim()),
+);
+const passwordInvalid = computed(() => validationAttempted.value && props.password.length === 0);
+
+function submit(): void {
+  validationAttempted.value = true;
+  if (emailInvalid.value || passwordInvalid.value) return;
+  emit("submit");
+}
 </script>

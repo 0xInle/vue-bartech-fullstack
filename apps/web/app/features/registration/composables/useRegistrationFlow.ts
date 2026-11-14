@@ -4,6 +4,7 @@ import {
   identityControllerVerifyRegistration,
 } from "@bartech/api-client";
 import { requestApi } from "~/utils/api-response";
+import { normalizePersonName } from "~/utils/person-name";
 
 type RegistrationForm = {
   email: string;
@@ -49,7 +50,7 @@ export function useRegistrationFlow(
         {
           email: form.email,
           password: form.password,
-          fullName: form.fullName,
+          fullName: normalizePersonName(form.fullName),
           companyName: form.companyName,
           venueName: form.venueName,
           initialRole: form.initialRole,

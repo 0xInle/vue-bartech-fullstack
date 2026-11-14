@@ -1,96 +1,53 @@
 <template>
-  <section class="mt-4 rounded-lg border border-surface p-4">
+  <section v-if="operationType === 'COMPANY'" class="mt-4 rounded-lg border border-surface p-4">
     <h3 class="text-sm font-semibold">Выгрузка для закрытия</h3>
     <p class="mt-1 text-sm text-color-secondary">
       Файл будет связан только с этой операцией и будет доступен до исходного срока хранения.
     </p>
-    <div v-if="operationType === 'COMPANY'" class="mt-4">
+    <div class="mt-4">
       <Button
         label="Подготовить PDF-архив компании"
         size="small"
         :loading="creating"
         :disabled="creating || isProcessing || !canCreate"
-        @click="create('COMPANY_CLOSURE_PDF_ZIP')"
+        @click="createCompanyExport"
       />
     </div>
-    <template v-else>
-      <LoadingIndicator v-if="productsQuery.isLoading.value" class="mt-4" />
-      <div v-else-if="productsQuery.isSuccess.value" class="mt-4">
-        <label v-if="canViewArchive" class="mb-3 flex items-center gap-2 text-sm">
-          <Checkbox
-            v-model="includeArchived"
-            input-id="closure-include-archive"
-            binary
-            size="small"
-          />
-          <span>Включить архивные карточки в PDF</span>
-        </label>
-        <div v-if="visibleProducts.length" class="max-h-48 divide-y divide-surface overflow-auto">
-          <label
-            v-for="product in visibleProducts"
-            :key="product.id"
-            class="flex cursor-pointer items-center gap-3 py-2 text-sm"
-          >
-            <Checkbox
-              v-model="selectedIds"
-              :input-id="`closure-product-${product.id}`"
-              :value="product.id"
-              size="small"
-            />
-            <span class="min-w-0 flex-1 truncate">{{ product.name }}</span>
-            <span class="text-xs text-color-secondary">{{ productTypeLabel(product.type) }}</span>
-          </label>
-        </div>
-        <Message v-else severity="secondary" :closable="false" class="mt-3">
-          Нет доступных техкарт для PDF-выгрузки.
-        </Message>
-        <div class="mt-4 flex flex-wrap gap-2">
-          <Button
-            label="PDF выбранной карточки"
-            icon="pi pi-file-pdf"
-            severity="secondary"
-            outlined
-            size="small"
-            :loading="creating"
-            :disabled="creating || isProcessing || !canCreate || selectedIds.length !== 1"
-            @click="create('SINGLE_PDF')"
-          />
-          <Button
-            label="ZIP выбранных PDF"
-            icon="pi pi-file-export"
-            size="small"
-            :loading="creating"
-            :disabled="creating || isProcessing || !canCreate || !selectedIds.length"
-            @click="create('BATCH_PDF_ZIP')"
-          />
-        </div>
-      </div>
-      <Message v-else severity="error" :closable="false" class="mt-4">
-        Не удалось загрузить список техкарт для выгрузки.
-      </Message>
-    </template>
-    <Message v-if="errorMessage" severity="error" :closable="false" class="mt-3">
-      {{ errorMessage }}
-    </Message>
-    <Message v-if="exportRequest" :severity="statusSeverity" :closable="false" class="mt-3">
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <span
-          >{{ statusText
-          }}<span v-if="exportRequest.expiresAt">
-            · хранится до {{ formatDate(exportRequest.expiresAt) }}</span
-          ></span
-        >
-        <Button
-          v-if="exportRequest.status === 'READY'"
-          label="Скачать файл"
-          icon="pi pi-download"
-          size="small"
-          text
-          @click="download"
-        />
-      </div>
-    </Message>
   </section>
+  <Message
+    v-if="errorMessage && operationType === 'COMPANY'"
+    severity="error"
+    size="small"
+    :closable="false"
+    :pt="compactMessagePt"
+    class="mt-3"
+  >
+    {{ errorMessage }}
+  </Message>
+  <Message
+    v-if="exportRequest"
+    :severity="statusSeverity"
+    size="small"
+    :closable="false"
+    :pt="compactMessagePt"
+    class="mt-3"
+  >
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <span
+        >{{ statusText
+        }}<span v-if="exportRequest.expiresAt">
+          · хранится до {{ formatDate(exportRequest.expiresAt) }}</span
+        ></span
+      >
+      <Button
+        v-if="exportRequest.status === 'READY'"
+        label="Скачать файл"
+        size="small"
+        text
+        @click="download"
+      />
+    </div>
+  </Message>
 </template>
 
 <script setup lang="ts">
@@ -100,38 +57,27 @@ import {
   organizationsControllerCreateClosureExport,
   organizationsControllerGetClosureOperation,
   organizationsControllerGetClosureOperationDownload,
-  productsControllerListArchive,
-  productsControllerListCocktails,
-  productsControllerListGarnishes,
-  productsControllerListPreparations,
 } from "@bartech/api-client";
-import type {
-  ArchiveListItemDto,
-  CocktailListItemResponseDto,
-  ClosureOperationResponseDto,
-  ClosureExportDtoType,
-  GarnishListItemResponseDto,
-  PreparationListItemResponseDto,
-  ProductExportResponseDto,
-} from "@bartech/api-client";
+import type { ClosureOperationResponseDto, ProductExportResponseDto } from "@bartech/api-client";
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
+import { compactMessagePt } from "~/utils/primevue-message";
 import { requestApi } from "~/utils/api-response";
 
 defineOptions({ name: "ClosureExportPicker" });
 
 const props = defineProps<{
   companyId: string;
-  venueId?: string;
   operationId: string;
   operationType: "VENUE" | "COMPANY";
-  canViewArchive?: boolean;
   canCreate?: boolean;
 }>();
-const emit = defineEmits<{ ready: [exportId: string]; requested: [exportId: string] }>();
+const emit = defineEmits<{
+  ready: [exportId: string];
+  requested: [exportId: string];
+  error: [message: string];
+}>();
 const identity = useIdentityFlow();
 const canCreate = computed(() => props.canCreate ?? true);
-const includeArchived = ref(false);
-const selectedIds = ref<string[]>([]);
 const creating = ref(false);
 const errorMessage = ref("");
 const operationQuery = useQuery<ClosureOperationResponseDto>({
@@ -151,81 +97,6 @@ const operationQuery = useQuery<ClosureOperationResponseDto>({
       ),
     ),
 });
-const productsQuery = useQuery({
-  queryKey: computed(() => [
-    "closure-export-products",
-    props.companyId,
-    props.venueId,
-    includeArchived.value,
-  ]),
-  enabled: computed(() => Boolean(props.venueId && props.operationType === "VENUE")),
-  retry: false,
-  queryFn: async ({ signal }): Promise<ExportProduct[]> => {
-    const venueId = props.venueId!;
-    const [cocktails, preparations, garnishes, archive] = await Promise.all([
-      productsControllerListCocktails(
-        props.companyId,
-        venueId,
-        undefined,
-        { credentials: "include", signal },
-        identity.apiFetch,
-      ),
-      productsControllerListPreparations(
-        props.companyId,
-        venueId,
-        undefined,
-        { credentials: "include", signal },
-        identity.apiFetch,
-      ),
-      productsControllerListGarnishes(
-        props.companyId,
-        venueId,
-        undefined,
-        { credentials: "include", signal },
-        identity.apiFetch,
-      ),
-      includeArchived.value && props.canViewArchive
-        ? productsControllerListArchive(
-            props.companyId,
-            venueId,
-            undefined,
-            { credentials: "include", signal },
-            identity.apiFetch,
-          )
-        : Promise.resolve({ data: [], status: 200 }),
-    ]);
-    const active = [
-      ...(await requestApi<CocktailListItemResponseDto[]>(Promise.resolve(cocktails))).map(
-        (item) => ({
-          ...item,
-          type: "COCKTAIL" as const,
-          status: "ACTIVE" as const,
-        }),
-      ),
-      ...(await requestApi<PreparationListItemResponseDto[]>(Promise.resolve(preparations))).map(
-        (item) => ({
-          ...item,
-          type: "PREPARATION" as const,
-          status: "ACTIVE" as const,
-        }),
-      ),
-      ...(await requestApi<GarnishListItemResponseDto[]>(Promise.resolve(garnishes))).map(
-        (item) => ({
-          ...item,
-          type: "GARNISH" as const,
-          status: "ACTIVE" as const,
-        }),
-      ),
-    ];
-    const archived = await requestApi<ArchiveListItemDto[]>(Promise.resolve(archive));
-    return [...active, ...archived.map((item) => ({ ...item, status: "ARCHIVED" as const }))];
-  },
-});
-const visibleProducts = computed(() =>
-  (productsQuery.data.value ?? []).filter(
-    (product) => includeArchived.value || product.status !== "ARCHIVED",
-  ),
-);
 const exportRequest = computed(() => operationQuery.data.value?.export ?? null);
 const isProcessing = computed(
   () => exportRequest.value?.status === "QUEUED" || exportRequest.value?.status === "PROCESSING",
@@ -268,23 +139,24 @@ watch(
   { immediate: true },
 );
 
-async function create(type: ClosureExportDtoType) {
+async function createVenueExport() {
+  await createExport("VENUE_CLOSURE_PDF_ZIP");
+}
+
+async function createCompanyExport() {
+  await createExport("COMPANY_CLOSURE_PDF_ZIP");
+}
+
+async function createExport(type: "VENUE_CLOSURE_PDF_ZIP" | "COMPANY_CLOSURE_PDF_ZIP") {
   creating.value = true;
   errorMessage.value = "";
+  if (props.operationType === "VENUE") emit("error", "");
   try {
-    const parameters =
-      type === "COMPANY_CLOSURE_PDF_ZIP"
-        ? { type }
-        : {
-            type,
-            productIds: type === "SINGLE_PDF" ? selectedIds.value.slice(0, 1) : selectedIds.value,
-            includeArchived: includeArchived.value,
-          };
     const response = await requestApi<ProductExportResponseDto>(
       organizationsControllerCreateClosureExport(
         props.companyId,
         props.operationId,
-        parameters,
+        { type },
         identity.mutationOptions(),
         identity.apiFetch,
       ),
@@ -294,6 +166,7 @@ async function create(type: ClosureExportDtoType) {
     if (response.status === "READY") emit("ready", response.id);
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : "Не удалось запросить выгрузку.";
+    if (props.operationType === "VENUE") emit("error", errorMessage.value);
   } finally {
     creating.value = false;
   }
@@ -312,11 +185,8 @@ async function download() {
   } catch (error) {
     errorMessage.value =
       error instanceof Error ? error.message : "Не удалось получить ссылку на файл.";
+    if (props.operationType === "VENUE") emit("error", errorMessage.value);
   }
-}
-
-function productTypeLabel(type: string) {
-  return { COCKTAIL: "Коктейль", PREPARATION: "Заготовка", GARNISH: "Гарнир" }[type] ?? "Техкарта";
 }
 
 function formatDate(value: string) {
@@ -325,9 +195,5 @@ function formatDate(value: string) {
   );
 }
 
-type ExportProduct =
-  | (CocktailListItemResponseDto & { type: "COCKTAIL"; status: "ACTIVE" })
-  | (PreparationListItemResponseDto & { type: "PREPARATION"; status: "ACTIVE" })
-  | (GarnishListItemResponseDto & { type: "GARNISH"; status: "ACTIVE" })
-  | (ArchiveListItemDto & { status: "ARCHIVED" });
+defineExpose({ createVenueExport, isCreating: creating, isProcessing });
 </script>

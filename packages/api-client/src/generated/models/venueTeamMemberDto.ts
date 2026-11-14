@@ -23,5 +23,7 @@ export interface VenueTeamMemberDto {
   availablePermissions: string[];
   availableRoles: VenueTeamMemberDtoAvailableRolesItem[];
   canManagePermissionOverrides: boolean;
+  hasFullManagementPackage: boolean;
+  canManageFullManagementPackage: boolean;
   isCurrentUser: boolean;
 }

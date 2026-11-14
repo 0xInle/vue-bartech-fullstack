@@ -52,6 +52,20 @@
 
           <section class="space-y-3">
             <h3 class="text-sm font-medium">Разрешения сотрудника</h3>
+            <div
+              v-if="member.canManageFullManagementPackage"
+              class="flex items-center gap-2 text-sm"
+            >
+              <ToggleSwitch
+                v-model="hasFullManagementPackage"
+                input-id="team-full-management-package"
+                :disabled="busy || roleChanged"
+                class="scale-75 origin-left"
+              />
+              <label for="team-full-management-package" class="text-xs">
+                Полный набор прав заведения
+              </label>
+            </div>
             <p
               v-if="
                 !member.canManagePermissionOverrides &&
@@ -105,7 +119,7 @@
               label="Сохранить"
               size="small"
               :loading="busy"
-              :disabled="busy || roleChanged || !permissionsChanged"
+              :disabled="busy || roleChanged || (!permissionsChanged && !packageChanged)"
             />
           </div>
         </form>
@@ -141,6 +155,7 @@ const visible = computed({
 });
 const role = ref<VenueRole>("BARTENDER");
 const permissions = ref<PermissionCode[]>([]);
+const hasFullManagementPackage = ref(false);
 const availableRoles: Array<{ label: string; value: VenueRole }> = [
   { label: "Бармен", value: "BARTENDER" },
   { label: "Барбек", value: "BARBACK" },
@@ -176,11 +191,15 @@ const permissionsChanged = computed(() => {
   if (!member) return false;
   return !samePermissions(getEditablePermissions(member.permissions), permissions.value);
 });
+const packageChanged = computed(() =>
+  Boolean(props.member && hasFullManagementPackage.value !== props.member.hasFullManagementPackage),
+);
 watch(
   () => props.member,
   (member) => {
     role.value = member?.role ?? "BARTENDER";
     permissions.value = getEditablePermissions(member?.permissions ?? []);
+    hasFullManagementPackage.value = Boolean(member?.hasFullManagementPackage);
   },
   { immediate: true },
 );
@@ -192,10 +211,12 @@ watch(role, (nextRole) => {
 });
 
 function save(): void {
-  if (!props.member || !permissionsChanged.value || roleChanged.value) return;
+  if (!props.member || (!permissionsChanged.value && !packageChanged.value) || roleChanged.value)
+    return;
   emit("save", {
     role: role.value,
     permissions: permissions.value,
+    ...(packageChanged.value ? { hasFullManagementPackage: hasFullManagementPackage.value } : {}),
   });
 }
 

@@ -1,34 +1,11 @@
 <template>
   <section>
-    <h2 class="text-xs mt-2 font-medium text-color-secondary">Рабочие пространства:</h2>
-    <ul v-if="workplaces.length" class="mt-2 space-y-3">
-      <li v-for="workplace in workplaces" :key="workplace.venue.id">
-        <NuxtLink
-          :to="`/app/companies/${workplace.company.id}/venues/${workplace.venue.id}`"
-          class="workspace-link block rounded-xl border p-4 transition-colors"
-        >
-          <span class="brand-eyebrow block text-xs font-semibold uppercase">
-            {{ workplace.venue.name }}
-          </span>
-          <span class="brand-description mt-1 block text-xs">{{ workplace.company.name }}</span>
-        </NuxtLink>
+    <ul v-if="groups.length" class="space-y-4">
+      <li v-for="group in groups" :key="group.company.id">
+        <OrganizationCompanyGroup :company="group.company" :workplaces="group.workplaces" />
       </li>
     </ul>
-    <section v-if="companies.length" :class="workplaces.length ? 'mt-6' : 'mt-5'">
-      <h3 class="text-sm font-semibold">Компании без заведений</h3>
-      <ul class="mt-3 space-y-3">
-        <li v-for="company in companies" :key="company.id">
-          <NuxtLink
-            :to="`/app/companies/${company.id}`"
-            class="workspace-link block rounded-xl border p-4 transition-colors"
-          >
-            <span class="block font-semibold">{{ company.name }}</span>
-            <span class="brand-description mt-1 block text-sm">Добавить заведение</span>
-          </NuxtLink>
-        </li>
-      </ul>
-    </section>
-    <p v-if="!workplaces.length && !companies.length" class="brand-description mt-3 text-sm">
+    <p v-else class="brand-description mt-4 text-sm">
       В аккаунте пока нет доступных заведений или компаний.
     </p>
   </section>
@@ -36,9 +13,26 @@
 
 <script setup lang="ts">
 import type { CompanySummary, Workspace } from "~/types/user-workspaces";
+import OrganizationCompanyGroup from "./OrganizationCompanyGroup.vue";
 
-defineProps<{
+const props = defineProps<{
   workplaces: Workspace[];
   companies: CompanySummary[];
 }>();
+
+const groups = computed(() => {
+  const grouped = new Map<string, { company: CompanySummary; workplaces: Workspace[] }>();
+  for (const workplace of props.workplaces) {
+    const group = grouped.get(workplace.company.id) ?? {
+      company: workplace.company,
+      workplaces: [],
+    };
+    group.workplaces.push(workplace);
+    grouped.set(workplace.company.id, group);
+  }
+  for (const company of props.companies) {
+    if (!grouped.has(company.id)) grouped.set(company.id, { company, workplaces: [] });
+  }
+  return [...grouped.values()];
+});
 </script>

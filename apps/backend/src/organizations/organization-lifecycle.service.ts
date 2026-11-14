@@ -25,7 +25,10 @@ export class OrganizationLifecycleService {
     const company = await this.database.company.findUnique({
       where: { id: companyId },
       include: {
-        memberships: { select: { userId: true, companyRole: true } },
+        memberships: {
+          where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+          select: { userId: true, companyRole: true },
+        },
         productExportClosures: {
           where: { status: "PENDING_CLOSURE", createdByUserId: userId },
           select: { id: true },
@@ -34,7 +37,12 @@ export class OrganizationLifecycleService {
         },
         venues: {
           where: { status: "ACTIVE" },
-          include: { memberships: { select: { userId: true, role: true } } },
+          include: {
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              select: { userId: true, role: true },
+            },
+          },
         },
       },
     });
@@ -47,16 +55,10 @@ export class OrganizationLifecycleService {
     ) {
       throw new NotFoundException("Состояние компании недоступно");
     }
-    const canCancel =
-      company.memberships.some(
-        ({ userId: memberId, companyRole }) =>
-          memberId === userId && companyRole === "CHEF_BARTENDER",
-      ) ||
-      company.venues.some((venue) =>
-        venue.memberships.some(
-          ({ userId: memberId, role }) => memberId === userId && role === "BAR_MANAGER",
-        ),
-      );
+    const canCancel = company.memberships.some(
+      ({ userId: memberId, companyRole }) =>
+        memberId === userId && companyRole === "CHEF_BARTENDER",
+    );
     return {
       status: company.status,
       closureDeadline: company.closureDeadline,
@@ -69,7 +71,16 @@ export class OrganizationLifecycleService {
     if (!venueId) {
       const company = await this.database.company.findUnique({
         where: { id: companyId },
-        include: { memberships: true, venues: { include: { memberships: true } } },
+        include: {
+          memberships: { where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] } },
+          venues: {
+            include: {
+              memberships: {
+                where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              },
+            },
+          },
+        },
       });
       const membership = company?.memberships.find(({ userId: memberId }) => memberId === userId);
       if (
@@ -108,44 +119,32 @@ export class OrganizationLifecycleService {
       where: { id: venueId, companyId, status: "ACTIVE", company: { status: "ACTIVE" } },
       include: {
         memberships: {
+          where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
           select: {
             userId: true,
             role: true,
-            temporaryResponsibility: { select: { id: true } },
+            hasFullManagementPackage: true,
           },
         },
         company: {
           select: {
             id: true,
             name: true,
-            memberships: { select: { userId: true, companyRole: true } },
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              select: { userId: true, companyRole: true },
+            },
           },
         },
       },
     });
     const actorMember = venue?.memberships.find(({ userId: id }) => id === userId);
-    const hasManager = venue?.memberships.some(({ role }) => role === "BAR_MANAGER") ?? false;
-    const hasChef =
-      venue?.company.memberships.some(({ companyRole }) => companyRole === "CHEF_BARTENDER") ??
-      false;
-    const actorHasCompanyRole =
-      venue?.company.memberships.some(({ userId: id }) => id === userId) ?? false;
-    const isLastLocalEmployee = Boolean(
-      venue?.memberships.length === 1 &&
-      actorMember?.userId === userId &&
-      (actorMember.role === "BARTENDER" || actorMember.role === "SENIOR_BARTENDER") &&
-      !actorHasCompanyRole,
-    );
     const isAuthorized = Boolean(
       workspace &&
       venue &&
       (actorMember?.role === "BAR_MANAGER" ||
         workspace.role === "chef_bartender" ||
-        (actorMember?.temporaryResponsibility &&
-          (actorMember.role === "BARTENDER" || actorMember.role === "SENIOR_BARTENDER") &&
-          !hasManager &&
-          !hasChef) ||
-        isLastLocalEmployee),
+        actorMember?.hasFullManagementPackage),
     );
     if (!isAuthorized || !venue || !workspace) {
       throw new NotFoundException("Заведение недоступно для закрытия");
@@ -182,7 +181,6 @@ export class OrganizationLifecycleService {
     companyId: string,
     operationId: string,
     type: ClosureExportKind,
-    parameters: ExportParameters,
   ) {
     const operation = await this.database.productExportClosureOperation.findFirst({
       where: { id: operationId, createdByUserId: userId, originalCompanyId: companyId },
@@ -196,7 +194,10 @@ export class OrganizationLifecycleService {
       }
       const company = await this.database.company.findUnique({
         where: { id: companyId },
-        include: { memberships: true, venues: { where: { status: "ACTIVE" } } },
+        include: {
+          memberships: { where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] } },
+          venues: { where: { status: "ACTIVE" } },
+        },
       });
       const isChef = company?.memberships.some(
         ({ userId: memberId, companyRole }) =>
@@ -229,7 +230,7 @@ export class OrganizationLifecycleService {
       });
     }
     const venueId = operation.venueId;
-    if (!venueId || type === "COMPANY_CLOSURE_PDF_ZIP") {
+    if (!venueId || type !== "VENUE_CLOSURE_PDF_ZIP") {
       throw new NotFoundException("Операция закрытия недоступна");
     }
     const workspace = await this.organizations.findWorkspaceForUser(userId, companyId, venueId);
@@ -240,11 +241,20 @@ export class OrganizationLifecycleService {
     if (!workspace?.permissions.includes("export_data") || company?.status !== "ACTIVE") {
       throw new NotFoundException("Заведение недоступно для выгрузки");
     }
+    const includeArchived = workspace.permissions.includes("view_archive");
+    const products = await this.database.product.findMany({
+      where: {
+        venueId,
+        type: { in: ["COCKTAIL", "PREPARATION", "GARNISH"] },
+        status: includeArchived ? { in: ["ACTIVE", "ARCHIVED"] } : "ACTIVE",
+      },
+      select: { id: true },
+    });
     return this.exportService.createClosureExport({
       context: { userId, companyId, venueId },
       operationId,
       type,
-      parameters,
+      parameters: { productIds: products.map(({ id }) => id), includeArchived },
     });
   }
 
@@ -272,6 +282,7 @@ export class OrganizationLifecycleService {
         where: {
           userId,
           companyId: operation.originalCompanyId,
+          OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
           companyRole: "CHEF_BARTENDER",
         },
       });
@@ -287,7 +298,10 @@ export class OrganizationLifecycleService {
         operation.type === "VENUE" &&
         (!workspace?.permissions.includes("export_data") ||
           (operation.exportRequest.type === "VENUE_BACKUP_ZIP" &&
-            !workspace.permissions.includes("view_archive")))
+            !workspace.permissions.includes("view_archive")) ||
+          (operation.exportRequest.type === "VENUE_CLOSURE_PDF_ZIP" &&
+            (operation.exportRequest.parameters as ExportParameters).includeArchived === true &&
+            !workspace?.permissions.includes("view_archive")))
       ) {
         throw new NotFoundException("Операция закрытия недоступна");
       }
@@ -426,13 +440,13 @@ export class OrganizationLifecycleService {
       `;
       const venue = venues[0];
       if (!venue) throw new NotFoundException("Заведение недоступно");
-      if (venue.name !== expectedName) {
+      if (venue.name.toLocaleLowerCase("ru-RU") !== expectedName.toLocaleLowerCase("ru-RU")) {
         throw new ConflictException("Название заведения не совпадает");
       }
 
       const [companyMemberships, venueMemberships, venueCount] = await Promise.all([
         transaction.companyMembership.findMany({
-          where: { companyId },
+          where: { companyId, OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
           select: { userId: true, companyRole: true },
         }),
         transaction.venueMembership.findMany({
@@ -442,7 +456,6 @@ export class OrganizationLifecycleService {
             OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
           },
           include: {
-            temporaryResponsibility: { select: { id: true } },
             permissionOverrides: { select: { code: true, enabled: true } },
           },
         }),
@@ -453,28 +466,22 @@ export class OrganizationLifecycleService {
       const isLastLocalEmployeeAction =
         venueMemberships.length === 1 &&
         actorVenueMembership?.userId === actorId &&
-        (actorVenueMembership.role === "BARTENDER" ||
+        (actorVenueMembership.role === "BAR_MANAGER" ||
+          actorVenueMembership.role === "BARTENDER" ||
           actorVenueMembership.role === "SENIOR_BARTENDER") &&
         !actorCompanyMembership?.companyRole;
       const hasChef = companyMemberships.some(
         ({ companyRole }) => companyRole === "CHEF_BARTENDER",
       );
-      const hasManager = venueMemberships.some(({ role }) => role === "BAR_MANAGER");
       const isChef = actorCompanyMembership?.companyRole === "CHEF_BARTENDER";
       const isManager = actorVenueMembership?.role === "BAR_MANAGER";
-      const isTemporaryResponsible = Boolean(
-        actorVenueMembership?.temporaryResponsibility &&
-        (actorVenueMembership.role === "BARTENDER" ||
-          actorVenueMembership.role === "SENIOR_BARTENDER") &&
-        !hasChef &&
-        !hasManager,
-      );
+      const hasFullManagementPackage = Boolean(actorVenueMembership?.hasFullManagementPackage);
       if (actorCompanyMembership?.companyRole && actorVenueMembership) {
         throw new ConflictException("У сотрудника обнаружены несовместимые полномочия");
       }
       const isAuthorized = asLastLocalEmployee
-        ? isLastLocalEmployeeAction
-        : isChef || isManager || isTemporaryResponsible;
+        ? isLastLocalEmployeeAction && (isChef || isManager || hasFullManagementPackage)
+        : isChef || isManager || hasFullManagementPackage;
       if (!isAuthorized) {
         throw new NotFoundException("Заведение недоступно");
       }
@@ -497,6 +504,7 @@ export class OrganizationLifecycleService {
       const actorCanExport = Boolean(
         isChef ||
         isManager ||
+        hasFullManagementPackage ||
         actorVenueMembership?.permissionOverrides.some(
           ({ code, enabled }) => code === "EXPORT_DATA" && enabled,
         ),
@@ -570,6 +578,32 @@ export class OrganizationLifecycleService {
       }
       await transaction.venue.delete({ where: { id: venueId } });
 
+      if (venueCount === 1 && hasChef) {
+        const deadline = new Date(Date.now() + COMPANY_CLOSURE_MS);
+        await transaction.company.update({
+          where: { id: companyId },
+          data: { status: "PENDING_CLOSURE", closureDeadline: deadline },
+        });
+        const chef = companyMemberships.find(({ companyRole }) => companyRole === "CHEF_BARTENDER");
+        if (chef) {
+          await transaction.productExportClosureOperation.create({
+            data: {
+              createdByUserId: chef.userId,
+              type: "COMPANY",
+              status: "PENDING_CLOSURE",
+              companyId,
+              originalCompanyId: companyId,
+              originalCompanyName: (
+                await transaction.company.findUniqueOrThrow({
+                  where: { id: companyId },
+                  select: { name: true },
+                })
+              ).name,
+            },
+          });
+        }
+      }
+
       for (const userId of affectedMembers) {
         const companyMembership = companyMemberships.find(
           (membership) => membership.userId === userId,
@@ -602,10 +636,16 @@ export class OrganizationLifecycleService {
         id: venueId,
         companyId,
         status: "ACTIVE",
-        company: { status: "ACTIVE", memberships: { some: { userId } } },
+        company: {
+          status: "ACTIVE",
+          memberships: {
+            some: { userId, OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+          },
+        },
       },
       select: {
         memberships: {
+          where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
           select: {
             userId: true,
             role: true,
@@ -617,7 +657,8 @@ export class OrganizationLifecycleService {
     return Boolean(
       venue?.memberships.length === 1 &&
       venue.memberships[0].userId === userId &&
-      (venue.memberships[0].role === "BARTENDER" ||
+      (venue.memberships[0].role === "BAR_MANAGER" ||
+        venue.memberships[0].role === "BARTENDER" ||
         venue.memberships[0].role === "SENIOR_BARTENDER") &&
       !venue.memberships[0].companyMembership.companyRole,
     );
@@ -638,8 +679,17 @@ export class OrganizationLifecycleService {
       const company = await transaction.company.findUnique({
         where: { id: companyId },
         include: {
-          memberships: { include: { user: { select: { id: true, email: true } } } },
-          venues: { include: { memberships: true } },
+          memberships: {
+            where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+            include: { user: { select: { id: true, email: true } } },
+          },
+          venues: {
+            include: {
+              memberships: {
+                where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              },
+            },
+          },
         },
       });
       if (!company) throw new NotFoundException("Компания недоступна");
@@ -751,8 +801,15 @@ export class OrganizationLifecycleService {
       const company = await transaction.company.findUnique({
         where: { id: companyId },
         include: {
-          memberships: true,
-          venues: { where: { status: "ACTIVE" }, include: { memberships: true } },
+          memberships: { where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] } },
+          venues: {
+            where: { status: "ACTIVE" },
+            include: {
+              memberships: {
+                where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              },
+            },
+          },
         },
       });
       const now = new Date();
@@ -767,10 +824,10 @@ export class OrganizationLifecycleService {
       const isChef = company.memberships.some(
         ({ userId, companyRole }) => userId === actorId && companyRole === "CHEF_BARTENDER",
       );
-      const isManager = company.venues.some((venue) =>
-        venue.memberships.some(({ userId, role }) => userId === actorId && role === "BAR_MANAGER"),
-      );
-      if (!isChef && !isManager) throw new NotFoundException("Компания недоступна");
+      if (!isChef) throw new NotFoundException("Компания недоступна");
+      if (company.venues.length === 0) {
+        throw new ConflictException("Для восстановления компании нужно создать новое заведение");
+      }
       await transaction.company.update({
         where: { id: companyId },
         data: { status: "ACTIVE", closureDeadline: null },

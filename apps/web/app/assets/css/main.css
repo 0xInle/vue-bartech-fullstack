@@ -1,6 +1,56 @@
 @import "tailwindcss";
 @import "primeicons/primeicons.css";
 
+.p-button.app-icon-button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+
+.p-button.app-icon-button .p-button-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--p-primary-color);
+  font-size: 0.875rem;
+  line-height: 0.875rem;
+}
+
+.p-button.landing-profile-button {
+  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.p-button.landing-profile-button .p-button-icon,
+.p-button.landing-profile-button .p-button-label {
+  color: var(--p-primary-color);
+}
+
+.p-button.landing-profile-button .p-button-label {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.p-button.workspace-action-icon-button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+
+.p-button.workspace-action-icon-button .p-button-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--p-primary-color);
+  font-size: 0.875rem;
+  line-height: 0.875rem;
+}
+
 :root {
   --schedule-palette-yellow-300: #fde047;
   --schedule-palette-green-300: #86efac;

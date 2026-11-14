@@ -4,6 +4,7 @@ import {
   invitationsControllerRevoke,
   invitationsControllerTeam,
   teamControllerEndMembership,
+  teamControllerAddExistingMember,
   teamControllerUpdateMember,
 } from "@bartech/api-client";
 import type { TeamControllerUpdateMemberMutationBody } from "@bartech/api-client";
@@ -15,7 +16,7 @@ export type PermissionCode = TeamControllerUpdateMemberMutationBody["permissions
 export type UpdateTeamMemberInput = Pick<
   TeamControllerUpdateMemberMutationBody,
   "role" | "permissions"
->;
+> & { hasFullManagementPackage?: boolean };
 export type TeamMember = {
   id: string;
   fullName: string;
@@ -26,8 +27,11 @@ export type TeamMember = {
   availableRoles: VenueRole[];
   availablePermissions: PermissionCode[];
   canManagePermissionOverrides: boolean;
+  hasFullManagementPackage: boolean;
+  canManageFullManagementPackage: boolean;
   isCurrentUser: boolean;
 };
+export type AvailableCompanyMember = { id: string; fullName: string; email: string };
 export type VenueInvitation = {
   id: string;
   email: string;
@@ -52,9 +56,11 @@ export function useVenueTeam(companyId: string, venueId: string) {
         { credentials: "include", signal },
         identity.apiFetch,
       );
-      return requestApi<{ members: TeamMember[]; invitations: VenueInvitation[] }>(
-        Promise.resolve(response),
-      );
+      return requestApi<{
+        members: TeamMember[];
+        availableCompanyMembers: AvailableCompanyMember[];
+        invitations: VenueInvitation[];
+      }>(Promise.resolve(response));
     },
   });
 
@@ -109,6 +115,26 @@ export function useVenueTeam(companyId: string, venueId: string) {
     await queryClient.invalidateQueries({ queryKey });
   }
 
+  async function addExistingMember(
+    userId: string,
+    role: "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER",
+  ) {
+    await identity.refreshCsrf();
+    const response = await teamControllerAddExistingMember(
+      companyId,
+      venueId,
+      { userId, role },
+      {
+        credentials: "include",
+        headers: { "x-csrf-token": identity.csrfToken.value },
+      },
+      identity.apiFetch,
+    );
+    await requestApi(Promise.resolve(response));
+    await queryClient.invalidateQueries({ queryKey });
+    await queryClient.invalidateQueries({ queryKey: ["workspace"] });
+  }
+
   async function endMembership(membershipId: string, terminationDate: string): Promise<void> {
     await identity.refreshCsrf();
     const response = await teamControllerEndMembership(
@@ -128,5 +154,12 @@ export function useVenueTeam(companyId: string, venueId: string) {
     await queryClient.invalidateQueries({ queryKey: ["schedule", companyId, venueId] });
   }
 
-  return { teamQuery, createInvitation, revokeInvitation, updateMember, endMembership };
+  return {
+    teamQuery,
+    createInvitation,
+    revokeInvitation,
+    updateMember,
+    endMembership,
+    addExistingMember,
+  };
 }

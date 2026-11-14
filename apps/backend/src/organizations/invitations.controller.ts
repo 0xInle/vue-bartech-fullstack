@@ -44,7 +44,7 @@ import {
   CompanyChefTeamResponseDto,
   CompanyVenueInvitationsResponseDto,
   CompleteExistingInvitationDto,
-  CreateVenueManagerInvitationDto,
+  CreateNewVenueInvitationDto,
 } from "./invitations.dto.js";
 
 const INVITATION_COOKIE = "bartech_invitation";
@@ -106,26 +106,31 @@ export class InvitationsController {
 
   @Post("organizations/companies/:companyId/venue-invitations")
   @UseGuards(SessionGuard)
-  @ApiOperation({ summary: "Пригласить бар-менеджера для нового заведения" })
+  @ApiOperation({ summary: "Пригласить сотрудника для нового заведения" })
   @ApiOkResponse({ description: "Приглашение создано, письмо поставлено в Outbox" })
-  createVenueManagerInvitation(
+  createNewVenueInvitation(
     @CurrentUser() user: AuthenticatedUser,
     @Param("companyId") companyId: string,
-    @Body() body: CreateVenueManagerInvitationDto,
+    @Body() body: CreateNewVenueInvitationDto,
   ) {
-    return this.invitationIssuance.createVenueManagerInvitation(user.id, companyId, body.email);
+    return this.invitationIssuance.createNewVenueInvitation(
+      user.id,
+      companyId,
+      body.email,
+      body.role,
+    );
   }
 
   @Post("organizations/companies/:companyId/venue-invitations/revoke")
   @UseGuards(SessionGuard)
   @ApiOperation({ summary: "Отозвать приглашение для нового заведения" })
   @ApiOkResponse({ description: "Приглашение и его сессия закрыты" })
-  async revokeVenueManagerInvitation(
+  async revokeNewVenueInvitation(
     @CurrentUser() user: AuthenticatedUser,
     @Param("companyId") companyId: string,
     @Body() body: RevokeInvitationDto,
   ) {
-    await this.organizationInvitations.revokeVenueManagerInvitation(
+    await this.organizationInvitations.revokeNewVenueInvitation(
       user.id,
       companyId,
       body.invitationId,

@@ -2864,7 +2864,7 @@ async function download(): Promise<void> {
         }
       } else {
         const header = [
-          "ФИО",
+          "Имя и фамилия",
           "Должность",
           ...Array.from({ length: selectedMonth.daysInMonth }, (_, index) => String(index + 1)),
           "Часы",

@@ -16,6 +16,7 @@ import type {
 } from '@tanstack/vue-query';
 
 import type {
+  AddExistingTeamMemberDto,
   EndTeamMemberDto,
   TeamMemberUpdateResponseDto,
   UpdateTeamMemberDto
@@ -25,7 +26,116 @@ import type {
 
 
 
-export type teamControllerUpdateMemberResponse200 = {
+export type teamControllerAddExistingMemberResponse200 = {
+  data: TeamMemberUpdateResponseDto
+  status: 200
+}
+
+export type teamControllerAddExistingMemberResponseSuccess = (teamControllerAddExistingMemberResponse200) & {
+  headers: Headers;
+};
+;
+
+export type teamControllerAddExistingMemberResponse = (teamControllerAddExistingMemberResponseSuccess)
+
+export const getTeamControllerAddExistingMemberUrl = (companyId: string,
+    venueId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/team/add-existing`
+}
+
+/**
+ * @summary Добавить существующего сотрудника компании в заведение
+ */
+export const teamControllerAddExistingMember = async (companyId: string,
+    venueId: string,
+    addExistingTeamMemberDto: AddExistingTeamMemberDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<teamControllerAddExistingMemberResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getTeamControllerAddExistingMemberUrl(companyId,venueId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addExistingTeamMemberDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: teamControllerAddExistingMemberResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as teamControllerAddExistingMemberResponse
+}
+
+
+
+
+
+export const getTeamControllerAddExistingMemberMutationKey = () => ['teamControllerAddExistingMember'] as const;
+
+export const getTeamControllerAddExistingMemberMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamControllerAddExistingMember>>, TError,TeamControllerAddExistingMemberMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof teamControllerAddExistingMember>>, TError,TeamControllerAddExistingMemberMutationVariables, TContext> => {
+
+const mutationKey = getTeamControllerAddExistingMemberMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof teamControllerAddExistingMember>>, TeamControllerAddExistingMemberMutationVariables> = (props) => {
+          const {companyId,venueId,data} = props ?? {};
+
+          return  teamControllerAddExistingMember(companyId,venueId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TeamControllerAddExistingMemberMutationResult = NonNullable<Awaited<ReturnType<typeof teamControllerAddExistingMember>>>
+    export type TeamControllerAddExistingMemberMutationBody = AddExistingTeamMemberDto
+    export type TeamControllerAddExistingMemberMutationError = unknown
+    export type TeamControllerAddExistingMemberMutationVariables = {companyId: string;venueId: string;data: AddExistingTeamMemberDto}
+
+    /**
+ * @summary Добавить существующего сотрудника компании в заведение
+ */
+export const useTeamControllerAddExistingMember = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamControllerAddExistingMember>>, TError,TeamControllerAddExistingMemberMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof teamControllerAddExistingMember>>,
+        TError,
+        TeamControllerAddExistingMemberMutationVariables,
+        TContext
+      > => {
+      return useMutation(getTeamControllerAddExistingMemberMutationOptions(options), queryClient);
+    }
+    export type teamControllerUpdateMemberResponse200 = {
   data: TeamMemberUpdateResponseDto
   status: 200
 }

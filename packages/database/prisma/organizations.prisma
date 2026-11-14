@@ -70,19 +70,24 @@ enum InvitationStatus {
 enum InvitationPurpose {
   JOIN_EXISTING_VENUE
   JOIN_COMPANY_AS_CHEF
-  CREATE_VENUE_AS_BAR_MANAGER
+  CREATE_VENUE
 }
 
 model Company {
   id                    String                          @id @default(uuid()) @db.Uuid
   name                  String
   nameNormalized        String
+  initialCreatorUserId  String?                         @db.Uuid
+  authorityHistoryKnown Boolean                         @default(false)
+  managementRoleEverPresent Boolean                     @default(true)
+  authorityTransferredEver Boolean                      @default(true)
   status                CompanyStatus                   @default(ACTIVE)
   closureDeadline       DateTime?                       @db.Timestamptz(6)
   createdAt             DateTime                        @default(now()) @db.Timestamptz(6)
   updatedAt             DateTime                        @updatedAt @db.Timestamptz(6)
   venues                Venue[]
   memberships           CompanyMembership[]
+  initialCreator        User?                            @relation("CompanyInitialCreator", fields: [initialCreatorUserId], references: [id], onDelete: SetNull)
   invitations           Invitation[]
   auditEvents           AuditEvent[]
   productExports        ProductExportRequest[]
@@ -91,6 +96,7 @@ model Company {
   supportAccessGrants   SupportAccessGrant[]
 
   @@index([status, closureDeadline], map: "companies_status_closure_deadline_idx")
+  @@index([initialCreatorUserId], map: "companies_initial_creator_user_id_idx")
   @@map("companies")
 }
 
@@ -155,6 +161,7 @@ model CompanyMembership {
   companyId        String            @db.Uuid
   companyRole      CompanyRole?
   createdAt        DateTime          @default(now()) @db.Timestamptz(6)
+  endedOn          DateTime?         @db.Date
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   venueMemberships VenueMembership[]
@@ -170,10 +177,14 @@ model VenueMembership {
   companyId               String                    @db.Uuid
   venueId                 String                    @db.Uuid
   role                    VenueRole                 @default(BAR_MANAGER)
+  hasFullManagementPackage Boolean                   @default(false)
+  fullManagementChangedAt DateTime?                  @db.Timestamptz(6)
+  fullManagementChangedByUserId String?              @db.Uuid
   startedOn               DateTime                  @default(dbgenerated("CURRENT_DATE")) @db.Date
   endedOn                 DateTime?                 @db.Date
   createdAt               DateTime                  @default(now()) @db.Timestamptz(6)
   user                    User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullManagementChangedBy User?                     @relation("VenueManagementPackageChangedBy", fields: [fullManagementChangedByUserId], references: [id], onDelete: SetNull)
   venue                   Venue                     @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
   companyMembership       CompanyMembership         @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
   permissionOverrides     VenuePermissionOverride[]
@@ -185,6 +196,7 @@ model VenueMembership {
 
   @@unique([id, venueId], map: "venue_memberships_id_venue_key")
   @@index([companyId, venueId, endedOn], map: "venue_memberships_company_venue_idx")
+  @@index([venueId, hasFullManagementPackage, endedOn], map: "venue_memberships_full_management_package_idx")
   @@map("venue_memberships")
 }
 

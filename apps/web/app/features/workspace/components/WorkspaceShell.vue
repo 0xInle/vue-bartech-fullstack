@@ -12,17 +12,6 @@
         >
           IndieBar
         </NuxtLink>
-        <Button
-          type="button"
-          :icon="colorScheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
-          :aria-label="colorScheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'"
-          :aria-pressed="colorScheme === 'dark'"
-          class="landing-icon-button"
-          severity="secondary"
-          variant="outlined"
-          size="small"
-          @click="toggleColorScheme"
-        />
       </div>
       <PanelMenu
         v-model:expanded-keys="expandedKeys"
@@ -39,23 +28,12 @@
           :full-name="fullName"
           :show-full-name="false"
           class="mb-2"
-          @switch="emit('switch', $event)"
+          @switch="switchWorkspace"
         />
         <p class="truncate px-3 text-center text-xs text-color-secondary">
           {{ fullName }}
         </p>
-        <div class="mt-2 flex justify-center">
-          <Button
-            :to="profilePath"
-            as="router-link"
-            label="Профиль"
-            severity="primary"
-            variant="text"
-            size="small"
-            class="w-fit justify-center"
-            :aria-current="isProfile ? 'page' : undefined"
-          />
-        </div>
+        <WorkspaceActionBar @open-profile="profileVisible = true" />
       </div>
     </aside>
 
@@ -71,23 +49,12 @@
         >
           IndieBar
         </NuxtLink>
-        <Button
-          type="button"
-          :icon="colorScheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
-          :aria-label="colorScheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'"
-          :aria-pressed="colorScheme === 'dark'"
-          class="landing-icon-button"
-          severity="secondary"
-          variant="outlined"
-          size="small"
-          @click="toggleColorScheme"
-        />
       </div>
       <WorkspaceIdentity
         :workspace="workspace"
         :workplaces="workplaces"
         :full-name="fullName"
-        @switch="emit('switch', $event)"
+        @switch="switchWorkspace"
       />
     </div>
 
@@ -106,7 +73,6 @@
     </main>
 
     <WorkspaceProductDrawer :workspace="workspace" />
-
     <nav
       aria-label="Мобильная навигация"
       class="fixed inset-x-0 bottom-0 z-10 flex border-t border-surface bg-surface-0 p-1 lg:hidden"
@@ -151,7 +117,7 @@
         :show-full-name="false"
         class="mb-6 border-b border-surface pb-4"
         style="border-color: var(--p-content-border-color)"
-        @switch="emit('switch', $event)"
+        @switch="switchWorkspace"
       />
       <PanelMenu
         v-model:expanded-keys="expandedKeys"
@@ -165,45 +131,34 @@
         <p class="truncate px-3 text-center text-xs text-color-secondary">
           {{ fullName }}
         </p>
-        <div class="mt-2 flex justify-center">
-          <Button
-            :to="profilePath"
-            as="router-link"
-            label="Профиль"
-            severity="primary"
-            variant="text"
-            size="small"
-            class="w-fit justify-center"
-            @click="moreVisible = false"
-          />
-        </div>
+        <WorkspaceActionBar @open-profile="openProfile" @open-docs="moreVisible = false" />
       </div>
     </Drawer>
+    <AccountProfileDrawer v-model:visible="profileVisible" />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { MenuItem } from "primevue/menuitem";
 import type { Workspace } from "~/types/user-workspaces";
-import { useColorScheme } from "~/composables/useColorScheme";
 import CompanyClosureBanner from "~/features/organizations/components/CompanyClosureBanner.vue";
 import WorkspaceIdentity from "./WorkspaceIdentity.vue";
 import WorkspaceProductSearch from "~/features/products/components/WorkspaceProductSearch.vue";
 import WorkspaceProductDrawer from "~/components/WorkspaceProductDrawer.vue";
+import WorkspaceActionBar from "./WorkspaceActionBar.vue";
+import AccountProfileDrawer from "~/features/identity/components/AccountProfileDrawer.vue";
 
 defineOptions({ name: "WorkspaceShell" });
 
 const props = defineProps<{ workspace: Workspace; workplaces: Workspace[]; fullName: string }>();
 const emit = defineEmits<{ switch: [workspace: Workspace] }>();
 const route = useRoute();
-const { colorScheme, toggleColorScheme } = useColorScheme();
 const moreVisible = ref(false);
-const expandedKeys = ref<Record<string, boolean>>({ catalog: true, team: true, management: true });
+const expandedKeys = ref<Record<string, boolean>>({ catalog: true, team: true });
 
 const homePath = computed(
   () => `/app/companies/${props.workspace.company.id}/venues/${props.workspace.venue.id}`,
 );
-const profilePath = computed(() => `${homePath.value}/profile`);
 const supportPath = computed(
   () => `/app/support?companyId=${props.workspace.company.id}&venueId=${props.workspace.venue.id}`,
 );
@@ -213,15 +168,14 @@ const paths = computed(() => ({
   ingredients: `${homePath.value}/ingredients`,
   garnishes: `${homePath.value}/garnishes`,
   history: `${homePath.value}/history`,
-  management: `${homePath.value}/management`,
   preparations: `${homePath.value}/preparations`,
   schedule: `${homePath.value}/schedule`,
   teamManagement: `${homePath.value}/team/management`,
   exports: `${homePath.value}/exports`,
 }));
 const isHome = computed(() => route.path === homePath.value);
-const isProfile = computed(() => route.path === profilePath.value);
 const isSchedulePage = computed(() => route.path === paths.value.schedule);
+const profileVisible = ref(false);
 
 function isPathActive(path: string): boolean {
   return route.path === path || route.path.startsWith(`${path}/`);
@@ -241,7 +195,7 @@ function linkItem(label: string, to: string, active: boolean): MenuItem {
 const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = [linkItem("Главная", homePath.value, isHome.value)];
   const teamItems: MenuItem[] = [];
-  if (props.workspace.role === "bar_manager") {
+  if (props.workspace.permissions.includes("manage_team")) {
     teamItems.push(
       linkItem(
         "Управление командой",
@@ -287,18 +241,6 @@ const menuItems = computed<MenuItem[]>(() => {
       linkItem("История", paths.value.history, isPathActive(paths.value.history)),
     );
   }
-  const canManageCompanyVenues = props.workplaces.some(
-    (workspace) =>
-      workspace.company.id === props.workspace.company.id &&
-      ["create_venues", "manage_venue", "manage_venues"].some((permission) =>
-        workspace.permissions.includes(permission),
-      ),
-  );
-  if (canManageCompanyVenues) {
-    managementItems.push(
-      linkItem("Заведения", paths.value.management, isPathActive(paths.value.management)),
-    );
-  }
   if (managementItems.length) {
     items.push({ key: "management", label: "Управление", items: managementItems });
   }
@@ -319,9 +261,17 @@ const mobileQuickItems = computed(() =>
       return { key: label, label, to, active: isPathActive(to) };
     }),
 );
-const isMoreActive = computed(
-  () => mobileQuickItems.value.every((item) => !item.active) && !isProfile.value,
-);
+const isMoreActive = computed(() => mobileQuickItems.value.every((item) => !item.active));
+
+function switchWorkspace(workspace: Workspace): void {
+  moreVisible.value = false;
+  emit("switch", workspace);
+}
+
+function openProfile(): void {
+  moreVisible.value = false;
+  profileVisible.value = true;
+}
 
 function getMenuLink(label: string): { label: string; to: string } {
   const links: Record<string, string> = {
@@ -333,22 +283,6 @@ function getMenuLink(label: string): { label: string; to: string } {
   return { label, to: links[label] ?? homePath.value };
 }
 </script>
-
-<style scoped>
-:deep(.p-button.landing-icon-button .p-button-icon) {
-  color: var(--p-primary-color);
-  width: 0.875rem;
-  height: 0.875rem;
-  font-size: 0.875rem;
-  line-height: 0.875rem;
-}
-
-:deep(.p-button.landing-icon-button) {
-  width: 1.75rem;
-  height: 1.75rem;
-  padding: 0;
-}
-</style>
 
 <style scoped>
 :deep(.workspace-panel-menu .p-panelmenu-item-link) {

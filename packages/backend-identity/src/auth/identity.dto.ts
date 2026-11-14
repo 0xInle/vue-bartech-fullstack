@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { WorkspaceSummaryDto } from "@bartech/backend-organizations";
 import { IsEmail, IsIn, IsNotEmpty, IsString, Length, MaxLength, MinLength } from "class-validator";
 
@@ -97,9 +97,50 @@ export class ChangePasswordDto {
   newPassword!: string;
 }
 
+export class UpdateProfileNameDto {
+  @ApiProperty({ example: "Иван Иванов", maxLength: 120 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  fullName!: string;
+}
+
+export class StartEmailChangeDto {
+  @ApiProperty({ example: "new.address@example.ru" })
+  @IsEmail()
+  @MaxLength(254)
+  newEmail!: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(256)
+  currentPassword!: string;
+}
+
+export class VerifyEmailChangeDto {
+  @ApiProperty({ example: "123456", minLength: 6, maxLength: 6 })
+  @IsString()
+  @Length(6, 6)
+  code!: string;
+}
+
+export class AccountPasswordConfirmationDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(256)
+  currentPassword!: string;
+}
+
 export class AcceptedDto {
   @ApiProperty({ example: true })
   accepted!: true;
+}
+
+export class AccountDeletionResponseDto {
+  @ApiProperty({ type: String, format: "date-time" })
+  deletionScheduledAt!: string;
 }
 
 export class CsrfTokenResponseDto {
@@ -116,6 +157,9 @@ export class PublicUserDto {
 
   @ApiProperty()
   fullName!: string;
+
+  @ApiPropertyOptional({ enum: ["ACTIVE", "PENDING_DELETION", "DELETED"] })
+  accountStatus?: string;
 }
 
 export class CompanySummaryDto {
@@ -159,4 +203,7 @@ export class CurrentIdentityResponseDto extends PublicUserDto {
 
   @ApiProperty({ type: [CompanySummaryDto] })
   companies!: CompanySummaryDto[];
+
+  @ApiPropertyOptional({ type: String, format: "date-time" })
+  deletionScheduledAt?: string | null;
 }

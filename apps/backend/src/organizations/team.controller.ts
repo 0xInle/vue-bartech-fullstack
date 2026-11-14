@@ -11,13 +11,33 @@ import {
 import { CurrentUser, SessionGuard, type AuthenticatedUser } from "@bartech/backend-identity";
 import { TeamService } from "@bartech/backend-organizations";
 import { RequirePermissions, WorkspacePermissionGuard } from "./workspace-permission.guard.js";
-import { EndTeamMemberDto, TeamMemberUpdateResponseDto, UpdateTeamMemberDto } from "./team.dto.js";
+import {
+  AddExistingTeamMemberDto,
+  EndTeamMemberDto,
+  TeamMemberUpdateResponseDto,
+  UpdateTeamMemberDto,
+} from "./team.dto.js";
 
 @ApiTags("team")
 @Controller()
 @UseGuards(SessionGuard, WorkspacePermissionGuard)
 export class TeamController {
   constructor(private readonly team: TeamService) {}
+
+  @Post("organizations/companies/:companyId/venues/:venueId/team/add-existing")
+  @RequirePermissions("manage_team")
+  @ApiOperation({ summary: "Добавить существующего сотрудника компании в заведение" })
+  @ApiParam({ name: "companyId", format: "uuid" })
+  @ApiParam({ name: "venueId", format: "uuid" })
+  @ApiOkResponse({ type: TeamMemberUpdateResponseDto })
+  addExistingMember(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Body() body: AddExistingTeamMemberDto,
+  ): Promise<TeamMemberUpdateResponseDto> {
+    return this.team.addExistingMember(user.id, companyId, venueId, body);
+  }
 
   @Patch("organizations/companies/:companyId/venues/:venueId/team/:membershipId")
   @RequirePermissions("manage_team")
@@ -42,6 +62,7 @@ export class TeamController {
     return this.team.updateMember(user.id, companyId, venueId, membershipId, {
       role: body.role,
       permissions: body.permissions,
+      hasFullManagementPackage: body.hasFullManagementPackage,
     });
   }
 

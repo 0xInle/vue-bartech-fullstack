@@ -16,8 +16,9 @@ export class IdentityChallengeService {
     transaction: Prisma.TransactionClient,
     input: {
       emailNormalized: string;
-      purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET";
+      purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET" | "EMAIL_CHANGE";
       code: string;
+      email?: string;
       userId?: string;
       registrationAttemptId?: string;
     },
@@ -25,6 +26,7 @@ export class IdentityChallengeService {
     await transaction.emailChallenge.create({
       data: {
         emailNormalized: input.emailNormalized,
+        ...(input.email ? { email: input.email } : {}),
         purpose: input.purpose,
         codeHash: await argon2.hash(input.code, { type: argon2.argon2id }),
         expiresAt: new Date(Date.now() + CODE_TTL_MS),

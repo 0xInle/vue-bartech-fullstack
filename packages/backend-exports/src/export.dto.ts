@@ -6,8 +6,9 @@ export type ExportKind =
   | "BATCH_PDF_ZIP"
   | "VENUE_BACKUP_ZIP"
   | "COMPANY_CLOSURE_BACKUP_ZIP"
-  | "COMPANY_CLOSURE_PDF_ZIP";
-export type ClosureExportKind = "SINGLE_PDF" | "BATCH_PDF_ZIP" | "COMPANY_CLOSURE_PDF_ZIP";
+  | "COMPANY_CLOSURE_PDF_ZIP"
+  | "VENUE_CLOSURE_PDF_ZIP";
+export type ClosureExportKind = "COMPANY_CLOSURE_PDF_ZIP" | "VENUE_CLOSURE_PDF_ZIP";
 export type ExportState = "QUEUED" | "PROCESSING" | "READY" | "FAILED" | "EXPIRED";
 export type ExportParameters = {
   productIds?: string[];
@@ -42,6 +43,7 @@ export class ProductExportResponseDto {
       "VENUE_BACKUP_ZIP",
       "COMPANY_CLOSURE_BACKUP_ZIP",
       "COMPANY_CLOSURE_PDF_ZIP",
+      "VENUE_CLOSURE_PDF_ZIP",
     ],
   })
   type!: ExportKind;

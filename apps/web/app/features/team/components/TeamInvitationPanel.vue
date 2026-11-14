@@ -1,16 +1,21 @@
 <template>
   <section class="space-y-4">
-    <h2 class="text-base font-semibold">Приглашение сотрудника</h2>
-    <Message v-if="error" severity="error" :closable="false" :pt="compactMessagePt">{{
-      error
-    }}</Message>
-    <Message v-if="chefError" severity="error" :closable="false" :pt="compactMessagePt">
-      Не удалось загрузить приглашения шеф-барменов.
-    </Message>
+    <div v-if="error || chefError || newVenueError" class="space-y-3 p-1">
+      <Message v-if="error" severity="error" :closable="false" :pt="compactMessagePt">{{
+        error
+      }}</Message>
+      <Message v-if="chefError" severity="error" :closable="false" :pt="compactMessagePt">
+        Не удалось загрузить приглашения шеф-барменов.
+      </Message>
+      <Message v-if="newVenueError" severity="error" :closable="false" :pt="compactMessagePt">
+        Не удалось загрузить приглашения для новых заведений.
+      </Message>
+    </div>
     <InviteEmployeeForm
       :allow-venue-invites="allowVenueInvites"
       :allow-bar-manager="allowBarManager"
       :allow-chef-bartender="allowChefBartender"
+      :allow-new-venue-invite="allowNewVenueInvite"
       :busy="busy"
       @submit="submit"
     />
@@ -40,26 +45,28 @@ type PendingInvitation = {
   role: InviteRole;
   expiresAt: string;
   canRevoke: boolean;
-  scope: "venue" | "company";
+  scope: "venue" | "company" | "newVenue";
 };
 
 defineProps<{
   allowVenueInvites: boolean;
   allowBarManager: boolean;
   allowChefBartender: boolean;
+  allowNewVenueInvite: boolean;
   busy: boolean;
   busyId: string;
   error: string;
   chefError: boolean;
+  newVenueError: boolean;
   loading: boolean;
   invitations: PendingInvitation[];
 }>();
 const emit = defineEmits<{
-  submit: [email: string, role: InviteRole];
+  submit: [email: string, role: InviteRole, newVenue: boolean];
   revoke: [invitation: PendingInvitation];
 }>();
 
-function submit(email: string, role: InviteRole): void {
-  emit("submit", email, role);
+function submit(email: string, role: InviteRole, newVenue: boolean): void {
+  emit("submit", email, role, newVenue);
 }
 </script>

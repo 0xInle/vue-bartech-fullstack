@@ -44,6 +44,8 @@ import type {
   CreateVenueDto,
   CreateVenueResponseDto,
   LeaveAndCloseAvailabilityDto,
+  LeaveCompanyDto,
+  LeaveVenueDto,
   ProductExportDownloadResponseDto,
   ProductExportResponseDto,
   VenueClosureResponseDto,
@@ -1513,4 +1515,244 @@ export const useOrganizationsControllerCreateVenue = <TError = void,
         TContext
       > => {
       return useMutation(getOrganizationsControllerCreateVenueMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerLeaveCompanyResponse200 = {
+  data: AcceptedResponseDto
+  status: 200
+}
+
+export type organizationsControllerLeaveCompanyResponse404 = {
+  data: void
+  status: 404
+}
+
+export type organizationsControllerLeaveCompanyResponse409 = {
+  data: void
+  status: 409
+}
+
+export type organizationsControllerLeaveCompanyResponseSuccess = (organizationsControllerLeaveCompanyResponse200) & {
+  headers: Headers;
+};
+export type organizationsControllerLeaveCompanyResponseError = (organizationsControllerLeaveCompanyResponse404 | organizationsControllerLeaveCompanyResponse409) & {
+  headers: Headers;
+};
+
+export type organizationsControllerLeaveCompanyResponse = (organizationsControllerLeaveCompanyResponseSuccess | organizationsControllerLeaveCompanyResponseError)
+
+export const getOrganizationsControllerLeaveCompanyUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/leave`
+}
+
+/**
+ * @summary Покинуть компанию, сохранив аккаунт и другие компании
+ */
+export const organizationsControllerLeaveCompany = async (companyId: string,
+    leaveCompanyDto: LeaveCompanyDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerLeaveCompanyResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getOrganizationsControllerLeaveCompanyUrl(companyId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(leaveCompanyDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerLeaveCompanyResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerLeaveCompanyResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerLeaveCompanyMutationKey = () => ['organizationsControllerLeaveCompany'] as const;
+
+export const getOrganizationsControllerLeaveCompanyMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerLeaveCompany>>, TError,OrganizationsControllerLeaveCompanyMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerLeaveCompany>>, TError,OrganizationsControllerLeaveCompanyMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerLeaveCompanyMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerLeaveCompany>>, OrganizationsControllerLeaveCompanyMutationVariables> = (props) => {
+          const {companyId,data} = props ?? {};
+
+          return  organizationsControllerLeaveCompany(companyId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerLeaveCompanyMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerLeaveCompany>>>
+    export type OrganizationsControllerLeaveCompanyMutationBody = LeaveCompanyDto
+    export type OrganizationsControllerLeaveCompanyMutationError = void
+    export type OrganizationsControllerLeaveCompanyMutationVariables = {companyId: string;data: LeaveCompanyDto}
+
+    /**
+ * @summary Покинуть компанию, сохранив аккаунт и другие компании
+ */
+export const useOrganizationsControllerLeaveCompany = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerLeaveCompany>>, TError,OrganizationsControllerLeaveCompanyMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerLeaveCompany>>,
+        TError,
+        OrganizationsControllerLeaveCompanyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerLeaveCompanyMutationOptions(options), queryClient);
+    }
+    export type organizationsControllerLeaveVenueResponse200 = {
+  data: AcceptedResponseDto
+  status: 200
+}
+
+export type organizationsControllerLeaveVenueResponse404 = {
+  data: void
+  status: 404
+}
+
+export type organizationsControllerLeaveVenueResponse409 = {
+  data: void
+  status: 409
+}
+
+export type organizationsControllerLeaveVenueResponseSuccess = (organizationsControllerLeaveVenueResponse200) & {
+  headers: Headers;
+};
+export type organizationsControllerLeaveVenueResponseError = (organizationsControllerLeaveVenueResponse404 | organizationsControllerLeaveVenueResponse409) & {
+  headers: Headers;
+};
+
+export type organizationsControllerLeaveVenueResponse = (organizationsControllerLeaveVenueResponseSuccess | organizationsControllerLeaveVenueResponseError)
+
+export const getOrganizationsControllerLeaveVenueUrl = (companyId: string,
+    venueId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/leave`
+}
+
+/**
+ * @summary Самостоятельно покинуть заведение, сохранив другие членства
+ */
+export const organizationsControllerLeaveVenue = async (companyId: string,
+    venueId: string,
+    leaveVenueDto: LeaveVenueDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<organizationsControllerLeaveVenueResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getOrganizationsControllerLeaveVenueUrl(companyId,venueId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(leaveVenueDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: organizationsControllerLeaveVenueResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as organizationsControllerLeaveVenueResponse
+}
+
+
+
+
+
+export const getOrganizationsControllerLeaveVenueMutationKey = () => ['organizationsControllerLeaveVenue'] as const;
+
+export const getOrganizationsControllerLeaveVenueMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerLeaveVenue>>, TError,OrganizationsControllerLeaveVenueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerLeaveVenue>>, TError,OrganizationsControllerLeaveVenueMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsControllerLeaveVenueMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsControllerLeaveVenue>>, OrganizationsControllerLeaveVenueMutationVariables> = (props) => {
+          const {companyId,venueId,data} = props ?? {};
+
+          return  organizationsControllerLeaveVenue(companyId,venueId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsControllerLeaveVenueMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsControllerLeaveVenue>>>
+    export type OrganizationsControllerLeaveVenueMutationBody = LeaveVenueDto
+    export type OrganizationsControllerLeaveVenueMutationError = void
+    export type OrganizationsControllerLeaveVenueMutationVariables = {companyId: string;venueId: string;data: LeaveVenueDto}
+
+    /**
+ * @summary Самостоятельно покинуть заведение, сохранив другие членства
+ */
+export const useOrganizationsControllerLeaveVenue = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsControllerLeaveVenue>>, TError,OrganizationsControllerLeaveVenueMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof organizationsControllerLeaveVenue>>,
+        TError,
+        OrganizationsControllerLeaveVenueMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsControllerLeaveVenueMutationOptions(options), queryClient);
     }

@@ -5,10 +5,12 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { CreateCompanyDtoInitialRole } from './createCompanyDtoInitialRole';
 
 export interface CreateCompanyDto {
   /** @maxLength 120 */
   companyName: string;
   /** @maxLength 120 */
   venueName: string;
+  initialRole: CreateCompanyDtoInitialRole;
 }

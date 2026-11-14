@@ -317,7 +317,11 @@ export class SupportService {
     }
     if (companyId) {
       const membership = await this.database.companyMembership.findFirst({
-        where: { userId: authorUserId, companyId },
+        where: {
+          userId: authorUserId,
+          companyId,
+          endedOn: null,
+        },
         select: { companyId: true },
       });
       if (!membership) throw new ForbiddenException("Выбранный контекст недоступен");

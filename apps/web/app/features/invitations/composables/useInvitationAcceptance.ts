@@ -12,9 +12,10 @@ import {
 } from "@bartech/api-client";
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
 import { requestApi } from "~/utils/api-response";
+import { isValidPersonName, normalizePersonName } from "~/utils/person-name";
 
 type Invitation = {
-  purpose: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF" | "CREATE_VENUE_AS_BAR_MANAGER";
+  purpose: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF" | "CREATE_VENUE";
   companyName: string;
   venueName: string | null;
   role: string | null;
@@ -41,12 +42,17 @@ export function useInvitationAcceptance() {
     | "missing"
   >("loading");
   const error = ref("");
+  const fullNameError = ref("");
+  const passwordError = ref("");
+  const registrationAttempted = ref(false);
   const venueNameError = ref("");
   const busy = ref(false);
   const form = reactive({ fullName: "", password: "", email: "", code: "", venueName: "" });
-  const needsVenueName = computed(
-    () => invitation.value?.purpose === "CREATE_VENUE_AS_BAR_MANAGER",
+  const fullNameInvalid = computed(
+    () => registrationAttempted.value && !isValidPersonName(form.fullName),
   );
+  const passwordInvalid = computed(() => registrationAttempted.value && !form.password);
+  const needsVenueName = computed(() => invitation.value?.purpose === "CREATE_VENUE");
 
   async function load(): Promise<void> {
     invitationToken = window.location.hash.slice(1);
@@ -122,11 +128,18 @@ export function useInvitationAcceptance() {
   }
 
   async function startRegistration(): Promise<void> {
+    registrationAttempted.value = true;
+    fullNameError.value = fullNameInvalid.value
+      ? "Введите имя и фамилию: сначала имя, затем фамилию."
+      : "";
+    passwordError.value = passwordInvalid.value ? "Введите пароль." : "";
+    if (fullNameInvalid.value || passwordInvalid.value) return;
+
     await run(async () => {
       await identity.refreshCsrf();
       await requestApi(
         invitationsControllerStartRegistration(
-          { fullName: form.fullName, password: form.password },
+          { fullName: normalizePersonName(form.fullName), password: form.password },
           identity.mutationOptions(),
           identity.apiFetch,
         ),
@@ -135,6 +148,19 @@ export function useInvitationAcceptance() {
       stage.value = "verify";
     });
   }
+
+  watch(
+    () => form.fullName,
+    () => {
+      fullNameError.value = "";
+    },
+  );
+  watch(
+    () => form.password,
+    () => {
+      passwordError.value = "";
+    },
+  );
 
   async function verifyRegistration(): Promise<void> {
     await run(async () => {
@@ -265,6 +291,10 @@ export function useInvitationAcceptance() {
     invitation,
     stage,
     error,
+    fullNameError,
+    fullNameInvalid,
+    passwordError,
+    passwordInvalid,
     venueNameError,
     busy,
     form,

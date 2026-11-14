@@ -30,5 +30,5 @@ import TeamManagementContent from "./TeamManagementContent.vue";
 
 const { currentUser, errorMessage, loading, switchWorkspace, workspace, workplaces } =
   useVenueWorkspace();
-const canManagePage = computed(() => workspace.value?.role === "bar_manager");
+const canManagePage = computed(() => workspace.value?.permissions.includes("manage_team") ?? false);
 </script>

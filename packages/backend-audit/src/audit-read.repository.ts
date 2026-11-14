@@ -125,16 +125,34 @@ export class AuditReadRepository {
     const events = await this.database.auditEvent.findMany({
       where,
       distinct: ["actorId", "internalUserId"],
-      select: { actorId: true, internalUserId: true },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { actorId: true, internalUserId: true, metadata: true },
     });
     const actorIds = events.flatMap(({ actorId }) => (actorId ? [actorId] : []));
     const internalUserIds = events.flatMap(({ internalUserId }) =>
       internalUserId ? [internalUserId] : [],
     );
+    const actorNames = new Map(
+      events.flatMap(({ actorId, metadata }) => {
+        if (
+          !actorId ||
+          !metadata ||
+          Array.isArray(metadata) ||
+          typeof metadata !== "object" ||
+          typeof metadata.actorName !== "string"
+        ) {
+          return [];
+        }
+        return [[actorId, metadata.actorName] as const];
+      }),
+    );
     const [users, internalUsers] = await Promise.all([
       actorIds.length
         ? this.database.user.findMany({
-            where: { id: { in: actorIds }, profile: { isNot: null } },
+            where: {
+              id: { in: actorIds.filter((id) => !actorNames.has(id)) },
+              profile: { isNot: null },
+            },
             select: { id: true, profile: { select: { fullName: true } } },
           })
         : [],
@@ -146,7 +164,8 @@ export class AuditReadRepository {
         : [],
     ]);
     return [
-      ...users.map(({ id, profile }) => ({ id, name: profile!.fullName })),
+      ...users.map(({ id, profile }) => ({ id, name: actorNames.get(id) ?? profile!.fullName })),
+      ...[...actorNames].map(([id, name]) => ({ id, name })),
       ...internalUsers.map(({ id, email }) => ({ id, name: email })),
     ].sort((left, right) => left.name.localeCompare(right.name, "ru"));
   }

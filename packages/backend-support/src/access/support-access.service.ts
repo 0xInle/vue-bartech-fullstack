@@ -50,7 +50,12 @@ export class SupportAccessService {
             select: { venueId: true },
           }),
           transaction.companyMembership.findFirst({
-            where: { userId, companyId: input.companyId, companyRole: "CHEF_BARTENDER" },
+            where: {
+              userId,
+              companyId: input.companyId,
+              endedOn: null,
+              companyRole: "CHEF_BARTENDER",
+            },
             select: { userId: true },
           }),
         ]);
@@ -62,7 +67,12 @@ export class SupportAccessService {
       } else {
         const [membership, venueMembership] = await Promise.all([
           transaction.companyMembership.findFirst({
-            where: { userId, companyId: input.companyId, companyRole: "CHEF_BARTENDER" },
+            where: {
+              userId,
+              companyId: input.companyId,
+              endedOn: null,
+              companyRole: "CHEF_BARTENDER",
+            },
             select: { userId: true },
           }),
           transaction.venueMembership.findFirst({

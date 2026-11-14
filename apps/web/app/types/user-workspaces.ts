@@ -13,6 +13,8 @@ export type CurrentUser = {
   id: string;
   email: string;
   fullName: string;
+  accountStatus?: "ACTIVE" | "PENDING_DELETION" | "DELETED";
+  deletionScheduledAt?: string | null;
   workplaces: Workspace[];
   companies: CompanySummary[];
 };

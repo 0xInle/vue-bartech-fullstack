@@ -93,7 +93,9 @@ export class AuditReadService {
             ? "Система"
             : row.actorType === "INTERNAL_USER"
               ? (row.internalUser?.email ?? "Сотрудник IndieBar")
-              : (row.actor?.profile?.fullName ?? "Аккаунт недоступен"),
+              : typeof resolvedMetadata?.actorName === "string"
+                ? resolvedMetadata.actorName
+                : (row.actor?.profile?.fullName ?? "Аккаунт недоступен"),
         actorId: row.actorId ?? row.internalUserId,
         entityName: typeof resolvedMetadata?.name === "string" ? resolvedMetadata.name : null,
         summary: eventSummary(
@@ -189,6 +191,7 @@ function safeMetadata(value: Prisma.JsonValue | null): Record<string, unknown> |
     "name",
     "subjectUserId",
     "subjectName",
+    "actorName",
     "subjectRole",
     "permissions",
     "purpose",
@@ -219,6 +222,7 @@ function safeMetadata(value: Prisma.JsonValue | null): Record<string, unknown> |
           "VENUE_BACKUP_ZIP",
           "COMPANY_CLOSURE_BACKUP_ZIP",
           "COMPANY_CLOSURE_PDF_ZIP",
+          "VENUE_CLOSURE_PDF_ZIP",
         ].includes(String(entry));
       if (key === "errorCode")
         return ["EXPORT_PROCESSING_FAILED", "DEADLINE_EXCEEDED"].includes(String(entry));

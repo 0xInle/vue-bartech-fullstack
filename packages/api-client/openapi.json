@@ -369,6 +369,166 @@
         ]
       }
     },
+    "/api/v1/identity/profile/name": {
+      "post": {
+        "operationId": "IdentityController_updateProfileName",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileNameDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Имя обновлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Изменить имя и фамилию текущего пользователя",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/identity/email-change": {
+      "post": {
+        "operationId": "IdentityController_startEmailChange",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartEmailChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Код отправлен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Отправить код подтверждения на новый основной email",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/identity/email-change/verify": {
+      "post": {
+        "operationId": "IdentityController_verifyEmailChange",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email изменён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Подтвердить новый основной email",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/identity/account-deletion": {
+      "post": {
+        "operationId": "IdentityController_requestAccountDeletion",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountPasswordConfirmationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Удаление запланировано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDeletionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Запустить семидневное ожидание удаления аккаунта",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/identity/account-deletion/cancel": {
+      "post": {
+        "operationId": "IdentityController_cancelAccountDeletion",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountPasswordConfirmationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Удаление отменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Отменить ожидающее удаление аккаунта",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
     "/api/v1/internal-auth/login": {
       "post": {
         "operationId": "InternalAuthController_login",
@@ -1159,7 +1319,7 @@
         },
         "responses": {
           "201": {
-            "description": "Компания, заведение и роль бар-менеджера созданы атомарно",
+            "description": "Компания, заведение и выбранная начальная роль созданы атомарно",
             "content": {
               "application/json": {
                 "schema": {
@@ -1201,7 +1361,7 @@
         },
         "responses": {
           "201": {
-            "description": "",
+            "description": "Локальное членство создаётся для выбранной роли; шеф-бармен может создать пустое заведение",
             "content": {
               "application/json": {
                 "schema": {
@@ -1218,6 +1378,111 @@
           }
         },
         "summary": "Создать дополнительное заведение в своей компании",
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/leave": {
+      "post": {
+        "operationId": "OrganizationsController_leaveCompany",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaveCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Компания недоступна"
+          },
+          "409": {
+            "description": "Выход нарушает состав команды или непрерывность управления"
+          }
+        },
+        "summary": "Покинуть компанию, сохранив аккаунт и другие компании",
+        "tags": [
+          "organizations"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/leave": {
+      "post": {
+        "operationId": "OrganizationsController_leaveVenue",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaveVenueDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Заведение недоступно"
+          },
+          "409": {
+            "description": "Выход нарушает правила состава или управления"
+          }
+        },
+        "summary": "Самостоятельно покинуть заведение, сохранив другие членства",
         "tags": [
           "organizations"
         ]
@@ -1353,7 +1618,7 @@
         ]
       },
       "post": {
-        "operationId": "InvitationsController_createVenueManagerInvitation",
+        "operationId": "InvitationsController_createNewVenueInvitation",
         "parameters": [
           {
             "name": "companyId",
@@ -1369,7 +1634,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateVenueManagerInvitationDto"
+                "$ref": "#/components/schemas/CreateNewVenueInvitationDto"
               }
             }
           }
@@ -1379,7 +1644,7 @@
             "description": "Приглашение создано, письмо поставлено в Outbox"
           }
         },
-        "summary": "Пригласить бар-менеджера для нового заведения",
+        "summary": "Пригласить сотрудника для нового заведения",
         "tags": [
           "invitations"
         ]
@@ -1387,7 +1652,7 @@
     },
     "/api/v1/organizations/companies/{companyId}/venue-invitations/revoke": {
       "post": {
-        "operationId": "InvitationsController_revokeVenueManagerInvitation",
+        "operationId": "InvitationsController_revokeNewVenueInvitation",
         "parameters": [
           {
             "name": "companyId",
@@ -1748,6 +2013,57 @@
         "summary": "Завершить приглашение для существующего аккаунта",
         "tags": [
           "invitations"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/team/add-existing": {
+      "post": {
+        "operationId": "TeamController_addExistingMember",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddExistingTeamMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberUpdateResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Добавить существующего сотрудника компании в заведение",
+        "tags": [
+          "team"
         ]
       }
     },
@@ -7797,6 +8113,14 @@
           },
           "fullName": {
             "type": "string"
+          },
+          "accountStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "PENDING_DELETION",
+              "DELETED"
+            ]
           }
         },
         "required": [
@@ -7976,6 +8300,14 @@
           "fullName": {
             "type": "string"
           },
+          "accountStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "PENDING_DELETION",
+              "DELETED"
+            ]
+          },
           "workplaces": {
             "type": "array",
             "items": {
@@ -7987,6 +8319,10 @@
             "items": {
               "$ref": "#/components/schemas/CompanySummaryDto"
             }
+          },
+          "deletionScheduledAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
@@ -8049,6 +8385,72 @@
         "required": [
           "currentPassword",
           "newPassword"
+        ]
+      },
+      "UpdateProfileNameDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "example": "Иван Иванов",
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "fullName"
+        ]
+      },
+      "StartEmailChangeDto": {
+        "type": "object",
+        "properties": {
+          "newEmail": {
+            "type": "string",
+            "example": "new.address@example.ru"
+          },
+          "currentPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "newEmail",
+          "currentPassword"
+        ]
+      },
+      "VerifyEmailChangeDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "123456",
+            "minLength": 6,
+            "maxLength": 6
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "AccountPasswordConfirmationDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword"
+        ]
+      },
+      "AccountDeletionResponseDto": {
+        "type": "object",
+        "properties": {
+          "deletionScheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "deletionScheduledAt"
         ]
       },
       "InternalLoginDto": {
@@ -8320,21 +8722,9 @@
           "type": {
             "type": "string",
             "enum": [
-              "SINGLE_PDF",
-              "BATCH_PDF_ZIP",
-              "COMPANY_CLOSURE_PDF_ZIP"
+              "COMPANY_CLOSURE_PDF_ZIP",
+              "VENUE_CLOSURE_PDF_ZIP"
             ]
-          },
-          "productIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          "includeArchived": {
-            "type": "boolean",
-            "default": false
           }
         },
         "required": [
@@ -8365,7 +8755,8 @@
               "BATCH_PDF_ZIP",
               "VENUE_BACKUP_ZIP",
               "COMPANY_CLOSURE_BACKUP_ZIP",
-              "COMPANY_CLOSURE_PDF_ZIP"
+              "COMPANY_CLOSURE_PDF_ZIP",
+              "VENUE_CLOSURE_PDF_ZIP"
             ]
           },
           "createdAt": {
@@ -8403,7 +8794,8 @@
               "BATCH_PDF_ZIP",
               "VENUE_BACKUP_ZIP",
               "COMPANY_CLOSURE_BACKUP_ZIP",
-              "COMPANY_CLOSURE_PDF_ZIP"
+              "COMPANY_CLOSURE_PDF_ZIP",
+              "VENUE_CLOSURE_PDF_ZIP"
             ]
           },
           "status": {
@@ -8638,11 +9030,21 @@
             "type": "string",
             "example": "Гадкий Шпрот",
             "maxLength": 120
+          },
+          "initialRole": {
+            "type": "string",
+            "enum": [
+              "CHEF_BARTENDER",
+              "BAR_MANAGER",
+              "SENIOR_BARTENDER",
+              "BARTENDER"
+            ]
           }
         },
         "required": [
           "companyName",
-          "venueName"
+          "venueName",
+          "initialRole"
         ]
       },
       "CreateCompanyResponseDto": {
@@ -8671,6 +9073,14 @@
             "type": "string",
             "example": "Гадкий Шпрот — Восток",
             "maxLength": 120
+          },
+          "initialRole": {
+            "type": "string",
+            "enum": [
+              "BAR_MANAGER",
+              "SENIOR_BARTENDER",
+              "BARTENDER"
+            ]
           }
         },
         "required": [
@@ -8694,6 +9104,32 @@
           "company",
           "venue",
           "redirectTo"
+        ]
+      },
+      "LeaveCompanyDto": {
+        "type": "object",
+        "properties": {
+          "confirmationName": {
+            "type": "string",
+            "example": "ООО Рога и Копыта",
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "confirmationName"
+        ]
+      },
+      "LeaveVenueDto": {
+        "type": "object",
+        "properties": {
+          "confirmationName": {
+            "type": "string",
+            "example": "Гадкий Шпрот",
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "confirmationName"
         ]
       },
       "CompanyChefMemberDto": {
@@ -8808,13 +9244,15 @@
           "purpose": {
             "type": "string",
             "enum": [
-              "CREATE_VENUE_AS_BAR_MANAGER"
+              "CREATE_VENUE"
             ]
           },
           "role": {
             "type": "string",
             "enum": [
-              "BAR_MANAGER"
+              "BAR_MANAGER",
+              "SENIOR_BARTENDER",
+              "BARTENDER"
             ]
           },
           "status": {
@@ -8861,16 +9299,25 @@
           "invitations"
         ]
       },
-      "CreateVenueManagerInvitationDto": {
+      "CreateNewVenueInvitationDto": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
             "example": "manager@example.ru"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "BAR_MANAGER",
+              "SENIOR_BARTENDER",
+              "BARTENDER"
+            ]
           }
         },
         "required": [
-          "email"
+          "email",
+          "role"
         ]
       },
       "VenueTeamMemberDto": {
@@ -8930,6 +9377,12 @@
           "canManagePermissionOverrides": {
             "type": "boolean"
           },
+          "hasFullManagementPackage": {
+            "type": "boolean"
+          },
+          "canManageFullManagementPackage": {
+            "type": "boolean"
+          },
           "isCurrentUser": {
             "type": "boolean"
           }
@@ -8944,6 +9397,8 @@
           "availablePermissions",
           "availableRoles",
           "canManagePermissionOverrides",
+          "hasFullManagementPackage",
+          "canManageFullManagementPackage",
           "isCurrentUser"
         ]
       },
@@ -8996,6 +9451,26 @@
           "canRevoke"
         ]
       },
+      "AvailableCompanyTeamMemberDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email"
+        ]
+      },
       "VenueTeamResponseDto": {
         "type": "object",
         "properties": {
@@ -9010,11 +9485,18 @@
             "items": {
               "$ref": "#/components/schemas/VenueInvitationDto"
             }
+          },
+          "availableCompanyMembers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailableCompanyTeamMemberDto"
+            }
           }
         },
         "required": [
           "members",
-          "invitations"
+          "invitations",
+          "availableCompanyMembers"
         ]
       },
       "CreateVenueInvitationDto": {
@@ -9061,7 +9543,7 @@
             "enum": [
               "JOIN_EXISTING_VENUE",
               "JOIN_COMPANY_AS_CHEF",
-              "CREATE_VENUE_AS_BAR_MANAGER"
+              "CREATE_VENUE"
             ]
           },
           "companyName": {
@@ -9171,6 +9653,41 @@
           }
         }
       },
+      "AddExistingTeamMemberDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "BAR_MANAGER",
+              "SENIOR_BARTENDER",
+              "BARTENDER"
+            ]
+          }
+        },
+        "required": [
+          "userId",
+          "role"
+        ]
+      },
+      "TeamMemberUpdateResponseDto": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "accepted"
+        ]
+      },
       "UpdateTeamMemberDto": {
         "type": "object",
         "properties": {
@@ -9210,25 +9727,14 @@
                 "manage_schedule"
               ]
             }
+          },
+          "hasFullManagementPackage": {
+            "type": "boolean"
           }
         },
         "required": [
           "role",
           "permissions"
-        ]
-      },
-      "TeamMemberUpdateResponseDto": {
-        "type": "object",
-        "properties": {
-          "accepted": {
-            "type": "boolean",
-            "enum": [
-              true
-            ]
-          }
-        },
-        "required": [
-          "accepted"
         ]
       },
       "EndTeamMemberDto": {

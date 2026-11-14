@@ -4,6 +4,7 @@ enum ProductExportType {
   VENUE_BACKUP_ZIP
   COMPANY_CLOSURE_BACKUP_ZIP
   COMPANY_CLOSURE_PDF_ZIP
+  VENUE_CLOSURE_PDF_ZIP
 }
 
 enum ProductExportStatus {

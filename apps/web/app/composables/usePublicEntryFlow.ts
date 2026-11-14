@@ -6,23 +6,29 @@ export function usePublicEntryFlow() {
   const route = useRoute();
   const identity = useIdentityFlow();
   const registration = useRegistrationFlow(identity.mutationOptions, identity.apiFetch);
-  const organizations = useOrganizations(identity.currentUser);
-  const mode = ref<"landing" | "register" | "login" | "recover">("landing");
+  const organizations = useOrganizations(
+    identity.currentUser,
+    identity.mutationOptions,
+    identity.apiFetch,
+  );
+  const mode = ref<"landing" | "register" | "login" | "recover" | "company">("landing");
+  const companyForm = reactive({
+    companyName: "",
+    venueName: "",
+    initialRole: "" as "CHEF_BARTENDER" | "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER" | "",
+  });
   const recoveryStep = ref<"email" | "code">("email");
   const busy = ref(false);
   const errorMessage = ref("");
   const notice = ref("");
 
   async function run(action: () => Promise<void>): Promise<void> {
-    if (!identity.csrfToken.value) {
-      errorMessage.value =
-        "Защищённая форма пока недоступна. Обновите страницу и попробуйте ещё раз.";
-      return;
-    }
+    if (busy.value) return;
     busy.value = true;
     errorMessage.value = "";
     notice.value = "";
     try {
+      if (!identity.csrfToken.value) await identity.refreshCsrf();
       await action();
     } catch (error) {
       errorMessage.value =
@@ -33,6 +39,7 @@ export function usePublicEntryFlow() {
   }
 
   async function initialize(): Promise<void> {
+    const sessionLoad = identity.loadSession();
     try {
       await identity.refreshCsrf();
     } catch (error) {
@@ -41,7 +48,7 @@ export function usePublicEntryFlow() {
           ? error.message
           : "Не удалось подготовить безопасное соединение. Обновите страницу и попробуйте ещё раз.";
     }
-    await identity.loadSession();
+    await sessionLoad;
     if (identity.sessionState.value === "error") {
       errorMessage.value = identity.sessionErrorMessage.value;
     }
@@ -51,6 +58,16 @@ export function usePublicEntryFlow() {
     if (!(await registration.begin())) return;
     notice.value =
       "Если этот адрес можно зарегистрировать, мы отправили на него код подтверждения. Введите код из письма.";
+  }
+
+  async function createCompany(): Promise<void> {
+    if (!companyForm.initialRole) throw new Error("Выберите должность для новой компании.");
+    await navigateTo(
+      await organizations.createCompany({
+        ...companyForm,
+        initialRole: companyForm.initialRole,
+      }),
+    );
   }
 
   async function verifyRegistration(): Promise<void> {
@@ -67,7 +84,6 @@ export function usePublicEntryFlow() {
     if (identity.sessionState.value === "error") {
       throw new Error(identity.sessionErrorMessage.value);
     }
-    await organizations.openFirstWorkplace();
   }
 
   async function requestRecovery(): Promise<void> {
@@ -87,7 +103,18 @@ export function usePublicEntryFlow() {
     await identity.logout();
   }
 
-  function changeMode(nextMode: "landing" | "register" | "login" | "recover"): void {
+  async function cancelAccountDeletion(currentPassword: string): Promise<void> {
+    await identity.cancelAccountDeletion(currentPassword);
+    notice.value =
+      "Удаление аккаунта отменено. Теперь вы можете создать компанию или принять приглашение.";
+  }
+
+  function recoverPendingAccountPassword(): void {
+    identity.credentials.email = identity.currentUser.value?.email ?? "";
+    changeMode("recover");
+  }
+
+  function changeMode(nextMode: "landing" | "register" | "login" | "recover" | "company"): void {
     if (nextMode === "register") {
       registration.form.email = identity.credentials.email;
       registration.form.password = identity.credentials.password;
@@ -102,7 +129,7 @@ export function usePublicEntryFlow() {
     notice.value = "";
   }
 
-  function toggleMode(nextMode: "register" | "login"): void {
+  function toggleMode(nextMode: "register" | "login" | "company"): void {
     changeMode(mode.value === nextMode ? "landing" : nextMode);
   }
 
@@ -118,6 +145,7 @@ export function usePublicEntryFlow() {
   return {
     identity,
     registration,
+    companyForm,
     organizations,
     mode,
     recoveryStep,
@@ -127,12 +155,15 @@ export function usePublicEntryFlow() {
     notice,
     run,
     submitRegistration,
+    createCompany,
     verifyRegistration,
     resendRegistrationCode,
     login,
     requestRecovery,
     completeRecovery,
     logout,
+    cancelAccountDeletion,
+    recoverPendingAccountPassword,
     changeMode,
     toggleMode,
   };

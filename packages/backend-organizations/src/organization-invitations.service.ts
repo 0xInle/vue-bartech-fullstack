@@ -7,11 +7,17 @@ import {
 } from "@nestjs/common";
 import { DATABASE_CLIENT, Prisma, PrismaClient } from "@bartech/database";
 import { PermissionService, type WorkspaceRole } from "./permissions/permission.service.js";
+import { canOpenAdditionalVenue } from "./venue-opening-authority.js";
 import {
   normalizeName,
   normalizeVenueName,
   type VenueInviteRole,
 } from "./organizations.service.js";
+
+export type NewVenueInviteRole = Extract<
+  VenueInviteRole,
+  "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER"
+>;
 
 @Injectable()
 export class OrganizationInvitationsService {
@@ -30,13 +36,13 @@ export class OrganizationInvitationsService {
     );
   }
 
-  async revokeVenueManagerInvitation(
+  async revokeNewVenueInvitation(
     actorId: string,
     companyId: string,
     invitationId: string,
   ): Promise<void> {
     await this.database.$transaction((transaction) =>
-      this.revokeVenueManagerInvitationInTransaction(transaction, {
+      this.revokeNewVenueInvitationInTransaction(transaction, {
         actorId,
         companyId,
         invitationId,
@@ -67,8 +73,8 @@ export class OrganizationInvitationsService {
     invitations: Array<{
       id: string;
       email: string;
-      purpose: "CREATE_VENUE_AS_BAR_MANAGER";
-      role: "BAR_MANAGER";
+      purpose: "CREATE_VENUE";
+      role: NewVenueInviteRole;
       status: "ACTIVE" | "IN_PROGRESS";
       createdAt: Date;
       expiresAt: Date;
@@ -78,13 +84,13 @@ export class OrganizationInvitationsService {
     const company = await this.database.company.findUnique({
       where: { id: companyId },
       include: {
-        memberships: true,
+        memberships: { where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] } },
         venues: {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
               where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
-              include: { permissionOverrides: true, temporaryResponsibility: true },
+              include: { permissionOverrides: true },
             },
           },
         },
@@ -96,7 +102,7 @@ export class OrganizationInvitationsService {
     const invitations = await this.database.invitation.findMany({
       where: {
         companyId,
-        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
+        purpose: "CREATE_VENUE",
         OR: [
           { status: "ACTIVE", expiresAt: { gt: now } },
           { status: "IN_PROGRESS", acceptanceSession: { is: { expiresAt: { gt: now } } } },
@@ -109,8 +115,8 @@ export class OrganizationInvitationsService {
       invitations: invitations.map((invitation) => ({
         id: invitation.id,
         email: invitation.email,
-        purpose: "CREATE_VENUE_AS_BAR_MANAGER" as const,
-        role: "BAR_MANAGER" as const,
+        purpose: "CREATE_VENUE" as const,
+        role: invitation.role as NewVenueInviteRole,
         status: invitation.status as "ACTIVE" | "IN_PROGRESS",
         createdAt: invitation.createdAt,
         expiresAt:
@@ -122,13 +128,14 @@ export class OrganizationInvitationsService {
     };
   }
 
-  async createVenueManagerInvitationInTransaction(
+  async createNewVenueInvitationInTransaction(
     transaction: Prisma.TransactionClient,
     input: {
       actorId: string;
       companyId: string;
       email: string;
       emailNormalized: string;
+      role: NewVenueInviteRole;
       tokenHash: string;
       expiresAt: Date;
     },
@@ -136,8 +143,8 @@ export class OrganizationInvitationsService {
     invitation: {
       id: string;
       email: string;
-      purpose: "CREATE_VENUE_AS_BAR_MANAGER";
-      role: "BAR_MANAGER";
+      purpose: "CREATE_VENUE";
+      role: NewVenueInviteRole;
       status: "ACTIVE";
       expiresAt: Date;
     };
@@ -156,13 +163,13 @@ export class OrganizationInvitationsService {
     const company = await transaction.company.findUnique({
       where: { id: input.companyId },
       include: {
-        memberships: true,
+        memberships: { where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] } },
         venues: {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
               where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
-              include: { permissionOverrides: true, temporaryResponsibility: true },
+              include: { permissionOverrides: true },
             },
           },
         },
@@ -178,7 +185,7 @@ export class OrganizationInvitationsService {
     if (existingUser) {
       const companyMembership = await transaction.companyMembership.findUnique({
         where: { userId_companyId: { userId: existingUser.id, companyId: input.companyId } },
-        select: { companyRole: true },
+        select: { companyRole: true, endedOn: true },
       });
       if (companyMembership?.companyRole === "CHEF_BARTENDER") {
         throw new ConflictException("Этот человек уже является шеф-барменом компании");
@@ -202,7 +209,7 @@ export class OrganizationInvitationsService {
     const replaced = await transaction.invitation.findMany({
       where: {
         companyId: input.companyId,
-        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
+        purpose: "CREATE_VENUE",
         emailNormalized: input.emailNormalized,
         status: { in: ["ACTIVE", "IN_PROGRESS"] },
       },
@@ -235,11 +242,11 @@ export class OrganizationInvitationsService {
 
     const invitation = await transaction.invitation.create({
       data: {
-        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
+        purpose: "CREATE_VENUE",
         companyId: input.companyId,
         email: input.email,
         emailNormalized: input.emailNormalized,
-        role: "BAR_MANAGER",
+        role: input.role,
         tokenHash: input.tokenHash,
         createdByUserId: input.actorId,
         expiresAt: input.expiresAt,
@@ -253,15 +260,15 @@ export class OrganizationInvitationsService {
         companyId: input.companyId,
         entityType: "invitation",
         entityId: invitation.id,
-        metadata: { purpose: invitation.purpose, role: "BAR_MANAGER" },
+        metadata: { purpose: invitation.purpose, role: input.role },
       },
     });
     return {
       invitation: {
         id: invitation.id,
         email: invitation.email,
-        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
-        role: "BAR_MANAGER",
+        purpose: "CREATE_VENUE",
+        role: input.role,
         status: "ACTIVE",
         expiresAt: invitation.expiresAt,
       },
@@ -269,7 +276,7 @@ export class OrganizationInvitationsService {
     };
   }
 
-  async revokeVenueManagerInvitationInTransaction(
+  async revokeNewVenueInvitationInTransaction(
     transaction: Prisma.TransactionClient,
     input: { actorId: string; companyId: string; invitationId: string },
   ): Promise<void> {
@@ -278,7 +285,7 @@ export class OrganizationInvitationsService {
       where: {
         id: input.invitationId,
         companyId: input.companyId,
-        purpose: "CREATE_VENUE_AS_BAR_MANAGER",
+        purpose: "CREATE_VENUE",
         status: { in: ["ACTIVE", "IN_PROGRESS"] },
       },
       select: { id: true, createdByUserId: true },
@@ -287,13 +294,13 @@ export class OrganizationInvitationsService {
     const company = await transaction.company.findUnique({
       where: { id: input.companyId },
       include: {
-        memberships: true,
+        memberships: { where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] } },
         venues: {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
               where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
-              include: { permissionOverrides: true, temporaryResponsibility: true },
+              include: { permissionOverrides: true },
             },
           },
         },
@@ -326,7 +333,7 @@ export class OrganizationInvitationsService {
 
   async createInvitedVenueInTransaction(
     transaction: Prisma.TransactionClient,
-    input: { companyId: string; userId: string; name: string },
+    input: { companyId: string; userId: string; name: string; role: NewVenueInviteRole },
   ): Promise<{ id: string }> {
     const name = normalizeName(input.name);
     if (!name || name.length > 120)
@@ -334,10 +341,21 @@ export class OrganizationInvitationsService {
     const nameNormalized = normalizeVenueName(name);
     const company = await transaction.company.findUnique({
       where: { id: input.companyId },
-      select: { id: true, status: true },
+      include: {
+        memberships: {
+          where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+          select: { companyRole: true },
+        },
+        venues: { where: { status: "ACTIVE" }, select: { id: true } },
+      },
     });
     if (!company) throw new ConflictException("Компания больше недоступна");
-    if (company.status !== "ACTIVE") {
+    const restoresEmptyCompany =
+      company.status === "PENDING_CLOSURE" &&
+      Boolean(company.closureDeadline && company.closureDeadline > new Date()) &&
+      company.venues.length === 0 &&
+      company.memberships.some(({ companyRole }) => companyRole === "CHEF_BARTENDER");
+    if (company.status !== "ACTIVE" && !restoresEmptyCompany) {
       throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
     }
     const existingVenue = await transaction.venue.findFirst({
@@ -355,24 +373,45 @@ export class OrganizationInvitationsService {
         companyId: input.companyId,
         venueId: venue.id,
         userId: input.userId,
-        role: "BAR_MANAGER",
+        role: input.role,
+        hasFullManagementPackage: true,
+        fullManagementChangedAt: new Date(),
+        fullManagementChangedByUserId: input.userId,
         startedOn: currentDate(),
-        rolePeriods: { create: { role: "BAR_MANAGER", startedOn: currentDate() } },
+        rolePeriods: { create: { role: input.role, startedOn: currentDate() } },
       },
     });
+    await transaction.company.update({
+      where: { id: input.companyId },
+      data: {
+        ...(input.role === "BAR_MANAGER" ? { managementRoleEverPresent: true } : {}),
+        authorityTransferredEver: true,
+        ...(restoresEmptyCompany ? { status: "ACTIVE", closureDeadline: null } : {}),
+      },
+    });
+    if (restoresEmptyCompany) {
+      await transaction.productExportClosureOperation.updateMany({
+        where: { originalCompanyId: input.companyId, status: "PENDING_CLOSURE" },
+        data: { status: "CANCELLED", cancelledAt: new Date() },
+      });
+    }
     return { id: venue.id };
   }
 
   private assertCompanyInvitationManager(
     company: {
       status: string;
+      initialCreatorUserId: string | null;
+      authorityHistoryKnown: boolean;
+      managementRoleEverPresent: boolean;
+      authorityTransferredEver: boolean;
       memberships: Array<{ userId: string; companyRole: string | null }>;
       venues: Array<{
         memberships: Array<{
           userId: string;
           role: string;
+          hasFullManagementPackage: boolean;
           permissionOverrides: Array<{ code: string; enabled: boolean }>;
-          temporaryResponsibility: unknown;
         }>;
       }>;
     },
@@ -382,32 +421,7 @@ export class OrganizationInvitationsService {
     if (company.status !== "ACTIVE" && !allowPendingClosure) {
       throw new ConflictException("Компания ожидает закрытия и доступна только для просмотра");
     }
-    const isChef = company.memberships.some(
-      (membership) => membership.userId === userId && membership.companyRole === "CHEF_BARTENDER",
-    );
-    const hasChefBartender = company.memberships.some(
-      ({ companyRole }) => companyRole === "CHEF_BARTENDER",
-    );
-    const isBarManager = company.venues.some((venue) => {
-      const membership = venue.memberships.find(
-        ({ userId: memberId, role }) => memberId === userId && role === "BAR_MANAGER",
-      );
-      return Boolean(
-        membership &&
-        this.permissions
-          .evaluate({
-            role: "bar_manager",
-            hasChefBartender,
-            hasBarManager: venue.memberships.some(({ role }) => role === "BAR_MANAGER"),
-            permissionOverrides: membership.permissionOverrides.map(({ code, enabled }) => ({
-              code: code.toLowerCase(),
-              enabled,
-            })),
-          })
-          .includes("invite_bar_manager"),
-      );
-    });
-    if (!isChef && !isBarManager) {
+    if (!canOpenAdditionalVenue({ userId, company })) {
       throw new NotFoundException("Управление приглашениями компании недоступно");
     }
   }
@@ -508,9 +522,13 @@ export class OrganizationInvitationsService {
       include: {
         memberships: {
           where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
-          include: { permissionOverrides: true, temporaryResponsibility: true },
+          include: { permissionOverrides: true },
         },
-        company: { include: { memberships: true } },
+        company: {
+          include: {
+            memberships: { where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] } },
+          },
+        },
       },
     });
     if (!venue) throw new NotFoundException("Заведение не найдено");
@@ -539,10 +557,6 @@ export class OrganizationInvitationsService {
         code: code.toLowerCase(),
         enabled,
       })),
-      temporaryResponsibility: Boolean(
-        localMembership?.temporaryResponsibility &&
-        (localMembership.role === "BARTENDER" || localMembership.role === "SENIOR_BARTENDER"),
-      ),
       hasBarManager,
       hasChefBartender,
     });
@@ -585,7 +599,7 @@ export class OrganizationInvitationsService {
     if (existingUser) {
       const companyMembership = await transaction.companyMembership.findUnique({
         where: { userId_companyId: { userId: existingUser.id, companyId: input.companyId } },
-        select: { companyRole: true },
+        select: { companyRole: true, endedOn: true },
       });
       if (companyMembership?.companyRole === "CHEF_BARTENDER") {
         throw new ConflictException("Этот человек уже является шеф-барменом компании");
@@ -782,13 +796,16 @@ export class OrganizationInvitationsService {
     const company = await this.database.company.findUnique({
       where: { id: companyId },
       include: {
-        memberships: { include: { user: { include: { profile: true } } } },
+        memberships: {
+          where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+          include: { user: { include: { profile: true } } },
+        },
         venues: {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
               where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
-              include: { permissionOverrides: true, temporaryResponsibility: true },
+              include: { permissionOverrides: true },
             },
           },
         },
@@ -902,13 +919,13 @@ export class OrganizationInvitationsService {
     const company = await transaction.company.findUnique({
       where: { id: input.companyId },
       include: {
-        memberships: true,
+        memberships: { where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] } },
         venues: {
           where: { status: "ACTIVE" },
           include: {
             memberships: {
               where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
-              include: { permissionOverrides: true, temporaryResponsibility: true },
+              include: { permissionOverrides: true },
             },
           },
         },
@@ -965,10 +982,14 @@ export class OrganizationInvitationsService {
       const [membership, localMembership] = await Promise.all([
         transaction.companyMembership.findUnique({
           where: { userId_companyId: { userId: existingUser.id, companyId: input.companyId } },
-          select: { companyRole: true },
+          select: { companyRole: true, endedOn: true },
         }),
         transaction.venueMembership.findFirst({
-          where: { userId: existingUser.id, companyId: input.companyId },
+          where: {
+            userId: existingUser.id,
+            companyId: input.companyId,
+            OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
+          },
           select: { id: true },
         }),
       ]);
@@ -984,7 +1005,7 @@ export class OrganizationInvitationsService {
     const localInvitation = await transaction.invitation.findFirst({
       where: {
         companyId: input.companyId,
-        purpose: { in: ["JOIN_EXISTING_VENUE", "CREATE_VENUE_AS_BAR_MANAGER"] },
+        purpose: { in: ["JOIN_EXISTING_VENUE", "CREATE_VENUE"] },
         emailNormalized: input.emailNormalized,
         status: { in: ["ACTIVE", "IN_PROGRESS"] },
       },
@@ -1082,7 +1103,7 @@ export class OrganizationInvitationsService {
     const company = await transaction.company.findUnique({
       where: { id: input.companyId },
       include: {
-        memberships: true,
+        memberships: { where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] } },
         venues: {
           include: {
             memberships: {
@@ -1152,7 +1173,7 @@ export class OrganizationInvitationsService {
       where: {
         companyId: input.companyId,
         emailNormalized: input.emailNormalized,
-        purpose: { in: ["JOIN_EXISTING_VENUE", "CREATE_VENUE_AS_BAR_MANAGER"] },
+        purpose: { in: ["JOIN_EXISTING_VENUE", "CREATE_VENUE"] },
         status: { in: ["ACTIVE", "IN_PROGRESS"] },
         id: { not: input.completedInvitationId },
       },
@@ -1213,9 +1234,15 @@ export class OrganizationInvitationsService {
           include: {
             memberships: {
               where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
-              include: { permissionOverrides: true, temporaryResponsibility: true },
+              include: { permissionOverrides: true },
             },
-            company: { include: { memberships: true } },
+            company: {
+              include: {
+                memberships: {
+                  where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+                },
+              },
+            },
           },
         },
       },
@@ -1243,10 +1270,6 @@ export class OrganizationInvitationsService {
             code: code.toLowerCase(),
             enabled,
           })),
-          temporaryResponsibility: Boolean(
-            localMembership?.temporaryResponsibility &&
-            (localMembership.role === "BARTENDER" || localMembership.role === "SENIOR_BARTENDER"),
-          ),
           hasBarManager: invitation.venue.memberships.some(({ role }) => role === "BAR_MANAGER"),
           hasChefBartender: invitation.venue.company.memberships.some(
             ({ companyRole }) => companyRole === "CHEF_BARTENDER",
@@ -1280,7 +1303,7 @@ export class OrganizationInvitationsService {
   }
 
   async findInvitationByToken(tokenHash: string): Promise<{
-    purpose: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF" | "CREATE_VENUE_AS_BAR_MANAGER";
+    purpose: "JOIN_EXISTING_VENUE" | "JOIN_COMPANY_AS_CHEF" | "CREATE_VENUE";
     company: { name: string };
     venue: { name: string } | null;
     role: VenueInviteRole | null;

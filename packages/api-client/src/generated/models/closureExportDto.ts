@@ -9,6 +9,4 @@ import type { ClosureExportDtoType } from './closureExportDtoType';
 
 export interface ClosureExportDto {
   type: ClosureExportDtoType;
-  productIds?: string[];
-  includeArchived?: boolean;
 }

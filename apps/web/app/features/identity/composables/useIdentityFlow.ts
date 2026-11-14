@@ -1,11 +1,17 @@
 import {
   identityControllerCompletePasswordRecovery,
   identityControllerCsrf,
+  identityControllerCancelAccountDeletion,
+  identityControllerChangePassword,
   identityControllerLogin,
   identityControllerLogout,
   identityControllerLogoutAll,
+  identityControllerRequestAccountDeletion,
   identityControllerRecoverPassword,
   identityControllerSession,
+  identityControllerStartEmailChange,
+  identityControllerUpdateProfileName,
+  identityControllerVerifyEmailChange,
 } from "@bartech/api-client";
 import type { CurrentUser } from "~/types/user-workspaces";
 import { requestApi } from "~/utils/api-response";
@@ -14,9 +20,10 @@ export function useIdentityFlow() {
   const apiFetch = useApiFetch();
   const csrfToken = useState("identity-csrf-token", () => "");
   const currentUser = useState<CurrentUser | null>("identity-current-user", () => null);
-  const sessionState = useState<
-    "idle" | "loading" | "authenticated" | "unauthenticated" | "error"
-  >("identity-session-state", () => "idle");
+  const sessionState = useState<"idle" | "loading" | "authenticated" | "unauthenticated" | "error">(
+    "identity-session-state",
+    () => "idle",
+  );
   const sessionErrorMessage = useState("identity-session-error", () => "");
   const credentials = reactive({
     email: "",
@@ -93,6 +100,54 @@ export function useIdentityFlow() {
     );
     credentials.password = "";
     credentials.recoveryCode = "";
+    currentUser.value = null;
+    await loadSession();
+  }
+
+  async function updateFullName(fullName: string): Promise<void> {
+    await requestApi(
+      identityControllerUpdateProfileName({ fullName }, mutationOptions(), apiFetch),
+    );
+    await loadSession();
+  }
+
+  async function startEmailChange(newEmail: string, currentPassword: string): Promise<void> {
+    await requestApi(
+      identityControllerStartEmailChange(
+        { newEmail, currentPassword },
+        mutationOptions(),
+        apiFetch,
+      ),
+    );
+  }
+
+  async function verifyEmailChange(code: string): Promise<void> {
+    await requestApi(identityControllerVerifyEmailChange({ code }, mutationOptions(), apiFetch));
+    await loadSession();
+  }
+
+  async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await requestApi(
+      identityControllerChangePassword(
+        { currentPassword, newPassword },
+        mutationOptions(),
+        apiFetch,
+      ),
+    );
+  }
+
+  async function requestAccountDeletion(currentPassword: string): Promise<void> {
+    await requestApi(
+      identityControllerRequestAccountDeletion({ currentPassword }, mutationOptions(), apiFetch),
+    );
+    await loadSession();
+  }
+
+  async function cancelAccountDeletion(currentPassword: string): Promise<void> {
+    await requestApi(
+      identityControllerCancelAccountDeletion({ currentPassword }, mutationOptions(), apiFetch),
+    );
+    await loadSession();
   }
 
   async function logout(): Promise<void> {
@@ -122,5 +177,11 @@ export function useIdentityFlow() {
     refreshCsrf,
     requestRecovery,
     completeRecovery,
+    updateFullName,
+    startEmailChange,
+    verifyEmailChange,
+    changePassword,
+    requestAccountDeletion,
+    cancelAccountDeletion,
   };
 }

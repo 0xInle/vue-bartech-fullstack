@@ -11,4 +11,6 @@ export type CompanyVenueInvitationDtoRole = typeof CompanyVenueInvitationDtoRole
 
 export const CompanyVenueInvitationDtoRole = {
   BAR_MANAGER: 'BAR_MANAGER',
+  SENIOR_BARTENDER: 'SENIOR_BARTENDER',
+  BARTENDER: 'BARTENDER',
 } as const;

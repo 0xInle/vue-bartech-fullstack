@@ -11,8 +11,6 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import {
-  ArrayMinSize,
-  IsArray,
   IsBoolean,
   IsIn,
   IsNotEmpty,
@@ -27,7 +25,11 @@ import {
   ProductExportResponseDto,
 } from "@bartech/backend-exports";
 import { CompanySummaryDto, VenueSummaryDto } from "@bartech/backend-identity";
-import { OrganizationsService, WorkspaceSummaryDto } from "@bartech/backend-organizations";
+import {
+  OrganizationsService,
+  TeamService,
+  WorkspaceSummaryDto,
+} from "@bartech/backend-organizations";
 import {
   CurrentWorkspace,
   RequirePermissions,
@@ -48,6 +50,10 @@ class CreateCompanyDto {
   @IsNotEmpty()
   @MaxLength(120)
   venueName!: string;
+
+  @ApiProperty({ enum: ["CHEF_BARTENDER", "BAR_MANAGER", "SENIOR_BARTENDER", "BARTENDER"] })
+  @IsIn(["CHEF_BARTENDER", "BAR_MANAGER", "SENIOR_BARTENDER", "BARTENDER"])
+  initialRole!: "CHEF_BARTENDER" | "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER";
 }
 
 class CreateCompanyResponseDto {
@@ -67,6 +73,27 @@ class CreateVenueDto {
   @IsNotEmpty()
   @MaxLength(120)
   venueName!: string;
+
+  @ApiPropertyOptional({ enum: ["BAR_MANAGER", "SENIOR_BARTENDER", "BARTENDER"] })
+  @IsOptional()
+  @IsIn(["BAR_MANAGER", "SENIOR_BARTENDER", "BARTENDER"])
+  initialRole?: "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER";
+}
+
+class LeaveVenueDto {
+  @ApiProperty({ example: "Гадкий Шпрот", maxLength: 120 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  confirmationName!: string;
+}
+
+class LeaveCompanyDto {
+  @ApiProperty({ example: "ООО Рога и Копыта", maxLength: 120 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  confirmationName!: string;
 }
 
 class CreateVenueResponseDto {
@@ -120,22 +147,10 @@ class CloseCompanyDto {
 
 class ClosureExportDto {
   @ApiProperty({
-    enum: ["SINGLE_PDF", "BATCH_PDF_ZIP", "COMPANY_CLOSURE_PDF_ZIP"],
+    enum: ["COMPANY_CLOSURE_PDF_ZIP", "VENUE_CLOSURE_PDF_ZIP"],
   })
-  @IsIn(["SINGLE_PDF", "BATCH_PDF_ZIP", "COMPANY_CLOSURE_PDF_ZIP"])
-  type!: "SINGLE_PDF" | "BATCH_PDF_ZIP" | "COMPANY_CLOSURE_PDF_ZIP";
-
-  @ApiPropertyOptional({ type: String, format: "uuid", isArray: true })
-  @IsOptional()
-  @IsArray()
-  @ArrayMinSize(1)
-  @IsUUID("all", { each: true })
-  productIds?: string[];
-
-  @ApiPropertyOptional({ default: false })
-  @IsOptional()
-  @IsBoolean()
-  includeArchived?: boolean;
+  @IsIn(["COMPANY_CLOSURE_PDF_ZIP", "VENUE_CLOSURE_PDF_ZIP"])
+  type!: "COMPANY_CLOSURE_PDF_ZIP" | "VENUE_CLOSURE_PDF_ZIP";
 }
 
 class CompanyClosureResponseDto {
@@ -201,6 +216,7 @@ class ClosureOperationExportResponseDto {
       "VENUE_BACKUP_ZIP",
       "COMPANY_CLOSURE_BACKUP_ZIP",
       "COMPANY_CLOSURE_PDF_ZIP",
+      "VENUE_CLOSURE_PDF_ZIP",
     ],
   })
   type!:
@@ -208,7 +224,8 @@ class ClosureOperationExportResponseDto {
     | "BATCH_PDF_ZIP"
     | "VENUE_BACKUP_ZIP"
     | "COMPANY_CLOSURE_BACKUP_ZIP"
-    | "COMPANY_CLOSURE_PDF_ZIP";
+    | "COMPANY_CLOSURE_PDF_ZIP"
+    | "VENUE_CLOSURE_PDF_ZIP";
 
   @ApiProperty({ enum: ["QUEUED", "PROCESSING", "READY", "FAILED", "EXPIRED"] })
   status!: "QUEUED" | "PROCESSING" | "READY" | "FAILED" | "EXPIRED";
@@ -258,6 +275,7 @@ export class OrganizationsController {
   constructor(
     private readonly organizations: OrganizationsService,
     private readonly lifecycle: OrganizationLifecycleService,
+    private readonly team: TeamService,
   ) {}
 
   @Get("companies/:companyId/closure")
@@ -309,10 +327,7 @@ export class OrganizationsController {
     @Param("operationId", new ParseUUIDPipe()) operationId: string,
     @Body() body: ClosureExportDto,
   ) {
-    return this.lifecycle.createClosureExport(user.id, companyId, operationId, body.type, {
-      productIds: body.productIds,
-      includeArchived: body.includeArchived ?? false,
-    });
+    return this.lifecycle.createClosureExport(user.id, companyId, operationId, body.type);
   }
 
   @Get("closure-operations/:operationId")
@@ -455,13 +470,14 @@ export class OrganizationsController {
   @Post()
   @ApiOperation({ summary: "Создать компанию и первое заведение для существующего пользователя" })
   @ApiCreatedResponse({
-    description: "Компания, заведение и роль бар-менеджера созданы атомарно",
+    description: "Компания, заведение и выбранная начальная роль созданы атомарно",
     type: CreateCompanyResponseDto,
   })
   async create(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateCompanyDto) {
     const result = await this.organizations.createForUser(user.id, {
       companyName: body.companyName,
       venueName: body.venueName,
+      initialRole: body.initialRole,
     });
     return {
       company: { id: result.company.id, name: result.company.name },
@@ -473,7 +489,11 @@ export class OrganizationsController {
   @Post("companies/:companyId/venues")
   @ApiOperation({ summary: "Создать дополнительное заведение в своей компании" })
   @ApiParam({ name: "companyId", format: "uuid" })
-  @ApiCreatedResponse({ type: CreateVenueResponseDto })
+  @ApiCreatedResponse({
+    description:
+      "Локальное членство создаётся для выбранной роли; шеф-бармен может создать пустое заведение",
+    type: CreateVenueResponseDto,
+  })
   @ApiNotFoundResponse({ description: "Компания недоступна или отсутствует право создания" })
   @ApiConflictResponse({ description: "В компании уже есть заведение с таким названием" })
   async createVenue(
@@ -481,11 +501,48 @@ export class OrganizationsController {
     @Param("companyId", new ParseUUIDPipe()) companyId: string,
     @Body() body: CreateVenueDto,
   ) {
-    const result = await this.organizations.createVenueForUser(user.id, companyId, body.venueName);
+    const result = await this.organizations.createVenueForUser(
+      user.id,
+      companyId,
+      body.venueName,
+      body.initialRole,
+    );
     return {
       company: { id: result.company.id, name: result.company.name },
       venue: { id: result.venue.id, name: result.venue.name },
       redirectTo: `/app/companies/${result.company.id}/venues/${result.venue.id}`,
     };
+  }
+
+  @Post("companies/:companyId/leave")
+  @ApiOperation({ summary: "Покинуть компанию, сохранив аккаунт и другие компании" })
+  @ApiParam({ name: "companyId", format: "uuid" })
+  @ApiOkResponse({ type: AcceptedResponseDto })
+  @ApiNotFoundResponse({ description: "Компания недоступна" })
+  @ApiConflictResponse({
+    description: "Выход нарушает состав команды или непрерывность управления",
+  })
+  leaveCompany(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId", new ParseUUIDPipe()) companyId: string,
+    @Body() body: LeaveCompanyDto,
+  ) {
+    return this.team.leaveCompany(user.id, companyId, body.confirmationName);
+  }
+
+  @Post("companies/:companyId/venues/:venueId/leave")
+  @ApiOperation({ summary: "Самостоятельно покинуть заведение, сохранив другие членства" })
+  @ApiParam({ name: "companyId", format: "uuid" })
+  @ApiParam({ name: "venueId", format: "uuid" })
+  @ApiOkResponse({ type: AcceptedResponseDto })
+  @ApiNotFoundResponse({ description: "Заведение недоступно" })
+  @ApiConflictResponse({ description: "Выход нарушает правила состава или управления" })
+  leaveVenue(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId", new ParseUUIDPipe()) companyId: string,
+    @Param("venueId", new ParseUUIDPipe()) venueId: string,
+    @Body() body: LeaveVenueDto,
+  ) {
+    return this.team.leaveVenue(user.id, companyId, venueId, body.confirmationName);
   }
 }

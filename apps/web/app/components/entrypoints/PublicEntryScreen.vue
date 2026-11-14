@@ -1,14 +1,32 @@
 <template>
-  <main class="public-page min-h-screen px-4 pt-2 py-6 sm:px-6">
-    <div class="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
+  <main class="public-page min-h-screen px-4 pt-2 pb-2 sm:px-6">
+    <div class="mx-auto flex min-h-[calc(100vh-1rem)] max-w-6xl flex-col">
       <header class="flex items-center justify-between">
-        <LandingClock />
+        <div
+          v-if="
+            flow.identity.currentUser.value &&
+            flow.identity.currentUser.value.accountStatus !== 'PENDING_DELETION'
+          "
+          class="flex min-w-0 items-center gap-2"
+        >
+          <Button
+            type="button"
+            icon="pi pi-user"
+            :label="flow.identity.currentUser.value.fullName"
+            :aria-label="`Профиль: ${flow.identity.currentUser.value.fullName}`"
+            class="landing-profile-button max-w-full px-2"
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            @click="profileVisible = true"
+          />
+        </div>
         <Button
           type="button"
           :icon="colorScheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
           :aria-label="colorScheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'"
           :aria-pressed="colorScheme === 'dark'"
-          class="landing-icon-button"
+          class="app-icon-button"
           severity="secondary"
           variant="outlined"
           size="small"
@@ -20,22 +38,27 @@
         tag="div"
         name="public-entry"
         class="public-entry-layout flex-1"
-        :class="{ 'public-entry-layout--active': isEntryPanelVisible }"
+        :class="{
+          'public-entry-layout--active': isEntryPanelVisible,
+        }"
       >
         <section key="hero" class="public-entry-hero">
-          <h1 class="brand-eyebrow text-sm font-semibold uppercase tracking-[0.22em]">IndieBar</h1>
-          <p class="brand-description mt-3 max-w-xl text-base leading-7">
+          <p
+            v-if="flow.mode.value === 'company'"
+            class="brand-eyebrow text-sm font-semibold uppercase tracking-[0.22em]"
+          >
+            IndieBar
+          </p>
+          <h1 v-else class="brand-eyebrow text-sm font-semibold uppercase tracking-[0.22em]">
+            IndieBar
+          </h1>
+          <p class="brand-description mt-3 max-w-xl text-sm leading-6">
             Рабочее пространство для барной команды.
           </p>
-          <p class="brand-description max-w-xl mt-3 text-xs leading-7">
-            Рецепты, заготовки и продукты внутри понятного интерфейса. <br />
-            Ничего лишнего.
-          </p>
-          <div
-            v-if="!flow.identity.currentUser.value"
-            class="public-entry-actions mt-5 flex flex-wrap items-center gap-3"
-          >
+          <p class="brand-description max-w-xl mt-3 text-xs leading-7">Ничего лишнего.</p>
+          <div class="public-entry-actions mt-3 flex flex-wrap items-center gap-3">
             <Button
+              v-if="!flow.identity.currentUser.value"
               type="button"
               label="Зарегистрировать компанию"
               size="small"
@@ -43,6 +66,19 @@
               @click="flow.toggleMode('register')"
             />
             <Button
+              v-else-if="flow.identity.currentUser.value.accountStatus !== 'PENDING_DELETION'"
+              type="button"
+              label="Зарегистрировать компанию"
+              size="small"
+              :aria-expanded="flow.mode.value === 'company'"
+              @click="flow.toggleMode('company')"
+            />
+            <Button
+              v-if="
+                !flow.identity.currentUser.value &&
+                flow.mode.value !== 'login' &&
+                flow.mode.value !== 'recover'
+              "
               type="button"
               label="Войти"
               size="small"
@@ -61,17 +97,51 @@
           class="public-entry-panel auth-panel rounded-2xl border p-4 shadow-sm sm:p-5"
           aria-live="polite"
         >
-          <AccountSessionPanel
-            v-if="flow.identity.currentUser.value"
-            :full-name="flow.identity.currentUser.value.fullName"
+          <CompanyCreationScreen
+            v-if="
+              flow.identity.currentUser.value &&
+              flow.identity.currentUser.value.accountStatus !== 'PENDING_DELETION' &&
+              flow.mode.value === 'company'
+            "
+            v-model:company-name="flow.companyForm.companyName"
+            v-model:venue-name="flow.companyForm.venueName"
+            v-model:initial-role="flow.companyForm.initialRole"
+            :busy="flow.busy.value"
+            :disabled="flow.formsDisabled.value"
+            @submit="flow.run(flow.createCompany)"
+            @cancel="flow.toggleMode('company')"
+          />
+          <PasswordRecoveryForm
+            v-else-if="
+              flow.identity.currentUser.value?.accountStatus === 'PENDING_DELETION' &&
+              flow.mode.value === 'recover'
+            "
+            v-model:email="flow.identity.credentials.email"
+            v-model:code="flow.identity.credentials.recoveryCode"
+            v-model:new-password="flow.identity.credentials.newPassword"
+            :step="flow.recoveryStep.value"
+            :busy="flow.busy.value"
+            :disabled="flow.formsDisabled.value"
+            @request="flow.run(flow.requestRecovery)"
+            @complete="flow.run(flow.completeRecovery)"
+            @back="flow.changeMode('landing')"
+          />
+          <AccountDeletionPendingPanel
+            v-else-if="flow.identity.currentUser.value?.accountStatus === 'PENDING_DELETION'"
+            :deletion-scheduled-at="flow.identity.currentUser.value.deletionScheduledAt ?? null"
             :busy="flow.formsDisabled.value"
+            :busy-action="flow.busy.value ? 'cancel' : ''"
+            :error-message="flow.errorMessage.value"
+            @cancel="flow.run(() => flow.cancelAccountDeletion($event))"
             @logout="flow.run(flow.logout)"
-          >
+            @recover="flow.recoverPendingAccountPassword"
+          />
+          <template v-else-if="flow.identity.currentUser.value">
             <OrganizationsPanel
               :workplaces="flow.organizations.workplaces.value"
               :companies="flow.organizations.companies.value"
             />
-          </AccountSessionPanel>
+          </template>
           <RegistrationForm
             v-else-if="flow.mode.value === 'register' && flow.registration.step.value === 'details'"
             v-model:company-name="flow.registration.form.companyName"
@@ -101,7 +171,7 @@
             v-model:email="flow.identity.credentials.email"
             v-model:password="flow.identity.credentials.password"
             :busy="flow.busy.value"
-            :disabled="flow.formsDisabled.value"
+            :disabled="flow.busy.value"
             @submit="flow.run(flow.login)"
             @recover="flow.changeMode('recover')"
           />
@@ -137,13 +207,36 @@
         </section>
       </TransitionGroup>
 
-      <footer class="mt-auto flex items-center justify-between gap-2 pt-4">
-        <span class="landing-section-counter text-sm" aria-label="Секция 01 из 05">01 | 05</span>
-        <nav class="flex gap-1" aria-label="Контакты и справка">
+      <footer class="public-entry-footer mt-auto grid items-end gap-3 pt-4">
+        <span class="landing-section-counter text-sm shadow-sm" aria-label="Секция 01 из 05"
+          >01 | 05</span
+        >
+        <Transition name="cookie-notice">
+          <section
+            v-if="showCookieNotice"
+            class="cookie-notice rounded-xl border p-3 text-center shadow-sm"
+            aria-label="Уведомление об использовании файлов cookie"
+          >
+            <p class="text-xs leading-5">
+              Мы используем файлы cookie для улучшения работы сайта и повышения эффективности.
+              Продолжив пользоваться сайтом, вы даёте свое согласие на применение файлов cookie.
+            </p>
+            <Button
+              type="button"
+              label="Согласен"
+              size="small"
+              severity="success"
+              variant="outlined"
+              class="mt-2"
+              @click="acceptCookieNotice"
+            />
+          </section>
+        </Transition>
+        <nav class="public-entry-footer-nav flex gap-1" aria-label="Контакты и справка">
           <Button
             type="button"
             aria-label="Telegram"
-            class="landing-icon-button"
+            class="app-icon-button"
             severity="secondary"
             variant="outlined"
             size="small"
@@ -156,7 +249,7 @@
             type="button"
             icon="pi pi-envelope"
             aria-label="Почта"
-            class="landing-icon-button"
+            class="app-icon-button"
             severity="secondary"
             variant="outlined"
             size="small"
@@ -167,7 +260,7 @@
               :href="href"
               icon="pi pi-question-circle"
               aria-label="Документация"
-              class="landing-icon-button"
+              class="app-icon-button"
               severity="secondary"
               variant="outlined"
               size="small"
@@ -178,7 +271,7 @@
             type="button"
             icon="pi pi-headphones"
             aria-label="Поддержка"
-            class="landing-icon-button"
+            class="app-icon-button"
             severity="secondary"
             variant="outlined"
             size="small"
@@ -186,6 +279,7 @@
         </nav>
       </footer>
     </div>
+    <AccountProfileDrawer v-model:visible="profileVisible" allow-account-deletion />
   </main>
 </template>
 
@@ -195,9 +289,10 @@ import EmailConfirmationForm from "~/features/registration/components/EmailConfi
 import RegistrationForm from "~/features/registration/components/RegistrationForm.vue";
 import LoginForm from "~/features/identity/components/LoginForm.vue";
 import PasswordRecoveryForm from "~/features/identity/components/PasswordRecoveryForm.vue";
-import AccountSessionPanel from "~/features/identity/components/AccountSessionPanel.vue";
+import AccountDeletionPendingPanel from "~/features/identity/components/AccountDeletionPendingPanel.vue";
+import AccountProfileDrawer from "~/features/identity/components/AccountProfileDrawer.vue";
 import OrganizationsPanel from "~/features/organizations/components/OrganizationsPanel.vue";
-import LandingClock from "~/components/entrypoints/LandingClock.vue";
+import CompanyCreationScreen from "~/features/organizations/components/CompanyCreationScreen.vue";
 import { useColorScheme } from "~/composables/useColorScheme";
 import { usePublicEntryFlow } from "~/composables/usePublicEntryFlow";
 
@@ -206,6 +301,9 @@ defineOptions({ name: "PublicEntryScreen" });
 const { colorScheme, toggleColorScheme } = useColorScheme();
 
 const flow = usePublicEntryFlow();
+const profileVisible = ref(false);
+const cookieConsentStorageKey = "bartech-cookie-consent";
+const showCookieNotice = ref(false);
 const isEntryPanelVisible = computed(
   () =>
     Boolean(flow.identity.currentUser.value) ||
@@ -213,9 +311,57 @@ const isEntryPanelVisible = computed(
     Boolean(flow.notice.value) ||
     Boolean(flow.errorMessage.value),
 );
+
+onMounted(() => {
+  showCookieNotice.value = localStorage.getItem(cookieConsentStorageKey) !== "accepted";
+});
+
+function acceptCookieNotice(): void {
+  localStorage.setItem(cookieConsentStorageKey, "accepted");
+  showCookieNotice.value = false;
+}
 </script>
 
 <style scoped>
+.public-entry-footer {
+  position: relative;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) minmax(0, 3fr);
+}
+
+.landing-section-counter {
+  justify-self: start;
+}
+
+.cookie-notice {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 40%;
+  max-width: 28rem;
+  translate: -50% 0;
+  background: var(--p-content-background);
+  border-color: var(--p-content-border-color);
+  color: var(--p-content-color);
+}
+
+.cookie-notice-enter-active,
+.cookie-notice-leave-active {
+  transition:
+    opacity 280ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cookie-notice-enter-from,
+.cookie-notice-leave-to {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+
+.public-entry-footer-nav {
+  grid-column: 3;
+  justify-self: end;
+}
+
 .public-entry-layout {
   position: relative;
   display: grid;
@@ -307,6 +453,28 @@ const isEntryPanelVisible = computed(
 }
 
 @media (max-width: 63.999rem) {
+  .public-entry-footer {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .landing-section-counter {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .cookie-notice {
+    bottom: calc(100% + 0.75rem);
+    left: 0;
+    width: 100%;
+    max-width: none;
+    translate: none;
+  }
+
+  .public-entry-footer-nav {
+    grid-column: 2;
+    justify-self: end;
+  }
+
   .public-entry-layout,
   .public-entry-layout--active {
     grid-template-columns: minmax(0, 1fr);
@@ -348,7 +516,9 @@ const isEntryPanelVisible = computed(
   .public-entry-layout,
   .public-entry-move,
   .public-entry-enter-active,
-  .public-entry-leave-active {
+  .public-entry-leave-active,
+  .cookie-notice-enter-active,
+  .cookie-notice-leave-active {
     transition-duration: 1ms;
     transition-delay: 0ms;
   }
@@ -395,20 +565,6 @@ const isEntryPanelVisible = computed(
 
 :deep(.p-button.inline-link:hover) {
   background: transparent;
-}
-
-:deep(.p-button.landing-icon-button .p-button-icon) {
-  color: var(--p-primary-color);
-  width: 0.875rem;
-  height: 0.875rem;
-  font-size: 0.875rem;
-  line-height: 0.875rem;
-}
-
-:deep(.p-button.landing-icon-button) {
-  width: 1.75rem;
-  height: 1.75rem;
-  padding: 0;
 }
 
 :deep(.p-message-content) {

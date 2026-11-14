@@ -1,6 +1,23 @@
 <template>
-  <form class="space-y-3" @submit.prevent="submit">
-    <FloatLabel variant="on" class="mt-2">
+  <form class="space-y-4" @submit.prevent="submit">
+    <div class="flex items-center justify-between gap-3">
+      <h2 class="text-base font-semibold">Приглашение сотрудника</h2>
+      <label
+        v-if="allowNewVenueInvite"
+        for="invite-new-venue"
+        class="flex items-center gap-2 text-xs"
+      >
+        <Checkbox
+          v-model="newVenue"
+          input-id="invite-new-venue"
+          binary
+          size="small"
+          :disabled="busy"
+        />
+        <span>В новое заведение</span>
+      </label>
+    </div>
+    <FloatLabel variant="on">
       <InputText
         id="invite-email"
         v-model="email"
@@ -49,25 +66,37 @@ const props = defineProps<{
   allowVenueInvites: boolean;
   allowBarManager: boolean;
   allowChefBartender: boolean;
+  allowNewVenueInvite: boolean;
   busy: boolean;
 }>();
-const emit = defineEmits<{ submit: [email: string, role: InviteRole] }>();
+const emit = defineEmits<{ submit: [email: string, role: InviteRole, newVenue: boolean] }>();
 const email = ref("");
 const role = ref<InviteRole | null>(null);
-const roles = computed(() => [
-  ...(props.allowVenueInvites
+const newVenue = ref(false);
+const roles = computed(() =>
+  newVenue.value
     ? [
-        { label: "Бармен", value: "BARTENDER" as const },
-        { label: "Барбек", value: "BARBACK" as const },
-        { label: "Стажёр", value: "TRAINEE" as const },
+        { label: "Бар-менеджер", value: "BAR_MANAGER" as const },
         { label: "Старший бармен", value: "SENIOR_BARTENDER" as const },
-        ...(props.allowBarManager
-          ? [{ label: "Бар-менеджер", value: "BAR_MANAGER" as const }]
-          : []),
+        { label: "Бармен", value: "BARTENDER" as const },
       ]
-    : []),
-  ...(props.allowChefBartender ? [{ label: "Шеф-бармен", value: "CHEF_BARTENDER" as const }] : []),
-]);
+    : [
+        ...(props.allowVenueInvites
+          ? [
+              { label: "Бармен", value: "BARTENDER" as const },
+              { label: "Барбек", value: "BARBACK" as const },
+              { label: "Стажёр", value: "TRAINEE" as const },
+              { label: "Старший бармен", value: "SENIOR_BARTENDER" as const },
+              ...(props.allowBarManager
+                ? [{ label: "Бар-менеджер", value: "BAR_MANAGER" as const }]
+                : []),
+            ]
+          : []),
+        ...(props.allowChefBartender
+          ? [{ label: "Шеф-бармен", value: "CHEF_BARTENDER" as const }]
+          : []),
+      ],
+);
 
 watch(
   roles,
@@ -80,6 +109,6 @@ watch(
 );
 
 function submit(): void {
-  if (role.value) emit("submit", email.value.trim(), role.value);
+  if (role.value) emit("submit", email.value.trim(), role.value, newVenue.value);
 }
 </script>

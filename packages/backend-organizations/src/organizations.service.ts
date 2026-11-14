@@ -14,6 +14,7 @@ import {
   type PermissionCode,
   type WorkspaceRole,
 } from "./permissions/permission.service.js";
+import { canOpenAdditionalVenue } from "./venue-opening-authority.js";
 
 export type WorkspaceInput = {
   companyName: string;
@@ -53,6 +54,7 @@ export class OrganizationsService {
       this.database.companyMembership.findMany({
         where: {
           userId,
+          OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
           companyRole: "CHEF_BARTENDER",
           company: companyOperationalOrInClosure,
         },
@@ -76,6 +78,9 @@ export class OrganizationsService {
         where: {
           userId,
           OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
+          companyMembership: {
+            is: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+          },
           venue: { status: "ACTIVE", company: companyOperationalOrInClosure },
         },
         include: {
@@ -88,7 +93,10 @@ export class OrganizationsService {
                   name: true,
                   status: true,
                   closureDeadline: true,
-                  memberships: { select: { companyRole: true } },
+                  memberships: {
+                    where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+                    select: { companyRole: true },
+                  },
                 },
               },
             },
@@ -102,7 +110,6 @@ export class OrganizationsService {
             },
           },
           permissionOverrides: { select: { code: true, enabled: true } },
-          temporaryResponsibility: { select: { id: true } },
         },
         orderBy: { createdAt: "asc" },
       }),
@@ -130,11 +137,7 @@ export class OrganizationsService {
         this.permissions.evaluate({
           role,
           permissionOverrides,
-          temporaryResponsibility:
-            !hasBarManager &&
-            !hasChefBartender &&
-            Boolean(membership.temporaryResponsibility) &&
-            (membership.role === "BARTENDER" || membership.role === "SENIOR_BARTENDER"),
+          fullVenueManagement: membership.hasFullManagementPackage,
           hasBarManager,
           hasChefBartender,
         }),
@@ -184,6 +187,7 @@ export class OrganizationsService {
     const memberships = await this.database.companyMembership.findMany({
       where: {
         userId,
+        OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
         companyRole: "CHEF_BARTENDER",
         company: {
           OR: [{ status: "ACTIVE" }, { status: "PENDING_CLOSURE", closureDeadline: { gt: now } }],
@@ -216,6 +220,7 @@ export class OrganizationsService {
       where: {
         userId,
         companyId,
+        OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
         companyRole: "CHEF_BARTENDER",
         company: {
           OR: [{ status: "ACTIVE" }, { status: "PENDING_CLOSURE", closureDeadline: { gt: now } }],
@@ -239,16 +244,14 @@ export class OrganizationsService {
     }
   }
 
-  async createVenueForUser(userId: string, companyId: string, venueNameInput: string) {
+  async createVenueForUser(
+    userId: string,
+    companyId: string,
+    venueNameInput: string,
+    initialRole?: "BAR_MANAGER" | "SENIOR_BARTENDER" | "BARTENDER",
+  ) {
     const venueName = normalizeName(venueNameInput);
     if (!venueName) throw new ConflictException("Укажите название заведения");
-
-    const workspaces = await this.listWorkspacesForUser(userId);
-    const canCreateVenue = workspaces.some(
-      (workspace) =>
-        workspace.company.id === companyId && workspace.permissions.includes("create_venues"),
-    );
-    if (!canCreateVenue) throw new NotFoundException("Компания недоступна");
 
     try {
       return await this.database.$transaction(async (transaction) => {
@@ -256,8 +259,44 @@ export class OrganizationsService {
           SELECT "id" FROM "companies" WHERE "id" = ${companyId}::uuid FOR UPDATE
         `;
         if (!lockedCompanies.length) throw new NotFoundException("Компания недоступна");
-        const company = await transaction.company.findUnique({ where: { id: companyId } });
-        if (!company || company.status !== "ACTIVE") {
+        const company = await transaction.company.findUnique({
+          where: { id: companyId },
+          include: {
+            memberships: {
+              where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+              select: { id: true, userId: true, companyRole: true },
+            },
+            venues: {
+              where: { status: "ACTIVE" },
+              include: {
+                memberships: {
+                  where: { OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
+                  select: { userId: true, role: true, hasFullManagementPackage: true },
+                },
+              },
+            },
+          },
+        });
+        if (!company) throw new NotFoundException("Компания недоступна");
+        const companyMembership = company.memberships.find(
+          ({ userId: memberId }) => memberId === userId,
+        );
+        if (!companyMembership) throw new NotFoundException("Компания недоступна");
+        const isChef = companyMembership.companyRole === "CHEF_BARTENDER";
+        const isPendingEmptyCompany =
+          company.status === "PENDING_CLOSURE" &&
+          Boolean(company.closureDeadline && company.closureDeadline > new Date()) &&
+          company.venues.length === 0;
+        if (company.status !== "ACTIVE" && !(isChef && isPendingEmptyCompany)) {
+          throw new NotFoundException("Компания недоступна");
+        }
+        if (isChef && initialRole) {
+          throw new ConflictException("Шеф-бармен создаёт заведение без локальной должности");
+        }
+        if (!isChef && !initialRole) {
+          throw new ConflictException("Выберите должность для нового заведения");
+        }
+        if (!canOpenAdditionalVenue({ userId, company })) {
           throw new NotFoundException("Компания недоступна");
         }
 
@@ -269,17 +308,40 @@ export class OrganizationsService {
           },
         });
 
-        const startedOn = currentDate();
-        await transaction.venueMembership.create({
-          data: {
-            userId,
-            companyId,
-            venueId: venue.id,
-            role: "BAR_MANAGER",
-            startedOn,
-            rolePeriods: { create: { role: "BAR_MANAGER", startedOn } },
-          },
-        });
+        if (initialRole) {
+          const role = initialRole;
+          const startedOn = currentDate();
+          await transaction.venueMembership.create({
+            data: {
+              userId,
+              companyId,
+              venueId: venue.id,
+              role,
+              hasFullManagementPackage: true,
+              fullManagementChangedAt: new Date(),
+              fullManagementChangedByUserId: userId,
+              startedOn,
+              rolePeriods: { create: { role, startedOn } },
+            },
+          });
+          if (role === "BAR_MANAGER") {
+            await transaction.company.update({
+              where: { id: companyId },
+              data: { managementRoleEverPresent: true },
+            });
+          }
+        }
+        if (isPendingEmptyCompany) {
+          const now = new Date();
+          await transaction.company.update({
+            where: { id: companyId },
+            data: { status: "ACTIVE", closureDeadline: null },
+          });
+          await transaction.productExportClosureOperation.updateMany({
+            where: { originalCompanyId: companyId, status: "PENDING_CLOSURE" },
+            data: { status: "CANCELLED", cancelledAt: now },
+          });
+        }
         return { company, venue };
       });
     } catch (error) {
@@ -306,6 +368,12 @@ export class OrganizationsService {
       data: {
         name: companyName,
         nameNormalized: companyName.toLocaleLowerCase("ru-RU"),
+        initialCreatorUserId: userId,
+        authorityHistoryKnown: true,
+        managementRoleEverPresent:
+          (input.initialRole ?? "BAR_MANAGER") === "CHEF_BARTENDER" ||
+          (input.initialRole ?? "BAR_MANAGER") === "BAR_MANAGER",
+        authorityTransferredEver: false,
       },
     });
 
@@ -330,6 +398,9 @@ export class OrganizationsService {
           companyId: company.id,
           venueId: venue.id,
           role: initialRole,
+          hasFullManagementPackage: true,
+          fullManagementChangedAt: new Date(),
+          fullManagementChangedByUserId: userId,
           startedOn: currentDate(),
           rolePeriods: {
             create: { role: initialRole, startedOn: currentDate() },
@@ -356,7 +427,10 @@ export class OrganizationsService {
       availablePermissions: string[];
       availableRoles: VenueInviteRole[];
       canManagePermissionOverrides: boolean;
+      hasFullManagementPackage: boolean;
+      canManageFullManagementPackage: boolean;
     }>;
+    availableCompanyMembers: Array<{ id: string; fullName: string; email: string }>;
     invitations: Array<{
       id: string;
       email: string;
@@ -373,13 +447,12 @@ export class OrganizationsService {
     }
 
     const now = new Date();
-    const [members, invitations, hasChefBartender] = await Promise.all([
+    const [members, invitations, hasChefBartender, companyMemberships] = await Promise.all([
       this.database.venueMembership.findMany({
         where: { companyId, venueId, OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }] },
         include: {
           user: { include: { profile: true } },
           permissionOverrides: true,
-          temporaryResponsibility: { select: { id: true } },
         },
         orderBy: [{ role: "asc" }, { createdAt: "asc" }],
       }),
@@ -402,41 +475,54 @@ export class OrganizationsService {
       }),
       this.database.companyMembership
         .count({
-          where: { companyId, companyRole: "CHEF_BARTENDER" },
+          where: {
+            companyId,
+            OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
+            companyRole: "CHEF_BARTENDER",
+          },
         })
         .then((count) => count > 0),
+      workspace.permissions.includes("manage_team")
+        ? this.database.companyMembership.findMany({
+            where: {
+              companyId,
+              OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
+              companyRole: null,
+            },
+            include: {
+              user: { include: { profile: true } },
+              venueMemberships: {
+                where: {
+                  venueId,
+                  OR: [{ endedOn: null }, { endedOn: { gt: currentDate() } }],
+                },
+                select: { id: true },
+              },
+            },
+          })
+        : Promise.resolve([]),
     ]);
 
     return {
       members: members.map((member) => {
-        const actorMembership = members.find(({ userId: memberUserId }) => memberUserId === userId);
         const canManageTeam =
           member.userId !== userId && workspace.permissions.includes("manage_team");
-        const canManageAllLocalRoles =
-          workspace.role === "bar_manager" || workspace.role === "chef_bartender";
-        const canManageAsTemporaryResponsible =
-          (actorMembership?.role === "BARTENDER" || actorMembership?.role === "SENIOR_BARTENDER") &&
-          workspace.permissions.includes("manage_team");
-        const canChangeRole =
-          canManageTeam &&
-          !(
-            canManageAsTemporaryResponsible &&
-            member.permissionOverrides.some(
-              ({ code, enabled }) => code === "DELETE_PRODUCTS_PERMANENTLY" && enabled,
-            )
-          ) &&
-          (canManageAllLocalRoles ||
-            (canManageAsTemporaryResponsible && member.role !== "BAR_MANAGER"));
+        const canManageAllLocalRoles = workspace.permissions.includes(
+          "manage_delegated_permissions",
+        );
+        const actorIsFullManager = workspace.permissions.includes("create_venues");
+        const canChangeRole = canManageTeam && canManageAllLocalRoles;
 
         const canManagePermissionOverrides =
           (canManageTeam ||
             (member.userId === userId &&
-              workspace.role === "bar_manager" &&
+              actorIsFullManager &&
               workspace.permissions.includes("manage_team"))) &&
           workspace.permissions.includes("manage_delegated_permissions");
-        const actorIsTemporaryResponsible =
-          (workspace.role === "bartender" || workspace.role === "senior_bartender") &&
-          workspace.permissions.includes("manage_team");
+        const hasFullManagementPackage =
+          member.role === "BAR_MANAGER" || member.hasFullManagementPackage;
+        const canManageFullManagementPackage =
+          canManageTeam && actorIsFullManager && member.role !== "BAR_MANAGER";
         const permissionOverrides = member.permissionOverrides.map(({ code, enabled }) => ({
           code: code.toLowerCase(),
           enabled,
@@ -445,29 +531,26 @@ export class OrganizationsService {
         const permissions = this.permissions.evaluate({
           role,
           permissionOverrides,
-          temporaryResponsibility:
-            Boolean(member.temporaryResponsibility) &&
-            (member.role === "BARTENDER" || member.role === "SENIOR_BARTENDER"),
+          fullVenueManagement: member.hasFullManagementPackage,
           hasBarManager:
             member.role === "BAR_MANAGER" || members.some(({ role }) => role === "BAR_MANAGER"),
           hasChefBartender,
         });
         const defaults = this.permissions.evaluate({
           role,
+          fullVenueManagement: member.hasFullManagementPackage,
           hasBarManager:
             member.role === "BAR_MANAGER" || members.some(({ role }) => role === "BAR_MANAGER"),
           hasChefBartender,
         });
         const availablePermissions = canManagePermissionOverrides
-          ? workspace.role === "bar_manager"
+          ? actorIsFullManager
             ? [...VENUE_PERMISSION_CODES]
             : [
                 ...new Set([
                   ...defaults.filter(isVenuePermission),
                   ...DELEGATABLE_PERMISSION_CODES.filter(
-                    (code) =>
-                      (workspace.permissions.includes(code) || permissions.includes(code)) &&
-                      !(actorIsTemporaryResponsible && code === "delete_products_permanently"),
+                    (code) => workspace.permissions.includes(code) || permissions.includes(code),
                   ),
                 ]),
               ]
@@ -485,6 +568,8 @@ export class OrganizationsService {
             ? ["BARTENDER", "SENIOR_BARTENDER", "BARBACK", "TRAINEE", "BAR_MANAGER"]
             : [],
           canManagePermissionOverrides,
+          hasFullManagementPackage,
+          canManageFullManagementPackage,
           isCurrentUser: member.userId === userId,
         };
       }),
@@ -501,6 +586,16 @@ export class OrganizationsService {
         canRevoke:
           invitation.createdByUserId === userId || workspace.permissions.includes("manage_team"),
       })),
+      availableCompanyMembers: companyMemberships
+        .filter(
+          ({ userId: memberUserId, venueMemberships: localMemberships }) =>
+            memberUserId !== userId && localMemberships.length === 0,
+        )
+        .map(({ userId: memberUserId, user }) => ({
+          id: memberUserId,
+          fullName: user.profile?.fullName ?? "",
+          email: user.email,
+        })),
     };
   }
 }

@@ -64,7 +64,7 @@ export function publicInvitation(invitation: {
     accessDescription:
       invitation.purpose === "JOIN_COMPANY_AS_CHEF"
         ? "Вы получите доступ ко всем заведениям этой компании."
-        : invitation.purpose === "CREATE_VENUE_AS_BAR_MANAGER"
+        : invitation.purpose === "CREATE_VENUE"
           ? "Название нового заведения вы укажете после принятия приглашения."
           : null,
     email: invitation.email,

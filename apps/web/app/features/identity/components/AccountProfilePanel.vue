@@ -36,7 +36,7 @@
       <h2 class="text-base font-semibold">Учётная запись</h2>
       <dl class="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
-          <dt class="text-sm text-zinc-500">Имя</dt>
+          <dt class="text-sm text-zinc-500">Имя и фамилия</dt>
           <dd class="mt-1 font-medium">{{ fullName }}</dd>
         </div>
         <div>

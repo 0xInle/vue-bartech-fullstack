@@ -9,10 +9,15 @@ import {
 } from "@nestjs/common";
 import { DATABASE_CLIENT, Prisma, PrismaClient } from "@bartech/database";
 import argon2 from "argon2";
-import { normalizeName, OrganizationInvitationsService } from "@bartech/backend-organizations";
+import {
+  normalizeName,
+  OrganizationInvitationsService,
+  type NewVenueInviteRole,
+} from "@bartech/backend-organizations";
 import { sessionTokenHash, type AuthenticatedUser } from "./session.guard.js";
 import { EmailOutboxService } from "../outbox/email-outbox.service.js";
 import { IdentityChallengeService } from "./identity-challenge.service.js";
+import { normalizePersonName } from "./person-name.js";
 import {
   CODE_TTL_MS,
   SESSION_IDLE_MS,
@@ -271,8 +276,10 @@ export class InvitationAcceptanceService {
     passwordInput: string,
   ): Promise<void> {
     const acceptance = await this.findAcceptanceSession(acceptanceToken);
-    const fullName = normalizeName(fullNameInput);
-    if (!fullName) throw new BadRequestException("Укажите имя и фамилию");
+    const fullName = normalizePersonName(fullNameInput);
+    if (!fullName) {
+      throw new BadRequestException("Укажите имя и фамилию: сначала имя, затем фамилию");
+    }
     normalizePassword(passwordInput, acceptance.emailNormalized, fullName);
     if (
       await this.database.user.findUnique({
@@ -370,7 +377,7 @@ export class InvitationAcceptanceService {
     venueNameInput?: string,
   ) {
     const acceptance = await this.findAcceptanceSession(acceptanceToken);
-    const createsVenue = acceptance.invitation.purpose === "CREATE_VENUE_AS_BAR_MANAGER";
+    const createsVenue = acceptance.invitation.purpose === "CREATE_VENUE";
     const venueName = venueNameInput === undefined ? "" : normalizeName(venueNameInput);
     if (createsVenue && (!venueName || venueName.length > 120)) {
       throw new BadRequestException("Укажите название заведения длиной не более 120 символов");
@@ -425,10 +432,10 @@ export class InvitationAcceptanceService {
           return { expired: true as const };
         }
         const isChefInvitation = activeSession.invitation.purpose === "JOIN_COMPANY_AS_CHEF";
-        const createsVenue = activeSession.invitation.purpose === "CREATE_VENUE_AS_BAR_MANAGER";
+        const createsVenue = activeSession.invitation.purpose === "CREATE_VENUE";
         if (
           createsVenue &&
-          (activeSession.invitation.venueId || activeSession.invitation.role !== "BAR_MANAGER")
+          (activeSession.invitation.venueId || !isNewVenueInviteRole(activeSession.invitation.role))
         ) {
           throw new ConflictException("Цель приглашения указана неверно");
         }
@@ -472,6 +479,15 @@ export class InvitationAcceptanceService {
           },
         });
         await transaction.$queryRaw`SELECT lock_company_membership_pair(${user.id}::UUID, ${activeSession.invitation.companyId}::UUID)`;
+        if (
+          isChefInvitation ||
+          (!createsVenue && activeSession.invitation.role === "BAR_MANAGER")
+        ) {
+          await transaction.company.update({
+            where: { id: activeSession.invitation.companyId },
+            data: { managementRoleEverPresent: true },
+          });
+        }
         await transaction.companyMembership.create({
           data: {
             companyId: activeSession.invitation.companyId,
@@ -500,6 +516,7 @@ export class InvitationAcceptanceService {
               companyId: activeSession.invitation.companyId,
               userId: user.id,
               name: venueName,
+              role: activeSession.invitation.role as NewVenueInviteRole,
             })
           ).id;
         } else {
@@ -579,7 +596,7 @@ export class InvitationAcceptanceService {
         "Войдите с адресом электронной почты, на который пришло приглашение",
       );
     }
-    const createsVenue = acceptance.invitation.purpose === "CREATE_VENUE_AS_BAR_MANAGER";
+    const createsVenue = acceptance.invitation.purpose === "CREATE_VENUE";
     const venueName = venueNameInput === undefined ? "" : normalizeName(venueNameInput);
     if (createsVenue && (!venueName || venueName.length > 120)) {
       throw new BadRequestException("Укажите название заведения длиной не более 120 символов");
@@ -614,10 +631,10 @@ export class InvitationAcceptanceService {
           return { expired: true as const };
         }
         const isChefInvitation = activeSession.invitation.purpose === "JOIN_COMPANY_AS_CHEF";
-        const createsVenue = activeSession.invitation.purpose === "CREATE_VENUE_AS_BAR_MANAGER";
+        const createsVenue = activeSession.invitation.purpose === "CREATE_VENUE";
         if (
           createsVenue &&
-          (activeSession.invitation.venueId || activeSession.invitation.role !== "BAR_MANAGER")
+          (activeSession.invitation.venueId || !isNewVenueInviteRole(activeSession.invitation.role))
         ) {
           throw new ConflictException("Цель приглашения указана неверно");
         }
@@ -644,6 +661,10 @@ export class InvitationAcceptanceService {
               "В этой компании у вас уже есть локальная должность. Попросите пригласившего проверить совместимость ролей.",
             );
           }
+          await transaction.company.update({
+            where: { id: activeSession.invitation.companyId },
+            data: { managementRoleEverPresent: true },
+          });
         }
         const companyMembership = await transaction.companyMembership.findUnique({
           where: {
@@ -687,7 +708,7 @@ export class InvitationAcceptanceService {
           if (companyMembership) {
             await transaction.companyMembership.update({
               where: { id: companyMembership.id },
-              data: { companyRole: "CHEF_BARTENDER" },
+              data: { companyRole: "CHEF_BARTENDER", endedOn: null },
             });
           } else {
             await transaction.companyMembership.create({
@@ -709,7 +730,12 @@ export class InvitationAcceptanceService {
             closeOnMembershipConflict = true;
             throw new ConflictException("Вы уже являетесь шеф-барменом этой компании");
           }
-          if (!companyMembership) {
+          if (companyMembership && companyMembership.endedOn) {
+            await transaction.companyMembership.update({
+              where: { id: companyMembership.id },
+              data: { endedOn: null },
+            });
+          } else if (!companyMembership) {
             await transaction.companyMembership.create({
               data: { companyId: activeSession.invitation.companyId, userId: user.id },
             });
@@ -719,10 +745,16 @@ export class InvitationAcceptanceService {
               companyId: activeSession.invitation.companyId,
               userId: user.id,
               name: venueName,
+              role: activeSession.invitation.role as NewVenueInviteRole,
             })
           ).id;
         } else {
-          if (!companyMembership) {
+          if (companyMembership && companyMembership.endedOn) {
+            await transaction.companyMembership.update({
+              where: { id: companyMembership.id },
+              data: { endedOn: null },
+            });
+          } else if (!companyMembership) {
             await transaction.companyMembership.create({
               data: { companyId: activeSession.invitation.companyId, userId: user.id },
             });
@@ -739,6 +771,12 @@ export class InvitationAcceptanceService {
               },
             },
           });
+          if (activeSession.invitation.role === "BAR_MANAGER") {
+            await transaction.company.update({
+              where: { id: activeSession.invitation.companyId },
+              data: { managementRoleEverPresent: true },
+            });
+          }
         }
         await transaction.auditEvent.create({
           data: {
@@ -874,6 +912,10 @@ function isVenueNameConflict(error: Prisma.PrismaClientKnownRequestError): boole
     return target.includes("companyId") && target.includes("nameNormalized");
   }
   return typeof target === "string" && target.includes("venues_company_normalized_name_key");
+}
+
+function isNewVenueInviteRole(role: string | null): role is NewVenueInviteRole {
+  return role === "BAR_MANAGER" || role === "SENIOR_BARTENDER" || role === "BARTENDER";
 }
 
 function dateOnly(value: Date): Date {

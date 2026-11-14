@@ -5,10 +5,12 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { AvailableCompanyTeamMemberDto } from './availableCompanyTeamMemberDto';
 import type { VenueInvitationDto } from './venueInvitationDto';
 import type { VenueTeamMemberDto } from './venueTeamMemberDto';
 
 export interface VenueTeamResponseDto {
   members: VenueTeamMemberDto[];
   invitations: VenueInvitationDto[];
+  availableCompanyMembers: AvailableCompanyTeamMemberDto[];
 }

@@ -17,6 +17,8 @@ import {
   AcceptedDto,
   CsrfTokenResponseDto,
   CurrentIdentityResponseDto,
+  AccountDeletionResponseDto,
+  AccountPasswordConfirmationDto,
   LoginDto,
   LoginResponseDto,
   PasswordRecoveryCompleteDto,
@@ -24,6 +26,9 @@ import {
   RegistrationStartDto,
   RegistrationCompleteResponseDto,
   VerifyEmailDto,
+  StartEmailChangeDto,
+  UpdateProfileNameDto,
+  VerifyEmailChangeDto,
 } from "./identity.dto.js";
 import { AuthenticationService } from "./authentication.service.js";
 import { RegistrationService } from "./registration.service.js";
@@ -31,6 +36,7 @@ import {
   CurrentUser,
   readCookie,
   SessionGuard,
+  AccountSessionGuard,
   sessionCookieName,
   type AuthenticatedUser,
 } from "./session.guard.js";
@@ -140,7 +146,7 @@ export class IdentityController {
   }
 
   @Post("logout")
-  @UseGuards(SessionGuard)
+  @UseGuards(AccountSessionGuard)
   @ApiOperation({ summary: "Завершить текущую сессию" })
   @ApiOkResponse({ description: "Текущая сессия завершена", type: AcceptedDto })
   async logout(
@@ -166,7 +172,7 @@ export class IdentityController {
   }
 
   @Get("session")
-  @UseGuards(SessionGuard)
+  @UseGuards(AccountSessionGuard)
   @ApiOperation({ summary: "Получить текущего пользователя и доступные рабочие пространства" })
   @ApiOkResponse({ description: "Текущий пользователь", type: CurrentIdentityResponseDto })
   session(@CurrentUser() user: AuthenticatedUser) {
@@ -204,6 +210,68 @@ export class IdentityController {
   })
   changePassword(@CurrentUser() user: AuthenticatedUser, @Body() body: ChangePasswordDto) {
     return this.authentication.changePassword(user, body.currentPassword, body.newPassword);
+  }
+
+  @Post("profile/name")
+  @UseGuards(SessionGuard)
+  @ApiOperation({ summary: "Изменить имя и фамилию текущего пользователя" })
+  @ApiOkResponse({ description: "Имя обновлено", type: AcceptedDto })
+  async updateProfileName(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: UpdateProfileNameDto,
+  ) {
+    await this.authentication.updateFullName(user, body.fullName);
+    return { accepted: true };
+  }
+
+  @Post("email-change")
+  @UseGuards(SessionGuard)
+  @ApiOperation({ summary: "Отправить код подтверждения на новый основной email" })
+  @ApiOkResponse({ description: "Код отправлен", type: AcceptedDto })
+  async startEmailChange(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: StartEmailChangeDto,
+  ) {
+    await this.authentication.requestEmailChange(user, body.newEmail, body.currentPassword);
+    return { accepted: true };
+  }
+
+  @Post("email-change/verify")
+  @UseGuards(SessionGuard)
+  @ApiOperation({ summary: "Подтвердить новый основной email" })
+  @ApiOkResponse({ description: "Email изменён", type: AcceptedDto })
+  async verifyEmailChange(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: VerifyEmailChangeDto,
+  ) {
+    await this.authentication.verifyEmailChange(user, body.code);
+    return { accepted: true };
+  }
+
+  @Post("account-deletion")
+  @UseGuards(SessionGuard)
+  @ApiOperation({ summary: "Запустить семидневное ожидание удаления аккаунта" })
+  @ApiOkResponse({ description: "Удаление запланировано", type: AccountDeletionResponseDto })
+  async requestAccountDeletion(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: AccountPasswordConfirmationDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authentication.requestAccountDeletion(user, body.currentPassword);
+    this.setSessionCookie(response, result.token, result.expiresAt);
+    return { deletionScheduledAt: result.deletionScheduledAt.toISOString() };
+  }
+
+  @Post("account-deletion/cancel")
+  @UseGuards(AccountSessionGuard)
+  @ApiOperation({ summary: "Отменить ожидающее удаление аккаунта" })
+  @ApiOkResponse({ description: "Удаление отменено", type: AcceptedDto })
+  async cancelAccountDeletion(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: AccountPasswordConfirmationDto,
+  ) {
+    await this.authentication.cancelAccountDeletion(user, body.currentPassword);
+    return { accepted: true };
   }
 
   private setSessionCookie(response: Response, token: string, expiresAt: Date): void {

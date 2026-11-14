@@ -10,5 +10,5 @@ export type CompanyVenueInvitationDtoPurpose = typeof CompanyVenueInvitationDtoP
 
 
 export const CompanyVenueInvitationDtoPurpose = {
-  CREATE_VENUE_AS_BAR_MANAGER: 'CREATE_VENUE_AS_BAR_MANAGER',
+  CREATE_VENUE: 'CREATE_VENUE',
 } as const;

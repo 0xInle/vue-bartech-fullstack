@@ -22,6 +22,12 @@
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <Tag :value="roleLabel(invitation.role)" severity="contrast" :pt="compactTagPt" />
+          <Tag
+            v-if="invitation.scope === 'newVenue'"
+            value="Новое заведение"
+            severity="secondary"
+            :pt="compactTagPt"
+          />
           <div class="ml-auto flex items-center gap-2">
             <Tag
               :value="`до ${formatDate(invitation.expiresAt)}`"
@@ -45,7 +51,7 @@ type PendingInvitation = {
   role: InviteRole;
   expiresAt: string;
   canRevoke: boolean;
-  scope: "venue" | "company";
+  scope: "venue" | "company" | "newVenue";
 };
 
 defineProps<{ invitations: PendingInvitation[]; busyId: string }>();

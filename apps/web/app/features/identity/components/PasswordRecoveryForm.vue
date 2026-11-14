@@ -1,11 +1,12 @@
 <template>
   <section>
     <template v-if="step === 'email'">
-      <form class="space-y-3" @submit.prevent="$emit('request')">
+      <form class="space-y-3" novalidate @submit.prevent="requestRecovery">
         <FloatLabel class="w-full" variant="on">
           <InputText
             id="recovery-email"
             :model-value="email"
+            :invalid="emailInvalid"
             required
             type="email"
             maxlength="254"
@@ -31,11 +32,12 @@
       <p class="brand-description mb-3 text-sm">
         Введите код из письма и новый пароль, чтобы восстановить доступ.
       </p>
-      <form class="space-y-3" @submit.prevent="$emit('complete')">
+      <form class="space-y-3" novalidate @submit.prevent="completeRecovery">
         <FloatLabel class="w-full" variant="on">
           <InputText
             id="recovery-code"
             :model-value="code"
+            :invalid="codeInvalid"
             required
             inputmode="numeric"
             pattern="[0-9]{6}"
@@ -53,6 +55,7 @@
             :model-value="newPassword"
             input-id="new-password"
             :input-props="{ autocomplete: 'new-password', minlength: 8, maxlength: 256 }"
+            :invalid="passwordInvalid"
             required
             :feedback="false"
             toggle-mask
@@ -87,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   email: string;
   code: string;
   newPassword: string;
@@ -95,7 +98,7 @@ defineProps<{
   busy: boolean;
   disabled: boolean;
 }>();
-defineEmits<{
+const emit = defineEmits<{
   "update:email": [value: string];
   "update:code": [value: string];
   "update:newPassword": [value: string];
@@ -103,4 +106,30 @@ defineEmits<{
   complete: [];
   back: [];
 }>();
+
+const emailValidationAttempted = ref(false);
+const completionValidationAttempted = ref(false);
+const emailInvalid = computed(
+  () => emailValidationAttempted.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(props.email.trim()),
+);
+const codeInvalid = computed(
+  () => completionValidationAttempted.value && !/^\d{6}$/.test(props.code.trim()),
+);
+const passwordInvalid = computed(
+  () =>
+    completionValidationAttempted.value &&
+    (props.newPassword.length < 8 || props.newPassword.length > 256),
+);
+
+function requestRecovery(): void {
+  emailValidationAttempted.value = true;
+  if (emailInvalid.value) return;
+  emit("request");
+}
+
+function completeRecovery(): void {
+  completionValidationAttempted.value = true;
+  if (codeInvalid.value || passwordInvalid.value) return;
+  emit("complete");
+}
 </script>

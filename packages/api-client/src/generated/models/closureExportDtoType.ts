@@ -10,7 +10,6 @@ export type ClosureExportDtoType = typeof ClosureExportDtoType[keyof typeof Clos
 
 
 export const ClosureExportDtoType = {
-  SINGLE_PDF: 'SINGLE_PDF',
-  BATCH_PDF_ZIP: 'BATCH_PDF_ZIP',
   COMPANY_CLOSURE_PDF_ZIP: 'COMPANY_CLOSURE_PDF_ZIP',
+  VENUE_CLOSURE_PDF_ZIP: 'VENUE_CLOSURE_PDF_ZIP',
 } as const;

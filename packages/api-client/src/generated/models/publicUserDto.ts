@@ -5,9 +5,11 @@
  * Служебный контракт API IndieBar
  * OpenAPI spec version: 1.0.0
  */
+import type { PublicUserDtoAccountStatus } from './publicUserDtoAccountStatus';
 
 export interface PublicUserDto {
   id: string;
   email: string;
   fullName: string;
+  accountStatus?: PublicUserDtoAccountStatus;
 }

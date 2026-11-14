@@ -14,6 +14,7 @@ import {
   type TokenSession,
 } from "./identity.helpers.js";
 import type { RegistrationStartDto } from "./identity.dto.js";
+import { normalizePersonName } from "./person-name.js";
 
 @Injectable()
 export class RegistrationService {
@@ -29,12 +30,14 @@ export class RegistrationService {
   ): Promise<{ accepted: true; registrationToken?: string }> {
     const email = input.email.trim();
     const emailNormalized = normalizeEmail(email);
-    const password = normalizePassword(input.password, email, input.fullName);
-    const fullName = normalizeName(input.fullName);
+    const fullName = normalizePersonName(input.fullName);
     const companyName = normalizeName(input.companyName);
     const venueName = normalizeName(input.venueName);
-    if (!fullName || !companyName || !venueName)
-      throw new BadRequestException("Заполните имя, компанию и заведение");
+    if (!fullName) {
+      throw new BadRequestException("Укажите имя и фамилию: сначала имя, затем фамилию");
+    }
+    const password = normalizePassword(input.password, email, fullName);
+    if (!companyName || !venueName) throw new BadRequestException("Заполните компанию и заведение");
 
     const existingUser = await this.database.user.findUnique({
       where: { emailNormalized },

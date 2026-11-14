@@ -12,7 +12,6 @@
           Удаление запланировано на {{ deadlineText }} по московскому времени. Данные доступны
           только для просмотра.
         </p>
-        <p v-if="errorMessage" class="mt-2 text-sm">{{ errorMessage }}</p>
         <NuxtLink
           v-if="closure.operationId"
           :to="`/app/closures/${closure.operationId}`"
@@ -21,14 +20,6 @@
           Открыть страницу результата закрытия
         </NuxtLink>
       </div>
-      <Button
-        v-if="closure.canCancel"
-        label="Отменить закрытие"
-        severity="secondary"
-        size="small"
-        :loading="isCancelling"
-        @click="cancelClosure"
-      />
     </div>
   </Message>
   <ClosureExportPicker
@@ -46,12 +37,8 @@ import ClosureExportPicker from "~/features/exports/components/ClosureExportPick
 defineOptions({ name: "CompanyClosureBanner" });
 
 const props = defineProps<{ companyId: string }>();
-const { closureQuery, cancelCompanyClosure } = useOrganizationLifecycle(
-  computed(() => props.companyId),
-);
-const isCancelling = ref(false);
+const { closureQuery } = useOrganizationLifecycle(computed(() => props.companyId));
 const companyId = computed(() => props.companyId);
-const errorMessage = ref("");
 const closure = computed(() => closureQuery.data.value);
 const deadlineText = computed(() => {
   const deadline = closure.value?.closureDeadline;
@@ -62,17 +49,4 @@ const deadlineText = computed(() => {
     timeZone: "Europe/Moscow",
   }).format(new Date(deadline));
 });
-
-async function cancelClosure() {
-  isCancelling.value = true;
-  errorMessage.value = "";
-  try {
-    await cancelCompanyClosure();
-  } catch (error) {
-    errorMessage.value =
-      error instanceof Error ? error.message : "Не удалось отменить закрытие компании.";
-  } finally {
-    isCancelling.value = false;
-  }
-}
 </script>
