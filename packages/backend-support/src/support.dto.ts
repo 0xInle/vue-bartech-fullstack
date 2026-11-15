@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from "class-validator";
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from "class-validator";
 
 export enum SupportReasonDto {
   DATA_MIGRATION = "data_migration",
@@ -10,7 +20,34 @@ export enum SupportReasonDto {
 export enum SupportStatusDto {
   NEW = "new",
   IN_PROGRESS = "in_progress",
+  WAITING_ON_CUSTOMER = "waiting_on_customer",
   CLOSED = "closed",
+}
+
+export class CreateSupportMessageDto {
+  @ApiPropertyOptional({ maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  message?: string;
+}
+
+export class CreateInternalSupportMessageDto {
+  @ApiProperty({ maxLength: 5000 })
+  @IsString()
+  @MaxLength(5000)
+  message!: string;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  requestAccess?: boolean;
+}
+
+export class MarkSupportMessagesReadDto {
+  @ApiProperty({ format: "uuid" })
+  @IsUUID("all")
+  throughMessageId!: string;
 }
 
 export class CreateSupportRequestDto {
@@ -18,9 +55,9 @@ export class CreateSupportRequestDto {
   @IsEnum(SupportReasonDto)
   reason!: SupportReasonDto;
 
-  @ApiProperty({ maxLength: 5000 })
+  @ApiProperty({ maxLength: 1000 })
   @IsString()
-  @MaxLength(5000)
+  @MaxLength(1000)
   message!: string;
 
   @ApiPropertyOptional({ format: "uuid" })
@@ -44,22 +81,6 @@ export class CreateSupportRequestDto {
   @IsString()
   @MaxLength(128)
   errorId?: string;
-}
-
-export class CreateSupportAccessGrantDto {
-  @ApiProperty({ format: "uuid" })
-  @IsUUID("all")
-  companyId!: string;
-
-  @ApiPropertyOptional({ format: "uuid" })
-  @IsOptional()
-  @IsUUID("all")
-  venueId?: string;
-
-  @ApiPropertyOptional({ format: "uuid" })
-  @IsOptional()
-  @IsUUID("all")
-  requestId?: string;
 }
 
 export class UpdateSupportRequestDto {
@@ -114,6 +135,71 @@ export class SupportAttachmentResponseDto {
   scannedAt!: Date | null;
 }
 
+export class SupportMessageAccessGrantDto {
+  @ApiProperty({ format: "uuid" })
+  id!: string;
+
+  @ApiProperty({ enum: ["COMPANY", "VENUE"] })
+  scopeType!: string;
+
+  @ApiProperty()
+  companyName!: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true })
+  venueName!: string | null;
+
+  @ApiProperty({ type: String, format: "date-time" })
+  expiresAt!: Date;
+
+  @ApiPropertyOptional({ type: String, format: "date-time", nullable: true })
+  revokedAt!: Date | null;
+
+  @ApiProperty()
+  active!: boolean;
+}
+
+export class SupportMessageResponseDto {
+  @ApiProperty({ format: "uuid" })
+  id!: string;
+
+  @ApiProperty({ enum: ["customer", "internal"] })
+  authorType!: string;
+
+  @ApiProperty()
+  authorName!: string;
+
+  @ApiProperty({ enum: ["text", "access_request"] })
+  kind!: string;
+
+  @ApiProperty()
+  body!: string;
+
+  @ApiProperty({ type: String, format: "date-time" })
+  createdAt!: Date;
+
+  @ApiProperty({ type: [SupportAttachmentResponseDto] })
+  attachments!: SupportAttachmentResponseDto[];
+
+  @ApiPropertyOptional({ type: SupportMessageAccessGrantDto, nullable: true })
+  accessGrant!: SupportMessageAccessGrantDto | null;
+}
+
+export class SupportUnreadRequestDto {
+  @ApiProperty({ format: "uuid" })
+  requestId!: string;
+
+  @ApiProperty()
+  unreadCount!: number;
+}
+
+export class SupportUnreadCountDto {
+  @ApiProperty()
+  totalCount!: number;
+
+  @ApiProperty({ type: [SupportUnreadRequestDto] })
+  requests!: SupportUnreadRequestDto[];
+}
+
 export class SupportRequestResponseDto {
   @ApiProperty({ format: "uuid" })
   id!: string;
@@ -142,8 +228,8 @@ export class SupportRequestResponseDto {
   @ApiProperty()
   updatedAt!: Date;
 
-  @ApiPropertyOptional({ type: SupportAttachmentResponseDto, nullable: true })
-  attachment!: SupportAttachmentResponseDto | null;
+  @ApiProperty({ type: [SupportAttachmentResponseDto] })
+  attachments!: SupportAttachmentResponseDto[];
 }
 
 export class SupportRequestAuthorDto {

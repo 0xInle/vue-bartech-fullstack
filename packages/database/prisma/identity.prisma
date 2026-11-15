@@ -87,9 +87,9 @@ model User {
   sessions                          Session[]
   challenges                        EmailChallenge[]
   companyMemberships                CompanyMembership[]
-  companiesInitiallyCreated          Company[]                       @relation("CompanyInitialCreator")
+  companiesInitiallyCreated         Company[]                       @relation("CompanyInitialCreator")
   venueMemberships                  VenueMembership[]
-  venueManagementPackagesChanged     VenueMembership[]                 @relation("VenueManagementPackageChangedBy")
+  venueManagementPackagesChanged    VenueMembership[]               @relation("VenueManagementPackageChangedBy")
   permissionOverridesChanged        VenuePermissionOverride[]
   temporaryResponsibilitiesAssigned TemporaryResponsibility[]
   createdInvitations                Invitation[]
@@ -98,11 +98,12 @@ model User {
   productsCreated                   Product[]                       @relation("ProductCreatedBy")
   productsUpdated                   Product[]                       @relation("ProductUpdatedBy")
   unitsCreated                      Unit[]                          @relation("UnitCreatedBy")
-  preparationCategoriesCreated      PreparationCategory[]            @relation("PreparationCategoryCreatedBy")
+  preparationCategoriesCreated      PreparationCategory[]           @relation("PreparationCategoryCreatedBy")
   referenceValuesCreated            ReferenceValue[]                @relation("ReferenceValueCreatedBy")
   productExportRequests             ProductExportRequest[]
   productExportClosures             ProductExportClosureOperation[]
   supportRequests                   SupportRequest[]
+  supportMessages                   SupportMessage[]                @relation("SupportMessageUserAuthor")
   supportAttachments                SupportAttachment[]
   supportAccessGrants               SupportAccessGrant[]
   venueRoleChanges                  VenueRolePeriod[]
@@ -209,6 +210,7 @@ model InternalUser {
   serviceSessions             ServiceSession[]
   businessAuditEvents         AuditEvent[]
   assignedSupportRequests     SupportRequest[]
+  supportMessages             SupportMessage[]        @relation("SupportMessageInternalAuthor")
 
   @@index([status, createdAt], map: "internal_users_status_created_idx")
   @@map("internal_users")

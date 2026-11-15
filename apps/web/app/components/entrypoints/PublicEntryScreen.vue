@@ -26,7 +26,7 @@
           :icon="colorScheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
           :aria-label="colorScheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'"
           :aria-pressed="colorScheme === 'dark'"
-          class="app-icon-button"
+          class="app-icon-button ml-auto"
           severity="secondary"
           variant="outlined"
           size="small"

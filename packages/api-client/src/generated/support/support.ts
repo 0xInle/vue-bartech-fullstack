@@ -31,9 +31,13 @@ import type {
 } from 'vue';
 
 import type {
+  MarkSupportMessagesReadDto,
   SupportControllerCreateBody,
   SupportControllerDownload200,
-  SupportRequestResponseDto
+  SupportControllerSendMessageBody,
+  SupportMessageResponseDto,
+  SupportRequestResponseDto,
+  SupportUnreadCountDto
 } from '../models';
 
 
@@ -79,8 +83,8 @@ if(supportControllerCreateBody.browser !== undefined) {
 if(supportControllerCreateBody.errorId !== undefined) {
  formData.append(`errorId`, supportControllerCreateBody.errorId);
  }
-if(supportControllerCreateBody.file !== undefined) {
- formData.append(`file`, supportControllerCreateBody.file);
+if(supportControllerCreateBody.files !== undefined) {
+ supportControllerCreateBody.files.forEach(value => formData.append(`files`, value));
  }
 
   const res = await (fetchFn ?? fetch)(getSupportControllerCreateUrl(),
@@ -247,7 +251,384 @@ export function useSupportControllerList<TData = Awaited<ReturnType<typeof suppo
 
 
 
-export type supportControllerGetMineResponse200 = {
+export type supportControllerUnreadCountResponse200 = {
+  data: SupportUnreadCountDto
+  status: 200
+}
+
+export type supportControllerUnreadCountResponseSuccess = (supportControllerUnreadCountResponse200) & {
+  headers: Headers;
+};
+;
+
+export type supportControllerUnreadCountResponse = (supportControllerUnreadCountResponseSuccess)
+
+export const getSupportControllerUnreadCountUrl = () => {
+
+
+
+
+  return `/api/v1/support/requests/unread-count`
+}
+
+export const supportControllerUnreadCount = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<supportControllerUnreadCountResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getSupportControllerUnreadCountUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: supportControllerUnreadCountResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as supportControllerUnreadCountResponse
+}
+
+
+
+
+
+export const getSupportControllerUnreadCountQueryKey = () => {
+    return [
+    'api','v1','support','requests','unread-count'
+    ] as const;
+    }
+
+
+export const getSupportControllerUnreadCountQueryOptions = <TData = Awaited<ReturnType<typeof supportControllerUnreadCount>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof supportControllerUnreadCount>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getSupportControllerUnreadCountQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof supportControllerUnreadCount>>> = ({ signal }) => supportControllerUnreadCount({ signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof supportControllerUnreadCount>>, TError, TData>
+}
+
+export type SupportControllerUnreadCountQueryResult = NonNullable<Awaited<ReturnType<typeof supportControllerUnreadCount>>>
+export type SupportControllerUnreadCountQueryError = unknown
+
+
+
+export function useSupportControllerUnreadCount<TData = Awaited<ReturnType<typeof supportControllerUnreadCount>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof supportControllerUnreadCount>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSupportControllerUnreadCountQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type supportControllerMessagesResponse200 = {
+  data: SupportMessageResponseDto[]
+  status: 200
+}
+
+export type supportControllerMessagesResponseSuccess = (supportControllerMessagesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type supportControllerMessagesResponse = (supportControllerMessagesResponseSuccess)
+
+export const getSupportControllerMessagesUrl = (requestId: string,) => {
+
+
+
+
+  return `/api/v1/support/requests/${requestId}/messages`
+}
+
+export const supportControllerMessages = async (requestId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<supportControllerMessagesResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getSupportControllerMessagesUrl(requestId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: supportControllerMessagesResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as supportControllerMessagesResponse
+}
+
+
+
+
+
+export const getSupportControllerMessagesQueryKey = (requestId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','support','requests',requestId,'messages'
+    ] as const;
+    }
+
+
+export const getSupportControllerMessagesQueryOptions = <TData = Awaited<ReturnType<typeof supportControllerMessages>>, TError = unknown>(requestId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof supportControllerMessages>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getSupportControllerMessagesQueryKey(requestId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof supportControllerMessages>>> = ({ signal }) => supportControllerMessages(toValue(requestId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(requestId) !== null && toValue(requestId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof supportControllerMessages>>, TError, TData>
+}
+
+export type SupportControllerMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof supportControllerMessages>>>
+export type SupportControllerMessagesQueryError = unknown
+
+
+
+export function useSupportControllerMessages<TData = Awaited<ReturnType<typeof supportControllerMessages>>, TError = unknown>(
+ requestId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof supportControllerMessages>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSupportControllerMessagesQueryOptions(requestId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type supportControllerSendMessageResponse201 = {
+  data: void
+  status: 201
+}
+
+export type supportControllerSendMessageResponseSuccess = (supportControllerSendMessageResponse201) & {
+  headers: Headers;
+};
+;
+
+export type supportControllerSendMessageResponse = (supportControllerSendMessageResponseSuccess)
+
+export const getSupportControllerSendMessageUrl = (requestId: string,) => {
+
+
+
+
+  return `/api/v1/support/requests/${requestId}/messages`
+}
+
+export const supportControllerSendMessage = async (requestId: string,
+    supportControllerSendMessageBody: SupportControllerSendMessageBody, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<supportControllerSendMessageResponse> => {
+    const formData = new FormData();
+if(supportControllerSendMessageBody.message !== undefined) {
+ formData.append(`message`, supportControllerSendMessageBody.message);
+ }
+if(supportControllerSendMessageBody.files !== undefined) {
+ supportControllerSendMessageBody.files.forEach(value => formData.append(`files`, value));
+ }
+
+  const res = await (fetchFn ?? fetch)(getSupportControllerSendMessageUrl(requestId),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: supportControllerSendMessageResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as supportControllerSendMessageResponse
+}
+
+
+
+
+
+export const getSupportControllerSendMessageMutationKey = () => ['supportControllerSendMessage'] as const;
+
+export const getSupportControllerSendMessageMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof supportControllerSendMessage>>, TError,SupportControllerSendMessageMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof supportControllerSendMessage>>, TError,SupportControllerSendMessageMutationVariables, TContext> => {
+
+const mutationKey = getSupportControllerSendMessageMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof supportControllerSendMessage>>, SupportControllerSendMessageMutationVariables> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  supportControllerSendMessage(requestId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SupportControllerSendMessageMutationResult = NonNullable<Awaited<ReturnType<typeof supportControllerSendMessage>>>
+    export type SupportControllerSendMessageMutationBody = SupportControllerSendMessageBody
+    export type SupportControllerSendMessageMutationError = unknown
+    export type SupportControllerSendMessageMutationVariables = {requestId: string;data: SupportControllerSendMessageBody}
+
+    export const useSupportControllerSendMessage = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof supportControllerSendMessage>>, TError,SupportControllerSendMessageMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof supportControllerSendMessage>>,
+        TError,
+        SupportControllerSendMessageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSupportControllerSendMessageMutationOptions(options), queryClient);
+    }
+    export type supportControllerMarkReadResponse201 = {
+  data: void
+  status: 201
+}
+
+export type supportControllerMarkReadResponseSuccess = (supportControllerMarkReadResponse201) & {
+  headers: Headers;
+};
+;
+
+export type supportControllerMarkReadResponse = (supportControllerMarkReadResponseSuccess)
+
+export const getSupportControllerMarkReadUrl = (requestId: string,) => {
+
+
+
+
+  return `/api/v1/support/requests/${requestId}/messages/read`
+}
+
+export const supportControllerMarkRead = async (requestId: string,
+    markSupportMessagesReadDto: MarkSupportMessagesReadDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<supportControllerMarkReadResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getSupportControllerMarkReadUrl(requestId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(markSupportMessagesReadDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: supportControllerMarkReadResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as supportControllerMarkReadResponse
+}
+
+
+
+
+
+export const getSupportControllerMarkReadMutationKey = () => ['supportControllerMarkRead'] as const;
+
+export const getSupportControllerMarkReadMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof supportControllerMarkRead>>, TError,SupportControllerMarkReadMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof supportControllerMarkRead>>, TError,SupportControllerMarkReadMutationVariables, TContext> => {
+
+const mutationKey = getSupportControllerMarkReadMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof supportControllerMarkRead>>, SupportControllerMarkReadMutationVariables> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  supportControllerMarkRead(requestId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SupportControllerMarkReadMutationResult = NonNullable<Awaited<ReturnType<typeof supportControllerMarkRead>>>
+    export type SupportControllerMarkReadMutationBody = MarkSupportMessagesReadDto
+    export type SupportControllerMarkReadMutationError = unknown
+    export type SupportControllerMarkReadMutationVariables = {requestId: string;data: MarkSupportMessagesReadDto}
+
+    export const useSupportControllerMarkRead = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof supportControllerMarkRead>>, TError,SupportControllerMarkReadMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof supportControllerMarkRead>>,
+        TError,
+        SupportControllerMarkReadMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSupportControllerMarkReadMutationOptions(options), queryClient);
+    }
+    export type supportControllerGetMineResponse200 = {
   data: SupportRequestResponseDto
   status: 200
 }
@@ -356,20 +737,22 @@ export type supportControllerDownloadResponseSuccess = (supportControllerDownloa
 
 export type supportControllerDownloadResponse = (supportControllerDownloadResponseSuccess)
 
-export const getSupportControllerDownloadUrl = (requestId: string,) => {
+export const getSupportControllerDownloadUrl = (requestId: string,
+    attachmentId: string,) => {
 
 
 
 
-  return `/api/v1/support/requests/${requestId}/attachment/download`
+  return `/api/v1/support/requests/${requestId}/attachments/${attachmentId}/download`
 }
 
 /**
  * @summary Получить временную ссылку на прошедшее проверку вложение
  */
-export const supportControllerDownload = async (requestId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<supportControllerDownloadResponse> => {
+export const supportControllerDownload = async (requestId: string,
+    attachmentId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<supportControllerDownloadResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getSupportControllerDownloadUrl(requestId),
+  const res = await (fetchFn ?? fetch)(getSupportControllerDownloadUrl(requestId,attachmentId),
   {
     ...options,
     method: 'GET'
@@ -389,29 +772,31 @@ export const supportControllerDownload = async (requestId: string, options?: Req
 
 
 
-export const getSupportControllerDownloadQueryKey = (requestId: MaybeRefOrGetter<string>,) => {
+export const getSupportControllerDownloadQueryKey = (requestId: MaybeRefOrGetter<string>,
+    attachmentId: MaybeRefOrGetter<string>,) => {
     return [
-    'api','v1','support','requests',requestId,'attachment','download'
+    'api','v1','support','requests',requestId,'attachments',attachmentId,'download'
     ] as const;
     }
 
 
-export const getSupportControllerDownloadQueryOptions = <TData = Awaited<ReturnType<typeof supportControllerDownload>>, TError = unknown>(requestId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof supportControllerDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+export const getSupportControllerDownloadQueryOptions = <TData = Awaited<ReturnType<typeof supportControllerDownload>>, TError = unknown>(requestId: MaybeRefOrGetter<string>,
+    attachmentId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof supportControllerDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
 
-  const queryKey =  getSupportControllerDownloadQueryKey(requestId);
+  const queryKey =  getSupportControllerDownloadQueryKey(requestId,attachmentId);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof supportControllerDownload>>> = ({ signal }) => supportControllerDownload(toValue(requestId), { signal, ...fetchOptions }, fetcherFn);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof supportControllerDownload>>> = ({ signal }) => supportControllerDownload(toValue(requestId),toValue(attachmentId), { signal, ...fetchOptions }, fetcherFn);
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: computed(() => toValue(requestId) !== null && toValue(requestId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof supportControllerDownload>>, TError, TData>
+   return  { queryKey, queryFn, enabled: computed(() => toValue(requestId) !== null && toValue(requestId) !== undefined && toValue(attachmentId) !== null && toValue(attachmentId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof supportControllerDownload>>, TError, TData>
 }
 
 export type SupportControllerDownloadQueryResult = NonNullable<Awaited<ReturnType<typeof supportControllerDownload>>>
@@ -423,11 +808,12 @@ export type SupportControllerDownloadQueryError = unknown
  */
 
 export function useSupportControllerDownload<TData = Awaited<ReturnType<typeof supportControllerDownload>>, TError = unknown>(
- requestId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof supportControllerDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ requestId: MaybeRefOrGetter<string>,
+    attachmentId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof supportControllerDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
  , queryClient?: QueryClient
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getSupportControllerDownloadQueryOptions(requestId,options)
+  const queryOptions = getSupportControllerDownloadQueryOptions(requestId,attachmentId,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

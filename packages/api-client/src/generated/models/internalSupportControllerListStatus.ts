@@ -12,5 +12,6 @@ export type InternalSupportControllerListStatus = typeof InternalSupportControll
 export const InternalSupportControllerListStatus = {
   new: 'new',
   in_progress: 'in_progress',
+  waiting_on_customer: 'waiting_on_customer',
   closed: 'closed',
 } as const;

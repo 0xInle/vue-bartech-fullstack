@@ -17,7 +17,19 @@
         v-model:expanded-keys="expandedKeys"
         :model="menuItems"
         class="workspace-panel-menu w-full flex-1"
-      />
+        :pt="supportMenuPt"
+      >
+        <template #headericon="{ item }">
+          <Badge
+            v-if="item.key === 'support' && supportUnreadCount > 0"
+            :value="supportUnreadCount"
+            :aria-label="`Непрочитанных ответов: ${supportUnreadCount}`"
+            severity="success"
+            size="small"
+            class="!order-last !ml-2 !mr-0 shrink-0 !self-center"
+          />
+        </template>
+      </PanelMenu>
       <div
         class="mt-auto border-t border-surface pt-4"
         style="border-color: var(--p-content-border-color)"
@@ -92,6 +104,19 @@
         :aria-current="item.active ? 'page' : undefined"
       />
       <Button
+        v-if="supportUnreadCount > 0"
+        severity="secondary"
+        variant="text"
+        size="small"
+        class="flex min-w-0 flex-1 items-center justify-center gap-1 px-1 text-xs"
+        :class="{ 'workspace-nav-active': isMoreActive }"
+        @click="moreVisible = true"
+      >
+        <span>Ещё</span>
+        <Badge :value="supportUnreadCount" severity="success" size="small" />
+      </Button>
+      <Button
+        v-else
         label="Ещё"
         severity="secondary"
         variant="text"
@@ -123,7 +148,19 @@
         v-model:expanded-keys="expandedKeys"
         :model="moreMenuItems"
         class="workspace-panel-menu w-full"
-      />
+        :pt="supportMenuPt"
+      >
+        <template #headericon="{ item }">
+          <Badge
+            v-if="item.key === 'support' && supportUnreadCount > 0"
+            :value="supportUnreadCount"
+            :aria-label="`Непрочитанных ответов: ${supportUnreadCount}`"
+            severity="success"
+            size="small"
+            class="!order-last !ml-2 !mr-0 shrink-0 !self-center"
+          />
+        </template>
+      </PanelMenu>
       <div
         class="mt-6 border-t border-surface pt-4"
         style="border-color: var(--p-content-border-color)"
@@ -147,21 +184,25 @@ import WorkspaceProductSearch from "~/features/products/components/WorkspaceProd
 import WorkspaceProductDrawer from "~/components/WorkspaceProductDrawer.vue";
 import WorkspaceActionBar from "./WorkspaceActionBar.vue";
 import AccountProfileDrawer from "~/features/identity/components/AccountProfileDrawer.vue";
+import { useSupportUnreadCount } from "~/features/support/composables/useSupportUnreadCount";
 
 defineOptions({ name: "WorkspaceShell" });
 
 const props = defineProps<{ workspace: Workspace; workplaces: Workspace[]; fullName: string }>();
 const emit = defineEmits<{ switch: [workspace: Workspace] }>();
 const route = useRoute();
+const supportUnread = useSupportUnreadCount();
+const supportUnreadCount = computed(() => supportUnread.data.value?.totalCount ?? 0);
+const supportMenuPt = {
+  headerLink: { class: "!flex !items-center" },
+};
 const moreVisible = ref(false);
 const expandedKeys = ref<Record<string, boolean>>({ catalog: true, team: true });
 
 const homePath = computed(
   () => `/app/companies/${props.workspace.company.id}/venues/${props.workspace.venue.id}`,
 );
-const supportPath = computed(
-  () => `/app/support?companyId=${props.workspace.company.id}&venueId=${props.workspace.venue.id}`,
-);
+const supportPath = computed(() => `${homePath.value}/support`);
 const paths = computed(() => ({
   archive: `${homePath.value}/archive`,
   cocktails: `${homePath.value}/cocktails`,
@@ -244,7 +285,9 @@ const menuItems = computed<MenuItem[]>(() => {
   if (managementItems.length) {
     items.push({ key: "management", label: "Управление", items: managementItems });
   }
-  items.push(linkItem("Техподдержка", supportPath.value, route.path.startsWith("/app/support")));
+  const supportItem = linkItem("Техподдержка", supportPath.value, route.path.endsWith("/support"));
+  supportItem.key = "support";
+  items.push(supportItem);
   return items;
 });
 const moreMenuItems = computed(() => menuItems.value.filter((item) => item.label !== "Главная"));

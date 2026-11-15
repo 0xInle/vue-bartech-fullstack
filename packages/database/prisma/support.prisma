@@ -7,7 +7,18 @@ enum SupportRequestReason {
 enum SupportRequestStatus {
   NEW
   IN_PROGRESS
+  WAITING_ON_CUSTOMER
   CLOSED
+}
+
+enum SupportMessageAuthorType {
+  CUSTOMER
+  INTERNAL
+}
+
+enum SupportMessageKind {
+  TEXT
+  ACCESS_REQUEST
 }
 
 enum SupportAttachmentStatus {
@@ -31,13 +42,16 @@ model SupportRequest {
   message          String
   status           SupportRequestStatus @default(NEW)
   technicalContext Json?
+  customerReadAt   DateTime?            @db.Timestamptz(6)
+  supportReadAt    DateTime?            @db.Timestamptz(6)
   createdAt        DateTime             @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime             @updatedAt @db.Timestamptz(6)
   author           User?                @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
   company          Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
   venue            Venue?               @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: SetNull)
   assignedTo       InternalUser?        @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
-  attachment       SupportAttachment?
+  messages         SupportMessage[]
+  attachments      SupportAttachment[]
   accessGrants     SupportAccessGrant[]
 
   @@index([authorUserId, createdAt], map: "support_requests_author_created_idx")
@@ -46,24 +60,46 @@ model SupportRequest {
   @@map("support_requests")
 }
 
+model SupportMessage {
+  id                   String                   @id @default(uuid()) @db.Uuid
+  requestId            String                   @db.Uuid
+  authorType           SupportMessageAuthorType
+  authorUserId         String?                  @db.Uuid
+  authorInternalUserId String?                  @db.Uuid
+  kind                 SupportMessageKind       @default(TEXT)
+  body                 String
+  createdAt            DateTime                 @default(now()) @db.Timestamptz(6)
+  request              SupportRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorUser           User?                    @relation("SupportMessageUserAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+  authorInternalUser   InternalUser?            @relation("SupportMessageInternalAuthor", fields: [authorInternalUserId], references: [id], onDelete: SetNull)
+  attachments          SupportAttachment[]
+  accessGrant          SupportAccessGrant?
+
+  @@index([requestId, createdAt], map: "support_messages_request_created_idx")
+  @@index([requestId, kind], map: "support_messages_request_kind_idx")
+  @@map("support_messages")
+}
+
 model SupportAccessGrant {
-  id               String                 @id @default(uuid()) @db.Uuid
-  authorUserId     String                 @db.Uuid
-  companyId        String                 @db.Uuid
-  venueId          String?                @db.Uuid
-  scopeType        SupportAccessScopeType
-  requestId        String?                @db.Uuid
-  createdAt        DateTime               @default(now()) @db.Timestamptz(6)
-  expiresAt        DateTime               @db.Timestamptz(6)
-  revokedAt        DateTime?              @db.Timestamptz(6)
-  revokedByUserId  String?                @db.Uuid
-  revocationReason String?
-  author           User                   @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
-  revokedBy        User?                  @relation("SupportAccessGrantRevoker", fields: [revokedByUserId], references: [id], onDelete: SetNull)
-  company          Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  venue            Venue?                 @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
-  request          SupportRequest?        @relation(fields: [requestId], references: [id], onDelete: SetNull)
-  sessions         ServiceSession[]
+  id                     String                 @id @default(uuid()) @db.Uuid
+  authorUserId           String                 @db.Uuid
+  companyId              String                 @db.Uuid
+  venueId                String?                @db.Uuid
+  scopeType              SupportAccessScopeType
+  requestId              String?                @db.Uuid
+  accessRequestMessageId String?                @unique(map: "support_access_grants_access_request_message_key") @db.Uuid
+  createdAt              DateTime               @default(now()) @db.Timestamptz(6)
+  expiresAt              DateTime               @db.Timestamptz(6)
+  revokedAt              DateTime?              @db.Timestamptz(6)
+  revokedByUserId        String?                @db.Uuid
+  revocationReason       String?
+  author                 User                   @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+  revokedBy              User?                  @relation("SupportAccessGrantRevoker", fields: [revokedByUserId], references: [id], onDelete: SetNull)
+  company                Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  venue                  Venue?                 @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
+  request                SupportRequest?        @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  accessRequestMessage   SupportMessage?        @relation(fields: [accessRequestMessageId], references: [id], onDelete: SetNull)
+  sessions               ServiceSession[]
 
   @@index([companyId, scopeType, venueId, revokedAt, expiresAt], map: "support_access_grants_scope_active_idx")
   @@index([authorUserId, createdAt], map: "support_access_grants_author_created_idx")
@@ -94,7 +130,8 @@ model ServiceSession {
 
 model SupportAttachment {
   id               String                   @id @default(uuid()) @db.Uuid
-  requestId        String                   @unique(map: "support_attachments_request_key") @db.Uuid
+  requestId        String                   @db.Uuid
+  messageId        String?                  @db.Uuid
   uploadedByUserId String?                  @db.Uuid
   originalName     String
   contentType      String
@@ -105,9 +142,11 @@ model SupportAttachment {
   createdAt        DateTime                 @default(now()) @db.Timestamptz(6)
   scannedAt        DateTime?                @db.Timestamptz(6)
   request          SupportRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  message          SupportMessage?          @relation(fields: [messageId], references: [id], onDelete: SetNull)
   uploadedBy       User?                    @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
   outbox           SupportAttachmentOutbox?
 
+  @@index([requestId], map: "support_attachments_request_idx")
   @@index([status, createdAt], map: "support_attachments_scan_status_created_idx")
   @@map("support_attachments")
 }

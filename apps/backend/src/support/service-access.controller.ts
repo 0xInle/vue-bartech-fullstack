@@ -1,5 +1,4 @@
 import {
-  Body,
   CanActivate,
   Controller,
   ExecutionContext,
@@ -25,7 +24,7 @@ import {
   SessionGuard,
   type AuthenticatedUser,
 } from "@bartech/backend-identity";
-import { CreateSupportAccessGrantDto, SupportAccessService } from "@bartech/backend-support";
+import { SupportAccessService } from "@bartech/backend-support";
 import type { Request } from "express";
 
 type InternalRequest = Request & {
@@ -49,11 +48,15 @@ export class ServiceAccessPermissionGuard implements CanActivate {
 export class SupportAccessGrantController {
   constructor(private readonly access: SupportAccessService) {}
 
-  @Post()
-  @ApiOperation({ summary: "Выдать временный доступ к продукции" })
+  @Post("requests/:requestId/messages/:messageId/approve-access")
+  @ApiOperation({ summary: "Подтвердить запрос временного доступа из обращения" })
   @ApiCreatedResponse()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() input: CreateSupportAccessGrantDto) {
-    return this.access.createGrant(user.id, input);
+  approve(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("requestId", new ParseUUIDPipe()) requestId: string,
+    @Param("messageId", new ParseUUIDPipe()) messageId: string,
+  ) {
+    return this.access.grantFromAccessRequest(user.id, requestId, messageId);
   }
 
   @Get()

@@ -19,7 +19,9 @@ export function useSupportRequests() {
     enabled: computed(() => Boolean(userId.value)),
     retry: false,
     refetchInterval: (query) =>
-      query.state.data?.some((request) => request.attachment?.status === "pending_scan")
+      query.state.data?.some((request) =>
+        request.attachments.some((attachment) => attachment.status === "pending_scan"),
+      )
         ? 3_000
         : false,
     queryFn: async ({ signal }): Promise<SupportRequestResponseDto[]> =>
@@ -44,12 +46,30 @@ export function useSupportRequests() {
     await queryClient.invalidateQueries({ queryKey: ["support-requests", userId.value] });
   }
 
-  async function download(requestId: string): Promise<void> {
+  async function download(requestId: string, attachmentId: string): Promise<void> {
     const result = await requestApi<{ url: string }>(
-      supportControllerDownload(requestId, { credentials: "include" }, identity.apiFetch),
+      supportControllerDownload(
+        requestId,
+        attachmentId,
+        { credentials: "include" },
+        identity.apiFetch,
+      ),
     );
     window.location.assign(result.url);
   }
 
-  return { requestsQuery, create, download };
+  async function revokeGrant(grantId: string): Promise<void> {
+    const csrf = await requestApi<{ token: string }>(
+      identityControllerCsrf({ credentials: "include" }, identity.apiFetch),
+    );
+    const response = await identity.apiFetch(`/api/v1/support/access-grants/${grantId}/revoke`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "x-csrf-token": csrf.token },
+    });
+    await requestApi({ status: response.status, data: await response.json() });
+    await queryClient.invalidateQueries({ queryKey: ["support-messages"] });
+  }
+
+  return { requestsQuery, create, download, revokeGrant };
 }

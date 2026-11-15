@@ -25,80 +25,64 @@ import {
   unref
 } from 'vue';
 
-import type {
-  CreateSupportAccessGrantDto
-} from '../models';
 
 
 
 
-
-export type supportAccessGrantControllerCreateResponse201 = {
+export type supportAccessGrantControllerApproveResponse201 = {
   data: void
   status: 201
 }
 
-export type supportAccessGrantControllerCreateResponseSuccess = (supportAccessGrantControllerCreateResponse201) & {
+export type supportAccessGrantControllerApproveResponseSuccess = (supportAccessGrantControllerApproveResponse201) & {
   headers: Headers;
 };
 ;
 
-export type supportAccessGrantControllerCreateResponse = (supportAccessGrantControllerCreateResponseSuccess)
+export type supportAccessGrantControllerApproveResponse = (supportAccessGrantControllerApproveResponseSuccess)
 
-export const getSupportAccessGrantControllerCreateUrl = () => {
+export const getSupportAccessGrantControllerApproveUrl = (requestId: string,
+    messageId: string,) => {
 
 
 
 
-  return `/api/v1/support/access-grants`
+  return `/api/v1/support/access-grants/requests/${requestId}/messages/${messageId}/approve-access`
 }
 
 /**
- * @summary Выдать временный доступ к продукции
+ * @summary Подтвердить запрос временного доступа из обращения
  */
-export const supportAccessGrantControllerCreate = async (createSupportAccessGrantDto: CreateSupportAccessGrantDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<supportAccessGrantControllerCreateResponse> => {
+export const supportAccessGrantControllerApprove = async (requestId: string,
+    messageId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<supportAccessGrantControllerApproveResponse> => {
 
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-const res = await (fetchFn ?? fetch)(getSupportAccessGrantControllerCreateUrl(),
+  const res = await (fetchFn ?? fetch)(getSupportAccessGrantControllerApproveUrl(requestId,messageId),
   {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(createSupportAccessGrantDto)
+    method: 'POST'
+
+
   }
 )
 
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: supportAccessGrantControllerCreateResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as supportAccessGrantControllerCreateResponse
+  const data: supportAccessGrantControllerApproveResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as supportAccessGrantControllerApproveResponse
 }
 
 
 
 
 
-export const getSupportAccessGrantControllerCreateMutationKey = () => ['supportAccessGrantControllerCreate'] as const;
+export const getSupportAccessGrantControllerApproveMutationKey = () => ['supportAccessGrantControllerApprove'] as const;
 
-export const getSupportAccessGrantControllerCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof supportAccessGrantControllerCreate>>, TError,SupportAccessGrantControllerCreateMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
-): UseMutationOptions<Awaited<ReturnType<typeof supportAccessGrantControllerCreate>>, TError,SupportAccessGrantControllerCreateMutationVariables, TContext> => {
+export const getSupportAccessGrantControllerApproveMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof supportAccessGrantControllerApprove>>, TError,SupportAccessGrantControllerApproveMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof supportAccessGrantControllerApprove>>, TError,SupportAccessGrantControllerApproveMutationVariables, TContext> => {
 
-const mutationKey = getSupportAccessGrantControllerCreateMutationKey();
+const mutationKey = getSupportAccessGrantControllerApproveMutationKey();
 const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -108,10 +92,10 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof supportAccessGrantControllerCreate>>, SupportAccessGrantControllerCreateMutationVariables> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof supportAccessGrantControllerApprove>>, SupportAccessGrantControllerApproveMutationVariables> = (props) => {
+          const {requestId,messageId} = props ?? {};
 
-          return  supportAccessGrantControllerCreate(data,fetchOptions, fetcherFn)
+          return  supportAccessGrantControllerApprove(requestId,messageId,fetchOptions, fetcherFn)
         }
 
 
@@ -121,23 +105,23 @@ const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = opt
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type SupportAccessGrantControllerCreateMutationResult = NonNullable<Awaited<ReturnType<typeof supportAccessGrantControllerCreate>>>
-    export type SupportAccessGrantControllerCreateMutationBody = CreateSupportAccessGrantDto
-    export type SupportAccessGrantControllerCreateMutationError = unknown
-    export type SupportAccessGrantControllerCreateMutationVariables = {data: CreateSupportAccessGrantDto}
+    export type SupportAccessGrantControllerApproveMutationResult = NonNullable<Awaited<ReturnType<typeof supportAccessGrantControllerApprove>>>
+
+    export type SupportAccessGrantControllerApproveMutationError = unknown
+    export type SupportAccessGrantControllerApproveMutationVariables = {requestId: string;messageId: string}
 
     /**
- * @summary Выдать временный доступ к продукции
+ * @summary Подтвердить запрос временного доступа из обращения
  */
-export const useSupportAccessGrantControllerCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof supportAccessGrantControllerCreate>>, TError,SupportAccessGrantControllerCreateMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+export const useSupportAccessGrantControllerApprove = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof supportAccessGrantControllerApprove>>, TError,SupportAccessGrantControllerApproveMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
  , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof supportAccessGrantControllerCreate>>,
+        Awaited<ReturnType<typeof supportAccessGrantControllerApprove>>,
         TError,
-        SupportAccessGrantControllerCreateMutationVariables,
+        SupportAccessGrantControllerApproveMutationVariables,
         TContext
       > => {
-      return useMutation(getSupportAccessGrantControllerCreateMutationOptions(options), queryClient);
+      return useMutation(getSupportAccessGrantControllerApproveMutationOptions(options), queryClient);
     }
     export type supportAccessGrantControllerListResponse200 = {
   data: void

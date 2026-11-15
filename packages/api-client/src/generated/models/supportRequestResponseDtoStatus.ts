@@ -12,5 +12,6 @@ export type SupportRequestResponseDtoStatus = typeof SupportRequestResponseDtoSt
 export const SupportRequestResponseDtoStatus = {
   new: 'new',
   in_progress: 'in_progress',
+  waiting_on_customer: 'waiting_on_customer',
   closed: 'closed',
 } as const;

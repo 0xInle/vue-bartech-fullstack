@@ -25,8 +25,7 @@ export interface SupportRequestQueueItemDto {
   venueId?: string | null;
   createdAt: string;
   updatedAt: string;
-  /** @nullable */
-  attachment?: SupportAttachmentResponseDto | null;
+  attachments: SupportAttachmentResponseDto[];
   /** @nullable */
   author?: SupportRequestAuthorDto | null;
   /** @nullable */

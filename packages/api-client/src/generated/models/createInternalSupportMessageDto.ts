@@ -6,8 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface CreateSupportAccessGrantDto {
-  companyId: string;
-  venueId?: string;
-  requestId?: string;
+export interface CreateInternalSupportMessageDto {
+  /** @maxLength 5000 */
+  message: string;
+  requestAccess?: boolean;
 }

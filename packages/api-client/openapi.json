@@ -6703,7 +6703,7 @@
                   },
                   "message": {
                     "type": "string",
-                    "maxLength": 5000
+                    "maxLength": 1000
                   },
                   "companyId": {
                     "type": "string",
@@ -6721,9 +6721,13 @@
                     "type": "string",
                     "maxLength": 128
                   },
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
+                  "files": {
+                    "type": "array",
+                    "maxItems": 5,
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
                   }
                 }
               }
@@ -6771,6 +6775,138 @@
         ]
       }
     },
+    "/api/v1/support/requests/unread-count": {
+      "get": {
+        "operationId": "SupportController_unreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportUnreadCountDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "support"
+        ]
+      }
+    },
+    "/api/v1/support/requests/{requestId}/messages": {
+      "get": {
+        "operationId": "SupportController_messages",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupportMessageResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "support"
+        ]
+      },
+      "post": {
+        "operationId": "SupportController_sendMessage",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "files": {
+                    "type": "array",
+                    "maxItems": 5,
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "support"
+        ]
+      }
+    },
+    "/api/v1/support/requests/{requestId}/messages/read": {
+      "post": {
+        "operationId": "SupportController_markRead",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkSupportMessagesReadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "support"
+        ]
+      }
+    },
     "/api/v1/support/requests/{requestId}": {
       "get": {
         "operationId": "SupportController_getMine",
@@ -6803,12 +6939,21 @@
         ]
       }
     },
-    "/api/v1/support/requests/{requestId}/attachment/download": {
+    "/api/v1/support/requests/{requestId}/attachments/{attachmentId}/download": {
       "get": {
         "operationId": "SupportController_download",
         "parameters": [
           {
             "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "attachmentId",
             "required": true,
             "in": "path",
             "schema": {
@@ -6843,6 +6988,166 @@
         ]
       }
     },
+    "/api/v1/internal/support/requests/unread-count": {
+      "get": {
+        "operationId": "InternalSupportController_unreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "internal-support"
+        ]
+      }
+    },
+    "/api/v1/internal/support/requests/{requestId}/messages": {
+      "get": {
+        "operationId": "InternalSupportController_messages",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "internal-support"
+        ]
+      },
+      "post": {
+        "operationId": "InternalSupportController_sendMessage",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInternalSupportMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "internal-support"
+        ]
+      }
+    },
+    "/api/v1/internal/support/requests/{requestId}/messages/read": {
+      "post": {
+        "operationId": "InternalSupportController_markRead",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkSupportMessagesReadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "internal-support"
+        ]
+      }
+    },
+    "/api/v1/internal/support/requests/{requestId}/access-grants/{grantId}/revoke": {
+      "post": {
+        "operationId": "InternalSupportController_revokeAccess",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "grantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "revokedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Отозвать временный доступ из очереди поддержки",
+        "tags": [
+          "internal-support"
+        ]
+      }
+    },
     "/api/v1/internal/support/requests": {
       "get": {
         "operationId": "InternalSupportController_list",
@@ -6856,6 +7161,7 @@
               "enum": [
                 "new",
                 "in_progress",
+                "waiting_on_customer",
                 "closed"
               ]
             }
@@ -6987,12 +7293,21 @@
         ]
       }
     },
-    "/api/v1/internal/support/requests/{requestId}/attachment/download": {
+    "/api/v1/internal/support/requests/{requestId}/attachments/{attachmentId}/download": {
       "get": {
         "operationId": "InternalSupportController_download",
         "parameters": [
           {
             "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "attachmentId",
             "required": true,
             "in": "path",
             "schema": {
@@ -7027,30 +7342,39 @@
         ]
       }
     },
-    "/api/v1/support/access-grants": {
+    "/api/v1/support/access-grants/requests/{requestId}/messages/{messageId}/approve-access": {
       "post": {
-        "operationId": "SupportAccessGrantController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSupportAccessGrantDto"
-              }
+        "operationId": "SupportAccessGrantController_approve",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
             }
           }
-        },
+        ],
         "responses": {
           "201": {
             "description": ""
           }
         },
-        "summary": "Выдать временный доступ к продукции",
+        "summary": "Подтвердить запрос временного доступа из обращения",
         "tags": [
           "support-access"
         ]
-      },
+      }
+    },
+    "/api/v1/support/access-grants": {
       "get": {
         "operationId": "SupportAccessGrantController_list",
         "parameters": [],
@@ -13008,6 +13332,7 @@
             "enum": [
               "new",
               "in_progress",
+              "waiting_on_customer",
               "closed"
             ]
           },
@@ -13033,14 +13358,11 @@
             "format": "date-time",
             "type": "string"
           },
-          "attachment": {
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SupportAttachmentResponseDto"
-              }
-            ]
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportAttachmentResponseDto"
+            }
           }
         },
         "required": [
@@ -13049,7 +13371,169 @@
           "message",
           "status",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "attachments"
+        ]
+      },
+      "SupportUnreadRequestDto": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unreadCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "requestId",
+          "unreadCount"
+        ]
+      },
+      "SupportUnreadCountDto": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "number"
+          },
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportUnreadRequestDto"
+            }
+          }
+        },
+        "required": [
+          "totalCount",
+          "requests"
+        ]
+      },
+      "SupportMessageAccessGrantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scopeType": {
+            "type": "string",
+            "enum": [
+              "COMPANY",
+              "VENUE"
+            ]
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "venueName": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "scopeType",
+          "companyName",
+          "expiresAt",
+          "active"
+        ]
+      },
+      "SupportMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorType": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "internal"
+            ]
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "text",
+              "access_request"
+            ]
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportAttachmentResponseDto"
+            }
+          },
+          "accessGrant": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportMessageAccessGrantDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "authorType",
+          "authorName",
+          "kind",
+          "body",
+          "createdAt",
+          "attachments"
+        ]
+      },
+      "MarkSupportMessagesReadDto": {
+        "type": "object",
+        "properties": {
+          "throughMessageId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "throughMessageId"
+        ]
+      },
+      "CreateInternalSupportMessageDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "requestAccess": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "message"
         ]
       },
       "SupportRequestAuthorDto": {
@@ -13113,6 +13597,7 @@
             "enum": [
               "new",
               "in_progress",
+              "waiting_on_customer",
               "closed"
             ]
           },
@@ -13138,14 +13623,11 @@
             "format": "date-time",
             "type": "string"
           },
-          "attachment": {
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SupportAttachmentResponseDto"
-              }
-            ]
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportAttachmentResponseDto"
+            }
           },
           "author": {
             "nullable": true,
@@ -13172,7 +13654,8 @@
           "message",
           "status",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "attachments"
         ]
       },
       "SupportRequestQueuePageDto": {
@@ -13225,6 +13708,7 @@
             "enum": [
               "new",
               "in_progress",
+              "waiting_on_customer",
               "closed"
             ]
           },
@@ -13234,26 +13718,6 @@
             "nullable": true
           }
         }
-      },
-      "CreateSupportAccessGrantDto": {
-        "type": "object",
-        "properties": {
-          "companyId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "venueId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "requestId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "companyId"
-        ]
       },
       "InternalAuditEventDto": {
         "type": "object",

@@ -7,11 +7,11 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { FilesInterceptor } from "@nestjs/platform-express";
 import {
   ApiBody,
   ApiConsumes,
@@ -30,6 +30,11 @@ import {
 } from "@bartech/backend-identity";
 import {
   CreateSupportRequestDto,
+  CreateSupportMessageDto,
+  CreateInternalSupportMessageDto,
+  MarkSupportMessagesReadDto,
+  SupportMessageResponseDto,
+  SupportUnreadCountDto,
   SupportQueueQueryDto,
   SupportRequestQueuePageDto,
   SupportRequestQueueItemDto,
@@ -39,6 +44,7 @@ import {
 } from "@bartech/backend-support";
 import {
   SUPPORT_FILE_MAX_BYTES,
+  SUPPORT_FILE_MAX_COUNT,
   SupportService,
   type SupportUploadFile,
 } from "@bartech/backend-support";
@@ -52,8 +58,15 @@ export class SupportController {
 
   @Post()
   @UseInterceptors(
-    FileInterceptor("file", {
-      limits: { fileSize: SUPPORT_FILE_MAX_BYTES, files: 1, fields: 6, parts: 7, fieldSize: 8192 },
+    FilesInterceptor("files", SUPPORT_FILE_MAX_COUNT, {
+      limits: {
+        fileSize: SUPPORT_FILE_MAX_BYTES,
+        files: SUPPORT_FILE_MAX_COUNT,
+        fields: 6,
+        parts: 11,
+        fieldSize: 8192,
+      },
+      defParamCharset: "utf8",
     }),
   )
   @ApiConsumes("multipart/form-data")
@@ -63,12 +76,16 @@ export class SupportController {
       required: ["reason", "message"],
       properties: {
         reason: { type: "string", enum: ["data_migration", "error", "other"] },
-        message: { type: "string", maxLength: 5000 },
+        message: { type: "string", maxLength: 1000 },
         companyId: { type: "string", format: "uuid" },
         venueId: { type: "string", format: "uuid" },
         browser: { type: "string", maxLength: 200 },
         errorId: { type: "string", maxLength: 128 },
-        file: { type: "string", format: "binary" },
+        files: {
+          type: "array",
+          maxItems: SUPPORT_FILE_MAX_COUNT,
+          items: { type: "string", format: "binary" },
+        },
       },
     },
   })
@@ -77,9 +94,9 @@ export class SupportController {
   create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateSupportRequestDto,
-    @UploadedFile() file?: SupportUploadFile,
+    @UploadedFiles() files?: SupportUploadFile[],
   ) {
-    return this.support.create(user.id, input, file);
+    return this.support.create(user.id, input, files);
   }
 
   @Get()
@@ -87,6 +104,65 @@ export class SupportController {
   @ApiOkResponse({ type: [SupportRequestResponseDto] })
   list(@CurrentUser() user: AuthenticatedUser) {
     return this.support.listMine(user.id);
+  }
+
+  @Get("unread-count")
+  @ApiOkResponse({ type: SupportUnreadCountDto })
+  unreadCount(@CurrentUser() user: AuthenticatedUser) {
+    return this.support.getUnreadCount({ userId: user.id });
+  }
+
+  @Get(":requestId/messages")
+  @ApiOkResponse({ type: [SupportMessageResponseDto] })
+  messages(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("requestId", new ParseUUIDPipe()) requestId: string,
+  ) {
+    return this.support.getMessages(requestId, { userId: user.id });
+  }
+
+  @Post(":requestId/messages/read")
+  markRead(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("requestId", new ParseUUIDPipe()) requestId: string,
+    @Body() input: MarkSupportMessagesReadDto,
+  ) {
+    return this.support.markMessagesRead(requestId, input.throughMessageId, { userId: user.id });
+  }
+
+  @Post(":requestId/messages")
+  @UseInterceptors(
+    FilesInterceptor("files", SUPPORT_FILE_MAX_COUNT, {
+      limits: {
+        fileSize: SUPPORT_FILE_MAX_BYTES,
+        files: SUPPORT_FILE_MAX_COUNT,
+        fields: 1,
+        parts: 7,
+      },
+      defParamCharset: "utf8",
+    }),
+  )
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        message: { type: "string", maxLength: 1000 },
+        files: {
+          type: "array",
+          maxItems: SUPPORT_FILE_MAX_COUNT,
+          items: { type: "string", format: "binary" },
+        },
+      },
+    },
+  })
+  sendMessage(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("requestId", new ParseUUIDPipe()) requestId: string,
+    @Body() input: CreateSupportMessageDto,
+    @UploadedFiles() files?: SupportUploadFile[],
+  ) {
+    return this.support.createCustomerMessage(user.id, requestId, input, files);
   }
 
   @Get(":requestId")
@@ -100,9 +176,10 @@ export class SupportController {
     return this.support.getMine(user.id, requestId);
   }
 
-  @Get(":requestId/attachment/download")
+  @Get(":requestId/attachments/:attachmentId/download")
   @ApiOperation({ summary: "Получить временную ссылку на прошедшее проверку вложение" })
   @ApiParam({ name: "requestId", format: "uuid" })
+  @ApiParam({ name: "attachmentId", format: "uuid" })
   @ApiOkResponse({
     schema: {
       properties: { url: { type: "string", format: "uri" }, expiresInSeconds: { type: "number" } },
@@ -111,8 +188,9 @@ export class SupportController {
   download(
     @CurrentUser() user: AuthenticatedUser,
     @Param("requestId", new ParseUUIDPipe()) requestId: string,
+    @Param("attachmentId", new ParseUUIDPipe()) attachmentId: string,
   ) {
-    return this.support.createDownloadUrl(requestId, { userId: user.id });
+    return this.support.createDownloadUrl(requestId, attachmentId, { userId: user.id });
   }
 }
 
@@ -121,6 +199,56 @@ export class SupportController {
 @UseGuards(InternalSessionGuard, InternalSupportPermissionGuard)
 export class InternalSupportController {
   constructor(private readonly support: SupportService) {}
+
+  @Get("requests/unread-count")
+  unreadCount() {
+    return this.support.getUnreadCount({ internal: true });
+  }
+
+  @Get("requests/:requestId/messages")
+  messages(@Param("requestId", new ParseUUIDPipe()) requestId: string) {
+    return this.support.getMessages(requestId, { internal: true });
+  }
+
+  @Post("requests/:requestId/messages/read")
+  markRead(
+    @Param("requestId", new ParseUUIDPipe()) requestId: string,
+    @Body() input: MarkSupportMessagesReadDto,
+  ) {
+    return this.support.markMessagesRead(requestId, input.throughMessageId, { internal: true });
+  }
+
+  @Post("requests/:requestId/messages")
+  sendMessage(
+    @CurrentInternalIdentity() identity: { user: { id: string } },
+    @Param("requestId", new ParseUUIDPipe()) requestId: string,
+    @Body() input: CreateInternalSupportMessageDto,
+  ) {
+    return this.support.createInternalMessage(identity.user.id, requestId, input);
+  }
+
+  @Post("requests/:requestId/access-grants/:grantId/revoke")
+  @ApiOperation({ summary: "Отозвать временный доступ из очереди поддержки" })
+  @ApiParam({ name: "requestId", format: "uuid" })
+  @ApiParam({ name: "grantId", format: "uuid" })
+  @ApiOkResponse({
+    schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", format: "uuid" },
+        active: { type: "boolean" },
+        revokedAt: { type: "string", format: "date-time", nullable: true },
+        expiresAt: { type: "string", format: "date-time" },
+      },
+    },
+  })
+  revokeAccess(
+    @CurrentInternalIdentity() identity: { user: { id: string } },
+    @Param("requestId", new ParseUUIDPipe()) requestId: string,
+    @Param("grantId", new ParseUUIDPipe()) grantId: string,
+  ) {
+    return this.support.revokeAccessBySupport(identity.user.id, requestId, grantId);
+  }
 
   @Get("requests")
   @ApiOperation({ summary: "Получить очередь обращений поддержки" })
@@ -156,15 +284,19 @@ export class InternalSupportController {
     return this.support.update(identity.user.id, requestId, input);
   }
 
-  @Get("requests/:requestId/attachment/download")
+  @Get("requests/:requestId/attachments/:attachmentId/download")
   @ApiOperation({ summary: "Получить временную ссылку на проверенное вложение" })
   @ApiParam({ name: "requestId", format: "uuid" })
+  @ApiParam({ name: "attachmentId", format: "uuid" })
   @ApiOkResponse({
     schema: {
       properties: { url: { type: "string", format: "uri" }, expiresInSeconds: { type: "number" } },
     },
   })
-  download(@Param("requestId", new ParseUUIDPipe()) requestId: string) {
-    return this.support.createDownloadUrl(requestId, { internal: true });
+  download(
+    @Param("requestId", new ParseUUIDPipe()) requestId: string,
+    @Param("attachmentId", new ParseUUIDPipe()) attachmentId: string,
+  ) {
+    return this.support.createDownloadUrl(requestId, attachmentId, { internal: true });
   }
 }

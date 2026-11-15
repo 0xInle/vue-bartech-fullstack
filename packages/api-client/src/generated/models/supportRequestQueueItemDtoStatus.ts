@@ -12,5 +12,6 @@ export type SupportRequestQueueItemDtoStatus = typeof SupportRequestQueueItemDto
 export const SupportRequestQueueItemDtoStatus = {
   new: 'new',
   in_progress: 'in_progress',
+  waiting_on_customer: 'waiting_on_customer',
   closed: 'closed',
 } as const;

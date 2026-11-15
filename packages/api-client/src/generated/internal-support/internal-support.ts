@@ -31,8 +31,11 @@ import type {
 } from 'vue';
 
 import type {
+  CreateInternalSupportMessageDto,
   InternalSupportControllerDownload200,
   InternalSupportControllerListParams,
+  InternalSupportControllerRevokeAccess200,
+  MarkSupportMessagesReadDto,
   SupportInternalUserResponseDto,
   SupportRequestQueueItemDto,
   SupportRequestQueuePageDto,
@@ -44,7 +47,485 @@ import type {
 
 
 
-export type internalSupportControllerListResponse200 = {
+export type internalSupportControllerUnreadCountResponse200 = {
+  data: void
+  status: 200
+}
+
+export type internalSupportControllerUnreadCountResponseSuccess = (internalSupportControllerUnreadCountResponse200) & {
+  headers: Headers;
+};
+;
+
+export type internalSupportControllerUnreadCountResponse = (internalSupportControllerUnreadCountResponseSuccess)
+
+export const getInternalSupportControllerUnreadCountUrl = () => {
+
+
+
+
+  return `/api/v1/internal/support/requests/unread-count`
+}
+
+export const internalSupportControllerUnreadCount = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<internalSupportControllerUnreadCountResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getInternalSupportControllerUnreadCountUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: internalSupportControllerUnreadCountResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as internalSupportControllerUnreadCountResponse
+}
+
+
+
+
+
+export const getInternalSupportControllerUnreadCountQueryKey = () => {
+    return [
+    'api','v1','internal','support','requests','unread-count'
+    ] as const;
+    }
+
+
+export const getInternalSupportControllerUnreadCountQueryOptions = <TData = Awaited<ReturnType<typeof internalSupportControllerUnreadCount>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerUnreadCount>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getInternalSupportControllerUnreadCountQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof internalSupportControllerUnreadCount>>> = ({ signal }) => internalSupportControllerUnreadCount({ signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerUnreadCount>>, TError, TData>
+}
+
+export type InternalSupportControllerUnreadCountQueryResult = NonNullable<Awaited<ReturnType<typeof internalSupportControllerUnreadCount>>>
+export type InternalSupportControllerUnreadCountQueryError = unknown
+
+
+
+export function useInternalSupportControllerUnreadCount<TData = Awaited<ReturnType<typeof internalSupportControllerUnreadCount>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerUnreadCount>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getInternalSupportControllerUnreadCountQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type internalSupportControllerMessagesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type internalSupportControllerMessagesResponseSuccess = (internalSupportControllerMessagesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type internalSupportControllerMessagesResponse = (internalSupportControllerMessagesResponseSuccess)
+
+export const getInternalSupportControllerMessagesUrl = (requestId: string,) => {
+
+
+
+
+  return `/api/v1/internal/support/requests/${requestId}/messages`
+}
+
+export const internalSupportControllerMessages = async (requestId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<internalSupportControllerMessagesResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getInternalSupportControllerMessagesUrl(requestId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: internalSupportControllerMessagesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as internalSupportControllerMessagesResponse
+}
+
+
+
+
+
+export const getInternalSupportControllerMessagesQueryKey = (requestId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','internal','support','requests',requestId,'messages'
+    ] as const;
+    }
+
+
+export const getInternalSupportControllerMessagesQueryOptions = <TData = Awaited<ReturnType<typeof internalSupportControllerMessages>>, TError = unknown>(requestId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerMessages>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getInternalSupportControllerMessagesQueryKey(requestId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof internalSupportControllerMessages>>> = ({ signal }) => internalSupportControllerMessages(toValue(requestId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(requestId) !== null && toValue(requestId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerMessages>>, TError, TData>
+}
+
+export type InternalSupportControllerMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof internalSupportControllerMessages>>>
+export type InternalSupportControllerMessagesQueryError = unknown
+
+
+
+export function useInternalSupportControllerMessages<TData = Awaited<ReturnType<typeof internalSupportControllerMessages>>, TError = unknown>(
+ requestId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerMessages>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getInternalSupportControllerMessagesQueryOptions(requestId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type internalSupportControllerSendMessageResponse201 = {
+  data: void
+  status: 201
+}
+
+export type internalSupportControllerSendMessageResponseSuccess = (internalSupportControllerSendMessageResponse201) & {
+  headers: Headers;
+};
+;
+
+export type internalSupportControllerSendMessageResponse = (internalSupportControllerSendMessageResponseSuccess)
+
+export const getInternalSupportControllerSendMessageUrl = (requestId: string,) => {
+
+
+
+
+  return `/api/v1/internal/support/requests/${requestId}/messages`
+}
+
+export const internalSupportControllerSendMessage = async (requestId: string,
+    createInternalSupportMessageDto: CreateInternalSupportMessageDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<internalSupportControllerSendMessageResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getInternalSupportControllerSendMessageUrl(requestId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createInternalSupportMessageDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: internalSupportControllerSendMessageResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as internalSupportControllerSendMessageResponse
+}
+
+
+
+
+
+export const getInternalSupportControllerSendMessageMutationKey = () => ['internalSupportControllerSendMessage'] as const;
+
+export const getInternalSupportControllerSendMessageMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalSupportControllerSendMessage>>, TError,InternalSupportControllerSendMessageMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof internalSupportControllerSendMessage>>, TError,InternalSupportControllerSendMessageMutationVariables, TContext> => {
+
+const mutationKey = getInternalSupportControllerSendMessageMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof internalSupportControllerSendMessage>>, InternalSupportControllerSendMessageMutationVariables> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  internalSupportControllerSendMessage(requestId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InternalSupportControllerSendMessageMutationResult = NonNullable<Awaited<ReturnType<typeof internalSupportControllerSendMessage>>>
+    export type InternalSupportControllerSendMessageMutationBody = CreateInternalSupportMessageDto
+    export type InternalSupportControllerSendMessageMutationError = unknown
+    export type InternalSupportControllerSendMessageMutationVariables = {requestId: string;data: CreateInternalSupportMessageDto}
+
+    export const useInternalSupportControllerSendMessage = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalSupportControllerSendMessage>>, TError,InternalSupportControllerSendMessageMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof internalSupportControllerSendMessage>>,
+        TError,
+        InternalSupportControllerSendMessageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getInternalSupportControllerSendMessageMutationOptions(options), queryClient);
+    }
+    export type internalSupportControllerMarkReadResponse201 = {
+  data: void
+  status: 201
+}
+
+export type internalSupportControllerMarkReadResponseSuccess = (internalSupportControllerMarkReadResponse201) & {
+  headers: Headers;
+};
+;
+
+export type internalSupportControllerMarkReadResponse = (internalSupportControllerMarkReadResponseSuccess)
+
+export const getInternalSupportControllerMarkReadUrl = (requestId: string,) => {
+
+
+
+
+  return `/api/v1/internal/support/requests/${requestId}/messages/read`
+}
+
+export const internalSupportControllerMarkRead = async (requestId: string,
+    markSupportMessagesReadDto: MarkSupportMessagesReadDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<internalSupportControllerMarkReadResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getInternalSupportControllerMarkReadUrl(requestId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(markSupportMessagesReadDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: internalSupportControllerMarkReadResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as internalSupportControllerMarkReadResponse
+}
+
+
+
+
+
+export const getInternalSupportControllerMarkReadMutationKey = () => ['internalSupportControllerMarkRead'] as const;
+
+export const getInternalSupportControllerMarkReadMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalSupportControllerMarkRead>>, TError,InternalSupportControllerMarkReadMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof internalSupportControllerMarkRead>>, TError,InternalSupportControllerMarkReadMutationVariables, TContext> => {
+
+const mutationKey = getInternalSupportControllerMarkReadMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof internalSupportControllerMarkRead>>, InternalSupportControllerMarkReadMutationVariables> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  internalSupportControllerMarkRead(requestId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InternalSupportControllerMarkReadMutationResult = NonNullable<Awaited<ReturnType<typeof internalSupportControllerMarkRead>>>
+    export type InternalSupportControllerMarkReadMutationBody = MarkSupportMessagesReadDto
+    export type InternalSupportControllerMarkReadMutationError = unknown
+    export type InternalSupportControllerMarkReadMutationVariables = {requestId: string;data: MarkSupportMessagesReadDto}
+
+    export const useInternalSupportControllerMarkRead = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalSupportControllerMarkRead>>, TError,InternalSupportControllerMarkReadMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof internalSupportControllerMarkRead>>,
+        TError,
+        InternalSupportControllerMarkReadMutationVariables,
+        TContext
+      > => {
+      return useMutation(getInternalSupportControllerMarkReadMutationOptions(options), queryClient);
+    }
+    export type internalSupportControllerRevokeAccessResponse200 = {
+  data: InternalSupportControllerRevokeAccess200
+  status: 200
+}
+
+export type internalSupportControllerRevokeAccessResponseSuccess = (internalSupportControllerRevokeAccessResponse200) & {
+  headers: Headers;
+};
+;
+
+export type internalSupportControllerRevokeAccessResponse = (internalSupportControllerRevokeAccessResponseSuccess)
+
+export const getInternalSupportControllerRevokeAccessUrl = (requestId: string,
+    grantId: string,) => {
+
+
+
+
+  return `/api/v1/internal/support/requests/${requestId}/access-grants/${grantId}/revoke`
+}
+
+/**
+ * @summary Отозвать временный доступ из очереди поддержки
+ */
+export const internalSupportControllerRevokeAccess = async (requestId: string,
+    grantId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<internalSupportControllerRevokeAccessResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getInternalSupportControllerRevokeAccessUrl(requestId,grantId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: internalSupportControllerRevokeAccessResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as internalSupportControllerRevokeAccessResponse
+}
+
+
+
+
+
+export const getInternalSupportControllerRevokeAccessMutationKey = () => ['internalSupportControllerRevokeAccess'] as const;
+
+export const getInternalSupportControllerRevokeAccessMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalSupportControllerRevokeAccess>>, TError,InternalSupportControllerRevokeAccessMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof internalSupportControllerRevokeAccess>>, TError,InternalSupportControllerRevokeAccessMutationVariables, TContext> => {
+
+const mutationKey = getInternalSupportControllerRevokeAccessMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof internalSupportControllerRevokeAccess>>, InternalSupportControllerRevokeAccessMutationVariables> = (props) => {
+          const {requestId,grantId} = props ?? {};
+
+          return  internalSupportControllerRevokeAccess(requestId,grantId,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InternalSupportControllerRevokeAccessMutationResult = NonNullable<Awaited<ReturnType<typeof internalSupportControllerRevokeAccess>>>
+
+    export type InternalSupportControllerRevokeAccessMutationError = unknown
+    export type InternalSupportControllerRevokeAccessMutationVariables = {requestId: string;grantId: string}
+
+    /**
+ * @summary Отозвать временный доступ из очереди поддержки
+ */
+export const useInternalSupportControllerRevokeAccess = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalSupportControllerRevokeAccess>>, TError,InternalSupportControllerRevokeAccessMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof internalSupportControllerRevokeAccess>>,
+        TError,
+        InternalSupportControllerRevokeAccessMutationVariables,
+        TContext
+      > => {
+      return useMutation(getInternalSupportControllerRevokeAccessMutationOptions(options), queryClient);
+    }
+    export type internalSupportControllerListResponse200 = {
   data: SupportRequestQueuePageDto
   status: 200
 }
@@ -461,20 +942,22 @@ export type internalSupportControllerDownloadResponseSuccess = (internalSupportC
 
 export type internalSupportControllerDownloadResponse = (internalSupportControllerDownloadResponseSuccess)
 
-export const getInternalSupportControllerDownloadUrl = (requestId: string,) => {
+export const getInternalSupportControllerDownloadUrl = (requestId: string,
+    attachmentId: string,) => {
 
 
 
 
-  return `/api/v1/internal/support/requests/${requestId}/attachment/download`
+  return `/api/v1/internal/support/requests/${requestId}/attachments/${attachmentId}/download`
 }
 
 /**
  * @summary Получить временную ссылку на проверенное вложение
  */
-export const internalSupportControllerDownload = async (requestId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<internalSupportControllerDownloadResponse> => {
+export const internalSupportControllerDownload = async (requestId: string,
+    attachmentId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<internalSupportControllerDownloadResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getInternalSupportControllerDownloadUrl(requestId),
+  const res = await (fetchFn ?? fetch)(getInternalSupportControllerDownloadUrl(requestId,attachmentId),
   {
     ...options,
     method: 'GET'
@@ -494,29 +977,31 @@ export const internalSupportControllerDownload = async (requestId: string, optio
 
 
 
-export const getInternalSupportControllerDownloadQueryKey = (requestId: MaybeRefOrGetter<string>,) => {
+export const getInternalSupportControllerDownloadQueryKey = (requestId: MaybeRefOrGetter<string>,
+    attachmentId: MaybeRefOrGetter<string>,) => {
     return [
-    'api','v1','internal','support','requests',requestId,'attachment','download'
+    'api','v1','internal','support','requests',requestId,'attachments',attachmentId,'download'
     ] as const;
     }
 
 
-export const getInternalSupportControllerDownloadQueryOptions = <TData = Awaited<ReturnType<typeof internalSupportControllerDownload>>, TError = unknown>(requestId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+export const getInternalSupportControllerDownloadQueryOptions = <TData = Awaited<ReturnType<typeof internalSupportControllerDownload>>, TError = unknown>(requestId: MaybeRefOrGetter<string>,
+    attachmentId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
 
-  const queryKey =  getInternalSupportControllerDownloadQueryKey(requestId);
+  const queryKey =  getInternalSupportControllerDownloadQueryKey(requestId,attachmentId);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof internalSupportControllerDownload>>> = ({ signal }) => internalSupportControllerDownload(toValue(requestId), { signal, ...fetchOptions }, fetcherFn);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof internalSupportControllerDownload>>> = ({ signal }) => internalSupportControllerDownload(toValue(requestId),toValue(attachmentId), { signal, ...fetchOptions }, fetcherFn);
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: computed(() => toValue(requestId) !== null && toValue(requestId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerDownload>>, TError, TData>
+   return  { queryKey, queryFn, enabled: computed(() => toValue(requestId) !== null && toValue(requestId) !== undefined && toValue(attachmentId) !== null && toValue(attachmentId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerDownload>>, TError, TData>
 }
 
 export type InternalSupportControllerDownloadQueryResult = NonNullable<Awaited<ReturnType<typeof internalSupportControllerDownload>>>
@@ -528,11 +1013,12 @@ export type InternalSupportControllerDownloadQueryError = unknown
  */
 
 export function useInternalSupportControllerDownload<TData = Awaited<ReturnType<typeof internalSupportControllerDownload>>, TError = unknown>(
- requestId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ requestId: MaybeRefOrGetter<string>,
+    attachmentId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof internalSupportControllerDownload>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
  , queryClient?: QueryClient
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getInternalSupportControllerDownloadQueryOptions(requestId,options)
+  const queryOptions = getInternalSupportControllerDownloadQueryOptions(requestId,attachmentId,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

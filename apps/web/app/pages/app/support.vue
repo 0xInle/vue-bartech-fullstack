@@ -1,9 +1,9 @@
 <template>
-  <SupportScreen />
+  <SupportLegacyRedirect />
 </template>
 
 <script setup lang="ts">
-import SupportScreen from "~/features/support/components/SupportScreen.vue";
+import SupportLegacyRedirect from "~/features/support/components/SupportLegacyRedirect.vue";
 
 defineOptions({ name: "SupportPage" });
 </script>

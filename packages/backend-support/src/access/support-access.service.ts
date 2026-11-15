@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  BadRequestException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -8,7 +9,6 @@ import {
 } from "@nestjs/common";
 import { DATABASE_CLIENT, type Prisma, type PrismaClient } from "@bartech/database";
 import { INTERNAL_SESSION_ABSOLUTE_MS, INTERNAL_SESSION_IDLE_MS } from "@bartech/backend-identity";
-import type { CreateSupportAccessGrantDto } from "../support.dto.js";
 
 const GRANT_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -16,129 +16,110 @@ const GRANT_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 export class SupportAccessService {
   constructor(@Inject(DATABASE_CLIENT) private readonly database: PrismaClient) {}
 
-  async createGrant(userId: string, input: CreateSupportAccessGrantDto) {
-    const now = new Date();
+  async assertCanRequestAccess(transaction: Prisma.TransactionClient, requestId: string) {
+    const request = await transaction.supportRequest.findFirst({
+      where: {
+        id: requestId,
+        reason: "DATA_MIGRATION",
+        companyId: { not: null },
+        status: { not: "CLOSED" },
+      },
+      select: { companyId: true, venueId: true, authorUserId: true },
+    });
+    if (!request?.companyId || !request.authorUserId) {
+      throw new BadRequestException("Для этого обращения нельзя запросить временный доступ");
+    }
+    const activeGrant = await transaction.supportAccessGrant.findFirst({
+      where: { requestId, revokedAt: null, expiresAt: { gt: new Date() } },
+      select: { id: true },
+    });
+    if (activeGrant) {
+      throw new BadRequestException("Для обращения уже предоставлен временный доступ");
+    }
+    await this.resolveRequestScope(
+      transaction,
+      request.authorUserId,
+      request.companyId,
+      request.venueId,
+    );
+  }
+
+  async grantFromAccessRequest(userId: string, requestId: string, messageId: string) {
     return this.database.$transaction(async (transaction) => {
-      await transaction.$queryRaw`SELECT "id" FROM "companies" WHERE "id" = ${input.companyId}::uuid FOR UPDATE`;
-      const company = await transaction.company.findFirst({
-        where: { id: input.companyId, status: "ACTIVE" },
+      const snapshot = await transaction.supportRequest.findFirst({
+        where: { id: requestId, authorUserId: userId },
+        select: { id: true, companyId: true },
+      });
+      if (!snapshot?.companyId) throw new NotFoundException("Обращение недоступно");
+      await transaction.$queryRaw`SELECT "id" FROM "support_requests" WHERE "id" = ${requestId}::uuid FOR UPDATE`;
+      await transaction.$queryRaw`SELECT "id" FROM "companies" WHERE "id" = ${snapshot.companyId}::uuid FOR UPDATE`;
+      const request = await transaction.supportRequest.findFirst({
+        where: {
+          id: requestId,
+          authorUserId: userId,
+          reason: "DATA_MIGRATION",
+          status: { not: "CLOSED" },
+          company: { status: "ACTIVE" },
+        },
+        select: { id: true, companyId: true, venueId: true },
+      });
+      const message = await transaction.supportMessage.findFirst({
+        where: { id: messageId, requestId, authorType: "INTERNAL", kind: "ACCESS_REQUEST" },
         select: { id: true },
       });
-      if (!company) throw new NotFoundException("Область временного доступа недоступна");
-      let scopeType: "COMPANY" | "VENUE";
-      let venueId: string | null = null;
-      if (input.venueId) {
-        const [membership, companyMembership] = await Promise.all([
-          transaction.venueMembership.findFirst({
-            where: {
-              userId,
-              companyId: input.companyId,
-              venueId: input.venueId,
-              OR: [
-                { endedOn: null },
-                {
-                  endedOn: {
-                    gt: new Date(
-                      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-                    ),
-                  },
-                },
-              ],
-              role: "BAR_MANAGER",
-              venue: { status: "ACTIVE" },
-            },
-            select: { venueId: true },
-          }),
-          transaction.companyMembership.findFirst({
-            where: {
-              userId,
-              companyId: input.companyId,
-              endedOn: null,
-              companyRole: "CHEF_BARTENDER",
-            },
-            select: { userId: true },
-          }),
-        ]);
-        if (!membership || companyMembership) {
-          throw new NotFoundException("Область временного доступа недоступна");
-        }
-        scopeType = "VENUE";
-        venueId = membership.venueId;
-      } else {
-        const [membership, venueMembership] = await Promise.all([
-          transaction.companyMembership.findFirst({
-            where: {
-              userId,
-              companyId: input.companyId,
-              endedOn: null,
-              companyRole: "CHEF_BARTENDER",
-            },
-            select: { userId: true },
-          }),
-          transaction.venueMembership.findFirst({
-            where: {
-              userId,
-              companyId: input.companyId,
-              OR: [
-                { endedOn: null },
-                {
-                  endedOn: {
-                    gt: new Date(
-                      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-                    ),
-                  },
-                },
-              ],
-            },
-          }),
-        ]);
-        if (!membership || venueMembership) {
-          throw new NotFoundException("Область временного доступа недоступна");
-        }
-        scopeType = "COMPANY";
-      }
-      if (input.requestId) {
-        const request = await transaction.supportRequest.findFirst({
-          where: {
-            id: input.requestId,
-            authorUserId: userId,
-            companyId: input.companyId,
-            ...(venueId ? { venueId } : {}),
-          },
-          select: { id: true },
-        });
-        if (!request) throw new NotFoundException("Обращение недоступно");
-      }
+      if (!request?.companyId || !message) throw new NotFoundException("Запрос доступа недоступен");
+
+      const existing = await transaction.supportAccessGrant.findUnique({
+        where: { accessRequestMessageId: messageId },
+      });
+      if (existing) return serializeGrant(existing);
+      const activeGrant = await transaction.supportAccessGrant.findFirst({
+        where: { requestId, revokedAt: null, expiresAt: { gt: new Date() } },
+      });
+      if (activeGrant) throw new BadRequestException("Для обращения уже предоставлен доступ");
+
+      const scope = await this.resolveRequestScope(
+        transaction,
+        userId,
+        request.companyId,
+        request.venueId,
+      );
+      const now = new Date();
       const grant = await transaction.supportAccessGrant.create({
         data: {
           id: randomUUID(),
           authorUserId: userId,
-          companyId: input.companyId,
-          venueId,
-          scopeType,
-          requestId: input.requestId,
+          companyId: request.companyId,
+          venueId: scope.venueId,
+          scopeType: scope.scopeType,
+          requestId,
+          accessRequestMessageId: messageId,
           expiresAt: new Date(now.getTime() + GRANT_LIFETIME_MS),
         },
+      });
+      await transaction.supportRequest.update({
+        where: { id: requestId },
+        data: { status: "IN_PROGRESS", updatedAt: now },
       });
       await transaction.auditEvent.create({
         data: {
           eventType: "support.access_granted",
           actorType: "USER",
           actorId: userId,
-          companyId: input.companyId,
-          venueId,
+          companyId: request.companyId,
+          venueId: scope.venueId,
           entityType: "SUPPORT_ACCESS_GRANT",
           entityId: grant.id,
-          metadata: { scopeType },
+          metadata: { scopeType: scope.scopeType, requestId },
         },
       });
       await transaction.internalAuditEvent.create({
         data: {
           eventType: "service_access.grant_created",
           actorType: "SYSTEM",
-          companyId: input.companyId,
-          venueId,
-          metadata: { grantId: grant.id, actorId: userId, scopeType },
+          companyId: request.companyId,
+          venueId: scope.venueId,
+          metadata: { grantId: grant.id, actorId: userId, scopeType: scope.scopeType, requestId },
         },
       });
       return serializeGrant(grant);
@@ -196,6 +177,62 @@ export class SupportAccessService {
         });
       }
       return { id: grant.id, revokedAt: grant.revokedAt ?? now };
+    });
+  }
+
+  async revokeGrantByInternalSupport(internalUserId: string, requestId: string, grantId: string) {
+    return this.database.$transaction(async (transaction) => {
+      await transaction.$queryRaw`SELECT "id" FROM "support_requests" WHERE "id" = ${requestId}::uuid FOR UPDATE`;
+      const request = await transaction.supportRequest.findUnique({
+        where: { id: requestId },
+        select: { id: true },
+      });
+      if (!request) throw new NotFoundException("Обращение не найдено");
+
+      await transaction.$queryRaw`SELECT "id" FROM "support_access_grants" WHERE "id" = ${grantId}::uuid AND "requestId" = ${requestId}::uuid FOR UPDATE`;
+      const grant = await transaction.supportAccessGrant.findFirst({
+        where: { id: grantId, requestId },
+      });
+      if (!grant) throw new NotFoundException("Временный доступ не найден");
+
+      const now = new Date();
+      if (!grant.revokedAt && grant.expiresAt > now) {
+        await transaction.supportAccessGrant.update({
+          where: { id: grant.id },
+          data: { revokedAt: now, revocationReason: "support_revoked" },
+        });
+        await this.endGrantSessions(transaction, grant, now, "grant_revoked");
+        await transaction.auditEvent.create({
+          data: {
+            eventType: "support.access_revoked",
+            actorType: "INTERNAL_USER",
+            internalUserId,
+            companyId: grant.companyId,
+            venueId: grant.venueId,
+            entityType: "SUPPORT_ACCESS_GRANT",
+            entityId: grant.id,
+            metadata: { scopeType: grant.scopeType, reason: "support_revoked", requestId },
+          },
+        });
+        await transaction.internalAuditEvent.create({
+          data: {
+            eventType: "service_access.grant_revoked",
+            actorType: "INTERNAL_USER",
+            actorId: internalUserId,
+            internalUserId,
+            companyId: grant.companyId,
+            venueId: grant.venueId,
+            metadata: { grantId: grant.id, requestId, reason: "support_revoked" },
+          },
+        });
+      }
+
+      return {
+        id: grant.id,
+        active: false,
+        revokedAt: grant.revokedAt ?? (grant.expiresAt > now ? now : null),
+        expiresAt: grant.expiresAt,
+      };
     });
   }
 
@@ -467,6 +504,49 @@ export class SupportAccessService {
         },
       });
     }
+  }
+
+  private async resolveRequestScope(
+    transaction: Prisma.TransactionClient,
+    userId: string,
+    companyId: string,
+    venueId: string | null,
+  ): Promise<{ scopeType: "COMPANY" | "VENUE"; venueId: string | null }> {
+    const company = await transaction.company.findFirst({
+      where: { id: companyId, status: "ACTIVE" },
+      select: { id: true },
+    });
+    if (!company) throw new NotFoundException("Область временного доступа недоступна");
+
+    const companyMembership = await transaction.companyMembership.findFirst({
+      where: { userId, companyId, endedOn: null, companyRole: "CHEF_BARTENDER" },
+      select: { userId: true },
+    });
+    if (companyMembership) return { scopeType: "COMPANY", venueId: null };
+
+    if (venueId) {
+      const now = new Date();
+      const venueMembership = await transaction.venueMembership.findFirst({
+        where: {
+          userId,
+          companyId,
+          venueId,
+          OR: [
+            { endedOn: null },
+            {
+              endedOn: {
+                gt: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())),
+              },
+            },
+          ],
+          role: "BAR_MANAGER",
+          venue: { status: "ACTIVE" },
+        },
+        select: { venueId: true },
+      });
+      if (venueMembership) return { scopeType: "VENUE", venueId: venueMembership.venueId };
+    }
+    throw new ForbiddenException("Текущая роль не может предоставить временный доступ");
   }
 
   private async endGrantSessions(

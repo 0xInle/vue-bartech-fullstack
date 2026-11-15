@@ -93,8 +93,8 @@ export class AuditReadService {
             ? "Система"
             : row.actorType === "INTERNAL_USER"
               ? (row.internalUser?.email ?? "Сотрудник IndieBar")
-              : typeof resolvedMetadata?.actorName === "string"
-                ? resolvedMetadata.actorName
+              : typeof (resolvedMetadata as Record<string, unknown> | null)?.actorName === "string"
+                ? String((resolvedMetadata as Record<string, unknown>).actorName)
                 : (row.actor?.profile?.fullName ?? "Аккаунт недоступен"),
         actorId: row.actorId ?? row.internalUserId,
         entityName: typeof resolvedMetadata?.name === "string" ? resolvedMetadata.name : null,

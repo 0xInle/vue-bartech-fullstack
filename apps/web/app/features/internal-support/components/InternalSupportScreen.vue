@@ -55,6 +55,11 @@
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <span class="font-medium">{{ reasonLabel(request.reason) }}</span>
                 <Tag
+                  v-if="unreadCount(request.id)"
+                  :value="String(unreadCount(request.id))"
+                  severity="warn"
+                />
+                <Tag
                   :value="statusLabel(request.status)"
                   :severity="statusSeverity(request.status)"
                 />
@@ -119,14 +124,15 @@
             </div>
           </dl>
 
-          <div class="mt-5 grid gap-3 sm:grid-cols-2">
+          <div v-if="selected.status !== 'closed'" class="mt-5 grid gap-3 sm:grid-cols-2">
             <FloatLabel variant="on">
               <Select
                 id="support-status"
                 v-model="editStatus"
-                :options="statusOptions.slice(1)"
+                :options="editableStatusOptions"
                 option-label="label"
                 option-value="value"
+                option-disabled="disabled"
                 size="small"
                 class="w-full"
               />
@@ -145,26 +151,127 @@
               <label for="support-assignee">Ответственный</label>
             </FloatLabel>
           </div>
+          <Message v-if="hasActiveGrant" severity="warn" :closable="false" class="mt-3">
+            Сначала отзовите временный доступ, чтобы закрыть обращение.
+          </Message>
           <Message v-if="actionError" severity="error" :closable="false" class="mt-3">{{
             actionError
           }}</Message>
-          <Button label="Сохранить" size="small" class="mt-3" :loading="saving" @click="save" />
+          <Button
+            v-if="selected.status !== 'closed'"
+            label="Сохранить"
+            size="small"
+            class="mt-3"
+            :loading="saving"
+            @click="save"
+          />
+          <p v-else class="mt-5 text-sm text-color-secondary">
+            Обращение закрыто. Переписка доступна только для чтения.
+          </p>
 
-          <div v-if="selected.attachment" class="mt-5 rounded-lg border border-surface p-3">
-            <p class="break-all text-sm font-medium">{{ selected.attachment.originalName }}</p>
-            <p class="mt-1 text-sm text-color-secondary">
-              {{ attachmentStatus(selected.attachment.status) }}
-            </p>
-            <Button
-              v-if="selected.attachment.status === 'clean'"
-              label="Скачать проверенное вложение"
-              icon="pi pi-download"
-              severity="secondary"
-              size="small"
-              class="mt-3"
-              @click="queue.download(selected.id)"
-            />
-          </div>
+          <ul v-if="selected.attachments.length" class="mt-5 space-y-3">
+            <li
+              v-for="attachment in selected.attachments"
+              :key="attachment.id"
+              class="rounded-lg border border-surface p-3"
+            >
+              <p class="break-all text-sm font-medium">{{ attachment.originalName }}</p>
+              <p class="mt-1 text-sm text-color-secondary">
+                {{ attachmentStatus(attachment.status) }} · {{ formatBytes(attachment.sizeBytes) }}
+              </p>
+              <Button
+                v-if="attachment.status === 'clean'"
+                label="Скачать проверенное вложение"
+                icon="pi pi-download"
+                severity="secondary"
+                size="small"
+                class="mt-3"
+                @click="queue.download(selected.id, attachment.id)"
+              />
+            </li>
+          </ul>
+          <Divider class="!my-5" />
+          <section aria-label="Переписка с пользователем" class="space-y-3">
+            <h2 class="text-base font-semibold">Переписка</h2>
+            <LoadingIndicator v-if="queue.messagesQuery.isLoading.value" />
+            <div
+              v-for="item in queue.messagesQuery.data.value ?? []"
+              :key="item.id"
+              class="flex"
+              :class="item.authorType === 'internal' ? 'justify-end' : 'justify-start'"
+            >
+              <article
+                class="max-w-[85%] rounded-lg bg-surface-100 px-3 py-2"
+                :class="item.authorType === 'internal' ? 'bg-primary-50' : ''"
+              >
+                <p class="text-xs font-semibold">
+                  {{ item.authorName }}
+                  <span class="font-normal text-color-secondary"
+                    >· {{ formatDate(item.createdAt) }}</span
+                  >
+                </p>
+                <p class="mt-1 whitespace-pre-wrap text-sm">{{ item.body }}</p>
+                <p
+                  v-if="item.kind === 'access_request' && !item.accessGrant"
+                  class="mt-2 text-xs text-color-secondary"
+                >
+                  Запрос временного доступа к продукции (до 7 дней).
+                </p>
+                <div
+                  v-if="item.accessGrant"
+                  class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-color-secondary"
+                >
+                  <span v-if="item.accessGrant.active">
+                    Доступ активен до {{ formatDate(item.accessGrant.expiresAt) }}.
+                  </span>
+                  <span v-else-if="item.accessGrant.revokedAt">
+                    Доступ отозван {{ formatDate(item.accessGrant.revokedAt) }}.
+                  </span>
+                  <span v-else
+                    >Срок доступа истёк {{ formatDate(item.accessGrant.expiresAt) }}.</span
+                  >
+                  <Button
+                    v-if="item.accessGrant.active"
+                    label="Отозвать доступ"
+                    severity="danger"
+                    size="small"
+                    :loading="revokingGrantId === item.accessGrant.id"
+                    :disabled="Boolean(revokingGrantId)"
+                    @click="revokeAccess(selected.id, item.accessGrant.id)"
+                  />
+                </div>
+              </article>
+            </div>
+            <div v-if="selected.status !== 'closed'" class="space-y-3">
+              <Textarea
+                v-model="replyText"
+                rows="3"
+                auto-resize
+                class="w-full"
+                placeholder="Ответ пользователю"
+                :disabled="replySending"
+              />
+              <div class="flex flex-wrap justify-end gap-2">
+                <Button
+                  v-if="accessStateLoaded && !hasActiveGrant"
+                  label="Запросить временный доступ"
+                  severity="secondary"
+                  size="small"
+                  :disabled="selected.reason !== 'data_migration' || !replyText.trim()"
+                  :loading="replySending"
+                  @click="sendInternalReply(true)"
+                />
+                <Button
+                  label="Отправить ответ"
+                  icon="pi pi-send"
+                  size="small"
+                  :disabled="!replyText.trim()"
+                  :loading="replySending"
+                  @click="sendInternalReply(false)"
+                />
+              </div>
+            </div>
+          </section>
         </template>
       </Card>
       <p v-else class="rounded-lg border border-surface p-5 text-sm text-color-secondary">
@@ -191,10 +298,14 @@ const editStatus = ref<"new" | "in_progress" | "closed">("new");
 const assigneeId = ref("");
 const saving = ref(false);
 const actionError = ref("");
+const replyText = ref("");
+const replySending = ref(false);
+const revokingGrantId = ref("");
 const statusOptions = [
   { label: "Все статусы", value: "" },
   { label: "Новое", value: "new" },
   { label: "В работе", value: "in_progress" },
+  { label: "Ждём ответа пользователя", value: "waiting_on_customer" },
   { label: "Закрыто", value: "closed" },
 ];
 const queue = useInternalSupportQueue(enabled, status, page);
@@ -204,6 +315,18 @@ const canAccess = computed(() =>
 const items = computed(() => queue.queueQuery.data.value?.items ?? []);
 const total = computed(() => queue.queueQuery.data.value?.total ?? 0);
 const selected = computed(() => items.value.find((request) => request.id === selectedId.value));
+const hasActiveGrant = computed(
+  () => queue.messagesQuery.data.value?.some((message) => message.accessGrant?.active) ?? false,
+);
+const accessStateLoaded = computed(
+  () => !queue.messagesQuery.isLoading.value && Array.isArray(queue.messagesQuery.data.value),
+);
+const editableStatusOptions = computed(() =>
+  statusOptions.slice(1).map((option) => ({
+    ...option,
+    disabled: option.value === "closed" && (!accessStateLoaded.value || hasActiveGrant.value),
+  })),
+);
 const assigneeOptions = computed(() => [
   { label: "Не назначено", value: "" },
   ...(queue.usersQuery.data.value?.map((user) => ({ label: user.email, value: user.id })) ?? []),
@@ -226,11 +349,51 @@ watch(selected, (request) => {
 });
 
 function selectRequest(id: string) {
+  if (replySending.value || revokingGrantId.value) return;
+  if (selectedId.value !== id) {
+    replyText.value = "";
+    actionError.value = "";
+  }
   selectedId.value = id;
+  queue.selectedRequestId.value = id;
+}
+
+watch(
+  () => queue.messagesQuery.data.value,
+  (messages) => {
+    if (messages?.length && selectedId.value) void queue.markRead(selectedId.value);
+  },
+);
+
+function unreadCount(requestId: string) {
+  return (
+    queue.unreadQuery.data.value?.requests.find((item) => item.requestId === requestId)
+      ?.unreadCount ?? 0
+  );
+}
+
+async function sendInternalReply(requestAccess: boolean) {
+  if (!selected.value) return;
+  replySending.value = true;
+  actionError.value = "";
+  try {
+    await queue.sendMessage(selected.value.id, replyText.value, requestAccess);
+    replyText.value = "";
+  } catch (error) {
+    actionError.value = error instanceof Error ? error.message : "Не удалось отправить ответ";
+  } finally {
+    replySending.value = false;
+  }
 }
 
 async function save() {
   if (!selected.value) return;
+  if (editStatus.value === "closed" && (!accessStateLoaded.value || hasActiveGrant.value)) {
+    actionError.value = hasActiveGrant.value
+      ? "Сначала отзовите временный доступ или дождитесь его истечения."
+      : "Дождитесь проверки временного доступа и попробуйте снова.";
+    return;
+  }
   saving.value = true;
   actionError.value = "";
   try {
@@ -245,6 +408,19 @@ async function save() {
   }
 }
 
+async function revokeAccess(requestId: string, grantId: string) {
+  if (!window.confirm("Отозвать доступ? Активная служебная сессия завершится.")) return;
+  revokingGrantId.value = grantId;
+  actionError.value = "";
+  try {
+    await queue.revokeAccess(requestId, grantId);
+  } catch (error) {
+    actionError.value = error instanceof Error ? error.message : "Не удалось отозвать доступ";
+  } finally {
+    revokingGrantId.value = "";
+  }
+}
+
 function reasonLabel(value: string) {
   return (
     { data_migration: "Перенос данных", error: "Ошибка", other: "Другой вопрос" }[value] ?? value
@@ -252,7 +428,14 @@ function reasonLabel(value: string) {
 }
 
 function statusLabel(value: string) {
-  return { new: "Новое", in_progress: "В работе", closed: "Закрыто" }[value] ?? value;
+  return (
+    {
+      new: "Новое",
+      in_progress: "В работе",
+      waiting_on_customer: "Ждём ответа",
+      closed: "Закрыто",
+    }[value] ?? value
+  );
 }
 
 function statusSeverity(value: string) {
@@ -262,11 +445,18 @@ function statusSeverity(value: string) {
 function attachmentStatus(value: string) {
   return (
     {
-      pending_scan: "Вложение проверяется",
-      clean: "Проверка пройдена",
-      rejected: "Вложение не прошло проверку",
+      pending_scan: "Идёт проверка безопасности",
+      clean: "Проверка безопасности пройдена",
+      rejected: "Файл не прошёл проверку безопасности",
     }[value] ?? value
   );
+}
+
+function formatBytes(value: number): string {
+  const formatter = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 });
+  return value < 1024 * 1024
+    ? `${Math.ceil(value / 1024)} КБ`
+    : `${formatter.format(value / 1024 / 1024)} МБ`;
 }
 
 function contextLabel(value: string) {

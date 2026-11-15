@@ -9,7 +9,7 @@ import type { SupportControllerCreateBodyReason } from './supportControllerCreat
 
 export type SupportControllerCreateBody = {
   reason: SupportControllerCreateBodyReason;
-  /** @maxLength 5000 */
+  /** @maxLength 1000 */
   message: string;
   companyId?: string;
   venueId?: string;
@@ -17,5 +17,6 @@ export type SupportControllerCreateBody = {
   browser?: string;
   /** @maxLength 128 */
   errorId?: string;
-  file?: Blob | File;
+  /** @maxItems 5 */
+  files?: (Blob | File)[];
 };
