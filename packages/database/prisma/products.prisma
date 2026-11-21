@@ -45,44 +45,49 @@ enum CatalogMatchReason {
 }
 
 model Product {
-  id                            String                 @id @default(uuid()) @db.Uuid
-  type                          ProductType
-  status                        ProductStatus          @default(ACTIVE)
-  workflowStatus               WorkflowStatus?
-  venueId                       String?                @db.Uuid
-  name                          String
-  nameNormalized                String
-  searchNameNormalized          String
-  searchTechnologyNormalized    String?
-  catalogIdentityKey            String?
-  catalogSeedManaged            Boolean                @default(false)
-  technology                    String?
-  comment                       String?
-  outputAmount                  Decimal?               @db.Decimal(12, 3)
-  outputUnitId                  String?                @db.Uuid
-  createdByUserId               String?                @db.Uuid
-  updatedByUserId               String?                @db.Uuid
-  createdAt                     DateTime               @default(now()) @db.Timestamptz(6)
-  updatedAt                     DateTime               @updatedAt @db.Timestamptz(6)
-  venue                         Venue?                 @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  createdBy                     User?                  @relation("ProductCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  updatedBy                     User?                  @relation("ProductUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
-  outputUnit                    Unit?                  @relation("ProductOutputUnit", fields: [outputUnitId], references: [id], onDelete: Restrict)
-  ingredient                    IngredientDetails?
-  preparation                   PreparationDetails?
-  cocktail                      CocktailDetails?
-  parentComponents              ProductComponent[]     @relation("ProductComponentsParent")
-  usedAsComponent               ProductComponent[]     @relation("ProductComponentsComponent")
-  cocktailGarnishes             CocktailGarnish[]      @relation("CocktailGarnishCocktail")
-  usedAsGarnish                 CocktailGarnish[]      @relation("CocktailGarnishGarnish")
-  cocktailQuickGarnishes        CocktailQuickGarnish[] @relation("CocktailQuickGarnishCocktail")
-  cocktailCategories            CocktailCategory[]     @relation("CocktailCategoryCocktail")
-  aliases                       ProductAlias[]
-  localCatalogMatchRequest      CatalogMatchRequest?   @relation("CatalogLocalProduct")
-  suggestedCatalogMatchRequests CatalogMatchRequest[]  @relation("CatalogSuggestedProduct")
+  id                                                                 String                 @id @default(uuid()) @db.Uuid
+  type                                                               ProductType
+  status                                                             ProductStatus          @default(ACTIVE)
+  workflowStatus                                                     WorkflowStatus?
+  venueId                                                            String?                @db.Uuid
+  name                                                               String
+  nameNormalized                                                     String
+  searchNameNormalized                                               String
+  searchTechnologyNormalized                                         String?
+  catalogIdentityKey                                                 String?                @unique(map: "products_catalog_identity_key", where: raw("((\"venueId\" IS NULL) AND (type = 'INGREDIENT'::\"ProductType\") AND (\"catalogIdentityKey\" IS NOT NULL))"))
+  catalogSeedManaged                                                 Boolean                @default(false)
+  technology                                                         String?
+  comment                                                            String?
+  outputAmount                                                       Decimal?               @db.Decimal(12, 3)
+  outputUnitId                                                       String?                @db.Uuid
+  createdByUserId                                                    String?                @db.Uuid
+  updatedByUserId                                                    String?                @db.Uuid
+  createdAt                                                          DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt                                                          DateTime               @updatedAt @db.Timestamptz(6)
+  venue                                                              Venue?                 @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  createdBy                                                          User?                  @relation("ProductCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  updatedBy                                                          User?                  @relation("ProductUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  outputUnit                                                         Unit?                  @relation("ProductOutputUnit", fields: [outputUnitId], references: [id], onDelete: Restrict)
+  ingredient                                                         IngredientDetails?
+  preparation                                                        PreparationDetails?
+  cocktail                                                           CocktailDetails?
+  parentComponents                                                   ProductComponent[]     @relation("ProductComponentsParent")
+  usedAsComponent                                                    ProductComponent[]     @relation("ProductComponentsComponent")
+  cocktailGarnishes                                                  CocktailGarnish[]      @relation("CocktailGarnishCocktail")
+  usedAsGarnish                                                      CocktailGarnish[]      @relation("CocktailGarnishGarnish")
+  cocktailQuickGarnishes                                             CocktailQuickGarnish[] @relation("CocktailQuickGarnishCocktail")
+  cocktailCategories                                                 CocktailCategory[]     @relation("CocktailCategoryCocktail")
+  aliases                                                            ProductAlias[]
+  localCatalogMatchRequest                                           CatalogMatchRequest?   @relation("CatalogLocalProduct")
+  suggestedCatalogMatchRequests                                      CatalogMatchRequest[]  @relation("CatalogSuggestedProduct")
+  product_components_product_components_componentProductIdToproducts ProductComponent[]     @relation("product_components_componentProductIdToproducts")
 
   @@unique([id, venueId], map: "products_id_venue_id_key")
+  @@unique([venueId, type, nameNormalized], map: "products_venue_type_name_active_key", where: raw("((\"venueId\" IS NOT NULL) AND (status = 'ACTIVE'::\"ProductStatus\"))"))
   @@index([venueId, type, status, nameNormalized], map: "products_venue_type_status_name_idx")
+  @@index([searchNameNormalized(ops: raw("gin_trgm_ops"))], map: "products_global_search_name_trgm_idx", type: Gin, where: raw("((type = 'INGREDIENT'::\"ProductType\") AND (\"venueId\" IS NULL) AND (status = 'ACTIVE'::\"ProductStatus\"))"))
+  @@index([searchNameNormalized(ops: raw("gin_trgm_ops"))], map: "products_venue_search_name_trgm_idx", type: Gin, where: raw("((\"venueId\" IS NOT NULL) AND (status = 'ACTIVE'::\"ProductStatus\"))"))
+  @@index([searchTechnologyNormalized(ops: raw("gin_trgm_ops"))], map: "products_venue_search_technology_trgm_idx", type: Gin, where: raw("((\"venueId\" IS NOT NULL) AND (status = 'ACTIVE'::\"ProductStatus\") AND (\"searchTechnologyNormalized\" IS NOT NULL))"))
   @@map("products")
 }
 
@@ -99,6 +104,8 @@ model IngredientDetails {
   product                    Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
   category                   IngredientCategory @relation(fields: [categoryCode], references: [code], onDelete: Restrict)
 
+  @@index([searchAttributesNormalized(ops: raw("gin_trgm_ops"))], map: "ingredient_details_search_attributes_trgm_idx", type: Gin)
+  @@index([searchBrandNormalized], map: "ingredient_details_search_brand_idx", where: raw("(\"searchBrandNormalized\" IS NOT NULL)"))
   @@map("ingredient_details")
 }
 
@@ -112,30 +119,31 @@ model PreparationDetails {
 }
 
 model CocktailDetails {
-  productId           String                 @id @db.Uuid
-  glassId             String?                @db.Uuid
-  iceId               String?                @db.Uuid
-  preparationMethodId String?                @db.Uuid
-  product             Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
-  glass               ReferenceValue?        @relation("CocktailGlass", fields: [glassId], references: [id], onDelete: Restrict)
-  ice                 ReferenceValue?        @relation("CocktailIce", fields: [iceId], references: [id], onDelete: Restrict)
-  preparationMethod   ReferenceValue?        @relation("CocktailPreparationMethod", fields: [preparationMethodId], references: [id], onDelete: Restrict)
+  productId           String          @id @db.Uuid
+  glassId             String?         @db.Uuid
+  iceId               String?         @db.Uuid
+  preparationMethodId String?         @db.Uuid
+  product             Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  glass               ReferenceValue? @relation("CocktailGlass", fields: [glassId], references: [id], onDelete: Restrict)
+  ice                 ReferenceValue? @relation("CocktailIce", fields: [iceId], references: [id], onDelete: Restrict)
+  preparationMethod   ReferenceValue? @relation("CocktailPreparationMethod", fields: [preparationMethodId], references: [id], onDelete: Restrict)
 
   @@map("cocktail_details")
 }
 
 model ProductComponent {
-  id                 String   @id @default(uuid()) @db.Uuid
-  parentProductId    String   @db.Uuid
-  parentVenueId      String   @db.Uuid
-  componentProductId String   @db.Uuid
-  componentVenueId   String?  @db.Uuid
-  unitId             String   @db.Uuid
-  amount             Decimal  @db.Decimal(12, 3)
-  position           Int
-  parentProduct      Product  @relation("ProductComponentsParent", fields: [parentProductId, parentVenueId], references: [id, venueId], onDelete: Cascade)
-  componentProduct   Product? @relation("ProductComponentsComponent", fields: [componentProductId, componentVenueId], references: [id, venueId], onDelete: Restrict)
-  unit               Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  id                                                       String   @id @default(uuid()) @db.Uuid
+  parentProductId                                          String   @db.Uuid
+  parentVenueId                                            String   @db.Uuid
+  componentProductId                                       String   @db.Uuid
+  componentVenueId                                         String?  @db.Uuid
+  unitId                                                   String   @db.Uuid
+  amount                                                   Decimal  @db.Decimal(12, 3)
+  position                                                 Int
+  parentProduct                                            Product  @relation("ProductComponentsParent", fields: [parentProductId, parentVenueId], references: [id, venueId], onDelete: Cascade, map: "product_components_parent_fkey")
+  componentProduct                                         Product? @relation("ProductComponentsComponent", fields: [componentProductId, componentVenueId], references: [id, venueId], map: "product_components_component_fkey")
+  unit                                                     Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  products_product_components_componentProductIdToproducts Product  @relation("product_components_componentProductIdToproducts", fields: [componentProductId], references: [id], map: "product_components_component_id_fkey")
 
   @@unique([parentProductId, position], map: "product_components_parent_position_key")
   @@index([parentVenueId, parentProductId], map: "product_components_parent_idx")
@@ -151,8 +159,8 @@ model CocktailGarnish {
   garnishId       String  @db.Uuid
   garnishVenueId  String  @db.Uuid
   position        Int
-  cocktail        Product @relation("CocktailGarnishCocktail", fields: [cocktailId, cocktailVenueId], references: [id, venueId], onDelete: Cascade)
-  garnish         Product @relation("CocktailGarnishGarnish", fields: [garnishId, garnishVenueId], references: [id, venueId], onDelete: Restrict)
+  cocktail        Product @relation("CocktailGarnishCocktail", fields: [cocktailId, cocktailVenueId], references: [id, venueId], onDelete: Cascade, map: "cocktail_garnishes_cocktail_fkey")
+  garnish         Product @relation("CocktailGarnishGarnish", fields: [garnishId, garnishVenueId], references: [id, venueId], map: "cocktail_garnishes_garnish_fkey")
 
   @@unique([cocktailId, garnishId], map: "cocktail_garnishes_cocktail_garnish_key")
   @@unique([cocktailId, position], map: "cocktail_garnishes_cocktail_position_key")
@@ -160,14 +168,14 @@ model CocktailGarnish {
 }
 
 model CocktailQuickGarnish {
-  id                    String         @id @default(uuid()) @db.Uuid
+  id                    String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   cocktailId            String         @db.Uuid
   cocktailVenueId       String         @db.Uuid
   referenceValueId      String         @db.Uuid
   referenceValueVenueId String         @db.Uuid
   position              Int
-  cocktail              Product        @relation("CocktailQuickGarnishCocktail", fields: [cocktailId, cocktailVenueId], references: [id, venueId], onDelete: Cascade)
-  referenceValue        ReferenceValue @relation(fields: [referenceValueId, referenceValueVenueId], references: [id, venueId], onDelete: Restrict)
+  cocktail              Product        @relation("CocktailQuickGarnishCocktail", fields: [cocktailId, cocktailVenueId], references: [id, venueId], onDelete: Cascade, map: "cocktail_quick_garnishes_cocktail_fkey")
+  referenceValue        ReferenceValue @relation(fields: [referenceValueId, referenceValueVenueId], references: [id, venueId], map: "cocktail_quick_garnishes_reference_value_fkey")
 
   @@unique([cocktailId, referenceValueId], map: "cocktail_quick_garnishes_cocktail_value_key")
   @@unique([cocktailId, position], map: "cocktail_quick_garnishes_cocktail_position_key")
@@ -178,17 +186,18 @@ model CocktailCategory {
   cocktailId       String         @db.Uuid
   cocktailVenueId  String         @db.Uuid
   referenceValueId String         @db.Uuid
-  cocktail         Product        @relation("CocktailCategoryCocktail", fields: [cocktailId, cocktailVenueId], references: [id, venueId], onDelete: Cascade)
-  referenceValue   ReferenceValue @relation(fields: [referenceValueId], references: [id], onDelete: Restrict)
+  cocktail         Product        @relation("CocktailCategoryCocktail", fields: [cocktailId, cocktailVenueId], references: [id, venueId], onDelete: Cascade, map: "cocktail_categories_cocktail_fkey")
+  referenceValue   ReferenceValue @relation(fields: [referenceValueId], references: [id], map: "cocktail_categories_reference_value_fkey")
 
   @@id([cocktailId, referenceValueId])
   @@index([referenceValueId, cocktailVenueId], map: "cocktail_categories_value_venue_idx")
+  @@index([cocktailVenueId, cocktailId], map: "cocktail_categories_venue_cocktail_idx")
   @@map("cocktail_categories")
 }
 
 model Unit {
   id              String             @id @default(uuid()) @db.Uuid
-  code            String
+  code            String             @unique(map: "units_system_code_key", where: raw("(\"venueId\" IS NULL)"))
   label           String
   kind            QuantityKind?
   venueId         String?            @db.Uuid
@@ -200,6 +209,7 @@ model Unit {
   components      ProductComponent[]
 
   @@unique([id, venueId], map: "units_id_venue_id_key")
+  @@unique([venueId, code], map: "units_venue_code_key", where: raw("(\"venueId\" IS NOT NULL)"))
   @@index([venueId, label], map: "units_venue_label_idx")
   @@map("units")
 }
@@ -220,16 +230,16 @@ model IngredientCategory {
 }
 
 model PreparationCategory {
-  id           String               @id @default(uuid()) @db.Uuid
-  code         String               @unique(map: "preparation_categories_code_key")
-  name         String
-  venueId      String?              @db.Uuid
-  createdByUserId String?            @db.Uuid
-  sortOrder    Int                  @default(0)
-  isActive     Boolean              @default(true)
-  venue        Venue?               @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  createdBy    User?                @relation("PreparationCategoryCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  preparations PreparationDetails[]
+  id              String               @id @default(uuid()) @db.Uuid
+  code            String               @unique(map: "preparation_categories_code_key")
+  name            String
+  venueId         String?              @db.Uuid
+  createdByUserId String?              @db.Uuid
+  sortOrder       Int                  @default(0)
+  isActive        Boolean              @default(true)
+  venue           Venue?               @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  createdBy       User?                @relation("PreparationCategoryCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  preparations    PreparationDetails[]
 
   @@index([venueId, sortOrder], map: "preparation_categories_venue_sort_idx")
   @@map("preparation_categories")
@@ -254,6 +264,8 @@ model ReferenceValue {
   cocktailCategories         CocktailCategory[]
 
   @@unique([id, venueId], map: "reference_values_id_venue_id_key")
+  @@unique([type, code], map: "reference_values_system_key", where: raw("(\"venueId\" IS NULL)"))
+  @@unique([venueId, type, code], map: "reference_values_venue_key", where: raw("(\"venueId\" IS NOT NULL)"))
   @@index([venueId, type, sortOrder], map: "reference_values_scope_type_sort_idx")
   @@map("reference_values")
 }
@@ -262,14 +274,14 @@ model ProductAlias {
   id                    String  @id @default(uuid()) @db.Uuid
   productId             String  @db.Uuid
   value                 String
-  valueNormalized       String
+  valueNormalized       String  @unique(map: "product_aliases_value_normalized_key")
   searchValueNormalized String
   isConfirmed           Boolean @default(false)
   language              String?
   product               Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([valueNormalized], map: "product_aliases_value_normalized_key")
   @@index([productId], map: "product_aliases_product_idx")
+  @@index([searchValueNormalized(ops: raw("gin_trgm_ops"))], map: "product_aliases_search_value_trgm_idx", type: Gin, where: raw("(\"isConfirmed\" = true)"))
   @@map("product_aliases")
 }
 
@@ -283,8 +295,8 @@ model CatalogMatchRequest {
   processedAt              DateTime                  @default(now()) @db.Timestamptz(6)
   createdAt                DateTime                  @default(now()) @db.Timestamptz(6)
   updatedAt                DateTime                  @updatedAt @db.Timestamptz(6)
-  localProduct             Product                   @relation("CatalogLocalProduct", fields: [localProductId], references: [id], onDelete: Cascade)
-  suggestedGlobalProduct   Product?                  @relation("CatalogSuggestedProduct", fields: [suggestedGlobalProductId], references: [id], onDelete: SetNull)
+  localProduct             Product                   @relation("CatalogLocalProduct", fields: [localProductId], references: [id], onDelete: Cascade, map: "catalog_match_requests_local_product_fkey")
+  suggestedGlobalProduct   Product?                  @relation("CatalogSuggestedProduct", fields: [suggestedGlobalProductId], references: [id], map: "catalog_match_requests_suggested_product_fkey")
 
   @@index([status, processedAt], map: "catalog_match_requests_status_processed_idx")
   @@map("catalog_match_requests")

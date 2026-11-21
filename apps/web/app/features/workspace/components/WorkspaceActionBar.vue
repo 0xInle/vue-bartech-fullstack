@@ -1,15 +1,15 @@
 <template>
-  <div class="mt-2 flex justify-center gap-1" aria-label="Действия рабочего пространства">
+  <div class="flex items-center gap-1" aria-label="Действия рабочего пространства">
     <Button
-      v-tooltip.top="{ value: 'Профиль', class: 'app-tooltip' }"
-      type="button"
-      icon="pi pi-user"
-      aria-label="Профиль"
+      v-tooltip.top="{ value: 'Справочный центр', class: 'app-tooltip' }"
+      as="router-link"
+      to="/docs"
+      icon="pi pi-question-circle"
+      aria-label="Справочный центр"
       severity="secondary"
-      variant="text"
+      variant="outlined"
       size="small"
-      class="workspace-action-icon-button"
-      @click="$emit('openProfile')"
+      class="app-icon-button"
     />
     <Button
       v-tooltip.top="{ value: 'Сменить тему', class: 'app-tooltip' }"
@@ -18,22 +18,10 @@
       :aria-label="colorScheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'"
       :aria-pressed="colorScheme === 'dark'"
       severity="secondary"
-      variant="text"
+      variant="outlined"
       size="small"
-      class="workspace-action-icon-button"
+      class="app-icon-button"
       @click="toggleColorScheme"
-    />
-    <Button
-      v-tooltip.top="{ value: 'Справочный центр', class: 'app-tooltip' }"
-      as="router-link"
-      to="/docs"
-      icon="pi pi-question-circle"
-      aria-label="Справочный центр"
-      severity="secondary"
-      variant="text"
-      size="small"
-      class="workspace-action-icon-button"
-      @click="$emit('openDocs')"
     />
   </div>
 </template>
@@ -41,6 +29,5 @@
 <script setup lang="ts">
 import { useColorScheme } from "~/composables/useColorScheme";
 
-defineEmits<{ openProfile: []; openDocs: [] }>();
 const { colorScheme, toggleColorScheme } = useColorScheme();
 </script>

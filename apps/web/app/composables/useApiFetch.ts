@@ -1,6 +1,8 @@
 import { analyticsDeviceType } from "~/features/analytics/utils/device-type";
+import { useQueryClient } from "@tanstack/vue-query";
 
 export function useApiFetch(): typeof globalThis.fetch {
+  const queryClient = useQueryClient();
   const config = useRuntimeConfig();
   const requestUrl = useRequestURL();
   const requestCookie = import.meta.server ? useRequestHeaders(["cookie"]).cookie : undefined;
@@ -37,26 +39,53 @@ export function useApiFetch(): typeof globalThis.fetch {
     const pending = request
       ? globalThis.fetch(new Request(request, { headers }))
       : globalThis.fetch(targetUrl, { ...init, headers });
-    if (
-      !import.meta.client ||
-      !targetUrl.pathname.startsWith("/api/v1/") ||
-      targetUrl.pathname.includes("/internal/")
-    ) {
-      return pending;
-    }
+    const isApiRequest = import.meta.client && targetUrl.pathname.startsWith("/api/v1/");
+    const shouldRefreshAudit = isApiRequest && isAuditMutation(targetUrl.pathname, method);
+    const shouldReportError = isApiRequest && !targetUrl.pathname.includes("/internal/");
+    if (!shouldRefreshAudit && !shouldReportError) return pending;
+
     return pending.then(
       (response) => {
-        if (response.status >= 500) reportTechnicalError("API", targetUrl, csrfToken.value);
+        if (shouldReportError && response.status >= 500)
+          reportTechnicalError("API", targetUrl, csrfToken.value);
+        if (shouldRefreshAudit && response.ok) {
+          void Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["audit-history"] }),
+            queryClient.invalidateQueries({ queryKey: ["audit-history-authors"] }),
+          ]);
+        }
         return response;
       },
       (error: unknown) => {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
+        if (shouldReportError && !(error instanceof DOMException && error.name === "AbortError")) {
           reportTechnicalError("NETWORK", targetUrl, csrfToken.value);
         }
         throw error;
       },
     );
   };
+}
+
+function isAuditMutation(pathname: string, method: string): boolean {
+  if (["GET", "HEAD", "OPTIONS"].includes(method)) return false;
+
+  // Список соответствует операциям, создающим видимые записи AuditEvent.
+  return [
+    /^\/api\/v1\/organizations\/companies\/[^/]+\/venues\/[^/]+\/(?:announcements|checklists)(?:\/[^/]+)?$/,
+    /^\/api\/v1\/organizations\/companies\/[^/]+\/venues\/[^/]+\/team\/(?:add-existing|[^/]+(?:\/end)?)$/,
+    /^\/api\/v1\/organizations\/companies\/[^/]+\/(?:chef-invitations|venue-invitations)(?:\/revoke)?$/,
+    /^\/api\/v1\/organizations\/companies\/[^/]+\/venues\/[^/]+\/invitations(?:\/revoke)?$/,
+    /^\/api\/v1\/invitations\/(?:accept|decline|cancel|complete)$/,
+    /^\/api\/v1\/organizations\/companies\/[^/]+\/venues\/[^/]+\/products\/(?:ingredients|preparations|garnishes|cocktails)(?:\/[^/]+)?$/,
+    /^\/api\/v1\/organizations\/companies\/[^/]+\/venues\/[^/]+\/products\/(?:[^/]+\/(?:archive|permanent-delete)|archive\/[^/]+\/restore)$/,
+    /^\/api\/v1\/support\/requests(?:\/[^/]+\/messages)?$/,
+    /^\/api\/v1\/support\/access-grants\/(?:requests\/[^/]+\/messages\/[^/]+\/approve-access|[^/]+\/revoke)$/,
+    /^\/api\/v1\/internal\/service-access\/(?:grants\/[^/]+\/sessions|sessions\/[^/]+\/end)$/,
+    /^\/api\/v1\/internal\/service-sessions\/[^/]+\/companies\/[^/]+\/venues\/[^/]+\/products\/(?:ingredients|preparations|garnishes|cocktails)(?:\/[^/]+)?$/,
+    /^\/api\/v1\/support\/requests\/[^/]+\/access-grants\/[^/]+\/revoke$/,
+    /^\/api\/v1\/internal\/support\/requests\/[^/]+\/access-grants\/[^/]+\/revoke$/,
+    /^\/api\/v1\/internal\/catalog\/candidates\/[^/]+\/(?:link|create-global|keep-local)$/,
+  ].some((route) => route.test(pathname));
 }
 
 function reportTechnicalError(

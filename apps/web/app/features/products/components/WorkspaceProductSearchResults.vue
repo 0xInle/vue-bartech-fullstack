@@ -1,6 +1,11 @@
 <template>
-  <div>
-    <LoadingIndicator v-if="loading" screen />
+  <div :class="fillViewport ? 'flex min-h-0 flex-1 flex-col' : ''">
+    <div
+      v-if="loading"
+      :class="fillViewport ? 'flex min-h-0 flex-1 items-center justify-center' : 'py-8'"
+    >
+      <LoadingIndicator />
+    </div>
     <Message v-else-if="active && error" severity="error" :closable="false" :pt="compactMessagePt">
       Не удалось выполнить поиск. Попробуйте ещё раз.
     </Message>
@@ -13,38 +18,52 @@
     >
       По вашему запросу ничего не найдено
     </Message>
-    <DataTable
+    <div
       v-else-if="active && ready && items.length > 0"
-      v-model:selection="selectedItem"
-      :value="items"
-      data-key="id"
-      selection-mode="single"
-      :meta-key-selection="false"
-      size="small"
-      row-hover
-      class="product-search-results-table mt-3 text-sm"
-      :pt="productSearchTablePt"
-      @row-select="emit('select', $event.data)"
+      class="relative mt-3 min-h-0 flex-1 overflow-hidden"
     >
-      <Column field="name" header="Наименование">
-        <template #body="{ data }">
-          <span class="font-medium">{{ data.name }}</span>
-          <Tag
-            v-if="data.workflowStatus === 'IN_DEVELOPMENT'"
-            value="Проработка"
-            severity="warn"
-            :pt="compactTagPt"
-            class="ml-2 align-middle"
-          />
-          <span v-if="companySearch && data.venueName" class="block text-xs text-color-secondary">
-            {{ data.venueName }}
-          </span>
-        </template>
-      </Column>
-      <Column field="type" header="Категория" style="width: 1%; white-space: nowrap">
-        <template #body="{ data }">{{ categoryLabel(data) }}</template>
-      </Column>
-    </DataTable>
+      <DataTable
+        v-model:selection="selectedItem"
+        :value="items"
+        data-key="id"
+        selection-mode="single"
+        :meta-key-selection="false"
+        size="small"
+        :scrollable="fillViewport"
+        :scroll-height="fillViewport ? 'flex' : undefined"
+        row-hover
+        class="product-search-results-table h-full text-sm"
+        :pt="productSearchTablePt"
+        @row-select="emit('select', $event.data)"
+      >
+        <Column field="name" header="Наименование">
+          <template #body="{ data }">
+            <div class="flex items-center gap-1">
+              <span class="font-medium">{{ data.name }}</span>
+              <i
+                v-if="isPreviewable(data)"
+                class="pi pi-arrow-up-right shrink-0"
+                style="color: var(--p-primary-color)"
+                aria-hidden="true"
+              />
+            </div>
+            <Tag
+              v-if="data.workflowStatus === 'IN_DEVELOPMENT'"
+              value="Проработка"
+              severity="warn"
+              :pt="compactTagPt"
+              class="ml-2 align-middle"
+            />
+            <span v-if="companySearch && data.venueName" class="block text-xs text-color-secondary">
+              {{ data.venueName }}
+            </span>
+          </template>
+        </Column>
+        <Column field="type" header="Категория" style="width: 1%; white-space: nowrap">
+          <template #body="{ data }">{{ categoryLabel(data) }}</template>
+        </Column>
+      </DataTable>
+    </div>
   </div>
 </template>
 
@@ -54,15 +73,20 @@ import type { ProductSearchCategoryResponseDto } from "@bartech/api-client";
 import { compactMessagePt } from "~/utils/primevue-message";
 import type { WorkspaceSearchItem } from "../composables/useWorkspaceProductSearch";
 
-const props = defineProps<{
-  items: WorkspaceSearchItem[];
-  loading: boolean;
-  active: boolean;
-  error: boolean;
-  ready: boolean;
-  companySearch: boolean;
-  categories: ProductSearchCategoryResponseDto[];
-}>();
+const props = withDefaults(
+  defineProps<{
+    items: WorkspaceSearchItem[];
+    loading: boolean;
+    active: boolean;
+    error: boolean;
+    ready: boolean;
+    companySearch: boolean;
+    categories: ProductSearchCategoryResponseDto[];
+    fillViewport?: boolean;
+    previewEnabled?: boolean;
+  }>(),
+  { fillViewport: false, previewEnabled: false },
+);
 const emit = defineEmits<{
   select: [item: WorkspaceSearchItem];
 }>();
@@ -71,7 +95,7 @@ const productSearchTablePt = {
   root: {
     style: {
       "--p-datatable-border-color": "var(--p-content-border-color)",
-      "--p-datatable-header-cell-background": "transparent",
+      "--p-datatable-header-cell-background": "var(--p-content-background)",
       "--p-datatable-row-background": "transparent",
       "--p-datatable-row-hover-background":
         "color-mix(in srgb, var(--p-primary-100) 70%, var(--p-content-background))",
@@ -126,9 +150,25 @@ function categoryLabel(item: WorkspaceSearchItem): string {
   };
   return labels[item.type] ?? "Продукция";
 }
+
+function isPreviewable(item: WorkspaceSearchItem): boolean {
+  return (
+    props.previewEnabled &&
+    item.scope === "VENUE" &&
+    (item.type === "COCKTAIL" || item.type === "PREPARATION" || item.type === "GARNISH")
+  );
+}
 </script>
 
 <style scoped>
+:deep(.product-search-results-table .p-datatable-thead > tr:first-child > th:first-child) {
+  border-top-left-radius: var(--p-border-radius-md);
+}
+
+:deep(.product-search-results-table .p-datatable-thead > tr:first-child > th:last-child) {
+  border-top-right-radius: var(--p-border-radius-md);
+}
+
 :deep(.product-search-results-table .p-datatable-tbody > tr:last-child > td) {
   border-block-end-width: 0;
 }

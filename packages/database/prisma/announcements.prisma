@@ -1,0 +1,15 @@
+model VenueAnnouncement {
+  id           String   @id @default(uuid()) @db.Uuid
+  companyId    String   @db.Uuid
+  venueId      String   @db.Uuid
+  authorUserId String?  @db.Uuid
+  title        String   @db.VarChar(100)
+  body         String   @db.VarChar(1000)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+  venue        Venue    @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
+  author       User?    @relation("VenueAnnouncementAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, venueId, createdAt], map: "venue_announcements_workspace_created_idx")
+  @@map("venue_announcements")
+}

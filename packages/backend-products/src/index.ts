@@ -1,4 +1,10 @@
 export { ProductsModule } from "./products.module.js";
+export { ProductCostCalculatorService } from "./cost-calculator/product-cost-calculator.service.js";
+export type {
+  CostCalculatorProduct,
+  CostCalculationInput,
+  CostCalculationResult,
+} from "./cost-calculator/product-cost-calculator.dto.js";
 export { ArchiveReadService } from "./archive/archive-read.service.js";
 export { ArchiveMutationService } from "./archive/archive-mutation.service.js";
 export { ProductExportReadModule } from "./exports/product-export-read.module.js";

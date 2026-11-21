@@ -14,6 +14,9 @@ const SELF_VISIBLE_EVENT = [
   "product.restored",
   "product.permanently_deleted",
   "PRODUCT_CATALOG_MATCHED",
+  "venue_checklist.created",
+  "venue_checklist.updated",
+  "venue_checklist.deleted",
 ];
 const HIDDEN_EVENT_TYPES = ["export.requested", "export.completed", "export.failed"];
 const COMPANY_CLOSURE_EVENTS = [
@@ -61,7 +64,7 @@ export class AuditReadService {
     const items = rows.slice(0, limit).map((row) => {
       const metadata = safeMetadata(row.metadata);
       const product = resolveProductContext(row, metadata, detailData);
-      const resolvedMetadata = metadata
+      const resolvedMetadata: Record<string, unknown> | null = metadata
         ? {
             ...metadata,
             ...(product.name ? { name: product.name } : {}),
@@ -102,6 +105,7 @@ export class AuditReadService {
           row.eventType,
           typeof resolvedMetadata?.name === "string" ? resolvedMetadata.name : null,
           typeof resolvedMetadata?.productType === "string" ? resolvedMetadata.productType : null,
+          typeof resolvedMetadata?.reason === "string" ? resolvedMetadata.reason : null,
         ),
         details,
         metadata: null,
@@ -189,6 +193,7 @@ function safeMetadata(value: Prisma.JsonValue | null): Record<string, unknown> |
     "granted",
     "revoked",
     "name",
+    "reason",
     "subjectUserId",
     "subjectName",
     "actorName",
@@ -226,6 +231,7 @@ function safeMetadata(value: Prisma.JsonValue | null): Record<string, unknown> |
         ].includes(String(entry));
       if (key === "errorCode")
         return ["EXPORT_PROCESSING_FAILED", "DEADLINE_EXCEEDED"].includes(String(entry));
+      if (key === "reason") return ["DATA_MIGRATION", "ERROR", "OTHER"].includes(String(entry));
       if (
         [
           "name",
@@ -261,15 +267,23 @@ function safeMetadata(value: Prisma.JsonValue | null): Record<string, unknown> |
   );
 }
 
-function eventSummary(eventType: string, name: string | null, productType: string | null): string {
+function eventSummary(
+  eventType: string,
+  name: string | null,
+  productType: string | null,
+  reason: string | null,
+): string {
   const actions: Record<string, string> = {
     "support.access_granted": "Выдача доступа техподдержке",
     "support.access_revoked": "Отзыв доступа техподдержке",
+    "support.request_created": "Создано обращение в техподдержку",
     "service_access.started": "Сотрудник техподдержки подключился",
     "service_access.ended": "Сотрудник техподдержки завершил сессию",
+    "membership.added_from_company": "Сотрудник добавлен в заведение",
     "membership.role_changed": "Изменена должность сотрудника",
     "membership.permission_overrides_changed": "Изменены права сотрудника",
     "membership.ended": "Сотрудник удалён из заведения",
+    "company_membership.ended": "Пользователь вышел из компании",
     "temporary_responsibility.ended": "Завершена временная ответственность сотрудника",
     "invitation.created": "Создано приглашение",
     "invitation.revoked": "Приглашение отозвано",
@@ -277,6 +291,33 @@ function eventSummary(eventType: string, name: string | null, productType: strin
     "invitation.completed": "Приглашение принято",
     PRODUCT_CATALOG_MATCHED: "Сопоставлен локальный ингредиент с каталогом",
   };
+  if (eventType.startsWith("venue_announcement.")) {
+    const subject = name ? `объявление «${name}»` : "объявление";
+    const summaries: Record<string, string> = {
+      "venue_announcement.created": `Создано ${subject}`,
+      "venue_announcement.updated": `Изменено ${subject}`,
+      "venue_announcement.deleted": `Удалено ${subject}`,
+    };
+    return summaries[eventType] ?? "Изменено объявление";
+  }
+  if (eventType.startsWith("venue_checklist.")) {
+    const subject = name ? `чек-лист «${name}»` : "чек-лист";
+    const summaries: Record<string, string> = {
+      "venue_checklist.created": `Создан ${subject}`,
+      "venue_checklist.updated": `Изменён ${subject}`,
+      "venue_checklist.deleted": `Удалён ${subject}`,
+    };
+    return summaries[eventType] ?? "Изменён чек-лист";
+  }
+  if (eventType === "support.request_created") {
+    const reasonLabels: Record<string, string> = {
+      DATA_MIGRATION: "Перенос данных",
+      ERROR: "Ошибка",
+      OTHER: "Другой вопрос",
+    };
+    const reasonLabel = reason ? reasonLabels[reason] : null;
+    return reasonLabel ? `Создано обращение «${reasonLabel}»` : "Создано обращение в техподдержку";
+  }
   if (!eventType.startsWith("product.")) return actions[eventType] ?? "Выполнено действие";
 
   if (!productType) {

@@ -1,5 +1,7 @@
 export * from './analytics/analytics';
+export * from './announcements/announcements';
 export * from './audit/audit';
+export * from './checklists/checklists';
 export * from './exports/exports';
 export * from './health/health';
 export * from './identity/identity';
@@ -14,6 +16,7 @@ export * from './invitations/invitations';
 export * from './meta/meta';
 export * from './organizations/organizations';
 export * from './products/products';
+export * from './reminders/reminders';
 export * from './schedules/schedules';
 export * from './support/support';
 export * from './support-access/support-access';

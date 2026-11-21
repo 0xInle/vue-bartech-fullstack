@@ -13,13 +13,17 @@ import { requestApi } from "~/utils/api-response";
 export type WorkspaceSearchItem = ProductSearchPageResponseDto["items"][number];
 export type WorkspaceSearchScope = "VENUE" | "COMPANY";
 
-export function useWorkspaceProductSearch(workspace: MaybeRefOrGetter<Workspace>) {
+export function useWorkspaceProductSearch(
+  workspace: MaybeRefOrGetter<Workspace>,
+  options: { types?: readonly string[] } = {},
+) {
   const identity = useIdentityFlow();
   const analytics = useProductAnalytics();
   const searchText = ref("");
   const debouncedSearch = ref("");
   const scope = ref<WorkspaceSearchScope>("VENUE");
   const limit = 20;
+  const types = options.types?.join(",");
   let searchTimer: ReturnType<typeof setTimeout> | undefined;
   const currentWorkspace = computed(() => toValue(workspace));
   const isChef = computed(() => currentWorkspace.value.role === "chef_bartender");
@@ -49,6 +53,7 @@ export function useWorkspaceProductSearch(workspace: MaybeRefOrGetter<Workspace>
       currentWorkspace.value.venue.id,
       currentWorkspace.value.role,
       isChef.value ? scope.value : "VENUE",
+      types,
       debouncedSearch.value,
     ]),
     enabled: queryEnabled,
@@ -57,6 +62,7 @@ export function useWorkspaceProductSearch(workspace: MaybeRefOrGetter<Workspace>
       const params = {
         query: debouncedSearch.value,
         limit,
+        ...(types ? { types } : {}),
       };
       const response =
         isChef.value && scope.value === "COMPANY"

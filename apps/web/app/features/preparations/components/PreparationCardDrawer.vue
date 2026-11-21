@@ -118,7 +118,7 @@
           size="small"
           severity="secondary"
           variant="outlined"
-          @click="emit('edit', preparation.id)"
+          @click="requestEdit"
         />
         <ExportActionButton
           class="min-w-max flex-auto shrink-0"
@@ -148,7 +148,7 @@
 import { computed } from "vue";
 import ExportActionButton from "~/features/exports/components/ExportActionButton.vue";
 import type { Workspace } from "~/types/user-workspaces";
-import { usePreparations } from "../composables/usePreparations";
+import { usePreparations, type PreparationCardResponseDto } from "../composables/usePreparations";
 import { compactMessagePt } from "~/utils/primevue-message";
 
 const props = defineProps<{
@@ -157,7 +157,11 @@ const props = defineProps<{
   readOnly?: boolean;
   workspace: Workspace;
 }>();
-const emit = defineEmits<{ "update:visible": [visible: boolean]; edit: [preparationId: string] }>();
+const emit = defineEmits<{
+  "update:visible": [visible: boolean];
+  edit: [preparationId: string];
+  "edit-product": [preparation: PreparationCardResponseDto];
+}>();
 const companyId = computed(() => props.workspace.company.id);
 const venueId = computed(() => props.workspace.venue.id);
 const { preparationQuery: createPreparationQuery } = usePreparations(companyId, venueId, {
@@ -189,6 +193,12 @@ const compactTagPt = {
   label: { style: { fontWeight: "400" } },
 };
 const sectionHeadingStyle = { backgroundColor: "var(--p-surface-50)" };
+
+function requestEdit(): void {
+  if (!preparation.value) return;
+  emit("edit-product", preparation.value);
+  emit("edit", preparation.value.id);
+}
 const sectionMarkerStyle = { backgroundColor: "var(--p-primary-color)" };
 function preparationPath(id: string): string {
   return `/app/companies/${companyId.value}/venues/${venueId.value}/preparations/${id}`;

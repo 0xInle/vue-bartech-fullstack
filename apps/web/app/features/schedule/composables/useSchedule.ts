@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { toValue, type MaybeRefOrGetter } from "vue";
 import {
   schedulesControllerDeleteTemplate,
   schedulesControllerExtend,
@@ -107,23 +108,7 @@ export function useSchedule(
 ) {
   const identity = useIdentityFlow();
   const queryClient = useQueryClient();
-  const queryKey = computed(() => ["schedule", companyId, venueId, year.value, month.value]);
-  const monthQuery = useQuery({
-    queryKey,
-    enabled,
-    retry: false,
-    placeholderData: (previousMonth) => previousMonth,
-    queryFn: async ({ signal }) => {
-      const response = await schedulesControllerGetMonth(
-        companyId,
-        venueId,
-        { year: year.value, month: month.value },
-        { credentials: "include", signal },
-        identity.apiFetch,
-      );
-      return requestApi<ScheduleMonth>(Promise.resolve(response));
-    },
-  });
+  const monthQuery = useScheduleMonthQuery(companyId, venueId, year, month, enabled);
   const templatesQuery = useQuery({
     queryKey: ["schedule-templates", companyId, venueId],
     enabled,
@@ -289,4 +274,38 @@ export function useSchedule(
     deleteTemplate,
     exportSchedule,
   };
+}
+
+export function useScheduleMonthQuery(
+  companyId: MaybeRefOrGetter<string>,
+  venueId: MaybeRefOrGetter<string>,
+  year: Readonly<Ref<number>>,
+  month: Readonly<Ref<number>>,
+  enabled: Ref<boolean> = ref(true),
+  options: { keepPreviousData?: boolean } = {},
+) {
+  const identity = useIdentityFlow();
+  return useQuery({
+    queryKey: computed(() => [
+      "schedule",
+      toValue(companyId),
+      toValue(venueId),
+      year.value,
+      month.value,
+    ]),
+    enabled,
+    retry: false,
+    placeholderData:
+      options.keepPreviousData === false ? undefined : (previousMonth) => previousMonth,
+    queryFn: async ({ signal }) => {
+      const response = await schedulesControllerGetMonth(
+        toValue(companyId),
+        toValue(venueId),
+        { year: year.value, month: month.value },
+        { credentials: "include", signal },
+        identity.apiFetch,
+      );
+      return requestApi<ScheduleMonth>(Promise.resolve(response));
+    },
+  });
 }

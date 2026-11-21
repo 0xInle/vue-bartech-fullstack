@@ -73,7 +73,7 @@ enum AnalyticsEventResult {
 }
 
 model User {
-  id                                String                          @id @default(uuid()) @db.Uuid
+  id                                String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email                             String
   emailNormalized                   String                          @unique(map: "users_email_normalized_key")
   passwordHash                      String?
@@ -114,8 +114,12 @@ model User {
   scheduleTemplatesCreated          ScheduleTemplate[]
   scheduleTemplateVersionsCreated   ScheduleTemplateVersion[]
   scheduleAssignments               ScheduleAssignment[]
+  venuePersonalReminders            VenuePersonalReminder[]
+  venueAnnouncementsCreated         VenueAnnouncement[]            @relation("VenueAnnouncementAuthor")
+  venueChecklistsCreated            VenueChecklist[]                @relation("VenueChecklistAuthor")
   revokedSupportAccessGrants        SupportAccessGrant[]            @relation("SupportAccessGrantRevoker")
 
+  @@index([status, deletionScheduledAt], map: "users_pending_deletion_idx")
   @@map("users")
 }
 
@@ -130,9 +134,9 @@ model UserProfile {
 }
 
 model RegistrationAttempt {
-  id                    String                  @id @default(uuid()) @db.Uuid
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email                 String
-  emailNormalized       String
+  emailNormalized       String                  @unique(map: "registration_attempts_email_normalized_key")
   fullName              String
   passwordHash          String
   companyName           String
@@ -151,7 +155,7 @@ model RegistrationAttempt {
 }
 
 model EmailChallenge {
-  id                    String                       @id @default(uuid()) @db.Uuid
+  id                    String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email                 String?
   emailNormalized       String
   purpose               ChallengePurpose
@@ -167,12 +171,14 @@ model EmailChallenge {
   registrationAttempt   RegistrationAttempt?         @relation(fields: [registrationAttemptId], references: [id], onDelete: Cascade)
   invitationSession     InvitationAcceptanceSession? @relation(fields: [invitationSessionId], references: [id], onDelete: Cascade)
 
+  @@unique([emailNormalized, purpose], map: "email_challenges_one_open_per_target_key", where: raw("(\"consumedAt\" IS NULL)"))
   @@index([emailNormalized, purpose, expiresAt], map: "email_challenges_lookup_idx")
+  @@index([invitationSessionId, purpose, expiresAt], map: "email_challenges_invitation_session_idx")
   @@map("email_challenges")
 }
 
 model Session {
-  id             String    @id @default(uuid()) @db.Uuid
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId         String    @db.Uuid
   tokenHash      String    @unique(map: "sessions_token_hash_key")
   createdAt      DateTime  @default(now()) @db.Timestamptz(6)
@@ -282,7 +288,7 @@ model InternalAuditEvent {
 }
 
 model ProductAnalyticsEvent {
-  id            String                    @id @default(uuid()) @db.Uuid
+  id            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   eventId       String                    @unique(map: "product_analytics_events_event_id_key") @db.Uuid
   eventType     ProductAnalyticsEventType
   deviceType    AnalyticsDeviceType
@@ -297,7 +303,7 @@ model ProductAnalyticsEvent {
 }
 
 model OutboxMessage {
-  id                String       @id @default(uuid()) @db.Uuid
+  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   eventType         String
   status            OutboxStatus @default(PENDING)
   payloadCiphertext String?

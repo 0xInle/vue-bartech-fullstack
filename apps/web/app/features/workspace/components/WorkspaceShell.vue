@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-surface-50 text-color lg:flex">
     <aside
-      class="hidden w-[16rem] shrink-0 flex-col border-r border-surface bg-surface-0 p-4 lg:flex"
+      class="hidden w-[16rem] shrink-0 flex-col border-r border-surface bg-surface-0 p-4 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start"
       style="border-color: var(--p-content-border-color)"
     >
       <div class="mb-6 flex items-center justify-between">
@@ -16,7 +16,7 @@
       <PanelMenu
         v-model:expanded-keys="expandedKeys"
         :model="menuItems"
-        class="workspace-panel-menu w-full flex-1"
+        class="workspace-panel-menu min-h-0 w-full flex-1 overflow-y-auto"
         :pt="supportMenuPt"
       >
         <template #headericon="{ item }">
@@ -45,7 +45,6 @@
         <p class="truncate px-3 text-center text-xs text-color-secondary">
           {{ fullName }}
         </p>
-        <WorkspaceActionBar @open-profile="profileVisible = true" />
       </div>
     </aside>
 
@@ -72,13 +71,29 @@
 
     <main
       class="min-w-0 flex-1 px-4 pb-24 pt-28 sm:px-6 lg:px-8 lg:pb-8 lg:pt-4"
-      :class="isSchedulePage ? 'flex h-dvh min-h-0 flex-col overflow-hidden' : ''"
+      :class="
+        isSchedulePage
+          ? 'flex h-dvh min-h-0 flex-col overflow-hidden'
+          : isHome
+            ? 'lg:flex lg:h-dvh lg:min-h-0 lg:flex-col lg:overflow-y-auto'
+            : ''
+      "
     >
-      <div v-if="!isHome" class="mb-5 flex shrink-0 justify-end xl:hidden">
-        <WorkspaceProductSearch :workspace="workspace" mode="trigger" />
+      <div class="mb-3 flex min-w-0 shrink-0 items-center gap-2">
+        <div v-if="isHome" class="min-w-0 flex-1">
+          <slot name="home-search" />
+        </div>
+        <div v-else class="xl:hidden">
+          <WorkspaceProductSearch :workspace="workspace" mode="trigger" />
+        </div>
+        <WorkspaceActionBar class="ml-auto" />
+        <AccountProfileButton :full-name="fullName" @open="profileVisible = true" />
       </div>
       <CompanyClosureBanner :company-id="workspace.company.id" />
       <div v-if="isSchedulePage" class="flex min-h-0 min-w-0 flex-1 flex-col">
+        <slot />
+      </div>
+      <div v-else-if="isHome" class="flex flex-col">
         <slot />
       </div>
       <slot v-else />
@@ -161,15 +176,11 @@
           />
         </template>
       </PanelMenu>
-      <div
-        class="mt-6 border-t border-surface pt-4"
-        style="border-color: var(--p-content-border-color)"
+      <p
+        class="mt-6 truncate border-t border-surface pt-4 text-center text-xs text-color-secondary"
       >
-        <p class="truncate px-3 text-center text-xs text-color-secondary">
-          {{ fullName }}
-        </p>
-        <WorkspaceActionBar @open-profile="openProfile" @open-docs="moreVisible = false" />
-      </div>
+        {{ fullName }}
+      </p>
     </Drawer>
     <AccountProfileDrawer v-model:visible="profileVisible" />
   </div>
@@ -184,6 +195,7 @@ import WorkspaceProductSearch from "~/features/products/components/WorkspaceProd
 import WorkspaceProductDrawer from "~/components/WorkspaceProductDrawer.vue";
 import WorkspaceActionBar from "./WorkspaceActionBar.vue";
 import AccountProfileDrawer from "~/features/identity/components/AccountProfileDrawer.vue";
+import AccountProfileButton from "~/features/identity/components/AccountProfileButton.vue";
 import { useSupportUnreadCount } from "~/features/support/composables/useSupportUnreadCount";
 
 defineOptions({ name: "WorkspaceShell" });
@@ -197,7 +209,10 @@ const supportMenuPt = {
   headerLink: { class: "!flex !items-center" },
 };
 const moreVisible = ref(false);
-const expandedKeys = ref<Record<string, boolean>>({ catalog: true, team: true });
+const expandedKeys = useState<Record<string, boolean>>(
+  `workspace-navigation-expanded-${props.workspace.company.id}-${props.workspace.venue.id}`,
+  () => ({ catalog: true, team: true, management: true }),
+);
 
 const homePath = computed(
   () => `/app/companies/${props.workspace.company.id}/venues/${props.workspace.venue.id}`,
@@ -309,11 +324,6 @@ const isMoreActive = computed(() => mobileQuickItems.value.every((item) => !item
 function switchWorkspace(workspace: Workspace): void {
   moreVisible.value = false;
   emit("switch", workspace);
-}
-
-function openProfile(): void {
-  moreVisible.value = false;
-  profileVisible.value = true;
 }
 
 function getMenuLink(label: string): { label: string; to: string } {

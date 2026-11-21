@@ -1,15 +1,20 @@
 <template>
   <div class="space-y-3">
     <FloatLabel variant="on">
-      <IconField>
+      <IconField class="w-full">
         <InputIcon class="pi pi-search" />
-        <InputText
-          id="product-search"
+        <AutoComplete
+          input-id="product-search"
           :model-value="searchText"
-          :maxlength="160"
+          :suggestions="noSuggestions"
           size="small"
+          show-clear
+          :show-empty-message="false"
+          :force-selection="false"
           class="w-full"
           aria-label="Поиск продукции"
+          fluid
+          :pt="{ pcInputText: { root: { maxlength: 160 } } }"
           @update:model-value="emit('update:searchText', String($event ?? ''))"
         />
       </IconField>
@@ -34,6 +39,7 @@ import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import type { WorkspaceSearchScope } from "../composables/useWorkspaceProductSearch";
 
+const noSuggestions: string[] = [];
 defineProps<{
   searchText: string;
   scope: WorkspaceSearchScope;

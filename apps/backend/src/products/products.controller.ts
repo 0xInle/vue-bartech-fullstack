@@ -22,8 +22,9 @@ import {
   ProductsService,
   ArchiveReadService,
   ArchiveMutationService,
+  ProductCostCalculatorService,
 } from "@bartech/backend-products";
-import type { CreateProductContext } from "@bartech/backend-products";
+import type { CostCalculationInput, CreateProductContext } from "@bartech/backend-products";
 import {
   RequirePermissions,
   WorkspacePermissionGuard,
@@ -62,6 +63,9 @@ import {
   GarnishListQueryDto,
   LocalIngredientListItemResponseDto,
   LocalIngredientListQueryDto,
+  CostCalculationRequestDto,
+  CostCalculationResponseDto,
+  CostCalculatorRecipeResponseDto,
 } from "./products.dto.js";
 import {
   ArchiveCardDto,
@@ -97,7 +101,44 @@ export class ProductsController {
     private readonly garnishUpdates: GarnishUpdateService,
     private readonly archiveReads: ArchiveReadService,
     private readonly archiveMutations: ArchiveMutationService,
+    private readonly costCalculator: ProductCostCalculatorService,
   ) {}
+
+  @Get("cost-calculator/:productId")
+  @RequirePermissions("view_products")
+  @ApiOperation({
+    summary: "Загрузить актуальный состав продукта для временного расчёта себестоимости",
+  })
+  @ApiParam({ name: "productId", format: "uuid" })
+  @ApiOkResponse({ type: CostCalculatorRecipeResponseDto })
+  getCostCalculatorRecipe(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Param("productId") productId: string,
+  ) {
+    return this.costCalculator.getRecipe(context(user, companyId, venueId), productId);
+  }
+
+  @Post("cost-calculator/:productId/calculate")
+  @RequirePermissions("view_products")
+  @ApiOperation({ summary: "Рассчитать себестоимость по текущим временным ценам" })
+  @ApiParam({ name: "productId", format: "uuid" })
+  @ApiOkResponse({ type: CostCalculationResponseDto })
+  @ApiBadRequestResponse({ description: "Переданные цены, единицы или пересчёты некорректны" })
+  calculateCost(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("companyId") companyId: string,
+    @Param("venueId") venueId: string,
+    @Param("productId") productId: string,
+    @Body() input: CostCalculationRequestDto,
+  ) {
+    return this.costCalculator.calculate(
+      context(user, companyId, venueId),
+      productId,
+      input as CostCalculationInput,
+    );
+  }
 
   @Get("local-ingredients")
   @RequirePermissions("view_products")

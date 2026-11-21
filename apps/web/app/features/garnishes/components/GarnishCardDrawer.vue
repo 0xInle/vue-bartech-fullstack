@@ -110,7 +110,7 @@
           size="small"
           severity="secondary"
           variant="outlined"
-          @click="emit('edit', garnish.id)"
+          @click="requestEdit"
         />
         <ExportActionButton
           class="min-w-max flex-auto shrink-0"
@@ -140,7 +140,7 @@
 import { computed } from "vue";
 import ExportActionButton from "~/features/exports/components/ExportActionButton.vue";
 import type { Workspace } from "~/types/user-workspaces";
-import { useGarnishes } from "../composables/useGarnishes";
+import { useGarnishes, type GarnishCardResponseDto } from "../composables/useGarnishes";
 import { compactMessagePt } from "~/utils/primevue-message";
 
 const props = defineProps<{
@@ -149,7 +149,11 @@ const props = defineProps<{
   visible: boolean;
   workspace: Workspace;
 }>();
-const emit = defineEmits<{ "update:visible": [visible: boolean]; edit: [garnishId: string] }>();
+const emit = defineEmits<{
+  "update:visible": [visible: boolean];
+  edit: [garnishId: string];
+  "edit-product": [garnish: GarnishCardResponseDto];
+}>();
 const companyId = computed(() => props.workspace.company.id);
 const venueId = computed(() => props.workspace.venue.id);
 const { garnishQuery: createGarnishQuery } = useGarnishes(companyId, venueId, { list: false });
@@ -179,6 +183,12 @@ const compactTagPt = {
   label: { style: { fontWeight: "400" } },
 };
 const sectionHeadingStyle = { backgroundColor: "var(--p-surface-50)" };
+
+function requestEdit(): void {
+  if (!garnish.value) return;
+  emit("edit-product", garnish.value);
+  emit("edit", garnish.value.id);
+}
 const sectionMarkerStyle = { backgroundColor: "var(--p-primary-color)" };
 function preparationPath(id: string): string {
   return `/app/companies/${companyId.value}/venues/${venueId.value}/preparations/${id}`;

@@ -15,6 +15,7 @@ import { ProductExportReadModule } from "./exports/product-export-read.module.js
 import { CatalogReviewModule } from "./catalog-review/catalog-review.module.js";
 import { CatalogManagementModule } from "./catalog-management/catalog-management.module.js";
 import { CatalogCategoriesModule } from "./catalog-categories/catalog-categories.module.js";
+import { ProductCostCalculatorService } from "./cost-calculator/product-cost-calculator.service.js";
 
 @Module({
   imports: [
@@ -33,9 +34,10 @@ import { CatalogCategoriesModule } from "./catalog-categories/catalog-categories
     CatalogManagementModule,
     CatalogCategoriesModule,
   ],
-  providers: [ProductsRepository, ProductsService],
+  providers: [ProductsRepository, ProductsService, ProductCostCalculatorService],
   exports: [
     ProductsService,
+    ProductCostCalculatorService,
     ProductSearchModule,
     IngredientMatchingModule,
     CocktailReadModule,

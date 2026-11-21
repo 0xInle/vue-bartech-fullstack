@@ -2196,6 +2196,125 @@
         ]
       }
     },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/cost-calculator/{productId}": {
+      "get": {
+        "operationId": "ProductsController_getCostCalculatorRecipe",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostCalculatorRecipeResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Рабочее пространство или связанная запись недоступны"
+          }
+        },
+        "summary": "Загрузить актуальный состав продукта для временного расчёта себестоимости",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/cost-calculator/{productId}/calculate": {
+      "post": {
+        "operationId": "ProductsController_calculateCost",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CostCalculationRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostCalculationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Переданные цены, единицы или пересчёты некорректны"
+          },
+          "404": {
+            "description": "Рабочее пространство или связанная запись недоступны"
+          }
+        },
+        "summary": "Рассчитать себестоимость по текущим временным ценам",
+        "tags": [
+          "products"
+        ]
+      }
+    },
     "/api/v1/organizations/companies/{companyId}/venues/{venueId}/products/local-ingredients": {
       "get": {
         "operationId": "ProductsController_listLocalIngredients",
@@ -8299,6 +8418,588 @@
           "schedules"
         ]
       }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/reminders": {
+      "get": {
+        "operationId": "RemindersController_list",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VenueReminderDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Получить личные напоминания заведения",
+        "tags": [
+          "reminders"
+        ]
+      },
+      "post": {
+        "operationId": "RemindersController_create",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReminderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenueReminderDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать личное напоминание",
+        "tags": [
+          "reminders"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/reminders/{reminderId}": {
+      "patch": {
+        "operationId": "RemindersController_setCompleted",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "reminderId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetReminderCompletedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenueReminderDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Изменить состояние личного напоминания",
+        "tags": [
+          "reminders"
+        ]
+      },
+      "delete": {
+        "operationId": "RemindersController_delete",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "reminderId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Напоминание удалено"
+          }
+        },
+        "summary": "Удалить личное напоминание",
+        "tags": [
+          "reminders"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/announcements": {
+      "get": {
+        "operationId": "AnnouncementsController_list",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VenueAnnouncementDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Получить объявления заведения",
+        "tags": [
+          "announcements"
+        ]
+      },
+      "post": {
+        "operationId": "AnnouncementsController_create",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveVenueAnnouncementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenueAnnouncementDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать объявление заведения",
+        "tags": [
+          "announcements"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/announcements/{announcementId}": {
+      "patch": {
+        "operationId": "AnnouncementsController_update",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "announcementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveVenueAnnouncementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenueAnnouncementDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Изменить объявление заведения",
+        "tags": [
+          "announcements"
+        ]
+      },
+      "delete": {
+        "operationId": "AnnouncementsController_delete",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "announcementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Объявление удалено"
+          }
+        },
+        "summary": "Удалить объявление заведения",
+        "tags": [
+          "announcements"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/checklists": {
+      "get": {
+        "operationId": "ChecklistsController_list",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VenueChecklistDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Получить чек-листы заведения",
+        "tags": [
+          "checklists"
+        ]
+      },
+      "post": {
+        "operationId": "ChecklistsController_create",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveVenueChecklistDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenueChecklistDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать чек-лист заведения",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
+    "/api/v1/organizations/companies/{companyId}/venues/{venueId}/checklists/{checklistId}": {
+      "patch": {
+        "operationId": "ChecklistsController_update",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "checklistId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveVenueChecklistDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenueChecklistDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Изменить чек-лист заведения",
+        "tags": [
+          "checklists"
+        ]
+      },
+      "delete": {
+        "operationId": "ChecklistsController_delete",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "venueId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "checklistId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Чек-лист удалён"
+          }
+        },
+        "summary": "Удалить чек-лист заведения",
+        "tags": [
+          "checklists"
+        ]
+      }
     }
   },
   "info": {
@@ -10073,6 +10774,382 @@
         },
         "required": [
           "terminationDate"
+        ]
+      },
+      "CostCalculatorUnitResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "VOLUME",
+              "MASS",
+              "COUNT",
+              "BAR_MEASURE",
+              null
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "label",
+          "kind"
+        ]
+      },
+      "CostCalculatorOutputResponseDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/CostCalculatorUnitResponseDto"
+          }
+        },
+        "required": [
+          "amount",
+          "unit"
+        ]
+      },
+      "CostCalculatorProductComponentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/CostCalculatorUnitResponseDto"
+          },
+          "product": {
+            "$ref": "#/components/schemas/CostCalculatorProductResponseDto"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "unit",
+          "product"
+        ]
+      },
+      "CostCalculatorGarnishResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRODUCT",
+              "QUICK"
+            ]
+          },
+          "product": {
+            "$ref": "#/components/schemas/CostCalculatorProductResponseDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ]
+      },
+      "CostCalculatorProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INGREDIENT",
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
+          },
+          "output": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CostCalculatorOutputResponseDto"
+              }
+            ]
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostCalculatorProductComponentResponseDto"
+            }
+          },
+          "garnishes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostCalculatorGarnishResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "output",
+          "components",
+          "garnishes"
+        ]
+      },
+      "CostCalculatorRecipeResponseDto": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/CostCalculatorProductResponseDto"
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostCalculatorUnitResponseDto"
+            }
+          },
+          "priceUnits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostCalculatorUnitResponseDto"
+            }
+          }
+        },
+        "required": [
+          "product",
+          "units",
+          "priceUnits"
+        ]
+      },
+      "CostCalculatorIngredientInputDto": {
+        "type": "object",
+        "properties": {
+          "lineKey": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "UNIT_PRICE",
+              "ESTIMATE",
+              "OMIT"
+            ]
+          },
+          "priceUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "estimatedCost": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "lineKey",
+          "mode"
+        ]
+      },
+      "CostCalculatorQuickGarnishDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "UNIT_PRICE",
+              "ESTIMATE",
+              "OMIT"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "unitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "priceUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "estimatedPrice": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "mode"
+        ]
+      },
+      "CostCalculationRequestDto": {
+        "type": "object",
+        "properties": {
+          "ingredientInputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostCalculatorIngredientInputDto"
+            }
+          },
+          "quickGarnishes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostCalculatorQuickGarnishDto"
+            }
+          }
+        },
+        "required": [
+          "ingredientInputs",
+          "quickGarnishes"
+        ]
+      },
+      "CostCalculationLineResponseDto": {
+        "type": "object",
+        "properties": {
+          "lineKey": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true
+          },
+          "unit": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CostCalculatorUnitResponseDto"
+              }
+            ]
+          },
+          "cost": {
+            "type": "number",
+            "nullable": true
+          },
+          "estimated": {
+            "type": "boolean"
+          },
+          "issue": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "lineKey",
+          "name",
+          "amount",
+          "unit",
+          "cost",
+          "estimated",
+          "issue"
+        ]
+      },
+      "CostCalculationResponseDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "productType": {
+            "type": "string",
+            "enum": [
+              "PREPARATION",
+              "GARNISH",
+              "COCKTAIL"
+            ]
+          },
+          "totalCost": {
+            "type": "number"
+          },
+          "costPerOutputUnit": {
+            "type": "number",
+            "nullable": true
+          },
+          "output": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CostCalculatorOutputResponseDto"
+              }
+            ]
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "hasEstimates": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostCalculationLineResponseDto"
+            }
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "productId",
+          "productName",
+          "productType",
+          "totalCost",
+          "costPerOutputUnit",
+          "output",
+          "complete",
+          "hasEstimates",
+          "lines",
+          "issues"
         ]
       },
       "LocalIngredientListItemResponseDto": {
@@ -14163,6 +15240,171 @@
         },
         "required": [
           "text"
+        ]
+      },
+      "VenueReminderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "completedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateReminderDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "SetReminderCompletedDto": {
+        "type": "object",
+        "properties": {
+          "completed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "completed"
+        ]
+      },
+      "VenueAnnouncementDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "SaveVenueAnnouncementDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ]
+      },
+      "VenueChecklistDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "steps": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "steps",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "SaveVenueChecklistDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "steps": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        },
+        "required": [
+          "title",
+          "steps"
         ]
       }
     }

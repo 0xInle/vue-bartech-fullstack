@@ -1,36 +1,25 @@
 <template>
   <main class="public-page min-h-screen px-4 pt-2 pb-2 sm:px-6">
     <div class="mx-auto flex min-h-[calc(100vh-1rem)] max-w-6xl flex-col">
-      <header class="flex items-center justify-between">
-        <div
-          v-if="
-            flow.identity.currentUser.value &&
-            flow.identity.currentUser.value.accountStatus !== 'PENDING_DELETION'
-          "
-          class="flex min-w-0 items-center gap-2"
-        >
-          <Button
-            type="button"
-            icon="pi pi-user"
-            :label="flow.identity.currentUser.value.fullName"
-            :aria-label="`Профиль: ${flow.identity.currentUser.value.fullName}`"
-            class="landing-profile-button max-w-full px-2"
-            severity="secondary"
-            variant="outlined"
-            size="small"
-            @click="profileVisible = true"
-          />
-        </div>
+      <header class="flex items-center justify-between gap-1">
         <Button
           type="button"
           :icon="colorScheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
           :aria-label="colorScheme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'"
           :aria-pressed="colorScheme === 'dark'"
-          class="app-icon-button ml-auto"
+          class="app-icon-button"
           severity="secondary"
           variant="outlined"
           size="small"
           @click="toggleColorScheme"
+        />
+        <AccountProfileButton
+          v-if="
+            flow.identity.currentUser.value &&
+            flow.identity.currentUser.value.accountStatus !== 'PENDING_DELETION'
+          "
+          :full-name="flow.identity.currentUser.value.fullName"
+          @open="profileVisible = true"
         />
       </header>
 
@@ -291,6 +280,7 @@ import LoginForm from "~/features/identity/components/LoginForm.vue";
 import PasswordRecoveryForm from "~/features/identity/components/PasswordRecoveryForm.vue";
 import AccountDeletionPendingPanel from "~/features/identity/components/AccountDeletionPendingPanel.vue";
 import AccountProfileDrawer from "~/features/identity/components/AccountProfileDrawer.vue";
+import AccountProfileButton from "~/features/identity/components/AccountProfileButton.vue";
 import OrganizationsPanel from "~/features/organizations/components/OrganizationsPanel.vue";
 import CompanyCreationScreen from "~/features/organizations/components/CompanyCreationScreen.vue";
 import { useColorScheme } from "~/composables/useColorScheme";

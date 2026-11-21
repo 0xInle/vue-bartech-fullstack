@@ -23,7 +23,7 @@ model Schedule {
   month       Int
   createdAt   DateTime                 @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime                 @updatedAt @db.Timestamptz(6)
-  venue       Venue                    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue       Venue                    @relation(fields: [venueId], references: [id], onDelete: Cascade, map: "schedules_venue_fkey")
   days        ScheduleDay[]
   members     ScheduleMemberSnapshot[]
   dateMarkers ScheduleDateMarker[]
@@ -34,7 +34,7 @@ model Schedule {
 }
 
 model ScheduleDateMarker {
-  id         String                 @id @default(uuid()) @db.Uuid
+  id         String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   scheduleId String                 @db.Uuid
   date       DateTime               @db.Date
   type       ScheduleDateMarkerType
@@ -49,8 +49,8 @@ model ScheduleMemberSnapshot {
   scheduleId        String          @db.Uuid
   venueMembershipId String          @db.Uuid
   fullName          String
-  schedule          Schedule        @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  membership        VenueMembership @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
+  schedule          Schedule        @relation(fields: [scheduleId], references: [id], onDelete: Cascade, map: "schedule_member_snapshots_schedule_fkey")
+  membership        VenueMembership @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade, map: "schedule_member_snapshots_membership_fkey")
 
   @@id([scheduleId, venueMembershipId])
   @@map("schedule_member_snapshots")
@@ -69,10 +69,10 @@ model ScheduleDay {
   updatedByUserId    String                     @db.Uuid
   createdAt          DateTime                   @default(now()) @db.Timestamptz(6)
   updatedAt          DateTime                   @updatedAt @db.Timestamptz(6)
-  schedule           Schedule                   @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  membership         VenueMembership            @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
+  schedule           Schedule                   @relation(fields: [scheduleId], references: [id], onDelete: Cascade, map: "schedule_days_schedule_fkey")
+  membership         VenueMembership            @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade, map: "schedule_days_membership_fkey")
   shiftSetting       VenueScheduleShiftSetting? @relation(fields: [shiftSettingId], references: [id], onDelete: SetNull)
-  updatedBy          User                       @relation(fields: [updatedByUserId], references: [id], onDelete: Restrict)
+  updatedBy          User                       @relation(fields: [updatedByUserId], references: [id], map: "schedule_days_updated_by_fkey")
   changes            ScheduleDayChange[]
   comment            ScheduleDayComment?
 
@@ -83,12 +83,12 @@ model ScheduleDay {
 }
 
 model VenueScheduleShiftSetting {
-  id                   String            @id @default(uuid()) @db.Uuid
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   venueId              String            @db.Uuid
   shiftCode            ScheduleShiftCode
   startMinute          Int
   defaultDurationHours Int
-  venue                Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue                Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade, map: "venue_schedule_shift_settings_venue_fkey")
   scheduleDays         ScheduleDay[]
 
   @@index([venueId, shiftCode], map: "venue_schedule_shift_settings_venue_code_idx")
@@ -102,8 +102,8 @@ model ScheduleDayChange {
   newValue        Json?
   changedByUserId String      @db.Uuid
   createdAt       DateTime    @default(now()) @db.Timestamptz(6)
-  scheduleDay     ScheduleDay @relation(fields: [scheduleDayId], references: [id], onDelete: Cascade)
-  changedBy       User        @relation(fields: [changedByUserId], references: [id], onDelete: Restrict)
+  scheduleDay     ScheduleDay @relation(fields: [scheduleDayId], references: [id], onDelete: Cascade, map: "schedule_day_changes_day_fkey")
+  changedBy       User        @relation(fields: [changedByUserId], references: [id], map: "schedule_day_changes_changed_by_fkey")
 
   @@index([scheduleDayId, createdAt], map: "schedule_day_changes_day_created_idx")
   @@map("schedule_day_changes")
@@ -114,8 +114,8 @@ model ScheduleDayComment {
   text            String
   updatedByUserId String                      @db.Uuid
   updatedAt       DateTime                    @updatedAt @db.Timestamptz(6)
-  scheduleDay     ScheduleDay                 @relation(fields: [scheduleDayId], references: [id], onDelete: Cascade)
-  updatedBy       User                        @relation(fields: [updatedByUserId], references: [id], onDelete: Restrict)
+  scheduleDay     ScheduleDay                 @relation(fields: [scheduleDayId], references: [id], onDelete: Cascade, map: "schedule_day_comments_day_fkey")
+  updatedBy       User                        @relation(fields: [updatedByUserId], references: [id], map: "schedule_day_comments_updated_by_fkey")
   history         ScheduleDayCommentVersion[]
 
   @@map("schedule_day_comments")
@@ -127,8 +127,8 @@ model ScheduleDayCommentVersion {
   text            String
   changedByUserId String             @db.Uuid
   createdAt       DateTime           @default(now()) @db.Timestamptz(6)
-  comment         ScheduleDayComment @relation(fields: [scheduleDayId], references: [scheduleDayId], onDelete: Cascade)
-  changedBy       User               @relation(fields: [changedByUserId], references: [id], onDelete: Restrict)
+  comment         ScheduleDayComment @relation(fields: [scheduleDayId], references: [scheduleDayId], onDelete: Cascade, map: "schedule_day_comment_versions_comment_fkey")
+  changedBy       User               @relation(fields: [changedByUserId], references: [id], map: "schedule_day_comment_versions_changed_by_fkey")
 
   @@index([scheduleDayId, createdAt], map: "schedule_comment_versions_day_created_idx")
   @@map("schedule_day_comment_versions")
@@ -139,14 +139,14 @@ model ScheduleTemplate {
   venueId          String?                   @db.Uuid
   name             String
   isSystem         Boolean                   @default(false)
-  currentVersionId String?                   @unique @db.Uuid
+  currentVersionId String?                   @unique(map: "schedule_templates_current_version_key") @db.Uuid
   createdByUserId  String?                   @db.Uuid
   createdAt        DateTime                  @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime                  @updatedAt @db.Timestamptz(6)
-  venue            Venue?                    @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  createdBy        User?                     @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  venue            Venue?                    @relation(fields: [venueId], references: [id], onDelete: Cascade, map: "schedule_templates_venue_fkey")
+  createdBy        User?                     @relation(fields: [createdByUserId], references: [id], map: "schedule_templates_created_by_fkey")
   versions         ScheduleTemplateVersion[] @relation("TemplateVersions")
-  currentVersion   ScheduleTemplateVersion?  @relation("CurrentTemplateVersion", fields: [currentVersionId], references: [id], onDelete: Restrict)
+  currentVersion   ScheduleTemplateVersion?  @relation("CurrentTemplateVersion", fields: [currentVersionId], references: [id], onDelete: Restrict, map: "schedule_templates_current_version_fkey")
   assignments      ScheduleAssignment[]
 
   @@index([venueId, isSystem, name], map: "schedule_templates_scope_name_idx")
@@ -159,9 +159,9 @@ model ScheduleTemplateVersion {
   version         Int
   createdByUserId String?               @db.Uuid
   createdAt       DateTime              @default(now()) @db.Timestamptz(6)
-  template        ScheduleTemplate      @relation("TemplateVersions", fields: [templateId], references: [id], onDelete: Cascade)
+  template        ScheduleTemplate      @relation("TemplateVersions", fields: [templateId], references: [id], onDelete: Cascade, map: "schedule_template_versions_template_fkey")
   currentFor      ScheduleTemplate?     @relation("CurrentTemplateVersion")
-  createdBy       User?                 @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdBy       User?                 @relation(fields: [createdByUserId], references: [id], map: "schedule_template_versions_created_by_fkey")
   assignments     ScheduleAssignment[]
   days            ScheduleTemplateDay[]
 
@@ -173,7 +173,7 @@ model ScheduleTemplateDay {
   templateVersionId String                  @db.Uuid
   position          Int
   shiftSettingId    String?                 @db.Uuid
-  templateVersion   ScheduleTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade)
+  templateVersion   ScheduleTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade, map: "schedule_template_days_version_fkey")
 
   @@id([templateVersionId, position])
   @@map("schedule_template_days")
@@ -187,10 +187,10 @@ model ScheduleAssignment {
   applyFromDate     DateTime                @db.Date
   assignedByUserId  String                  @db.Uuid
   updatedAt         DateTime                @updatedAt @db.Timestamptz(6)
-  membership        VenueMembership         @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
-  template          ScheduleTemplate        @relation(fields: [templateId], references: [id], onDelete: Restrict)
-  templateVersion   ScheduleTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Restrict)
-  assignedBy        User                    @relation(fields: [assignedByUserId], references: [id], onDelete: Restrict)
+  membership        VenueMembership         @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade, map: "schedule_assignments_membership_fkey")
+  template          ScheduleTemplate        @relation(fields: [templateId], references: [id], map: "schedule_assignments_template_fkey")
+  templateVersion   ScheduleTemplateVersion @relation(fields: [templateVersionId], references: [id], map: "schedule_assignments_version_fkey")
+  assignedBy        User                    @relation(fields: [assignedByUserId], references: [id], map: "schedule_assignments_assigned_by_fkey")
 
   @@map("schedule_assignments")
 }

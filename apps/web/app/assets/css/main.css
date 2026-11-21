@@ -15,7 +15,7 @@
   line-height: 0.875rem;
 }
 
-.p-button.landing-profile-button {
+.p-button.account-profile-button {
   width: fit-content;
   min-width: 0;
   max-width: 100%;
@@ -23,12 +23,12 @@
   gap: 0.5rem;
 }
 
-.p-button.landing-profile-button .p-button-icon,
-.p-button.landing-profile-button .p-button-label {
+.p-button.account-profile-button .p-button-icon,
+.p-button.account-profile-button .p-button-label {
   color: var(--p-primary-color);
 }
 
-.p-button.landing-profile-button .p-button-label {
+.p-button.account-profile-button .p-button-label {
   min-width: 0;
   overflow: hidden;
   font-size: 0.75rem;
@@ -49,6 +49,14 @@
   color: var(--p-primary-color);
   font-size: 0.875rem;
   line-height: 0.875rem;
+}
+
+.p-button.cost-calculator-mode-button {
+  width: 20px;
+  min-width: 20px;
+  height: 20px !important;
+  min-height: 20px !important;
+  padding: 0;
 }
 
 :root {
@@ -189,6 +197,65 @@ button:not(.p-inputnumber-button),
 
 .p-datepicker-time-picker {
   font-size: var(--p-form-field-sm-font-size, 0.875rem) !important;
+}
+
+.dashboard-collapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  padding-top: 0.5rem;
+}
+
+.dashboard-collapse > * {
+  min-height: 0;
+}
+
+.dashboard-collapse-enter-active,
+.dashboard-collapse-leave-active {
+  overflow: hidden;
+  transition:
+    grid-template-rows 180ms ease,
+    opacity 180ms ease,
+    padding-top 180ms ease;
+}
+
+.dashboard-collapse-enter-active > *,
+.dashboard-collapse-leave-active > * {
+  overflow: hidden;
+}
+
+.dashboard-collapse-enter-from,
+.dashboard-collapse-leave-to {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  padding-top: 0;
+}
+
+.dashboard-collapse-enter-to,
+.dashboard-collapse-leave-from {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.dashboard-list-scroll--tasks {
+  max-height: min(22.25rem, 70vh);
+  overflow-y: auto;
+}
+
+.dashboard-list-scroll--checklists {
+  max-height: min(25rem, 70vh);
+  overflow-y: auto;
+}
+
+.dashboard-list-scroll--announcements {
+  max-height: min(35rem, 70vh);
+  overflow-y: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-collapse-enter-active,
+  .dashboard-collapse-leave-active {
+    transition-duration: 0.01ms;
+  }
 }
 
 .p-datepicker-time-picker .p-button {

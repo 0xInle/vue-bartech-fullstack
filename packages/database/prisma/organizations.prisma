@@ -74,26 +74,26 @@ enum InvitationPurpose {
 }
 
 model Company {
-  id                    String                          @id @default(uuid()) @db.Uuid
-  name                  String
-  nameNormalized        String
-  initialCreatorUserId  String?                         @db.Uuid
-  authorityHistoryKnown Boolean                         @default(false)
-  managementRoleEverPresent Boolean                     @default(true)
-  authorityTransferredEver Boolean                      @default(true)
-  status                CompanyStatus                   @default(ACTIVE)
-  closureDeadline       DateTime?                       @db.Timestamptz(6)
-  createdAt             DateTime                        @default(now()) @db.Timestamptz(6)
-  updatedAt             DateTime                        @updatedAt @db.Timestamptz(6)
-  venues                Venue[]
-  memberships           CompanyMembership[]
-  initialCreator        User?                            @relation("CompanyInitialCreator", fields: [initialCreatorUserId], references: [id], onDelete: SetNull)
-  invitations           Invitation[]
-  auditEvents           AuditEvent[]
-  productExports        ProductExportRequest[]
-  productExportClosures ProductExportClosureOperation[]
-  supportRequests       SupportRequest[]
-  supportAccessGrants   SupportAccessGrant[]
+  id                        String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                      String
+  nameNormalized            String
+  initialCreatorUserId      String?                         @db.Uuid
+  authorityHistoryKnown     Boolean                         @default(false)
+  managementRoleEverPresent Boolean                         @default(true)
+  authorityTransferredEver  Boolean                         @default(true)
+  status                    CompanyStatus                   @default(ACTIVE)
+  closureDeadline           DateTime?                       @db.Timestamptz(6)
+  createdAt                 DateTime                        @default(now()) @db.Timestamptz(6)
+  updatedAt                 DateTime                        @updatedAt @db.Timestamptz(6)
+  venues                    Venue[]
+  memberships               CompanyMembership[]
+  initialCreator            User?                           @relation("CompanyInitialCreator", fields: [initialCreatorUserId], references: [id], map: "companies_initial_creator_user_id_fkey")
+  invitations               Invitation[]
+  auditEvents               AuditEvent[]
+  productExports            ProductExportRequest[]
+  productExportClosures     ProductExportClosureOperation[]
+  supportRequests           SupportRequest[]
+  supportAccessGrants       SupportAccessGrant[]
 
   @@index([status, closureDeadline], map: "companies_status_closure_deadline_idx")
   @@index([initialCreatorUserId], map: "companies_initial_creator_user_id_idx")
@@ -101,7 +101,7 @@ model Company {
 }
 
 model Venue {
-  id                      String                          @id @default(uuid()) @db.Uuid
+  id                      String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId               String                          @db.Uuid
   name                    String
   nameNormalized          String
@@ -124,6 +124,9 @@ model Venue {
   scheduleTemplates       ScheduleTemplate[]
   schedules               Schedule[]
   scheduleShiftSettings   VenueScheduleShiftSetting[]
+  personalReminders       VenuePersonalReminder[]
+  announcements           VenueAnnouncement[]
+  checklists              VenueChecklist[]
 
   @@unique([id, companyId], map: "venues_id_company_id_key")
   @@unique([companyId, nameNormalized], map: "venues_company_normalized_name_key")
@@ -156,7 +159,7 @@ model ProductExportClosureOperation {
 }
 
 model CompanyMembership {
-  id               String            @id @default(uuid()) @db.Uuid
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId           String            @db.Uuid
   companyId        String            @db.Uuid
   companyRole      CompanyRole?
@@ -172,30 +175,31 @@ model CompanyMembership {
 }
 
 model VenueMembership {
-  id                      String                    @id @default(uuid()) @db.Uuid
-  userId                  String                    @db.Uuid
-  companyId               String                    @db.Uuid
-  venueId                 String                    @db.Uuid
-  role                    VenueRole                 @default(BAR_MANAGER)
-  hasFullManagementPackage Boolean                   @default(false)
-  fullManagementChangedAt DateTime?                  @db.Timestamptz(6)
-  fullManagementChangedByUserId String?              @db.Uuid
-  startedOn               DateTime                  @default(dbgenerated("CURRENT_DATE")) @db.Date
-  endedOn                 DateTime?                 @db.Date
-  createdAt               DateTime                  @default(now()) @db.Timestamptz(6)
-  user                    User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fullManagementChangedBy User?                     @relation("VenueManagementPackageChangedBy", fields: [fullManagementChangedByUserId], references: [id], onDelete: SetNull)
-  venue                   Venue                     @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
-  companyMembership       CompanyMembership         @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
-  permissionOverrides     VenuePermissionOverride[]
-  temporaryResponsibility TemporaryResponsibility?
-  rolePeriods             VenueRolePeriod[]
-  scheduleDays            ScheduleDay[]
-  scheduleAssignment      ScheduleAssignment?
-  scheduleSnapshots       ScheduleMemberSnapshot[]
+  id                            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                        String                    @db.Uuid
+  companyId                     String                    @db.Uuid
+  venueId                       String                    @db.Uuid
+  role                          VenueRole                 @default(BAR_MANAGER)
+  hasFullManagementPackage      Boolean                   @default(false)
+  fullManagementChangedAt       DateTime?                 @db.Timestamptz(6)
+  fullManagementChangedByUserId String?                   @db.Uuid
+  startedOn                     DateTime                  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  endedOn                       DateTime?                 @db.Date
+  createdAt                     DateTime                  @default(now()) @db.Timestamptz(6)
+  user                          User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullManagementChangedBy       User?                     @relation("VenueManagementPackageChangedBy", fields: [fullManagementChangedByUserId], references: [id], map: "venue_memberships_management_package_changed_by_fkey")
+  venue                         Venue                     @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
+  companyMembership             CompanyMembership         @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
+  permissionOverrides           VenuePermissionOverride[]
+  temporaryResponsibility       TemporaryResponsibility?
+  rolePeriods                   VenueRolePeriod[]
+  scheduleDays                  ScheduleDay[]
+  scheduleAssignment            ScheduleAssignment?
+  scheduleSnapshots             ScheduleMemberSnapshot[]
 
   @@unique([id, venueId], map: "venue_memberships_id_venue_key")
-  @@index([companyId, venueId, endedOn], map: "venue_memberships_company_venue_idx")
+  @@unique([userId, venueId], map: "venue_memberships_one_active_user_venue_key", where: raw("(\"endedOn\" IS NULL)"))
+  @@index([companyId, venueId], map: "venue_memberships_company_venue_idx")
   @@index([venueId, hasFullManagementPackage, endedOn], map: "venue_memberships_full_management_package_idx")
   @@map("venue_memberships")
 }
@@ -209,15 +213,15 @@ model VenueRolePeriod {
   changedByUserId   String?         @db.Uuid
   reason            String?
   createdAt         DateTime        @default(now()) @db.Timestamptz(6)
-  membership        VenueMembership @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade)
-  changedBy         User?           @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+  membership        VenueMembership @relation(fields: [venueMembershipId], references: [id], onDelete: Cascade, map: "venue_role_periods_membership_fkey")
+  changedBy         User?           @relation(fields: [changedByUserId], references: [id], map: "venue_role_periods_changed_by_fkey")
 
   @@index([venueMembershipId, startedOn], map: "venue_role_periods_membership_start_idx")
   @@map("venue_role_periods")
 }
 
 model VenuePermissionOverride {
-  id                String          @id @default(uuid()) @db.Uuid
+  id                String          @id(map: "delegated_permissions_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   venueMembershipId String          @db.Uuid
   code              PermissionCode
   enabled           Boolean         @default(true)
@@ -232,14 +236,14 @@ model VenuePermissionOverride {
 }
 
 model TemporaryResponsibility {
-  id                String          @id @default(uuid()) @db.Uuid
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   venueId           String          @unique(map: "temporary_responsibilities_venue_key") @db.Uuid
   venueMembershipId String          @db.Uuid
   assignedByUserId  String          @db.Uuid
   reason            String
   assignedAt        DateTime        @default(now()) @db.Timestamptz(6)
   venue             Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  venueMembership   VenueMembership @relation(fields: [venueMembershipId, venueId], references: [id, venueId], onDelete: Cascade)
+  venueMembership   VenueMembership @relation(fields: [venueMembershipId, venueId], references: [id, venueId], onDelete: Cascade, map: "temporary_responsibilities_membership_venue_fkey")
   assignedBy        User            @relation(fields: [assignedByUserId], references: [id], onDelete: Restrict)
 
   @@unique([venueMembershipId, venueId], map: "temporary_responsibilities_membership_venue_key")
@@ -248,7 +252,7 @@ model TemporaryResponsibility {
 }
 
 model Invitation {
-  id                String                       @id @default(uuid()) @db.Uuid
+  id                String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   purpose           InvitationPurpose            @default(JOIN_EXISTING_VENUE)
   companyId         String                       @db.Uuid
   venueId           String?                      @db.Uuid
@@ -267,6 +271,9 @@ model Invitation {
   createdBy         User?                        @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
   acceptanceSession InvitationAcceptanceSession?
 
+  @@unique([emailNormalized, companyId], map: "invitations_one_open_chef_per_email_company_key", where: raw("((purpose = 'JOIN_COMPANY_AS_CHEF'::\"InvitationPurpose\") AND (status = ANY (ARRAY['ACTIVE'::\"InvitationStatus\", 'IN_PROGRESS'::\"InvitationStatus\"])))"))
+  @@unique([emailNormalized, companyId], map: "invitations_one_open_new_venue_per_email_company_key", where: raw("((purpose = 'CREATE_VENUE'::\"InvitationPurpose\") AND (status = ANY (ARRAY['ACTIVE'::\"InvitationStatus\", 'IN_PROGRESS'::\"InvitationStatus\"])))"))
+  @@unique([emailNormalized, venueId], map: "invitations_one_open_per_email_venue_key", where: raw("((purpose = 'JOIN_EXISTING_VENUE'::\"InvitationPurpose\") AND (\"venueId\" IS NOT NULL) AND (status = ANY (ARRAY['ACTIVE'::\"InvitationStatus\", 'IN_PROGRESS'::\"InvitationStatus\"])))"))
   @@index([venueId, status, expiresAt], map: "invitations_venue_status_expiry_idx")
   @@index([emailNormalized, venueId], map: "invitations_email_venue_idx")
   @@index([companyId, purpose, status, expiresAt], map: "invitations_company_purpose_status_expiry_idx")
@@ -274,7 +281,7 @@ model Invitation {
 }
 
 model InvitationAcceptanceSession {
-  id              String           @id @default(uuid()) @db.Uuid
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   invitationId    String           @unique(map: "invitation_acceptance_sessions_invitation_key") @db.Uuid
   tokenHash       String           @unique(map: "invitation_acceptance_sessions_token_hash_key")
   emailNormalized String

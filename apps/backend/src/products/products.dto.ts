@@ -1027,3 +1027,228 @@ export class GarnishCardResponseDto {
   @ApiProperty({ type: String, nullable: true })
   comment!: string | null;
 }
+
+export class CostCalculatorIngredientInputDto {
+  @ApiProperty()
+  @IsString()
+  lineKey!: string;
+
+  @ApiProperty({ enum: ["UNIT_PRICE", "ESTIMATE", "OMIT"] })
+  @IsIn(["UNIT_PRICE", "ESTIMATE", "OMIT"])
+  mode!: "UNIT_PRICE" | "ESTIMATE" | "OMIT";
+
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  priceUnitId?: string;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  unitPrice?: number;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  estimatedCost?: number;
+}
+
+export class CostCalculatorQuickGarnishDto {
+  @ApiProperty({ format: "uuid" })
+  @IsUUID()
+  id!: string;
+
+  @ApiProperty({ enum: ["UNIT_PRICE", "ESTIMATE", "OMIT"] })
+  @IsIn(["UNIT_PRICE", "ESTIMATE", "OMIT"])
+  mode!: "UNIT_PRICE" | "ESTIMATE" | "OMIT";
+
+  @ApiPropertyOptional({ minimum: 0.000001 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0.000001)
+  amount?: number;
+
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  unitId?: string;
+
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  priceUnitId?: string;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  unitPrice?: number;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  estimatedPrice?: number;
+}
+
+export class CostCalculationRequestDto {
+  @ApiProperty({ type: [CostCalculatorIngredientInputDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CostCalculatorIngredientInputDto)
+  ingredientInputs!: CostCalculatorIngredientInputDto[];
+
+  @ApiProperty({ type: [CostCalculatorQuickGarnishDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CostCalculatorQuickGarnishDto)
+  quickGarnishes!: CostCalculatorQuickGarnishDto[];
+}
+
+export class CostCalculatorUnitResponseDto {
+  @ApiProperty({ format: "uuid" })
+  id!: string;
+
+  @ApiProperty()
+  code!: string;
+
+  @ApiProperty()
+  label!: string;
+
+  @ApiProperty({ enum: ["VOLUME", "MASS", "COUNT", "BAR_MEASURE", null], nullable: true })
+  kind!: "VOLUME" | "MASS" | "COUNT" | "BAR_MEASURE" | null;
+}
+
+export class CostCalculatorProductResponseDto {
+  @ApiProperty({ format: "uuid" })
+  id!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty({ enum: ["INGREDIENT", "PREPARATION", "GARNISH", "COCKTAIL"] })
+  type!: "INGREDIENT" | "PREPARATION" | "GARNISH" | "COCKTAIL";
+
+  @ApiProperty({ type: () => CostCalculatorOutputResponseDto, nullable: true })
+  output!: { amount: number; unit: CostCalculatorUnitResponseDto } | null;
+
+  @ApiProperty({ type: () => [CostCalculatorProductComponentResponseDto] })
+  components!: Array<{
+    id: string;
+    amount: number;
+    unit: CostCalculatorUnitResponseDto;
+    product: CostCalculatorProductResponseDto;
+  }>;
+
+  @ApiProperty({ type: () => [CostCalculatorGarnishResponseDto] })
+  garnishes!: Array<{
+    id: string;
+    name: string;
+    kind: "PRODUCT" | "QUICK";
+    product?: CostCalculatorProductResponseDto;
+  }>;
+}
+
+export class CostCalculatorOutputResponseDto {
+  @ApiProperty()
+  amount!: number;
+
+  @ApiProperty({ type: CostCalculatorUnitResponseDto })
+  unit!: CostCalculatorUnitResponseDto;
+}
+
+export class CostCalculatorProductComponentResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  amount!: number;
+
+  @ApiProperty({ type: CostCalculatorUnitResponseDto })
+  unit!: CostCalculatorUnitResponseDto;
+
+  @ApiProperty({ type: () => CostCalculatorProductResponseDto })
+  product!: CostCalculatorProductResponseDto;
+}
+
+export class CostCalculatorGarnishResponseDto {
+  @ApiProperty({ format: "uuid" })
+  id!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty({ enum: ["PRODUCT", "QUICK"] })
+  kind!: "PRODUCT" | "QUICK";
+
+  @ApiPropertyOptional({ type: () => CostCalculatorProductResponseDto })
+  product?: CostCalculatorProductResponseDto;
+}
+
+export class CostCalculatorRecipeResponseDto {
+  @ApiProperty({ type: CostCalculatorProductResponseDto })
+  product!: CostCalculatorProductResponseDto;
+
+  @ApiProperty({ type: [CostCalculatorUnitResponseDto] })
+  units!: CostCalculatorUnitResponseDto[];
+
+  @ApiProperty({ type: [CostCalculatorUnitResponseDto] })
+  priceUnits!: CostCalculatorUnitResponseDto[];
+}
+
+export class CostCalculationLineResponseDto {
+  @ApiProperty()
+  lineKey!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty({ type: Number, nullable: true })
+  amount!: number | null;
+
+  @ApiProperty({ type: CostCalculatorUnitResponseDto, nullable: true })
+  unit!: CostCalculatorUnitResponseDto | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  cost!: number | null;
+
+  @ApiProperty()
+  estimated!: boolean;
+
+  @ApiProperty({ type: String, nullable: true })
+  issue!: string | null;
+}
+
+export class CostCalculationResponseDto {
+  @ApiProperty({ format: "uuid" })
+  productId!: string;
+
+  @ApiProperty()
+  productName!: string;
+
+  @ApiProperty({ enum: ["PREPARATION", "GARNISH", "COCKTAIL"] })
+  productType!: "PREPARATION" | "GARNISH" | "COCKTAIL";
+
+  @ApiProperty()
+  totalCost!: number;
+
+  @ApiProperty({ type: Number, nullable: true })
+  costPerOutputUnit!: number | null;
+
+  @ApiProperty({ type: () => CostCalculatorOutputResponseDto, nullable: true })
+  output!: { amount: number; unit: CostCalculatorUnitResponseDto } | null;
+
+  @ApiProperty()
+  complete!: boolean;
+
+  @ApiProperty()
+  hasEstimates!: boolean;
+
+  @ApiProperty({ type: [CostCalculationLineResponseDto] })
+  lines!: CostCalculationLineResponseDto[];
+
+  @ApiProperty({ type: [String] })
+  issues!: string[];
+}

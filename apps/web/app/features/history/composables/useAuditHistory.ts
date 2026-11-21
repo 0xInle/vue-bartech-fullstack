@@ -17,13 +17,13 @@ export function useAuditHistory(
   companyId: MaybeRefOrGetter<string>,
   venueId: MaybeRefOrGetter<string>,
   params: MaybeRefOrGetter<AuditControllerListParams>,
-  authorParams: MaybeRefOrGetter<AuditControllerListAuthorsParams>,
+  authorParams: MaybeRefOrGetter<AuditControllerListAuthorsParams> | null = null,
 ) {
   const identity = useIdentityFlow();
   const company = computed(() => toValue(companyId));
   const venue = computed(() => toValue(venueId));
   const filters = computed(() => toValue(params));
-  const authorFilters = computed(() => toValue(authorParams));
+  const authorFilters = computed(() => (authorParams ? toValue(authorParams) : null));
 
   const historyQuery = useQuery({
     queryKey: computed(() => ["audit-history", company.value, venue.value, filters.value]),
@@ -50,9 +50,10 @@ export function useAuditHistory(
       venue.value,
       authorFilters.value,
     ]),
-    enabled: computed(() => Boolean(company.value && venue.value)),
+    enabled: computed(() => Boolean(company.value && venue.value && authorFilters.value)),
     retry: false,
     queryFn: async ({ signal }) => {
+      if (!authorFilters.value) return [];
       const response = await auditControllerListAuthors(
         company.value,
         venue.value,

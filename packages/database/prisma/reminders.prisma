@@ -1,0 +1,15 @@
+model VenuePersonalReminder {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  companyId   String    @db.Uuid
+  venueId     String    @db.Uuid
+  text        String    @db.VarChar(500)
+  completedAt DateTime? @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue       Venue     @relation(fields: [venueId, companyId], references: [id, companyId], onDelete: Cascade)
+
+  @@index([userId, companyId, venueId, completedAt, createdAt], map: "venue_personal_reminders_owner_venue_idx")
+  @@map("venue_personal_reminders")
+}

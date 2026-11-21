@@ -45,6 +45,9 @@ import type {
   CocktailListItemResponseDto,
   CompanyProductsControllerGetCompanyProductParams,
   CompanyProductsControllerSearchCompanyParams,
+  CostCalculationRequestDto,
+  CostCalculationResponseDto,
+  CostCalculatorRecipeResponseDto,
   CreateCocktailDto,
   CreateGarnishDto,
   CreateLocalIngredientDto,
@@ -87,7 +90,244 @@ import type {
 
 
 
-export type productsControllerListLocalIngredientsResponse200 = {
+export type productsControllerGetCostCalculatorRecipeResponse200 = {
+  data: CostCalculatorRecipeResponseDto
+  status: 200
+}
+
+export type productsControllerGetCostCalculatorRecipeResponse404 = {
+  data: void
+  status: 404
+}
+
+export type productsControllerGetCostCalculatorRecipeResponseSuccess = (productsControllerGetCostCalculatorRecipeResponse200) & {
+  headers: Headers;
+};
+export type productsControllerGetCostCalculatorRecipeResponseError = (productsControllerGetCostCalculatorRecipeResponse404) & {
+  headers: Headers;
+};
+
+export type productsControllerGetCostCalculatorRecipeResponse = (productsControllerGetCostCalculatorRecipeResponseSuccess | productsControllerGetCostCalculatorRecipeResponseError)
+
+export const getProductsControllerGetCostCalculatorRecipeUrl = (companyId: string,
+    venueId: string,
+    productId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/cost-calculator/${productId}`
+}
+
+/**
+ * @summary Загрузить актуальный состав продукта для временного расчёта себестоимости
+ */
+export const productsControllerGetCostCalculatorRecipe = async (companyId: string,
+    venueId: string,
+    productId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerGetCostCalculatorRecipeResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getProductsControllerGetCostCalculatorRecipeUrl(companyId,venueId,productId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: productsControllerGetCostCalculatorRecipeResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as productsControllerGetCostCalculatorRecipeResponse
+}
+
+
+
+
+
+export const getProductsControllerGetCostCalculatorRecipeQueryKey = (companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>,) => {
+    return [
+    'api','v1','organizations','companies',companyId,'venues',venueId,'products','cost-calculator',productId
+    ] as const;
+    }
+
+
+export const getProductsControllerGetCostCalculatorRecipeQueryOptions = <TData = Awaited<ReturnType<typeof productsControllerGetCostCalculatorRecipe>>, TError = void>(companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerGetCostCalculatorRecipe>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?? {};
+
+  const queryKey =  getProductsControllerGetCostCalculatorRecipeQueryKey(companyId,venueId,productId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof productsControllerGetCostCalculatorRecipe>>> = ({ signal }) => productsControllerGetCostCalculatorRecipe(toValue(companyId),toValue(venueId),toValue(productId), { signal, ...fetchOptions }, fetcherFn);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: computed(() => toValue(companyId) !== null && toValue(companyId) !== undefined && toValue(venueId) !== null && toValue(venueId) !== undefined && toValue(productId) !== null && toValue(productId) !== undefined), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof productsControllerGetCostCalculatorRecipe>>, TError, TData>
+}
+
+export type ProductsControllerGetCostCalculatorRecipeQueryResult = NonNullable<Awaited<ReturnType<typeof productsControllerGetCostCalculatorRecipe>>>
+export type ProductsControllerGetCostCalculatorRecipeQueryError = void
+
+
+/**
+ * @summary Загрузить актуальный состав продукта для временного расчёта себестоимости
+ */
+
+export function useProductsControllerGetCostCalculatorRecipe<TData = Awaited<ReturnType<typeof productsControllerGetCostCalculatorRecipe>>, TError = void>(
+ companyId: MaybeRefOrGetter<string>,
+    venueId: MaybeRefOrGetter<string>,
+    productId: MaybeRefOrGetter<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof productsControllerGetCostCalculatorRecipe>>, TError, TData>>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProductsControllerGetCostCalculatorRecipeQueryOptions(companyId,venueId,productId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+
+
+export type productsControllerCalculateCostResponse200 = {
+  data: CostCalculationResponseDto
+  status: 200
+}
+
+export type productsControllerCalculateCostResponse400 = {
+  data: void
+  status: 400
+}
+
+export type productsControllerCalculateCostResponse404 = {
+  data: void
+  status: 404
+}
+
+export type productsControllerCalculateCostResponseSuccess = (productsControllerCalculateCostResponse200) & {
+  headers: Headers;
+};
+export type productsControllerCalculateCostResponseError = (productsControllerCalculateCostResponse400 | productsControllerCalculateCostResponse404) & {
+  headers: Headers;
+};
+
+export type productsControllerCalculateCostResponse = (productsControllerCalculateCostResponseSuccess | productsControllerCalculateCostResponseError)
+
+export const getProductsControllerCalculateCostUrl = (companyId: string,
+    venueId: string,
+    productId: string,) => {
+
+
+
+
+  return `/api/v1/organizations/companies/${companyId}/venues/${venueId}/products/cost-calculator/${productId}/calculate`
+}
+
+/**
+ * @summary Рассчитать себестоимость по текущим временным ценам
+ */
+export const productsControllerCalculateCost = async (companyId: string,
+    venueId: string,
+    productId: string,
+    costCalculationRequestDto: CostCalculationRequestDto, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<productsControllerCalculateCostResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await (fetchFn ?? fetch)(getProductsControllerCalculateCostUrl(companyId,venueId,productId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(costCalculationRequestDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: productsControllerCalculateCostResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as productsControllerCalculateCostResponse
+}
+
+
+
+
+
+export const getProductsControllerCalculateCostMutationKey = () => ['productsControllerCalculateCost'] as const;
+
+export const getProductsControllerCalculateCostMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerCalculateCost>>, TError,ProductsControllerCalculateCostMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+): UseMutationOptions<Awaited<ReturnType<typeof productsControllerCalculateCost>>, TError,ProductsControllerCalculateCostMutationVariables, TContext> => {
+
+const mutationKey = getProductsControllerCalculateCostMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions, fetcher: fetcherFn} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof productsControllerCalculateCost>>, ProductsControllerCalculateCostMutationVariables> = (props) => {
+          const {companyId,venueId,productId,data} = props ?? {};
+
+          return  productsControllerCalculateCost(companyId,venueId,productId,data,fetchOptions, fetcherFn)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProductsControllerCalculateCostMutationResult = NonNullable<Awaited<ReturnType<typeof productsControllerCalculateCost>>>
+    export type ProductsControllerCalculateCostMutationBody = CostCalculationRequestDto
+    export type ProductsControllerCalculateCostMutationError = void
+    export type ProductsControllerCalculateCostMutationVariables = {companyId: string;venueId: string;productId: string;data: CostCalculationRequestDto}
+
+    /**
+ * @summary Рассчитать себестоимость по текущим временным ценам
+ */
+export const useProductsControllerCalculateCost = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof productsControllerCalculateCost>>, TError,ProductsControllerCalculateCostMutationVariables, TContext>, fetch?: RequestInit, fetcher?: typeof globalThis.fetch}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof productsControllerCalculateCost>>,
+        TError,
+        ProductsControllerCalculateCostMutationVariables,
+        TContext
+      > => {
+      return useMutation(getProductsControllerCalculateCostMutationOptions(options), queryClient);
+    }
+    export type productsControllerListLocalIngredientsResponse200 = {
   data: LocalIngredientListItemResponseDto[]
   status: 200
 }
