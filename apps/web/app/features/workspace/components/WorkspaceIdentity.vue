@@ -1,67 +1,67 @@
 <template>
-  <section class="space-y-2 text-center">
-    <p class="truncate px-3 text-xs text-color-secondary">
+  <section class="space-y-2">
+    <p class="truncate px-3 text-center text-xs text-color-secondary">
       {{ props.workspace.company.name }}
     </p>
-    <p v-if="workplaces.length <= 1" class="truncate px-3 text-xs text-color-secondary">
-      {{ props.workspace.venue.name }}
-    </p>
     <Button
-      v-else
+      v-if="workplaces.length > 1"
       type="button"
       :label="props.workspace.venue.name"
-      icon="pi pi-chevron-down"
+      :icon="workspaceSwitcherOpen ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+      icon-pos="right"
       severity="secondary"
       variant="text"
       size="small"
-      class="w-full justify-center"
+      class="w-full justify-between"
+      :pt="{
+        label: {
+          style: {
+            fontFamily: 'inherit',
+            fontSize: '0.75rem',
+            color: 'var(--p-text-color)',
+          },
+        },
+      }"
       aria-label="Выбрать заведение"
-      aria-haspopup="true"
       :aria-expanded="workspaceSwitcherOpen"
-      @click="openWorkspaceList"
+      aria-haspopup="true"
+      @click="toggleWorkspaceList"
     />
-    <Popover
-      ref="workspacePopover"
-      class="min-w-56 p-2"
+    <p v-else class="truncate px-3 text-center text-xs text-color-secondary">
+      {{ props.workspace.venue.name }}
+    </p>
+    <Menu
+      ref="workspaceMenu"
+      :model="workspaceMenuItems"
+      popup
+      aria-label="Рабочие пространства"
+      class="min-w-56"
+      :pt="{
+        list: { class: 'max-h-80 overflow-y-auto' },
+        itemContent: { class: 'text-xs' },
+        itemLink: ({ context }) => ({
+          class: '!justify-center',
+          style: context.item?.active
+            ? { color: 'var(--p-primary-color)', fontWeight: 600 }
+            : undefined,
+        }),
+        itemLabel: {
+          class: 'text-center text-xs',
+          style: { fontFamily: 'inherit', fontSize: '0.75rem' },
+        },
+      }"
       @show="workspaceSwitcherOpen = true"
       @hide="workspaceSwitcherOpen = false"
-    >
-      <FloatLabel v-if="workplaces.length > 8" class="mb-2 w-full px-1 pt-2" variant="on">
-        <InputText :id="searchInputId" v-model="searchText" size="small" class="w-full" />
-        <label :for="searchInputId" class="text-xs">Найти заведение</label>
-      </FloatLabel>
-      <div class="max-h-80 overflow-y-auto">
-        <section
-          v-for="group in filteredWorkspaceGroups"
-          :key="group.company.id"
-          class="mb-2 last:mb-0"
-        >
-          <p class="px-2 py-1 text-xs font-semibold text-color-secondary">
-            {{ group.company.name }}
-          </p>
-          <Button
-            v-for="item in group.workplaces"
-            :key="`${item.company.id}:${item.venue.id}`"
-            :label="item.venue.name"
-            severity="secondary"
-            variant="text"
-            size="small"
-            class="w-full justify-start"
-            :disabled="isCurrentWorkspace(item)"
-            :aria-current="isCurrentWorkspace(item) ? 'page' : undefined"
-            @click="selectWorkspace(item)"
-          />
-        </section>
-      </div>
-    </Popover>
-    <p v-if="props.showFullName" class="truncate px-3 text-xs text-color-secondary">
+    />
+    <p v-if="props.showFullName" class="truncate px-3 text-center text-xs text-color-secondary">
       {{ props.fullName }}
     </p>
   </section>
 </template>
 
 <script setup lang="ts">
-import Popover from "primevue/popover";
+import Menu from "primevue/menu";
+import type { MenuItem } from "primevue/menuitem";
 import type { Workspace } from "~/types/user-workspaces";
 
 const props = withDefaults(
@@ -74,48 +74,29 @@ const props = withDefaults(
   { showFullName: true },
 );
 const emit = defineEmits<{ switch: [workspace: Workspace] }>();
-const workspacePopover = ref<InstanceType<typeof Popover> | null>(null);
+const workspaceMenu = ref<InstanceType<typeof Menu> | null>(null);
 const workspaceSwitcherOpen = ref(false);
-const searchText = ref("");
-const searchInputId = useId();
-const workspaceGroups = computed(() => {
-  const groups = new Map<string, { company: Workspace["company"]; workplaces: Workspace[] }>();
-  for (const workplace of props.workplaces) {
-    const group = groups.get(workplace.company.id) ?? {
-      company: workplace.company,
-      workplaces: [],
-    };
-    group.workplaces.push(workplace);
-    groups.set(workplace.company.id, group);
-  }
-  return [...groups.values()];
-});
-const filteredWorkspaceGroups = computed(() => {
-  const query = searchText.value.trim().toLocaleLowerCase("ru");
-  if (!query) return workspaceGroups.value;
-  return workspaceGroups.value
-    .map((group) => ({
-      ...group,
-      workplaces: group.workplaces.filter((workplace) =>
-        `${group.company.name} ${workplace.venue.name}`.toLocaleLowerCase("ru").includes(query),
-      ),
-    }))
-    .filter((group) => group.workplaces.length);
-});
+const workspaceMenuItems = computed<MenuItem[]>(() =>
+  props.workplaces.map((workplace) => ({
+    label: workplace.venue.name,
+    active: isCurrentWorkspace(workplace),
+    command: () => selectWorkspace(workplace),
+  })),
+);
 
-function isCurrentWorkspace(item: Workspace): boolean {
+function toggleWorkspaceList(event: MouseEvent): void {
+  workspaceMenu.value?.toggle(event);
+}
+
+function isCurrentWorkspace(workplace: Workspace): boolean {
   return (
-    item.company.id === props.workspace.company.id && item.venue.id === props.workspace.venue.id
+    workplace.company.id === props.workspace.company.id &&
+    workplace.venue.id === props.workspace.venue.id
   );
 }
 
-function openWorkspaceList(event: MouseEvent): void {
-  if (props.workplaces.length > 1) workspacePopover.value?.toggle(event);
-}
-
-function selectWorkspace(item: Workspace): void {
-  workspacePopover.value?.hide();
-  searchText.value = "";
-  if (!isCurrentWorkspace(item)) emit("switch", item);
+function selectWorkspace(workplace: Workspace): void {
+  workspaceMenu.value?.hide();
+  if (!isCurrentWorkspace(workplace)) emit("switch", workplace);
 }
 </script>

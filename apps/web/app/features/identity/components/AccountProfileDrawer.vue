@@ -289,15 +289,6 @@
         >
           Сначала покиньте все компании и заведения на странице выбора рабочих пространств.
         </Message>
-        <Button
-          v-if="hasMemberships"
-          label="Перейти к рабочим пространствам"
-          severity="secondary"
-          variant="outlined"
-          size="small"
-          :disabled="busy"
-          @click="openWorkspaces"
-        />
         <Message
           v-if="deletionError"
           severity="error"
@@ -365,10 +356,6 @@ const passwordConfirmation = ref("");
 const deletionError = ref("");
 const deletionPassword = ref("");
 
-async function openWorkspaces(): Promise<void> {
-  emit("update:visible", false);
-  await navigateTo("/");
-}
 const logoutError = ref("");
 const installError = ref("");
 

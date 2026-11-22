@@ -45,7 +45,7 @@
     <Divider />
     <section class="space-y-3">
       <h3 class="text-sm font-semibold">Ожидают увольнения</h3>
-      <p v-if="!scheduledDepartures.length" class="text-sm text-color-secondary">
+      <p v-if="!scheduledDepartures.length" class="text-xs text-color-secondary">
         Нет запланированных увольнений
       </p>
       <ul v-else class="divide-y divide-surface overflow-hidden rounded-lg border border-surface">

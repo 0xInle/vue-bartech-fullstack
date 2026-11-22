@@ -1,12 +1,12 @@
 <template>
   <section
     class="w-full min-w-0 rounded-lg border border-[var(--p-content-border-color)] p-2"
-    aria-labelledby="today-shift-roster-title"
+    :aria-labelledby="headingId"
   >
     <header class="flex items-center justify-between gap-2">
       <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <i class="pi pi-calendar text-sm text-primary" aria-hidden="true" />
-        <h2 id="today-shift-roster-title" class="text-sm font-semibold">{{ title }}</h2>
+        <h2 :id="headingId" class="text-sm font-semibold">{{ title }}</h2>
         <Divider layout="vertical" class="!mx-0 !my-0 self-stretch" />
         <div class="flex items-center gap-1">
           <Button
@@ -93,6 +93,7 @@ import { computed, ref, toRef } from "vue";
 import { useTodayShiftRoster } from "~/features/schedule/composables/useTodayShiftRoster";
 
 const props = defineProps<{ companyId: string; venueId: string }>();
+const headingId = useId();
 const collapsed = ref(false);
 const { date, isToday, title, canGoPrevious, canGoNext, monthQuery, nextDay, previousDay, shifts } =
   useTodayShiftRoster(toRef(props, "companyId"), toRef(props, "venueId"));

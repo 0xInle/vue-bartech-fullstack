@@ -80,7 +80,10 @@
       "
     >
       <div class="mb-3 flex min-w-0 shrink-0 items-center gap-2">
-        <div v-if="isHome" class="min-w-0 flex-1">
+        <div v-if="$slots['page-title']" class="min-w-0 flex-1">
+          <slot name="page-title" />
+        </div>
+        <div v-else-if="isHome" class="min-w-0 flex-1">
           <slot name="home-search" />
         </div>
         <div v-else class="xl:hidden">

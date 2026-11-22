@@ -1,5 +1,12 @@
 <template>
-  <div :class="fillViewport ? 'flex min-h-0 flex-1 flex-col' : ''">
+  <div
+    :class="[
+      overlay
+        ? 'absolute inset-x-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto rounded-lg bg-[var(--p-content-background)] shadow-sm'
+        : '',
+      fillViewport ? 'flex min-h-0 flex-1 flex-col' : '',
+    ]"
+  >
     <div
       v-if="loading"
       :class="fillViewport ? 'flex min-h-0 flex-1 items-center justify-center' : 'py-8'"
@@ -20,7 +27,7 @@
     </Message>
     <div
       v-else-if="active && ready && items.length > 0"
-      class="relative mt-3 min-h-0 flex-1 overflow-hidden"
+      class="relative min-h-0 flex-1 overflow-hidden"
     >
       <DataTable
         v-model:selection="selectedItem"
@@ -54,9 +61,6 @@
               :pt="compactTagPt"
               class="ml-2 align-middle"
             />
-            <span v-if="companySearch && data.venueName" class="block text-xs text-color-secondary">
-              {{ data.venueName }}
-            </span>
           </template>
         </Column>
         <Column field="type" header="Категория" style="width: 1%; white-space: nowrap">
@@ -80,12 +84,12 @@ const props = withDefaults(
     active: boolean;
     error: boolean;
     ready: boolean;
-    companySearch: boolean;
     categories: ProductSearchCategoryResponseDto[];
+    overlay?: boolean;
     fillViewport?: boolean;
     previewEnabled?: boolean;
   }>(),
-  { fillViewport: false, previewEnabled: false },
+  { overlay: false, fillViewport: false, previewEnabled: false },
 );
 const emit = defineEmits<{
   select: [item: WorkspaceSearchItem];

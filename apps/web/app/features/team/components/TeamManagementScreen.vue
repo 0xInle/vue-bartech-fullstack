@@ -1,8 +1,5 @@
 <template>
-  <section class="flex min-h-0 min-w-0 flex-1 flex-col gap-5">
-    <header class="shrink-0">
-      <h1 class="text-xl font-semibold">График работы</h1>
-    </header>
+  <section class="flex min-h-0 min-w-0 flex-1 flex-col">
     <ScheduleScreen class="min-h-0 flex-1" :workspace="workspace" />
   </section>
 </template>

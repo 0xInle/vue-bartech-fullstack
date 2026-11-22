@@ -12,7 +12,10 @@
     :full-name="currentUser.fullName"
     @switch="switchWorkspace"
   >
-    <HistoryScreen :company-id="companyId" :venue-id="venueId" :scope="workspace.scope" />
+    <template #page-title>
+      <h1 class="text-xl font-semibold tracking-tight">История действий</h1>
+    </template>
+    <HistoryScreen :company-id="companyId" :venue-id="venueId" />
   </WorkspaceShell>
 </template>
 

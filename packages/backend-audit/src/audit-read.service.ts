@@ -149,7 +149,7 @@ export class AuditReadService {
     }
     const where: Prisma.AuditEventWhereInput = {
       companyId: workspace.company.id,
-      ...(workspace.scope === "venue" ? { venueId: workspace.venue.id } : {}),
+      venueId: workspace.venue.id,
       ...(fullHistory
         ? {}
         : {

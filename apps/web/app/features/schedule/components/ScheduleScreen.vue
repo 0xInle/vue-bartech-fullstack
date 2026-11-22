@@ -229,7 +229,7 @@
         <template #empty>
           <span
             v-if="previewMode || schedule.monthQuery.isSuccess.value"
-            class="text-color-secondary"
+            class="text-color-secondary text-xs"
             >В этом месяце нет сотрудников</span
           >
         </template>

@@ -10,17 +10,18 @@
     :full-name="currentUser.fullName"
     @switch="switchWorkspace"
   >
+    <template #page-title>
+      <h1 class="text-xl font-semibold tracking-tight">Ингредиенты</h1>
+    </template>
     <section class="w-full">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <h1 class="text-xl font-semibold tracking-tight">Ингредиенты</h1>
-        <Button
-          v-if="canManage"
-          label="Создать ингредиент"
-          size="small"
-          @click="openCreateDialog"
-        />
-      </div>
-      <div class="mt-5 grid gap-3 pt-2 sm:grid-cols-[minmax(0,1fr)_14rem]">
+      <div
+        class="mt-5 grid items-center gap-3 pt-2"
+        :class="
+          canManage
+            ? 'sm:grid-cols-[minmax(0,1fr)_14rem_auto]'
+            : 'sm:grid-cols-[minmax(0,1fr)_14rem]'
+        "
+      >
         <FloatLabel variant="on" class="min-w-0">
           <IconField>
             <InputIcon class="pi pi-search" />
@@ -49,6 +50,13 @@
           />
           <label for="local-ingredient-category-filter" class="text-xs">Категория</label>
         </FloatLabel>
+        <Button
+          v-if="canManage"
+          label="Создать ингредиент"
+          size="small"
+          class="w-full whitespace-nowrap sm:w-auto"
+          @click="openCreateDialog"
+        />
       </div>
       <Message
         v-if="listQuery.isError.value"

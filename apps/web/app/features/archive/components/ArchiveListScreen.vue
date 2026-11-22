@@ -12,11 +12,11 @@
     :full-name="currentUser.fullName"
     @switch="switchWorkspace"
   >
+    <template #page-title>
+      <h1 class="text-xl font-semibold tracking-tight">Архив</h1>
+    </template>
     <section class="w-full">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-xl font-semibold tracking-tight">Архив</h1>
-      </div>
-      <div class="mt-5 grid gap-3 pt-2 sm:grid-cols-[minmax(0,1fr)_14rem]">
+      <div class="mt-5 grid items-center gap-3 pt-2 sm:grid-cols-[minmax(0,1fr)_14rem]">
         <FloatLabel variant="on" class="min-w-0">
           <IconField>
             <InputIcon class="pi pi-search" />
@@ -156,7 +156,7 @@
           @page="handlePageChange"
         />
       </template>
-      <p v-else class="mt-6 text-sm text-color-secondary">
+      <p v-else class="mt-6 text-xs text-color-secondary">
         {{
           query || type
             ? "По выбранным условиям ничего не найдено."

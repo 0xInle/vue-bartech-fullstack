@@ -16,13 +16,16 @@
     v-else
     class="flex flex-col gap-4 lg:h-[calc(100vh-6rem)] lg:min-h-0 xl:h-[calc(100vh-3rem)]"
   >
-    <h1 class="text-xl font-semibold">Управление командой</h1>
     <div class="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,65fr)_auto_minmax(0,35fr)]">
       <section class="flex min-h-0 min-w-0 flex-col gap-3">
         <h2 class="text-base font-semibold">Сотрудники</h2>
-        <div class="relative h-96 min-h-0 overflow-hidden lg:h-full lg:flex-1">
+        <div
+          v-if="displayedMembers.length"
+          class="relative h-96 min-h-0 overflow-hidden lg:h-full lg:flex-1"
+        >
           <TeamMembersTable :members="displayedMembers" @edit="openMemberEditor" />
         </div>
+        <p v-else class="text-xs text-color-secondary">В этом заведении пока нет сотрудников.</p>
       </section>
       <Divider layout="vertical" class="!mx-0 !my-0 !hidden self-stretch lg:!flex" />
       <Divider class="!my-0 lg:!hidden" />
@@ -115,7 +118,6 @@
 <script setup lang="ts">
 import type { Workspace } from "~/types/user-workspaces";
 import { compactMessagePt } from "~/utils/primevue-message";
-import { PREVIEW_TEAM_ROSTER } from "~/utils/preview-team-roster";
 import {
   useVenueTeam,
   type TeamMember,
@@ -138,12 +140,7 @@ const {
   endMembership,
   addExistingMember,
 } = useVenueTeam(props.workspace.company.id, props.workspace.venue.id);
-type TeamMemberRow = TeamMember & { isPreview?: true };
-const previewMembers = ref<TeamMemberRow[]>(createPreviewMembers());
-const displayedMembers = computed(() => [
-  ...(teamQuery.data.value?.members ?? []),
-  ...previewMembers.value,
-]);
+const displayedMembers = computed(() => teamQuery.data.value?.members ?? []);
 const availableCompanyMembers = computed(() =>
   (teamQuery.data.value?.availableCompanyMembers ?? []).map(({ id, fullName, email }) => ({
     value: id,
@@ -175,7 +172,7 @@ const { createInvitation: createNewVenueInvitation, revokeInvitation: revokeNewV
 const invitationBusy = ref(false);
 const invitationError = ref("");
 const busyInvitationId = ref("");
-const editingMember = ref<TeamMemberRow | null>(null);
+const editingMember = ref<TeamMember | null>(null);
 const editorBusy = ref(false);
 const editorError = ref("");
 const pendingInvitations = computed(() => [
@@ -250,9 +247,7 @@ function closeMemberEditor(): void {
 watch(
   () => teamQuery.data.value?.members.find(({ id }) => id === editingMember.value?.id),
   (member) => {
-    if (member && editingMember.value && !editingMember.value.isPreview) {
-      editingMember.value = member;
-    }
+    if (member) editingMember.value = member;
   },
 );
 
@@ -261,20 +256,7 @@ async function confirmMemberRole(role: VenueRole): Promise<void> {
   editorBusy.value = true;
   editorError.value = "";
   try {
-    if (editingMember.value.isPreview) {
-      const permissions = defaultPreviewPermissions(role);
-      previewMembers.value = previewMembers.value.map((member) =>
-        member.id === editingMember.value?.id
-          ? {
-              ...member,
-              role,
-              permissions,
-            }
-          : member,
-      );
-    } else {
-      await updateMember(editingMember.value.id, { role, permissions: [] });
-    }
+    await updateMember(editingMember.value.id, { role, permissions: [] });
   } catch (cause) {
     editorError.value = cause instanceof Error ? cause.message : "Не удалось изменить должность";
   } finally {
@@ -302,86 +284,12 @@ async function saveMember(input: UpdateTeamMemberInput): Promise<void> {
   editorBusy.value = true;
   editorError.value = "";
   try {
-    if (editingMember.value.isPreview) {
-      previewMembers.value = previewMembers.value.map((member) =>
-        member.id === editingMember.value?.id
-          ? {
-              ...member,
-              ...input,
-            }
-          : member,
-      );
-    } else {
-      await updateMember(editingMember.value.id, input);
-    }
+    await updateMember(editingMember.value.id, input);
     editingMember.value = null;
   } catch (cause) {
     editorError.value = cause instanceof Error ? cause.message : "Не удалось изменить сотрудника";
   } finally {
     editorBusy.value = false;
   }
-}
-
-function createPreviewMembers(): TeamMemberRow[] {
-  if (!import.meta.dev) return [];
-  const availableRoles: VenueRole[] = [
-    "BARTENDER",
-    "SENIOR_BARTENDER",
-    "BARBACK",
-    "TRAINEE",
-    "BAR_MANAGER",
-  ];
-  const delegatablePermissions = [
-    "manage_products",
-    "manage_product_archive",
-    "delete_products_permanently",
-    "export_data",
-    "invite_employees",
-    "manage_schedule",
-  ];
-  return PREVIEW_TEAM_ROSTER.map((employee, index) => ({
-    id: `preview-team-member-${index + 1}`,
-    fullName: employee.name,
-    email: `demo-${index + 1}@example.test`,
-    role: employee.role,
-    terminationDate: null,
-    permissions: defaultPreviewPermissions(employee.role),
-    availableRoles,
-    availablePermissions: [
-      ...new Set([...defaultPreviewPermissions(employee.role), ...delegatablePermissions]),
-    ],
-    canManagePermissionOverrides: true,
-    isCurrentUser: false,
-    isPreview: true,
-  }));
-}
-
-function defaultPreviewPermissions(role: VenueRole): string[] {
-  if (role === "BAR_MANAGER") {
-    return [
-      "view_products",
-      "view_archive",
-      "view_team",
-      "view_schedule",
-      "manage_products",
-      "manage_product_archive",
-      "delete_products_permanently",
-      "export_data",
-      "invite_employees",
-      "invite_bar_manager",
-      "invite_chef_bartender",
-      "create_venues",
-      "manage_team",
-      "manage_delegated_permissions",
-      "manage_venue",
-      "manage_company",
-      "view_history",
-      "manage_schedule",
-    ];
-  }
-  if (role === "SENIOR_BARTENDER") {
-    return ["view_products", "view_archive", "view_team", "view_schedule", "manage_products"];
-  }
-  return ["view_products", "view_archive", "view_team", "view_schedule"];
 }
 </script>

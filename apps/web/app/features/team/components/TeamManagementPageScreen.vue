@@ -12,6 +12,9 @@
     :full-name="currentUser.fullName"
     @switch="switchWorkspace"
   >
+    <template #page-title>
+      <h1 class="text-xl font-semibold">Управление командой</h1>
+    </template>
     <TeamManagementContent v-if="canManagePage" :workspace="workspace" />
     <div v-else class="mx-auto max-w-5xl pt-8">
       <Message severity="error" :closable="false" :pt="compactMessagePt">

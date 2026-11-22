@@ -5,7 +5,7 @@
     :dismissable-mask="!busy"
     :closable="!busy"
     :close-on-escape="!busy"
-    header="Открыть заведение"
+    header="Создание рабочего пространства"
     class="dialog-size-sm"
     :pt="{ pcCloseButton: { root: { class: '!rounded-md' } } }"
   >
@@ -39,22 +39,10 @@
         />
         <label for="open-venue-role" class="text-xs">Ваша должность</label>
       </FloatLabel>
-      <p v-else class="text-sm text-color-secondary">
-        Заведение откроется без локальной команды. Вы сможете подготовить его к работе и пригласить
-        сотрудников.
-      </p>
       <Message v-if="errorMessage" severity="error" :closable="false" class="w-full">
         {{ errorMessage }}
       </Message>
-      <div class="flex flex-col gap-2">
-        <Button
-          type="submit"
-          :label="busy ? 'Открываем…' : 'Открыть заведение'"
-          :loading="busy"
-          :disabled="busy"
-          size="small"
-          class="w-full"
-        />
+      <div class="flex gap-2">
         <Button
           type="button"
           label="Отмена"
@@ -62,8 +50,16 @@
           variant="outlined"
           :disabled="busy"
           size="small"
-          class="w-full"
+          class="flex-1"
           @click="visible = false"
+        />
+        <Button
+          type="submit"
+          :label="busy ? 'Создаём…' : 'Создать'"
+          :loading="busy"
+          :disabled="busy"
+          size="small"
+          class="flex-1"
         />
       </div>
     </form>

@@ -1,9 +1,5 @@
 <template>
   <section class="w-full">
-    <header class="mb-5">
-      <h1 class="text-xl font-semibold tracking-tight">Обращение в техподдержку</h1>
-    </header>
-
     <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
       <div class="space-y-4">
         <section class="space-y-4">

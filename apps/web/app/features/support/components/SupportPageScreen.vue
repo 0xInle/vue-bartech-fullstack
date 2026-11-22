@@ -12,6 +12,9 @@
     :full-name="currentUser.fullName"
     @switch="switchWorkspace"
   >
+    <template #page-title>
+      <h1 class="text-xl font-semibold tracking-tight">Обращение в техподдержку</h1>
+    </template>
     <SupportScreen :workspace="workspace" />
   </WorkspaceShell>
 </template>

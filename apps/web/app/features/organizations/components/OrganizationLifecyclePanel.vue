@@ -25,7 +25,7 @@
       <Button
         v-if="showCompanyActions && canCloseCompany && canOperate"
         label="Закрыть компанию"
-        icon="pi pi-building"
+        icon="pi pi-times-circle"
         severity="danger"
         size="small"
         @click="openDialog('company')"
@@ -57,29 +57,17 @@
       </div>
       <p class="text-sm text-color-secondary">{{ dialogDescription }}</p>
       <ClosureExportPicker
-        v-if="operationId"
+        v-if="operationId && dialogMode !== 'company'"
         ref="closureExportPickerRef"
         :company-id="companyId"
         :operation-id="operationId"
-        :operation-type="dialogMode === 'company' ? 'COMPANY' : 'VENUE'"
+        operation-type="VENUE"
         :can-create="true"
         @ready="selectedExportId = $event"
-        @requested="onExportRequested"
+        @requested="onVenueExportRequested"
         @error="errorMessage = $event"
       />
       <template v-if="dialogMode === 'company'">
-        <Button
-          class="mt-4"
-          label="Продолжить без выгрузки"
-          severity="secondary"
-          outlined
-          size="small"
-          :disabled="preparingOperation"
-          @click="chooseNoExport"
-        />
-        <p v-if="withoutExport" class="mt-3 text-sm text-color-secondary">
-          Вы подтвердили закрытие без выгрузки продукции.
-        </p>
         <label class="mt-5 block text-sm font-medium" for="closure-confirmation">
           Введите название точно, с учётом регистра
         </label>
@@ -115,7 +103,7 @@
           severity="danger"
           size="small"
           :loading="isSubmitting"
-          :disabled="confirmationName !== expectedName || !operationId || !hasChosenClosurePath"
+          :disabled="confirmationName !== expectedName || !operationId"
           @click="confirmClosure"
         />
       </template>
@@ -250,7 +238,6 @@ const preparingOperation = ref(false);
 const operationId = ref("");
 const closureExportPickerRef = ref<InstanceType<typeof ClosureExportPicker> | null>(null);
 const selectedExportId = ref("");
-const exportRequested = ref(false);
 const withoutExport = ref(false);
 const dialogMode = ref<"venue" | "leaveVenue" | "company">("venue");
 const isPending = computed(() => closureQuery.data.value?.status === "PENDING_CLOSURE");
@@ -300,9 +287,7 @@ const dialogDescription = computed(() =>
 );
 const confirmLabel = computed(() =>
   dialogMode.value === "company"
-    ? withoutExport.value
-      ? "Начать без выгрузки"
-      : "Начать ожидание закрытия"
+    ? "Начать ожидание закрытия"
     : dialogMode.value === "leaveVenue"
       ? withoutExport.value
         ? "Покинуть и закрыть без выгрузки"
@@ -313,7 +298,6 @@ const confirmLabel = computed(() =>
 );
 const companyId = computed(() => props.workspace?.company.id ?? props.company?.id ?? "");
 const venueId = computed(() => props.workspace?.venue.id ?? "");
-const hasChosenClosurePath = computed(() => exportRequested.value || withoutExport.value);
 
 async function openDialog(mode: "venue" | "leaveVenue" | "company") {
   dialogMode.value = mode;
@@ -321,7 +305,6 @@ async function openDialog(mode: "venue" | "leaveVenue" | "company") {
   errorMessage.value = "";
   operationId.value = "";
   selectedExportId.value = "";
-  exportRequested.value = false;
   withoutExport.value = false;
   dialogVisible.value = true;
   preparingOperation.value = true;
@@ -386,23 +369,13 @@ async function openCompanyClosure(): Promise<void> {
 
 defineExpose({ openVenueClosure, openCompanyClosure, openSelfLeave });
 
-function chooseNoExport() {
-  withoutExport.value = true;
-  selectedExportId.value = "";
-}
-
-function onExportRequested() {
-  if (dialogMode.value === "company") {
-    exportRequested.value = true;
-    withoutExport.value = false;
-  } else {
-    selectedExportId.value = "";
-  }
-}
-
 function requestVenueExport() {
   errorMessage.value = "";
   void closureExportPickerRef.value?.createVenueExport();
+}
+
+function onVenueExportRequested() {
+  selectedExportId.value = "";
 }
 
 function closeDialog() {
@@ -433,7 +406,7 @@ async function confirmClosure() {
       }
       await navigateTo(`/app/closures/${operationId.value}`);
     } else {
-      await beginCompanyClosure(confirmationName.value, operationId.value, withoutExport.value);
+      await beginCompanyClosure(confirmationName.value, operationId.value, true);
       closeDialog();
     }
   } catch (error) {

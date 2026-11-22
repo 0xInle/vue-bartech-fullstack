@@ -1,12 +1,12 @@
 <template>
   <section
     class="w-full min-w-0 rounded-lg border border-[var(--p-content-border-color)] p-2"
-    aria-labelledby="recent-audit-events-title"
+    :aria-labelledby="headingId"
   >
     <header class="flex items-center justify-between gap-2">
       <div class="flex min-w-0 flex-1 items-center gap-2">
         <i class="pi pi-history text-sm text-primary" aria-hidden="true" />
-        <h2 id="recent-audit-events-title" class="text-sm font-semibold">Последние изменения</h2>
+        <h2 :id="headingId" class="text-sm font-semibold">Последние изменения</h2>
       </div>
       <Button
         :icon="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'"
@@ -57,6 +57,7 @@ import { useAuditHistory } from "~/features/history/composables/useAuditHistory"
 import { compactMessagePt } from "~/utils/primevue-message";
 
 const props = defineProps<{ companyId: string; venueId: string }>();
+const headingId = useId();
 const filters: AuditControllerListParams = { page: 1, limit: 10 };
 const { historyQuery } = useAuditHistory(
   () => props.companyId,

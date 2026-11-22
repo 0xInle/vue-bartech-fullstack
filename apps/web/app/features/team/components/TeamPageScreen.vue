@@ -12,6 +12,9 @@
     :full-name="currentUser.fullName"
     @switch="switchWorkspace"
   >
+    <template #page-title>
+      <h1 class="text-xl font-semibold">График работы</h1>
+    </template>
     <TeamManagementScreen :workspace="workspace" />
   </WorkspaceShell>
 </template>

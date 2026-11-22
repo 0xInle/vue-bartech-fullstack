@@ -12,6 +12,9 @@
     :full-name="currentUser.fullName"
     @switch="switchWorkspace"
   >
+    <template #page-title>
+      <h1 class="text-xl font-semibold tracking-tight">Выгрузка</h1>
+    </template>
     <ProductExportsScreen
       :company-id="companyId"
       :venue-id="venueId"

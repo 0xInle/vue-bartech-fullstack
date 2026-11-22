@@ -1,9 +1,6 @@
 import { computed, onScopeDispose, ref, toValue, watch, type MaybeRefOrGetter } from "vue";
 import { useQuery } from "@tanstack/vue-query";
-import {
-  companyProductsControllerSearchCompany,
-  productsControllerSearchWorkspace,
-} from "@bartech/api-client";
+import { productsControllerSearchWorkspace } from "@bartech/api-client";
 import type { ProductSearchPageResponseDto } from "@bartech/api-client";
 import { useIdentityFlow } from "~/features/identity/composables/useIdentityFlow";
 import { useProductAnalytics } from "~/features/analytics/composables/useProductAnalytics";
@@ -11,8 +8,6 @@ import type { Workspace } from "~/types/user-workspaces";
 import { requestApi } from "~/utils/api-response";
 
 export type WorkspaceSearchItem = ProductSearchPageResponseDto["items"][number];
-export type WorkspaceSearchScope = "VENUE" | "COMPANY";
-
 export function useWorkspaceProductSearch(
   workspace: MaybeRefOrGetter<Workspace>,
   options: { types?: readonly string[] } = {},
@@ -21,12 +16,10 @@ export function useWorkspaceProductSearch(
   const analytics = useProductAnalytics();
   const searchText = ref("");
   const debouncedSearch = ref("");
-  const scope = ref<WorkspaceSearchScope>("VENUE");
   const limit = 20;
   const types = options.types?.join(",");
   let searchTimer: ReturnType<typeof setTimeout> | undefined;
   const currentWorkspace = computed(() => toValue(workspace));
-  const isChef = computed(() => currentWorkspace.value.role === "chef_bartender");
   const queryEnabled = computed(() => debouncedSearch.value.length >= 2);
   watch(
     searchText,
@@ -41,9 +34,6 @@ export function useWorkspaceProductSearch(
     },
     { flush: "sync" },
   );
-  watch(isChef, (allowed) => {
-    if (!allowed) scope.value = "VENUE";
-  });
   onScopeDispose(() => clearTimeout(searchTimer));
 
   const productQuery = useQuery({
@@ -52,7 +42,7 @@ export function useWorkspaceProductSearch(
       currentWorkspace.value.company.id,
       currentWorkspace.value.venue.id,
       currentWorkspace.value.role,
-      isChef.value ? scope.value : "VENUE",
+      "VENUE",
       types,
       debouncedSearch.value,
     ]),
@@ -64,21 +54,13 @@ export function useWorkspaceProductSearch(
         limit,
         ...(types ? { types } : {}),
       };
-      const response =
-        isChef.value && scope.value === "COMPANY"
-          ? await companyProductsControllerSearchCompany(
-              currentWorkspace.value.company.id,
-              params,
-              { credentials: "include", signal },
-              identity.apiFetch,
-            )
-          : await productsControllerSearchWorkspace(
-              currentWorkspace.value.company.id,
-              currentWorkspace.value.venue.id,
-              params,
-              { credentials: "include", signal },
-              identity.apiFetch,
-            );
+      const response = await productsControllerSearchWorkspace(
+        currentWorkspace.value.company.id,
+        currentWorkspace.value.venue.id,
+        params,
+        { credentials: "include", signal },
+        identity.apiFetch,
+      );
       const page = await requestApi<ProductSearchPageResponseDto>(Promise.resolve(response));
       if (
         !page ||
@@ -98,7 +80,6 @@ export function useWorkspaceProductSearch(
   return {
     debouncedSearch,
     productQuery,
-    scope,
     searchText,
   };
 }

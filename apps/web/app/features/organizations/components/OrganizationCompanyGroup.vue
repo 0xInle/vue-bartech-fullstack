@@ -5,17 +5,31 @@
         <h2 class="text-xs font-medium text-color-secondary">Рабочие пространства</h2>
         <span class="text-xs font-semibold">{{ company.name }}</span>
       </div>
-      <Button
-        v-tooltip.top="{ value: 'Выйти из компании', class: 'app-tooltip' }"
-        type="button"
-        icon="pi pi-sign-out"
-        aria-label="Выйти из компании"
-        severity="secondary"
-        variant="text"
-        size="small"
-        class="workspace-action-icon-button shrink-0"
-        @click="companyExitDialog?.open()"
-      />
+      <div class="flex shrink-0 items-center gap-1">
+        <Button
+          v-if="canManageCompany"
+          v-tooltip.top="{ value: 'Закрыть компанию', class: 'app-tooltip' }"
+          type="button"
+          icon="pi pi-times-circle"
+          aria-label="Закрыть компанию"
+          severity="secondary"
+          variant="text"
+          size="small"
+          class="workspace-action-icon-button"
+          @click="lifecyclePanel?.openCompanyClosure()"
+        />
+        <Button
+          v-tooltip.top="{ value: 'Выйти из компании', class: 'app-tooltip' }"
+          type="button"
+          icon="pi pi-sign-out"
+          aria-label="Выйти из компании"
+          severity="secondary"
+          variant="text"
+          size="small"
+          class="workspace-action-icon-button"
+          @click="companyExitDialog?.open()"
+        />
+      </div>
     </div>
     <ul v-if="workplaces.length" class="mt-4 space-y-4">
       <li v-for="workplace in workplaces" :key="workplace.venue.id">
@@ -38,19 +52,6 @@
         size="small"
         class="w-full"
         @click="openVenueDialog?.open()"
-      />
-    </div>
-    <div v-if="canManageCompany" class="mt-4 flex justify-center">
-      <Button
-        v-tooltip.top="{ value: 'Закрыть компанию', class: 'app-tooltip' }"
-        type="button"
-        icon="pi pi-building"
-        aria-label="Закрыть компанию"
-        severity="secondary"
-        variant="text"
-        size="small"
-        class="workspace-action-icon-button"
-        @click="lifecyclePanel?.openCompanyClosure()"
       />
     </div>
     <OpenVenueDialog

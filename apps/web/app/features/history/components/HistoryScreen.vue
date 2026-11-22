@@ -1,9 +1,5 @@
 <template>
   <section class="w-full">
-    <header class="mb-5 flex items-center justify-between gap-3">
-      <h1 class="text-xl font-semibold tracking-tight">История действий</h1>
-    </header>
-
     <div class="mb-5 flex flex-col gap-3 pt-2 md:flex-row md:flex-nowrap md:items-end">
       <FloatLabel variant="on" class="w-full min-w-0 md:w-64 md:flex-none">
         <DatePicker
@@ -62,14 +58,9 @@
       Историю не удалось загрузить. Проверьте доступ к рабочему пространству и повторите попытку.
       <Button label="Повторить" size="small" text @click="historyQuery.refetch()" />
     </Message>
-    <Message
-      v-else-if="!items.length"
-      severity="secondary"
-      :closable="false"
-      :pt="compactMessagePt"
-    >
+    <p v-else-if="!items.length" class="mt-6 text-xs text-color-secondary">
       За выбранный период действий не найдено.
-    </Message>
+    </p>
     <DataTable
       v-else
       v-model:expanded-rows="expandedRows"
@@ -144,7 +135,7 @@ import type { AuditControllerListParams } from "@bartech/api-client";
 import { compactMessagePt } from "~/utils/primevue-message";
 import { useAuditHistory, type AuditEvent } from "../composables/useAuditHistory";
 
-const props = defineProps<{ companyId: string; venueId: string; scope: "company" | "venue" }>();
+const props = defineProps<{ companyId: string; venueId: string }>();
 const pageSize = ref(20);
 const route = useRoute();
 const router = useRouter();

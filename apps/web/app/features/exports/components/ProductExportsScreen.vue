@@ -1,21 +1,8 @@
 <template>
   <section class="w-full">
-    <header class="flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-xl font-semibold tracking-tight">Выгрузка</h1>
-      <div v-if="!exportId" class="flex flex-wrap items-center gap-2">
-        <Button
-          label="Выгрузить"
-          size="small"
-          :disabled="!filteredProducts.length || isExportPending"
-          :loading="creating"
-          @click="createBatch"
-        />
-      </div>
-    </header>
-
     <template v-if="!exportId">
       <div
-        class="export-filters mt-5 flex flex-col gap-3 pt-2 md:flex-row md:flex-nowrap md:items-end"
+        class="export-filters mt-5 flex flex-col gap-3 pt-2 md:flex-row md:flex-nowrap md:items-center"
       >
         <FloatLabel variant="on" class="min-w-0 flex-1">
           <IconField>
@@ -67,6 +54,14 @@
           />
           <label for="export-status-filter" class="text-xs">Статус продукции</label>
         </FloatLabel>
+        <Button
+          label="Выгрузить"
+          size="small"
+          class="w-full md:w-auto md:flex-none"
+          :disabled="!filteredProducts.length || isExportPending"
+          :loading="creating"
+          @click="createBatch"
+        />
       </div>
 
       <Message
@@ -165,7 +160,7 @@
           @page="handlePageChange"
         />
       </template>
-      <p v-else class="mt-6 text-sm text-color-secondary">
+      <p v-else class="mt-6 text-xs text-color-secondary">
         {{
           query || types.length || statuses.length
             ? "По выбранным условиям ничего не найдено."

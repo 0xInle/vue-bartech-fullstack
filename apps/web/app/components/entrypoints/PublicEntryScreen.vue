@@ -197,9 +197,7 @@
       </TransitionGroup>
 
       <footer class="public-entry-footer mt-auto grid items-end gap-3 pt-4">
-        <span class="landing-section-counter text-sm shadow-sm" aria-label="Секция 01 из 05"
-          >01 | 05</span
-        >
+        <span class="landing-section-counter text-sm" aria-label="Секция 01 из 05">01 | 05</span>
         <Transition name="cookie-notice">
           <section
             v-if="showCookieNotice"

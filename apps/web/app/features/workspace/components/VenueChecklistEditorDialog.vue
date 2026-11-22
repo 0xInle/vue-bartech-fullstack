@@ -21,6 +21,32 @@
       >
         {{ errorMessage }}
       </Message>
+      <div v-if="targetOptions" class="space-y-1 pt-2">
+        <FloatLabel variant="on">
+          <Select
+            :id="targetSelectId"
+            :model-value="target"
+            :options="targetOptions"
+            option-label="label"
+            option-value="value"
+            size="small"
+            class="w-full"
+            :disabled="busy"
+            :invalid="targetInvalid"
+            @update:model-value="emit('update:target', $event)"
+          />
+          <label :for="targetSelectId" class="text-xs">Куда создать</label>
+        </FloatLabel>
+      </div>
+      <Message
+        v-if="targetInvalid"
+        severity="error"
+        size="small"
+        :closable="false"
+        :pt="compactMessagePt"
+      >
+        Выберите заведение или все заведения компании.
+      </Message>
       <div class="space-y-1 pt-2">
         <FloatLabel variant="on">
           <InputText
@@ -130,15 +156,20 @@ const props = defineProps<{
   checklist: VenueChecklistDto | null;
   busy: boolean;
   errorMessage: string;
+  targetOptions?: Array<{ label: string; value: string }>;
+  target?: string | null;
 }>();
 const emit = defineEmits<{
   "update:visible": [visible: boolean];
+  "update:target": [target: string | null];
   submit: [input: SaveVenueChecklistDto];
 }>();
+const targetSelectId = useId();
 const title = ref("");
 const steps = ref<ChecklistStepDraft[]>([]);
 let nextStepId = 0;
 const attempted = ref(false);
+const targetInvalid = ref(false);
 const normalizedSteps = computed(() => steps.value.map((step) => step.text.trim()).filter(Boolean));
 const titleInvalid = computed(
   () => attempted.value && (!title.value.trim() || title.value.trim().length > 100),
@@ -162,6 +193,7 @@ watch(
   ([visible, checklist]) => {
     if (!visible) {
       attempted.value = false;
+      targetInvalid.value = false;
       return;
     }
     title.value = checklist?.title ?? "";
@@ -174,6 +206,8 @@ watch(
 
 function submit(): void {
   attempted.value = true;
+  targetInvalid.value = Boolean(props.targetOptions && !props.target);
+  if (targetInvalid.value) return;
   if (titleInvalid.value || stepsInvalid.value) return;
   emit("submit", { title: title.value.trim(), steps: normalizedSteps.value });
 }

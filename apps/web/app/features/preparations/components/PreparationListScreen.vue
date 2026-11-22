@@ -10,17 +10,18 @@
     :full-name="currentUser.fullName"
     @switch="switchWorkspace"
   >
+    <template #page-title>
+      <h1 class="text-xl font-semibold tracking-tight">Заготовки</h1>
+    </template>
     <section class="w-full">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <h1 class="text-xl font-semibold tracking-tight">Заготовки</h1>
-        <Button
-          v-if="canManage"
-          label="Создать заготовку"
-          size="small"
-          @click="drawerVisible = true"
-        />
-      </div>
-      <div class="mt-5 grid gap-3 pt-2 sm:grid-cols-[minmax(0,1fr)_14rem_12rem]">
+      <div
+        class="mt-5 grid items-center gap-3 pt-2"
+        :class="
+          canManage
+            ? 'sm:grid-cols-[minmax(0,1fr)_14rem_12rem_auto]'
+            : 'sm:grid-cols-[minmax(0,1fr)_14rem_12rem]'
+        "
+      >
         <FloatLabel variant="on" class="min-w-0"
           ><IconField
             ><InputIcon class="pi pi-search" /><InputText
@@ -61,6 +62,13 @@
           />
           <label for="preparation-workflow-status-filter" class="text-xs">Статус</label>
         </FloatLabel>
+        <Button
+          v-if="canManage"
+          label="Создать заготовку"
+          size="small"
+          class="w-full whitespace-nowrap sm:w-auto"
+          @click="drawerVisible = true"
+        />
       </div>
       <Message
         v-if="listQuery.isError.value"
