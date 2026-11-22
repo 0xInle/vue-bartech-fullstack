@@ -87,14 +87,14 @@
             </template>
           </Column>
           <Column
-            v-if="canManageArchive || canDeletePermanently"
+            v-if="hasActions"
             header=""
             style="width: 30px; min-width: 30px; max-width: 30px"
             header-class="!p-0"
             body-class="!p-0"
           />
           <Column
-            v-if="canManageArchive || canDeletePermanently"
+            v-if="hasActions"
             header="Действие"
             style="width: 1%; white-space: nowrap"
             header-class="px-2"
@@ -132,7 +132,7 @@
                 />
               </div>
             </button>
-            <div v-if="canManageArchive || canDeletePermanently" class="mt-2 flex gap-1">
+            <div v-if="hasActions" class="mt-2 flex gap-1">
               <ArchiveListActions
                 :company-id="companyId"
                 :venue-id="venueId"
@@ -229,6 +229,7 @@ const canManageArchive = computed(
 const canDeletePermanently = computed(
   () => workspace.value?.permissions.includes("delete_products_permanently") ?? false,
 );
+const hasActions = computed(() => canManageArchive.value || canDeletePermanently.value);
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(archiveItems.value.length / pageSize.value)),
 );
@@ -278,7 +279,9 @@ const archiveTablePt = {
   },
   bodyRow: { class: "cursor-pointer" },
 };
-const archiveColumnPt = { bodyCell: { style: { paddingBlock: "0" } } };
+const archiveColumnPt = computed(() => ({
+  bodyCell: { style: { paddingBlock: hasActions.value ? "0" : "0.375rem" } },
+}));
 const paginatorPt = {
   root: { class: "gap-1 border-0 bg-transparent p-0 text-sm" },
   first: { class: "!h-8 !min-w-8 text-xs" },

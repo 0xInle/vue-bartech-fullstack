@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { OrganizationsService } from "@bartech/backend-organizations";
+import { OrganizationsService, type WorkspaceRole } from "@bartech/backend-organizations";
 import { SupportAccessService } from "@bartech/backend-support";
 import type { Prisma } from "@bartech/database";
 import type { CreateProductContext } from "./product.dto.js";
@@ -15,6 +15,7 @@ export class ProductContextAccess {
     context: CreateProductContext,
     permission: "view_products" | "manage_products",
     transaction?: Prisma.TransactionClient,
+    allowedRoles?: readonly WorkspaceRole[],
   ) {
     if (context.internalUserId) {
       await this.supportAccess.assertActiveSession(
@@ -34,7 +35,10 @@ export class ProductContextAccess {
       context.venueId,
     );
     if (!workspace) throw new NotFoundException("Рабочее пространство не найдено");
-    if (!workspace.permissions.includes(permission)) {
+    if (
+      !workspace.permissions.includes(permission) ||
+      (allowedRoles && !allowedRoles.includes(workspace.role))
+    ) {
       throw new ForbiddenException("У вас нет доступа к этому действию");
     }
   }

@@ -93,12 +93,14 @@
                 :pt="compactTagPt" /></template
           ></Column>
           <Column
+            v-if="hasActions"
             header=""
             style="width: 30px; min-width: 30px; max-width: 30px"
             header-class="!p-0"
             body-class="!p-0"
           />
           <Column
+            v-if="hasActions"
             header="Действие"
             style="width: 1%; white-space: nowrap"
             header-class="px-2"
@@ -154,7 +156,7 @@
                 />
               </div>
             </button>
-            <div class="mt-2 flex gap-1">
+            <div v-if="hasActions" class="mt-2 flex gap-1">
               <Button
                 v-if="canManage"
                 label="Редактировать"
@@ -276,6 +278,9 @@ const canArchive = computed(
 const canDeletePermanently = computed(
   () => workspace.value?.permissions.includes("delete_products_permanently") ?? false,
 );
+const hasActions = computed(
+  () => canManage.value || canArchive.value || canDeletePermanently.value,
+);
 const selectedGarnishId = computed(
   () =>
     props.garnishId ?? (typeof route.query.garnish === "string" ? route.query.garnish : undefined),
@@ -344,7 +349,9 @@ const tablePt = {
   },
   bodyRow: { class: "cursor-pointer" },
 };
-const columnPt = { bodyCell: { style: { paddingBlock: "0" } } };
+const columnPt = computed(() => ({
+  bodyCell: { style: { paddingBlock: hasActions.value ? "0" : "0.375rem" } },
+}));
 const listPath = computed(
   () => `/app/companies/${companyId.value}/venues/${venueId.value}/garnishes`,
 );

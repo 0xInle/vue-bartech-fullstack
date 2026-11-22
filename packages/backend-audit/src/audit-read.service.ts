@@ -1,23 +1,13 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { OrganizationsService } from "@bartech/backend-organizations";
 import { Prisma } from "@bartech/database";
 import { AuditReadRepository } from "./audit-read.repository.js";
 
-const SELF_VISIBLE_EVENT = [
-  "product.created",
-  "product.updated",
-  "support.access_granted",
-  "support.access_revoked",
-  "service_access.started",
-  "service_access.ended",
-  "product.archived",
-  "product.restored",
-  "product.permanently_deleted",
-  "PRODUCT_CATALOG_MATCHED",
-  "venue_checklist.created",
-  "venue_checklist.updated",
-  "venue_checklist.deleted",
-];
 const HIDDEN_EVENT_TYPES = ["export.requested", "export.completed", "export.failed"];
 const COMPANY_CLOSURE_EVENTS = [
   "company.closure_started",
@@ -25,13 +15,6 @@ const COMPANY_CLOSURE_EVENTS = [
   "company.closed",
 ];
 const VENUE_LIFECYCLE_EVENTS = ["venue.created", "venue.closed"];
-const PERMISSION_EVENT = [
-  "membership.role_changed",
-  "membership.permission_overrides_changed",
-  "membership.ended",
-  "temporary_responsibility.ended",
-];
-
 export type AuditReadContext = { userId: string; companyId: string; venueId: string };
 export type AuditReadQuery = {
   from?: string;
@@ -52,7 +35,7 @@ export class AuditReadService {
   ) {}
 
   async list(context: AuditReadContext, query: AuditReadQuery) {
-    const { where } = await this.buildWhere(context, query);
+    const where = await this.buildWhere(context, query);
 
     const limit = [10, 20, 30].includes(query.limit ?? 20) ? (query.limit ?? 20) : 20;
     const page = Math.max(query.page ?? 1, 1);
@@ -119,8 +102,7 @@ export class AuditReadService {
     context: AuditReadContext,
     query: Omit<AuditReadQuery, "actorId" | "limit" | "page">,
   ) {
-    const { where } = await this.buildWhere(context, query);
-    return this.repository.listAuthors(where);
+    return this.repository.listAuthors(await this.buildWhere(context, query));
   }
 
   private async buildWhere(
@@ -134,7 +116,8 @@ export class AuditReadService {
     );
     if (!workspace) throw new NotFoundException("Рабочее пространство не найдено");
 
-    const fullHistory = workspace.permissions.includes("view_history");
+    if (!workspace.permissions.includes("view_history"))
+      throw new ForbiddenException("Недостаточно прав для просмотра истории действий");
     const excludedEventTypes = [
       ...COMPANY_CLOSURE_EVENTS,
       ...HIDDEN_EVENT_TYPES,
@@ -150,18 +133,6 @@ export class AuditReadService {
     const where: Prisma.AuditEventWhereInput = {
       companyId: workspace.company.id,
       venueId: workspace.venue.id,
-      ...(fullHistory
-        ? {}
-        : {
-            OR: [
-              { actorId: context.userId, eventType: { in: SELF_VISIBLE_EVENT } },
-              {
-                eventType: { in: PERMISSION_EVENT },
-                metadata: { path: ["subjectUserId"], equals: context.userId },
-                venueId: workspace.venue.id,
-              },
-            ],
-          }),
       ...(query.from || query.to
         ? {
             createdAt: {
@@ -174,7 +145,7 @@ export class AuditReadService {
       ...(query.entityType ? { entityType: query.entityType } : {}),
       ...(query.entityId ? { entityId: query.entityId } : {}),
     };
-    return { where, fullHistory };
+    return where;
   }
 }
 

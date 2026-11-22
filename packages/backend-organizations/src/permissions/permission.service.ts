@@ -38,7 +38,6 @@ export const VENUE_PERMISSION_CODES = [
   "manage_team",
   "manage_delegated_permissions",
   "manage_venue",
-  "view_history",
   "view_schedule",
   "manage_schedule",
 ] as const satisfies readonly PermissionCode[];
@@ -70,17 +69,18 @@ export const FULL_VENUE_MANAGEMENT_PERMISSIONS: PermissionCode[] = [
   "manage_delegated_permissions",
   "create_venues",
   "manage_venue",
-  "view_history",
   "manage_schedule",
 ];
 export const BAR_MANAGER_PERMISSIONS: PermissionCode[] = [
   ...FULL_VENUE_MANAGEMENT_PERMISSIONS,
+  "view_history",
   "invite_chef_bartender",
 ];
 const CHEF_BARTENDER_PERMISSIONS: PermissionCode[] = [
   "invite_chef_bartender",
   "manage_venues",
   "manage_company",
+  "view_history",
 ];
 
 export type PermissionEvaluationInput = {

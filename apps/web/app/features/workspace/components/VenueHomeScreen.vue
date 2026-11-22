@@ -17,7 +17,10 @@
     </template>
     <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
       <section class="flex min-w-0 flex-col gap-3">
-        <ProductCostCalculator :workspace="workspace" />
+        <ProductCostCalculator
+          v-if="workspace.role === 'bar_manager' || workspace.role === 'chef_bartender'"
+          :workspace="workspace"
+        />
         <VenueChecklists
           :company-id="workspace.company.id"
           :venue-id="workspace.venue.id"
@@ -34,7 +37,11 @@
         <Divider class="!my-0 lg:!hidden" />
         <TodayShiftRoster :company-id="workspace.company.id" :venue-id="workspace.venue.id" />
         <MyVenueReminders :company-id="workspace.company.id" :venue-id="workspace.venue.id" />
-        <RecentAuditEvents :company-id="workspace.company.id" :venue-id="workspace.venue.id" />
+        <RecentAuditEvents
+          v-if="workspace.permissions.includes('view_history')"
+          :company-id="workspace.company.id"
+          :venue-id="workspace.venue.id"
+        />
       </section>
     </div>
   </WorkspaceShell>

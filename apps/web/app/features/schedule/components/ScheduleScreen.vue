@@ -159,7 +159,7 @@
           </template>
           <template #body="{ data }">
             <div
-              class="relative flex w-full items-center justify-center"
+              class="schedule-day-cell flex w-full items-center justify-center"
               :class="{ 'opacity-30': !data.cells[day - 1]?.applicable }"
               @click="handleDayCellClick($event, data, day - 1)"
             >
@@ -179,20 +179,16 @@
               >
                 {{ cellLabel(data.cells[day - 1].value) }}
               </span>
-              <OverlayBadge
+              <span
                 v-if="data.cells[day - 1]?.applicable && data.cells[day - 1]?.comment?.text?.trim()"
                 v-tooltip.top="{
                   value: commentPreview(data.cells[day - 1].comment?.text),
                   showDelay: 0,
                   class: 'app-tooltip',
                 }"
-                severity="success"
-                size="small"
-                class="!absolute !right-0 !top-0 z-10"
+                class="schedule-comment-indicator"
                 :aria-label="commentPreview(data.cells[day - 1].comment?.text)"
-                :pt="{
-                  pcBadge: { root: { class: '!h-1.5 !min-w-1.5 !w-1.5 !p-0' } },
-                }"
+                role="img"
               />
               <span
                 v-else-if="!data.cells[day - 1]?.applicable"
@@ -535,7 +531,7 @@
             </div>
           </div>
         </section>
-        <section v-if="activeCell && !bulkEditMode" class="space-y-2">
+        <section v-if="activeCell && !bulkEditMode" class="space-y-2 pt-2">
           <div class="space-y-0.5">
             <FloatLabel variant="on">
               <Textarea
@@ -2919,6 +2915,21 @@ function formatCellDayMonth(value: string): string {
 .schedule-table-viewport {
   overflow: clip;
   border-radius: var(--p-border-radius-md);
+}
+
+.schedule-comment-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  inset-inline-end: 0;
+  width: 8px;
+  height: 8px;
+  border-top: 8px solid var(--p-primary-color);
+  border-left: 8px solid transparent;
+}
+
+.schedule-day-cell {
+  position: relative;
 }
 
 .schedule-table :deep(.p-datatable-frozen-column) {

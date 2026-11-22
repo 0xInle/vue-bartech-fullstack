@@ -292,10 +292,7 @@ const menuItems = computed<MenuItem[]>(() => {
       linkItem("Выгрузка", paths.value.exports, isPathActive(paths.value.exports)),
     );
   }
-  if (
-    props.workspace.permissions.includes("view_history") ||
-    props.workspace.permissions.includes("view_products")
-  ) {
+  if (props.workspace.permissions.includes("view_history")) {
     managementItems.push(
       linkItem("История", paths.value.history, isPathActive(paths.value.history)),
     );

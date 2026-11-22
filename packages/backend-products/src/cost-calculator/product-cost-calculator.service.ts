@@ -53,7 +53,10 @@ export class ProductCostCalculatorService {
   ) {}
 
   async getRecipe(context: CreateProductContext, productId: string): Promise<CostCalculatorRecipe> {
-    await this.access.assert(context, "view_products");
+    await this.access.assert(context, "view_products", undefined, [
+      "bar_manager",
+      "chef_bartender",
+    ]);
     const [product, units, priceUnits] = await Promise.all([
       this.loadProduct(context.venueId, productId, true, []),
       this.database.unit.findMany({
